@@ -141,6 +141,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 <div class="tab-bar" style="background:var(--bg);position:sticky;top:89px;z-index:80">
   <div class="wrap" style="display:flex">
     <button class="tab-btn on" id="tab-scan"    onclick="sw('scan')">📈 信号扫描</button>
+    <button class="tab-btn"    id="tab-entry"   onclick="sw('entry')">🚨 今日入场</button>
     <button class="tab-btn"    id="tab-sectors" onclick="sw('sectors')">🗺 板块追踪</button>
     <button class="tab-btn"    id="tab-cta"     onclick="sw('cta')">🌐 CTA宏观</button>
     <button class="tab-btn"    id="tab-bt"      onclick="sw('bt')">📊 回测验证</button>
@@ -161,6 +162,13 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
           开始扫描
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- TAB 1.5: 今日入场 -->
+  <div id="pane-entry" style="display:none">
+    <div id="entryBody">
+      <div style="text-align:center;padding:64px 0;color:var(--text2);font-size:13px">先运行信号扫描，今日入场信号将自动显示在这里</div>
     </div>
   </div>
 
@@ -250,8 +258,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-const TABS = ['scan','sectors','cta','bt'];
-const loaded = {scan:false, sectors:false, cta:false, bt:false};
+const TABS = ['scan','entry','sectors','cta','bt'];
+const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false};
 let curTab = 'scan';
 let sectView = 'momentum';
 let btChart = null;
@@ -360,6 +368,10 @@ function sw(tab){
     $('pane-'+t).style.display=t===tab?'block':'none';
     $('tab-'+t).className='tab-btn'+(t===tab?' on':'');
   });
+  if(tab==='entry'&&!loaded.entry){
+    if(_lastScanData) renderEntrySignals(_lastScanData);
+    else loadScan();
+  }
   if(tab==='sectors'&&!loaded.sectors)loadSectors();
   if(tab==='cta'&&!loaded.cta)loadCta();
   if(tab==='bt'&&!loaded.bt)loadBt();
@@ -431,12 +443,133 @@ async function loadMacro(){
 // ══════════════════════════════════════════
 // SIGNAL SCAN
 // ══════════════════════════════════════════
+// 财报徽章
+function earningsBadge(e){
+  if(!e||!e.soon) return '';
+  if(e.urgent) return ` <span title="财报在即！${e.date}（${e.days_left}天后）" style="cursor:help;font-size:10px;color:#f85149;font-weight:700;vertical-align:middle">📢${e.days_left}天</span>`;
+  return ` <span title="财报临近：${e.date}（${e.days_left}天后）" style="cursor:help;font-size:10px;color:#f59e0b;vertical-align:middle">📅${e.days_left}天</span>`;
+}
+
+// 跳转回测
+function goToBt(ticker, e){
+  e.stopPropagation();
+  sw('bt');
+  loadBtTicker(ticker);
+}
+
+// 今日入场渲染
+let _lastScanData = null;
+function renderEntrySignals(data){
+  _lastScanData = data;
+  const entries = [];
+  for(const[grp,stocks]of Object.entries(data)){
+    for(const s of stocks){
+      const hasEntry = (s.strategies||[]).some(st=>st.state==='entry_today');
+      if(s.verdict_code==='green'||hasEntry) entries.push({...s,grp});
+    }
+  }
+  const tab = $('tab-entry');
+  if(entries.length) tab.innerHTML=`🚨 今日入场 <span style="background:#f85149;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;margin-left:4px">${entries.length}</span>`;
+  else tab.textContent='🚨 今日入场';
+
+  if(!entries.length){
+    $('entryBody').innerHTML=`<div style="text-align:center;padding:80px 0;color:var(--text2)">
+      <div style="font-size:36px;margin-bottom:12px;opacity:.3">🔍</div>
+      <div>今日暂无入场信号</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">等待策略触发，或刷新数据</div>
+    </div>`;
+    return;
+  }
+
+  let h=`<div style="margin-bottom:16px;display:flex;align-items:center;gap:12px">
+    <h2 style="font-size:15px;font-weight:700;color:var(--green)">🚨 今日入场信号</h2>
+    <span style="font-size:12px;color:var(--text3)">${entries.length} 只触发</span>
+  </div>`;
+
+  for(const s of entries){
+    const cc=(s.price_chg||0)>=0?'#3fb950':'#f85149';
+    const earBadge=earningsBadge(s.earnings);
+    const entryStrats=(s.strategies||[]).filter(st=>st.state==='entry_today');
+    const inStrats=(s.strategies||[]).filter(st=>st.state==='in_trade');
+    h+=`<div class="card" style="margin-bottom:16px;padding:20px 24px;border-color:rgba(63,185,80,.3)">
+      <!-- 股票头部 -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-size:22px;font-weight:800;color:var(--text)">${s.ticker}</span>
+          ${earBadge}
+          <span style="font-size:12px;color:var(--text3)">${s.grp}</span>
+        </div>
+        <span style="font-size:20px;font-weight:700;color:var(--text)">${s.price>0?'$'+s.price:''}</span>
+        <span style="font-size:14px;font-weight:600;color:${cc}">${s.price_chg>=0?'+':''}${s.price_chg}%</span>
+        <span style="margin-left:auto;display:flex;gap:8px">
+          <button onclick="toggleDetail('entry-dr-${s.ticker}')" style="padding:5px 12px;border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;background:var(--s2)">详情 ▾</button>
+          <button onclick="goToBt('${s.ticker}',event)" style="padding:5px 14px;border:1px solid rgba(88,166,255,.4);border-radius:6px;color:#58a6ff;font-size:12px;cursor:pointer;background:rgba(88,166,255,.08)">📊 查看回测</button>
+        </span>
+      </div>
+
+      <!-- 入场策略卡 -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;color:#3fb950;text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:8px">▲ 今日触发入场</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+        ${entryStrats.map(st=>{
+          const ei=ENTRY_INFO[st.entry]||{name:st.entry};
+          const ci=CTA_INFO[st.cta]||{name:st.cta};
+          const xi=EXIT_INFO[st.exit]||{name:st.exit};
+          const stopLine=st.stop_px!=null?`<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:8px;align-items:center">
+            <span style="font-size:10px;color:#f87171;font-weight:600">止损</span>
+            <span style="font-size:12px;color:#f87171;font-weight:700">$${st.stop_px.toFixed(2)}</span>
+            <span style="font-size:10px;color:var(--text3)">(-${st.stop_pct}%)</span>
+            <span style="font-size:9px;color:var(--text3);margin-left:auto">${st.stop_src||''}</span>
+          </div>`:'';
+          return `<div style="padding:10px 14px;border-radius:8px;border:1px solid rgba(63,185,80,.4);background:rgba(63,185,80,.08)">
+            <div style="font-size:11px;font-weight:700;color:#3fb950;margin-bottom:4px">今日入场 ▲</div>
+            <div style="font-size:12px;color:var(--text);font-weight:600;margin-bottom:2px">${ei.name}</div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${ci.name} · ${xi.name}</div>
+            <div style="font-size:10px;color:var(--text2)">${ei.desc||''}</div>
+            <div style="font-size:10px;color:#fbbf24;margin-top:4px">入场：${st.entry_desc||'—'}</div>
+            <div style="font-size:10px;color:#f87171;margin-top:2px">出场：${st.exit_desc||'—'}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px">胜率${st.win_rate}%  3M ${st.ret_3m>=0?'+':''}${st.ret_3m}%</div>
+            ${stopLine}
+          </div>`;
+        }).join('')}
+        </div>
+      </div>
+
+      <!-- 其他策略仍在仓 -->
+      ${inStrats.length?`<div style="margin-bottom:12px">
+        <div style="font-size:10px;color:#58a6ff;text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:6px">● 其他策略持仓中</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px">
+        ${inStrats.map(st=>{
+          const ei=ENTRY_INFO[st.entry]||{name:st.entry};
+          const xi=EXIT_INFO[st.exit]||{name:st.exit};
+          return `<div style="padding:8px 12px;border-radius:6px;border:1px solid rgba(88,166,255,.25);background:rgba(88,166,255,.06);font-size:11px">
+            <span style="color:#58a6ff;font-weight:600">${ei.name}</span>
+            <span style="color:var(--text3);margin:0 4px">·</span>
+            <span style="color:var(--text3)">${xi.name}</span>
+            ${st.stop_px!=null?`<span style="float:right;color:#f87171">止损$${st.stop_px.toFixed(2)}</span>`:''}
+            ${st.exit_desc?`<div style="color:#f87171;margin-top:3px;font-size:10px">出场：${st.exit_desc}</div>`:''}
+          </div>`;
+        }).join('')}
+        </div>
+      </div>`:''}
+
+      <!-- 技术面概要 -->
+      <div id="entry-dr-${s.ticker}" style="display:none;border-top:1px solid var(--border);margin-top:4px;padding-top:14px">
+        ${detailHtml(s)}
+      </div>
+    </div>`;
+  }
+  $('entryBody').innerHTML=h;
+  loaded.entry=true;
+}
+
 async function loadScan(){
   $('scanBody').innerHTML=loading('扫描信号中，约 30 秒...');
   try{
     const j=await(await fetch('/api/scan')).json();
     loaded.scan=true;
     renderScan(j.data,j.cached_at);
+    renderEntrySignals(j.data);
     $('lastUpd').textContent='扫描于 '+j.cached_at;
   }catch(e){
     $('scanBody').innerHTML=errHtml('扫描失败: '+e.message);
@@ -475,9 +608,10 @@ function renderScan(data,ts){
       const ctac=cCTA(s.cta_val);
       const sc=s.score||0;
       const dots=Array.from({length:7},(_,j)=>`<span style="display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:2px;background:${j<sc?'#58a6ff':'rgba(255,255,255,0.08)'}"></span>`).join('');
+      const earBadge = earningsBadge(s.earnings);
       h+=`<tr class="clickable" onclick="toggleDetail('${id}')">
         <td class="tl"><span class="badge ${bc}">${s.verdict||'—'}</span></td>
-        <td class="tl mono" style="font-weight:700;color:var(--text);font-size:13px">${s.ticker}</td>
+        <td class="tl mono" style="font-weight:700;color:var(--text);font-size:13px">${s.ticker}${earBadge}</td>
         <td class="mono" style="color:var(--text)">${s.price>0?'$'+s.price:'—'}</td>
         <td class="mono" style="color:${cc};font-weight:600">${s.price>0?((s.price_chg>=0?'+':'')+s.price_chg+'%'):'—'}</td>
         <td class="hxs">${dots}</td>
@@ -582,7 +716,8 @@ function detailHtml(s){
       <div class="mono" style="font-size:12px;color:var(--text2)">量能: ${s.vol_r}x</div>
     </div>
   </div>
-  <div style="display:flex;flex-wrap:wrap;gap:4px">${sigs}${wars}</div>`;
+  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">${sigs}${wars}</div>
+  <button onclick="goToBt('${s.ticker}',event)" style="padding:5px 14px;border:1px solid rgba(88,166,255,.35);border-radius:6px;color:#58a6ff;font-size:12px;cursor:pointer;background:rgba(88,166,255,.07)">📊 查看完整回测 →</button>`;
 }
 
 function toggleDetail(id){

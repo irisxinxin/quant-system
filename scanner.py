@@ -366,6 +366,53 @@ def _rsi(prices: pd.Series, period: int = 10) -> float:
 
 
 # ──────────────────────────────────────────────
+# 财报日期
+# ──────────────────────────────────────────────
+
+def _get_earnings(ticker: str) -> dict | None:
+    """返回下次财报信息，若无或出错返回 None"""
+    try:
+        import yfinance as yf
+        from datetime import date, datetime
+        t = yf.Ticker(ticker)
+        cal = t.calendar
+        if cal is None:
+            return None
+        # calendar 返回格式可能是 dict 或 DataFrame
+        if hasattr(cal, 'get'):
+            ed = cal.get("Earnings Date")
+        elif hasattr(cal, 'loc'):
+            row = cal.loc["Earnings Date"] if "Earnings Date" in cal.index else None
+            ed = row.tolist() if row is not None else None
+        else:
+            ed = None
+        if not ed:
+            return None
+        # 取第一个有效日期
+        next_date = None
+        today = date.today()
+        for d in (ed if isinstance(ed, (list, tuple)) else [ed]):
+            try:
+                dd = d.date() if hasattr(d, 'date') else datetime.strptime(str(d)[:10], "%Y-%m-%d").date()
+                if dd >= today:
+                    next_date = dd
+                    break
+            except Exception:
+                continue
+        if not next_date:
+            return None
+        days_left = (next_date - today).days
+        return {
+            "date":      next_date.strftime("%Y-%m-%d"),
+            "days_left": days_left,
+            "urgent":    days_left <= 7,
+            "soon":      days_left <= 21,
+        }
+    except Exception:
+        return None
+
+
+# ──────────────────────────────────────────────
 # 单股扫描
 # ──────────────────────────────────────────────
 
@@ -637,6 +684,7 @@ def scan_ticker(
             "rs20":          round(rs20 * 100, 1),
             "strategies":    strat_states,   # top3 策略当前状态
             "error":         None,
+            "earnings":      _get_earnings(ticker),
         }
 
     except Exception as e:
