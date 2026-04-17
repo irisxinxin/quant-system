@@ -167,7 +167,7 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
 # ──────────────────────────────────────────────
 
 def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta):
-    """重建指定策略，返回 (candles, markers, trades_list, metrics dict)"""
+    """重建指定策略，返回 candles/markers/trades/metrics dict"""
     prices, ohlcv, signal = _build_signals(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta)
     res       = backtest(prices, signal)
     trades_df = res["trades"]
@@ -181,80 +181,126 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta
         avg_hold = 0.0
 
     def _s(v):
-        if v is None: return None
+        if v is None:
+            return None
         try:
             f = float(v)
             return None if (math.isnan(f) or math.isinf(f)) else round(f, 4)
         except Exception:
             return None
 
-    # K 线（近 6 个月）
+    # ── K 线（近 6 个月）——用 iloc 位置索引避免 tz / dtype 不匹配 ──
     cutoff     = prices.index[-1] - pd.Timedelta(days=185)
-    recent_idx = prices.index[prices.index >= cutoff]
-    candles = []
-    for dt in recent_idx:
-        try:
-            row = ohlcv.loc[dt]
-            o = _s(row["Open"]); h = _s(row["High"]); l = _s(row["Low"])
-            v = int(row["Volume"]) if not pd.isna(row["Volume"]) else 0
-        except Exception:
-            o = h = l = None; v = 0
-        c = _s(prices.get(dt))
-        if c is None: continue
-        candles.append({"time": dt.strftime("%Y-%m-%d"),
-                         "open": o or c, "high": h or c, "low": l or c,
-                         "close": c, "volume": v})
+    mask       = prices.index >= cutoff
+    recent_prices = prices[mask]       # Series
+    recent_ohlcv  = ohlcv[mask]        # DataFrame（已 reindex 对齐）
 
-    # 买卖点 markers
+    candles = []
+    for i in range(len(recent_prices)):
+        try:
+            c = _s(float(recent_prices.iloc[i]))
+            if c is None:
+                continue
+            dt_str = recent_prices.index[i].strftime("%Y-%m-%d")
+            try:
+                orow = recent_ohlcv.iloc[i]
+                o = _s(orow["Open"])
+                h = _s(orow["High"])
+                l = _s(orow["Low"])
+                vol_raw = orow["Volume"]
+                v = int(float(vol_raw)) if not pd.isna(vol_raw) else 0
+            except Exception:
+                o = h = l = None
+                v = 0
+            candles.append({
+                "time":   dt_str,
+                "open":   o if o is not None else c,
+                "high":   h if h is not None else c,
+                "low":    l if l is not None else c,
+                "close":  c,
+                "volume": v,
+            })
+        except Exception:
+            continue
+
+    # ── 买持基准线（归一化到 1.0）──
+    bah = []
+    if len(recent_prices) > 0:
+        try:
+            base0 = float(recent_prices.iloc[0])
+            for i in range(len(recent_prices)):
+                try:
+                    val = float(recent_prices.iloc[i]) / base0
+                    bah.append({"time": recent_prices.index[i].strftime("%Y-%m-%d"),
+                                 "value": round(val, 4)})
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
+    # ── 买卖点 markers ──
     markers = []
     for _, tr in trades_df.iterrows():
-        ep  = _s(tr["entry_px"]); xp  = _s(tr["exit_px"]); pnl = _s(tr["pnl_pct"])
-        markers.append({"time": tr["entry_date"].strftime("%Y-%m-%d"), "type": "buy",
-                         "price": ep, "text": f"B ${ep:.2f}" if ep else "B"})
-        markers.append({"time": tr["exit_date"].strftime("%Y-%m-%d"), "type": "sell",
-                         "price": xp, "pnl": pnl,
-                         "text": f"S ${xp:.2f} ({pnl:+.1f}%)" if (xp and pnl is not None) else "S"})
+        try:
+            ep  = _s(tr["entry_px"]); xp = _s(tr["exit_px"]); pnl = _s(tr["pnl_pct"])
+            markers.append({"time": tr["entry_date"].strftime("%Y-%m-%d"), "type": "buy",
+                             "price": ep, "text": f"B ${ep:.2f}" if ep else "B"})
+            markers.append({"time": tr["exit_date"].strftime("%Y-%m-%d"), "type": "sell",
+                             "price": xp, "pnl": pnl,
+                             "text": f"S ${xp:.2f} ({pnl:+.1f}%)" if (xp and pnl is not None) else "S"})
+        except Exception:
+            continue
 
-    # 交易记录（近 3 年，最新在前）
+    # ── 交易记录（近 3 年，最新在前）──
     cutoff_trades = prices.index[-1] - pd.Timedelta(days=1095)
     trades_list   = []
     for _, tr in trades_df.iterrows():
-        if tr["exit_date"] < cutoff_trades: continue
-        trades_list.append({"entry_date": tr["entry_date"].strftime("%Y-%m-%d"),
-                             "exit_date":  tr["exit_date"].strftime("%Y-%m-%d"),
-                             "entry_px":   _s(tr["entry_px"]), "exit_px": _s(tr["exit_px"]),
-                             "pnl_pct":    _s(tr["pnl_pct"]), "days_held": int(tr["days_held"])})
+        try:
+            if tr["exit_date"] < cutoff_trades:
+                continue
+            trades_list.append({
+                "entry_date": tr["entry_date"].strftime("%Y-%m-%d"),
+                "exit_date":  tr["exit_date"].strftime("%Y-%m-%d"),
+                "entry_px":   _s(tr["entry_px"]),
+                "exit_px":    _s(tr["exit_px"]),
+                "pnl_pct":    _s(tr["pnl_pct"]),
+                "days_held":  int(tr["days_held"]),
+            })
+        except Exception:
+            continue
     trades_list = list(reversed(trades_list))
 
-    # 买持基准线（close-only，标准化到 1.0）
-    base0 = float(prices[recent_idx[0]]) if len(recent_idx) else 1.0
-    bah = [{"time": dt.strftime("%Y-%m-%d"), "value": round(float(prices[dt]) / base0, 4)}
-           for dt in recent_idx if prices.get(dt) is not None]
-
+    # ── 分段绩效 ──
     m    = res["metrics"]
     mets = res.get("returns", pd.Series(dtype=float))
-    # 分段绩效
+
     def _pstat(ret):
-        if ret.empty or len(ret) < 2: return {"ret": 0, "calmar": 0, "dd": 0}
-        cum  = (1 + ret).cumprod()
-        tot  = (cum.iloc[-1] - 1) * 100
-        dd   = ((cum - cum.cummax()) / cum.cummax()).min() * 100
-        ny   = len(ret) / 252
-        cagr = ((cum.iloc[-1] ** (1/ny)) - 1) * 100 if ny > 0.05 else tot
-        cal  = abs(cagr / dd) if dd < 0 else 0
-        return {"ret": round(tot,1), "calmar": round(cal,2), "dd": round(dd,1)}
+        if ret.empty or len(ret) < 2:
+            return {"ret": 0.0, "calmar": 0.0, "dd": 0.0}
+        try:
+            cum  = (1 + ret).cumprod()
+            tot  = float((cum.iloc[-1] - 1) * 100)
+            dd   = float(((cum - cum.cummax()) / cum.cummax()).min() * 100)
+            ny   = len(ret) / 252
+            cagr = float(((cum.iloc[-1] ** (1 / ny)) - 1) * 100) if ny > 0.05 else tot
+            cal  = abs(cagr / dd) if dd < 0 else 0.0
+            return {"ret": round(tot, 1), "calmar": round(cal, 2), "dd": round(dd, 1)}
+        except Exception:
+            return {"ret": 0.0, "calmar": 0.0, "dd": 0.0}
 
     def _metric(key, default=0):
         v = m.get(key, default)
         if isinstance(v, str):
-            v = v.replace("%","").replace("×","").strip()
-            try: v = float(v)
-            except: return default
+            v = v.replace("%", "").replace("×", "").strip()
+            try:
+                v = float(v)
+            except Exception:
+                return default
         return _s(v)
 
-    p1m = _pstat(mets.iloc[-21:]  if len(mets)>=21  else mets)
-    p3m = _pstat(mets.iloc[-63:]  if len(mets)>=63  else mets)
-    p1y = _pstat(mets.iloc[-252:] if len(mets)>=252 else mets)
+    p1m = _pstat(mets.iloc[-21:]  if len(mets) >= 21  else mets)
+    p3m = _pstat(mets.iloc[-63:]  if len(mets) >= 63  else mets)
+    p1y = _pstat(mets.iloc[-252:] if len(mets) >= 252 else mets)
 
     return {
         "candles":  candles,
