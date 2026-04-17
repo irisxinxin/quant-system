@@ -126,6 +126,7 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         "spy":   (spy_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
         "smh":   (smh_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
     }
+    rsi_was_hot  = rsi.rolling(5).max() > 70
     exits = {
         "ema_x":    (e20 < e60).fillna(False).astype(float),
         "ma_x":     (ma50 < ma200).fillna(False).astype(float),
@@ -134,6 +135,7 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         "cmf_neg":  (cmf < -0.05).fillna(False).astype(float),
         "trail_8":  (prices < hi20_max * 0.92).fillna(False).astype(float),
         "trail_12": (prices < hi20_max * 0.88).fillna(False).astype(float),
+        "rsi_fade": ((rsi < 60) & rsi_was_hot).fillna(False).astype(float),
     }
 
     e_sig = entries.get(entry_name, entries["dc20"])

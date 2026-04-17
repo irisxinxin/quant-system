@@ -120,12 +120,15 @@ def _multi_period(strat_ret: pd.Series) -> dict:
 
 CALMAR_CAP = 4.0   # 防止极少笔交易的过拟合策略"垄断"排名
 
-def _recency_score(periods: dict) -> float:
+def _recency_score(periods: dict, avg_hold: float = 1.0) -> float:
     """近期加权综合评分（越高越好）"""
     c1y  = min(periods["1Y"]["calmar"], CALMAR_CAP)
     r3m  = periods["3M"]["ret"] / 30.0   # 标准化到 ~0~1 范围
     call = min(periods["All"]["calmar"], CALMAR_CAP)
-    return W_1Y * c1y + W_3M * r3m + W_ALL * call
+    # 持仓时长加成：平均持仓越长（趋势型）得分越高，上限0.5分
+    # 旨在让 rsi_fade/ema_x 等趋势退出策略与高频 trail_8 更好区分
+    hold_bonus = min(avg_hold / 20.0, 0.5)
+    return W_1Y * c1y + W_3M * r3m + W_ALL * call + 0.15 * hold_bonus
 
 
 # ──────────────────────────────────────────────
@@ -288,6 +291,7 @@ def optimize_ticker(
         }
 
         # ── 出场条件 ──
+        rsi_was_hot  = rsi.rolling(5).max() > 70          # 近5天RSI曾超70
         exits = {
             "ema_x":     (e20 < e60).fillna(False).astype(float),
             "ma_x":      (ma50 < ma200).fillna(False).astype(float),
@@ -298,6 +302,8 @@ def optimize_ticker(
             # Trailing stop：从近20日高点回撤触发（适合趋势股持仓更久）
             "trail_8":   (prices < hi20_max * 0.92).fillna(False).astype(float),   # 回撤8%止损
             "trail_12":  (prices < hi20_max * 0.88).fillna(False).astype(float),   # 回撤12%止损
+            # 动量衰减：RSI曾高位(>70)后真正回落到60以下才出场，避免追高后被小波动震出
+            "rsi_fade":  ((rsi < 60) & rsi_was_hot).fillna(False).astype(float),
         }
 
         results = []
@@ -328,7 +334,7 @@ def optimize_ticker(
                     sig_s = pd.Series(pos, index=prices.index)
 
                     in_mkt = sig_s.mean()
-                    if in_mkt < 0.03 or in_mkt > 0.97:   # 过滤极端情况
+                    if in_mkt < 0.03 or in_mkt > 0.98:   # 过滤极端情况
                         continue
 
                     try:
@@ -349,9 +355,12 @@ def optimize_ticker(
                         if cagr < 0.03:   # 全期 CAGR < 3%
                             continue
 
+                        # 平均持仓天数（趋势型策略加成）
+                        avg_hold = float(res["trades"]["days_held"].mean()) if n_tr > 0 else 1.0
+
                         # 分段绩效（近1年/3月/1月）
                         periods = _multi_period(strat_ret)
-                        score   = _recency_score(periods)
+                        score   = _recency_score(periods, avg_hold)
 
                         results.append({
                             "entry":     en,
@@ -376,6 +385,17 @@ def optimize_ticker(
         results.sort(key=lambda x: x["score"], reverse=True)
         best = results[0]
 
+        # ── 构建 top3：保证至少一个趋势持仓型出场（rsi_fade/ema_x/ma_x）──
+        # 短线策略（trail/rsi80）高频小利，趋势策略吃大波段，两种风格都要展示
+        TREND_EXITS = {"rsi_fade", "ema_x", "ma_x"}
+        top3 = results[:3]
+        top3_exits = {r["exit"] for r in top3}
+        if not (top3_exits & TREND_EXITS):
+            for r in results[3:]:
+                if r["exit"] in TREND_EXITS:
+                    top3[2] = r   # 替换第3位
+                    break
+
         return {
             "ticker":     ticker,
             "type":       asset_type,
@@ -391,7 +411,7 @@ def optimize_ticker(
             "n_trades":   best["n_trades"],
             "in_market":  round(best["in_market"] * 100, 1),
             "periods":    best["periods"],
-            "top3":       results[:3],
+            "top3":       top3,
             "error":      None,
         }
 
