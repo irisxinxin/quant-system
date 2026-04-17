@@ -85,6 +85,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 /* ── Spinner ── */
 @keyframes spin{to{transform:rotate(360deg)}}
 .spin{animation:spin .8s linear infinite;display:inline-block}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 
 /* ── CTA bar ── */
 .bar-track{height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;flex-shrink:0}
@@ -1074,17 +1075,22 @@ function renderBtDetail(s){
   }
   $('bt-trades-body').innerHTML = trades.slice(0,60).map(t=>{
     const pnl = t.pnl_pct;
+    const isOpen = !!t.is_open;
     const win = pnl!=null&&pnl>0;
-    const pnlCol = pnl==null?'#8b949e':win?'#3fb950':'#f85149';
-    const pnlStr = pnl==null?'持仓中':(pnl>=0?'+':'')+pnl.toFixed(2)+'%';
-    const badge  = pnl==null?'<span class="badge bk">持仓中</span>':win
-      ?'<span class="badge bg">盈利</span>':'<span class="badge br">亏损</span>';
-    return `<tr>
+    const pnlCol = isOpen?(win?'#3fb950':'#f85149'):pnl==null?'#8b949e':win?'#3fb950':'#f85149';
+    const pnlStr = isOpen
+      ? (pnl!=null?(pnl>=0?'+':'')+pnl.toFixed(2)+'% 浮盈':'持仓中')
+      : (pnl==null?'—':(pnl>=0?'+':'')+pnl.toFixed(2)+'%');
+    const badge = isOpen
+      ? '<span class="badge bc" style="animation:pulse 1.5s infinite">持仓中 ●</span>'
+      : (win?'<span class="badge bg">盈利</span>':'<span class="badge br">亏损</span>');
+    const rowBg = isOpen ? 'background:rgba(88,166,255,0.06);' : '';
+    return `<tr style="${rowBg}">
       <td class="tl mono" style="color:var(--blue)">${t.entry_date}</td>
-      <td class="tl mono" style="color:var(--text2)">${t.exit_date||'—'}</td>
-      <td style="color:var(--text2)">${t.days_held}</td>
+      <td class="tl mono" style="color:${isOpen?'#58a6ff':'var(--text2)'}">${isOpen?'未平仓':(t.exit_date||'—')}</td>
+      <td style="color:var(--text2)">${t.days_held}${isOpen?'天（持续中）':''}</td>
       <td class="mono">${t.entry_px!=null?'$'+t.entry_px.toFixed(2):'—'}</td>
-      <td class="mono">${t.exit_px!=null?'$'+t.exit_px.toFixed(2):'—'}</td>
+      <td class="mono" style="color:${isOpen?'#58a6ff':'inherit'}">${isOpen?'$'+t.exit_px.toFixed(2)+' 现价':(t.exit_px!=null?'$'+t.exit_px.toFixed(2):'—')}</td>
       <td class="mono" style="color:${pnlCol};font-weight:600">${pnlStr}</td>
       <td class="tl">${badge}</td>
     </tr>`;

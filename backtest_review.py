@@ -277,6 +277,37 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta
         except Exception:
             pass
 
+    # ── 检测当前是否有未平仓持仓 ──
+    open_trade = None
+    try:
+        sig_series = res["signal"]
+        if float(sig_series.iloc[-1]) != 0:
+            # 找到当前持仓的入场点（从末尾往前找最近一次从0变1的位置）
+            sig_vals = sig_series.values
+            open_start_i = len(sig_vals) - 1
+            while open_start_i > 0 and sig_vals[open_start_i - 1] != 0:
+                open_start_i -= 1
+            open_entry_date = sig_series.index[open_start_i]
+            open_entry_px   = float(prices.loc[open_entry_date]) if open_entry_date in prices.index else None
+            open_cur_px     = float(prices.iloc[-1])
+            open_pnl        = round((open_cur_px - open_entry_px) / open_entry_px * 100, 2) if open_entry_px else None
+            open_days       = (prices.index[-1] - open_entry_date).days
+            open_trade = {
+                "entry_date": open_entry_date.strftime("%Y-%m-%d"),
+                "exit_date":  None,
+                "entry_px":   _s(open_entry_px),
+                "exit_px":    _s(open_cur_px),
+                "pnl_pct":    open_pnl,
+                "days_held":  open_days,
+                "is_open":    True,
+            }
+            # 加入 K 线 markers（买入点）
+            ep = _s(open_entry_px)
+            markers.append({"time": open_entry_date.strftime("%Y-%m-%d"), "type": "buy",
+                             "price": ep, "text": f"B ${ep:.2f}" if ep else "B"})
+    except Exception:
+        pass
+
     # ── 交易记录（近 3 年，最新在前）──
     cutoff_trades = prices.index[-1] - pd.Timedelta(days=1095)
     trades_list   = []
@@ -291,10 +322,14 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta
                 "exit_px":    _s(tr["exit_px"]),
                 "pnl_pct":    _s(tr["pnl_pct"]),
                 "days_held":  int(tr["days_held"]),
+                "is_open":    False,
             })
         except Exception:
             continue
     trades_list = list(reversed(trades_list))
+    # 未平仓持仓置顶
+    if open_trade:
+        trades_list.insert(0, open_trade)
 
     # ── 分段绩效 ──
     m    = res["metrics"]
