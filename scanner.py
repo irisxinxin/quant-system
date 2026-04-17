@@ -459,30 +459,7 @@ def scan_ticker(
         stop_ema60 = round(e60v * 0.98, 1)
         stop_pct10 = round(px * 0.90, 1)
 
-        # ── 综合判断 ──
-        if not ema_ok or cta_val < 0:
-            verdict, verdict_code = "回避", "red"
-            entry_zone = "不入场"
-        elif dc_ok and score >= 3:
-            verdict, verdict_code = "强烈推荐", "green"
-            entry_zone = f"当前价 {px:.1f}，收盘确认突破"
-        elif dc_ok:
-            verdict, verdict_code = "可以入场", "yellow"
-            entry_zone = f"当前价 {px:.1f}，小仓位试探"
-        elif abs(ext_e20) <= 4 and score >= 3:
-            verdict, verdict_code = "推荐入场", "green"
-            entry_zone = f"EMA20附近 {e20v:.0f}~{e20v*1.02:.0f}"
-        elif rsiv < 40 and bbpct < 20:
-            verdict, verdict_code = "可以入场", "yellow"
-            entry_zone = f"当前价 {px:.1f}，需次日确认"
-        elif score >= 3:
-            verdict, verdict_code = "观望偏多", "yellow"
-            entry_zone = f"等DC20>{dc20h:.0f} 或回踩EMA20≈{e20v:.0f}"
-        else:
-            verdict, verdict_code = "观望", "gray"
-            entry_zone = f"等DC20>{dc20h:.0f} 或回踩EMA20≈{e20v:.0f}"
-
-        # ── 最优策略实时信号状态 ──
+        # ── 最优策略实时信号状态（先算，再参与 verdict）──
         strat_states = []
         top3_list = (top3_map or {}).get(ticker, [])
         if top3_list:
@@ -493,6 +470,65 @@ def scan_ticker(
                 ticker, top3_list, prices, ohlcv,
                 smh_cta_s, spy_cta_s, qqq_cta_s, extra_ctas or {},
             )
+
+        # 策略状态统计（用于修正 verdict）
+        n_entry   = sum(1 for s in strat_states if s["state"] == "entry_today")
+        n_intrade = sum(1 for s in strat_states if s["state"] == "in_trade")
+        n_exit    = sum(1 for s in strat_states if s["state"] == "exit_today")
+        n_wait    = sum(1 for s in strat_states if s["state"] == "waiting")
+        n_strats  = len(strat_states)
+
+        # ── 综合判断（策略信号优先级最高）──
+        if not ema_ok or cta_val < 0:
+            verdict, verdict_code = "回避", "red"
+            entry_zone = "不入场"
+
+        # 有策略今日出场：不管技术面多好，都不新入场
+        elif n_exit > 0 and n_entry == 0:
+            if n_exit == n_strats:
+                verdict, verdict_code = "出场信号", "red"
+                entry_zone = f"最优策略全部今日出场，暂勿追入"
+                warnings.append(f"⚠ Top{n_strats}策略今日均出场")
+            else:
+                verdict, verdict_code = "观望", "gray"
+                entry_zone = f"部分策略出场（{n_exit}/{n_strats}），等信号明朗"
+                warnings.append(f"⚠ {n_exit}个策略今日出场")
+
+        # 有策略今日入场：强信号
+        elif n_entry > 0:
+            if n_entry >= 2 or (n_entry == 1 and score >= 3):
+                verdict, verdict_code = "强烈推荐", "green"
+                entry_zone = f"当前价 {px:.1f}，{n_entry}个策略今日触发入场"
+                signals.append(f"✓ {n_entry}个最优策略今日入场信号")
+            else:
+                verdict, verdict_code = "可以入场", "yellow"
+                entry_zone = f"当前价 {px:.1f}，1个策略今日触发入场"
+                signals.append("✓ 1个最优策略今日入场信号")
+
+        # 策略全部在仓：趋势持续，持有或观望追入
+        elif n_intrade == n_strats and n_strats > 0:
+            if score >= 4:
+                verdict, verdict_code = "持仓中·偏强", "green"
+                entry_zone = f"策略已在仓，追入需谨慎（DC20>{dc20h:.0f}）"
+            else:
+                verdict, verdict_code = "持仓中·观望", "yellow"
+                entry_zone = f"策略在仓，不追高，等回踩EMA20≈{e20v:.0f}"
+            signals.append(f"✓ Top{n_strats}策略均在仓中")
+
+        # 策略全部等待：按技术面打分
+        else:
+            if dc_ok and score >= 3:
+                verdict, verdict_code = "观望偏多", "yellow"
+                entry_zone = f"技术面较强但策略未触发，等DC20>{dc20h:.0f}确认"
+            elif rsiv < 40 and bbpct < 20:
+                verdict, verdict_code = "关注低吸", "yellow"
+                entry_zone = f"当前价 {px:.1f}，超卖区域，等策略入场信号"
+            elif score >= 3:
+                verdict, verdict_code = "观望偏多", "yellow"
+                entry_zone = f"等DC20>{dc20h:.0f} 或回踩EMA20≈{e20v:.0f}"
+            else:
+                verdict, verdict_code = "观望", "gray"
+                entry_zone = f"等DC20>{dc20h:.0f} 或回踩EMA20≈{e20v:.0f}"
 
         return {
             "ticker":        ticker,
