@@ -548,12 +548,22 @@ def scan_ticker(
         n_wait    = sum(1 for s in strat_states if s["state"] == "waiting")
         n_strats  = len(strat_states)
 
-        # ── 综合判断（策略信号优先级最高）──
-        if not ema_ok or cta_macro < 0:
-            verdict, verdict_code = "回避", "red"
-            entry_zone = "不入场"
+        # ── 综合判断 ──
+        # 优先级：已在仓/出场信号 > 新入场信号 > 宏观过滤 > 技术评分
 
-        # 有策略今日出场：不管技术面多好，都不新入场
+        # 1. 策略全部在仓：已入场，不受 ema_ok 限制
+        if n_intrade == n_strats and n_strats > 0:
+            verdict, verdict_code = "持仓续持", "blue"
+            gap_pct = round((px - e20v) / e20v * 100, 1)
+            if gap_pct <= 3:
+                entry_zone = f"距EMA20仅{gap_pct}%，接近回踩区间，可关注"
+            elif gap_pct <= 8:
+                entry_zone = f"距EMA20 {gap_pct}%，等回踩≈${e20v:.1f}再入"
+            else:
+                entry_zone = f"距EMA20 {gap_pct}%（追高风险大），等回踩≈${e20v:.1f}"
+            signals.append(f"✓ Top{n_strats}策略均在仓中（非新买点）")
+
+        # 2. 有策略今日出场
         elif n_exit > 0 and n_entry == 0:
             if n_exit == n_strats:
                 verdict, verdict_code = "出场信号", "red"
@@ -564,9 +574,12 @@ def scan_ticker(
                 entry_zone = f"部分策略出场（{n_exit}/{n_strats}），等信号明朗"
                 warnings.append(f"⚠ {n_exit}个策略今日出场")
 
-        # 有策略今日入场：强信号
+        # 3. 有策略今日入场，但宏观/趋势不对则拒绝
         elif n_entry > 0:
-            if n_entry >= 2 or (n_entry == 1 and score >= 3):
+            if not ema_ok or cta_macro < 0:
+                verdict, verdict_code = "回避", "red"
+                entry_zone = f"策略触发但宏观/趋势不支持，不入场"
+            elif n_entry >= 2 or (n_entry == 1 and score >= 3):
                 verdict, verdict_code = "强烈推荐", "green"
                 entry_zone = f"当前价 {px:.1f}，{n_entry}个策略今日触发入场"
                 signals.append(f"✓ {n_entry}个最优策略今日入场信号")
@@ -575,19 +588,12 @@ def scan_ticker(
                 entry_zone = f"当前价 {px:.1f}，1个策略今日触发入场"
                 signals.append("✓ 1个最优策略今日入场信号")
 
-        # 策略全部在仓：趋势持续，但不是新买点
-        elif n_intrade == n_strats and n_strats > 0:
-            verdict, verdict_code = "持仓续持", "blue"
-            gap_pct = round((px - e20v) / e20v * 100, 1)  # 当前价距EMA20的距离
-            if gap_pct <= 3:
-                entry_zone = f"距EMA20仅{gap_pct}%，接近回踩区间，可关注"
-            elif gap_pct <= 8:
-                entry_zone = f"距EMA20 {gap_pct}%，等回踩≈${e20v:.1f}再入"
-            else:
-                entry_zone = f"距EMA20 {gap_pct}%（追高风险大），等回踩≈${e20v:.1f}"
-            signals.append(f"✓ Top{n_strats}策略均在仓中（非新买点）")
+        # 4. 宏观/趋势不对：回避
+        elif not ema_ok or cta_macro < 0:
+            verdict, verdict_code = "回避", "red"
+            entry_zone = "不入场"
 
-        # 策略全部等待：按技术面打分
+        # 5. 等待：按技术面评分
         else:
             if dc_ok and score >= 3:
                 verdict, verdict_code = "观望偏多", "yellow"
