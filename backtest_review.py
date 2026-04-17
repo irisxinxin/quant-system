@@ -50,7 +50,8 @@ def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray) -> n
 
 
 def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
-                   smh_cta: pd.Series, spy_cta: pd.Series, qqq_cta: pd.Series | None = None):
+                   smh_cta: pd.Series, spy_cta: pd.Series, qqq_cta: pd.Series | None = None,
+                   extra_ctas: dict | None = None):
     """
     用指定参数重建仓位信号序列。
     返回 (prices, ohlcv_aligned, signal_series)
@@ -134,6 +135,10 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         "smh":   (smh_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
         "qqq":   (qqq_s > 0).astype(float),
     }
+    if extra_ctas:
+        for _cn, _cs in extra_ctas.items():
+            if _cn not in cta_gates:
+                cta_gates[_cn] = (_cs.reindex(prices.index).ffill().fillna(0) > 0).astype(float)
     rsi_was_hot  = rsi.rolling(5).max() > 70
     exits = {
         "ema_x":    (e20 < e60).fillna(False).astype(float),
@@ -181,9 +186,9 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
 # 主函数：优化 + 信号提取
 # ──────────────────────────────────────────────
 
-def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta, qqq_cta=None):
+def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta, qqq_cta=None, extra_ctas=None):
     """重建指定策略，返回 candles/markers/trades/metrics dict"""
-    prices, ohlcv, signal = _build_signals(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta, qqq_cta)
+    prices, ohlcv, signal = _build_signals(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta, qqq_cta, extra_ctas)
     res       = backtest(prices, signal)
     trades_df = res["trades"]
 
@@ -257,14 +262,20 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta
     markers = []
     for _, tr in trades_df.iterrows():
         try:
-            ep  = _s(tr["entry_px"]); xp = _s(tr["exit_px"]); pnl = _s(tr["pnl_pct"])
+            ep  = _s(tr["entry_px"])
             markers.append({"time": tr["entry_date"].strftime("%Y-%m-%d"), "type": "buy",
                              "price": ep, "text": f"B ${ep:.2f}" if ep else "B"})
-            markers.append({"time": tr["exit_date"].strftime("%Y-%m-%d"), "type": "sell",
-                             "price": xp, "pnl": pnl,
-                             "text": f"S ${xp:.2f} ({pnl:+.1f}%)" if (xp and pnl is not None) else "S"})
         except Exception:
-            continue
+            pass
+        try:
+            exit_dt = tr.get("exit_date") if hasattr(tr, "get") else tr["exit_date"]
+            if pd.notna(exit_dt):
+                xp  = _s(tr["exit_px"]); pnl = _s(tr["pnl_pct"])
+                markers.append({"time": exit_dt.strftime("%Y-%m-%d"), "type": "sell",
+                                 "price": xp, "pnl": pnl,
+                                 "text": f"S ${xp:.2f} ({pnl:+.1f}%)" if (xp and pnl is not None) else "S"})
+        except Exception:
+            pass
 
     # ── 交易记录（近 3 年，最新在前）──
     cutoff_trades = prices.index[-1] - pd.Timedelta(days=1095)
@@ -348,10 +359,17 @@ def get_optimal_and_signals(ticker: str) -> dict:
         smh_cta = _cta_series(smh_px)
         spy_cta = _cta_series(spy_px)
         qqq_cta = _cta_series(qqq_px)
+        _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT"}
+        extra_ctas = {}
+        for _name, _sym in _sector_etfs.items():
+            try:
+                extra_ctas[_name] = _cta_series(get_prices(_sym))
+            except Exception:
+                pass
 
         # ── 找 Top 3 最优策略 ──
         from optimize_stocks import optimize_ticker
-        opt = optimize_ticker(ticker, smh_cta, spy_cta, qqq_cta)
+        opt = optimize_ticker(ticker, smh_cta, spy_cta, qqq_cta, extra_ctas)
         if opt.get("error"):
             return {"ticker": ticker, "error": opt["error"]}
 
@@ -364,7 +382,7 @@ def get_optimal_and_signals(ticker: str) -> dict:
         for rank, strat in enumerate(top3):
             en, cn, xn = strat["entry"], strat["cta"], strat["exit"]
             try:
-                sig_data = _signals_for_combo(ticker, en, cn, xn, smh_cta, spy_cta, qqq_cta)
+                sig_data = _signals_for_combo(ticker, en, cn, xn, smh_cta, spy_cta, qqq_cta, extra_ctas=extra_ctas)
             except Exception as e:
                 logger.warning(f"  #{rank+1} {en}+{cn}+{xn} failed: {e}")
                 continue

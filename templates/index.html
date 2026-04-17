@@ -261,12 +261,14 @@ let btActiveStrat = 0;   // index into strategies[]
 const BT_SECTORS = {
   "🔵 大盘/核心":      ["QQQ","SPY","GOOG","META","TSLA","AMZN"],
   "⚡ 半导体/AI算力":  ["NVDA","ASML","TSM","AMD","ARM","AVGO","AEHR","TXN","MRVL","KLAC"],
-  "💾 存储":           ["MU","WDC","STX"],
+  "💾 存储":           ["MU","WDC","STX","SNDK"],
   "🏗 AI电力/数据中心":["BE","VRT","ETN","GEV","PWR"],
   "🌐 光子/高速连接":  ["LITE","COHR","FN","AAOI","LWLG","VIAV","CLS","CIEN","GLW","TSEM"],
   "🚚 物流/运输":      ["ODFL","XPO","JBHT","PCAR","CMI"],
   "🏭 工业/航天制造":  ["CAT","DE","HWM","ITT","EME","AME"],
   "💰 金融":           ["MS","CBOE","TRV"],
+  "🪙 加密/Fintech":  ["COIN","MSTR"],
+  "🔋 电池/稀土":      ["MP","ALB","EOSE"],
   "🚀 太空/机器人":    ["LUNR","PL","TER","RKLB"],
 };
 
@@ -906,6 +908,11 @@ const CTA_INFO = {
   'spy':   { name:'SPY大盘CTA',    desc:'仅在大盘趋势正向时入场，减少市场Beta拖累' },
   'qqq':   { name:'QQQ纳指CTA',    desc:'以纳斯达克100趋势为准，比SPY更贴近科技/半导体股行情节奏' },
   'combo': { name:'双CTA严格过滤', desc:'SMH+SPY均须正向才入场，最严格条件，大幅减少假突破' },
+  'soxx':  { name:'SOXX费城半导体',  desc:'Philadelphia Semiconductor Index ETF，覆盖面比SMH更广，包含更多芯片设计公司' },
+  'igv':   { name:'IGV软件/SaaS',   desc:'iShares软件ETF，MSFT/ORCL/ADBE主导，适合纯软件股作为宏观参考' },
+  'xly':   { name:'XLY消费成长',     desc:'消费可选品ETF，AMZN/TSLA主导，消费科技股的板块风向标' },
+  'xar':   { name:'XAR军工/航天',    desc:'SPDR航空航天国防ETF，LUNR/RKLB等太空股的最相关板块基准' },
+  'ibit':  { name:'IBIT比特币ETF',   desc:'iShares比特币现货ETF，加密资产风险偏好指标，COIN/MSTR的同步参考' },
 };
 const EXIT_INFO = {
   'rsi80':    { name:'RSI超买止盈',   desc:'RSI>80时离场，适合高波动、容易快速过热的个股',                  style:'short',   hold:'短 5-15天' },

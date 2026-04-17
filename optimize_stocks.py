@@ -32,6 +32,8 @@ SECTOR_GROUPS = {
     "🚚 物流/运输":        ["ODFL", "XPO", "JBHT", "PCAR", "CMI"],
     "🏭 工业/航天制造":    ["CAT", "DE", "HWM", "ITT", "EME", "AME"],
     "💰 金融":             ["MS", "CBOE", "TRV"],
+    "🪙 加密/Fintech":    ["COIN", "MSTR"],
+    "🔋 电池/稀土":        ["MP", "ALB", "EOSE"],
     "🚀 太空/机器人":      ["LUNR", "PL", "TER", "RKLB"],
 }
 
@@ -64,6 +66,8 @@ W_ALL = 0.15
 # 热门板块 ETF（资金追踪用）
 HOT_SECTOR_ETFS = {
     "半导体":   "SMH",
+    "软件/SaaS": "IGV",
+    "军工/航天": "XAR",
     "AI/科技":  "IGV",
     "核能":     "NLR",
     "太空/国防":"XAR",
@@ -192,6 +196,7 @@ def optimize_ticker(
     smh_cta: pd.Series,
     spy_cta: pd.Series,
     qqq_cta: pd.Series | None = None,
+    extra_ctas: dict | None = None,
 ) -> dict:
     """对单只股票跑所有组合，返回最优策略信息"""
     try:
@@ -301,6 +306,12 @@ def optimize_ticker(
             "smh":   (smh_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
             "qqq":   (qqq_s > 0).astype(float),             # 纳指趋势，更贴近科技股
         }
+
+        # 动态注入行业 CTA（soxx/igv/xly/xar/ibit 等）
+        if extra_ctas:
+            for _cn, _cs in extra_ctas.items():
+                if _cn not in cta_gates:
+                    cta_gates[_cn] = (_cs.reindex(prices.index).ffill().fillna(0) > 0).astype(float)
 
         # ── 出场条件 ──
         rsi_was_hot  = rsi.rolling(5).max() > 70          # 近5天RSI曾超70
@@ -480,6 +491,14 @@ def main(tickers: list | None = None) -> list:
     smh_cta  = _cta_series(smh_px)
     spy_cta  = _cta_series(spy_px)
     qqq_cta  = _cta_series(qqq_px)
+    # 行业 CTA：soxx=费城半导体, igv=软件, xly=消费, xar=军工, ibit=加密
+    _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT"}
+    extra_ctas = {}
+    for _name, _sym in _sector_etfs.items():
+        try:
+            extra_ctas[_name] = _cta_series(get_prices(_sym))
+        except Exception:
+            pass
     print(f"   SMH CTA: {smh_cta.iloc[-1]:.2f}  SPY CTA: {spy_cta.iloc[-1]:.2f}  QQQ CTA: {qqq_cta.iloc[-1]:.2f}")
 
     print(f"\n⚡ 并行优化中...\n")
@@ -498,7 +517,7 @@ def main(tickers: list | None = None) -> list:
     raw_results = {}
     with ThreadPoolExecutor(max_workers=6) as executor:
         futures = {
-            executor.submit(optimize_ticker, t, smh_cta, spy_cta, qqq_cta): t
+            executor.submit(optimize_ticker, t, smh_cta, spy_cta, qqq_cta, extra_ctas): t
             for t in tickers
         }
         for future in as_completed(futures):
