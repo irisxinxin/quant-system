@@ -397,20 +397,33 @@ async function loadMacro(){
   try{
     const j=await(await fetch('/api/macro')).json();
     const d=j.data;
+    // VIX pill
     const vc={low:'#3fb950',normal:'#8b949e',high:'#f59e0b',extreme:'#f85149'}[d.vix_status]||'#8b949e';
-    let h=`<div class="mpill"><span style="color:${vc};font-weight:600">${d.vix_label||'VIX —'}</span></div>`;
-    for(const[name,c]of Object.entries(d.ctas||{})){
-      const col=c.value>.15?'#3fb950':c.value<-.15?'#f85149':'#8b949e';
-      const arr=c.value>.15?'▲':c.value<-.15?'▼':'─';
-      h+=`<div class="mpill">
-        <span style="color:var(--text2);font-size:11px">${name}</span>
-        <span class="mono" style="color:${col};font-weight:600">${c.value>0?'+':''}${c.value}</span>
-        <span style="color:${col};font-size:10px">${arr}</span>
+    let h='';
+    if(d.vix_label){
+      h+=`<div class="mpill" title="CBOE恐慌指数：衡量市场预期波动率&#10;<20 低波动 可正常入场&#10;20-30 正常&#10;30-40 高波动 谨慎&#10;>40 极端恐慌 减仓" style="cursor:help">
+        <span style="color:${vc};font-weight:600">${d.vix_label}</span>
+        <span style="color:${vc};font-size:10px;margin-left:2px">${d.vix_desc||''}</span>
+      </div>`;
+    }else{
+      h+=`<div class="mpill"><span style="color:var(--text3);font-size:11px">VIX —</span></div>`;
+    }
+    // 市场指数 pill
+    for(const[name,m]of Object.entries(d.markets||{})){
+      if(!m){h+=`<div class="mpill"><span style="color:var(--text3)">${name} —</span></div>`;continue;}
+      const dc=m.chg_1d>=0?'#3fb950':'#f85149';
+      const arr=m.chg_1d>=0?'▲':'▼';
+      const tc=m.trend==='强势'?'#3fb950':m.trend==='弱势'?'#f85149':'#8b949e';
+      h+=`<div class="mpill" title="${name} 今日${m.chg_1d>=0?'+':''}${m.chg_1d}%  5日${m.chg_5d>=0?'+':''}${m.chg_5d}%&#10;20日趋势：${m.trend}（斜率${m.slope>=0?'+':''}${m.slope}%）&#10;${m.above_ma20?'✓ 站上MA20':'✗ 跌破MA20'}" style="cursor:help">
+        <span style="color:var(--text2);font-size:11px;font-weight:500">${name}</span>
+        <span class="mono" style="color:${dc};font-weight:700">${m.chg_1d>=0?'+':''}${m.chg_1d}%</span>
+        <span style="color:${dc};font-size:10px">${arr}</span>
+        <span style="color:${tc};font-size:10px;margin-left:2px;border-left:1px solid rgba(255,255,255,0.1);padding-left:6px">${m.trend}</span>
       </div>`;
     }
     h+=`<span style="margin-left:auto;font-size:11px;color:var(--text3)">${j.cached_at}</span>`;
     $('macroWrap').querySelector('div').innerHTML=h;
-  }catch{
+  }catch(e){
     $('macroWrap').querySelector('div').innerHTML='<span style="color:#f85149;font-size:12px">宏观数据加载失败</span>';
   }
 }

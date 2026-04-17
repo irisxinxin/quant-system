@@ -666,39 +666,62 @@ def scan_all() -> dict:
 # ──────────────────────────────────────────────
 
 def get_macro() -> dict:
-    """VIX + 关键 CTA 信号"""
+    """VIX + 关键市场指数实时状态"""
     import yfinance as yf
 
-    result: dict = {"vix": None, "vix_status": "unknown", "vix_label": "VIX 获取失败", "ctas": {}}
-    try:
-        vix_data = yf.download("^VIX", period="5d", progress=False, auto_adjust=True)
-        vix = float(vix_data["Close"].iloc[-1])
-        result["vix"] = round(vix, 1)
-        if vix < 20:
-            result["vix_status"] = "low"
-            result["vix_label"]  = f"VIX {vix:.1f}  低波动"
-        elif vix < 30:
-            result["vix_status"] = "normal"
-            result["vix_label"]  = f"VIX {vix:.1f}  正常"
-        elif vix < 40:
-            result["vix_status"] = "high"
-            result["vix_label"]  = f"VIX {vix:.1f}  高波动"
-        else:
-            result["vix_status"] = "extreme"
-            result["vix_label"]  = f"VIX {vix:.1f}  极端"
-    except Exception:
-        pass
+    result: dict = {"vix": None, "vix_status": "unknown", "vix_label": None, "markets": {}}
 
+    # VIX
+    for vix_sym in ["^VIX", "VIX"]:
+        try:
+            vix_data = yf.download(vix_sym, period="5d", progress=False, auto_adjust=True)
+            if vix_data.empty:
+                continue
+            vix = float(vix_data["Close"].dropna().iloc[-1])
+            result["vix"] = round(vix, 1)
+            if vix < 20:
+                result["vix_status"] = "low"
+                result["vix_label"]  = f"VIX {vix:.1f}"
+                result["vix_desc"]   = "低波动"
+            elif vix < 30:
+                result["vix_status"] = "normal"
+                result["vix_label"]  = f"VIX {vix:.1f}"
+                result["vix_desc"]   = "正常"
+            elif vix < 40:
+                result["vix_status"] = "high"
+                result["vix_label"]  = f"VIX {vix:.1f}"
+                result["vix_desc"]   = "高波动⚠"
+            else:
+                result["vix_status"] = "extreme"
+                result["vix_label"]  = f"VIX {vix:.1f}"
+                result["vix_desc"]   = "极端恐慌🔴"
+            break
+        except Exception:
+            continue
+
+    # 关键指数：今日涨跌 + 20日趋势
     for name, ticker in [("SPY", "SPY"), ("QQQ", "QQQ"), ("SMH", "SMH")]:
         try:
-            val = cta_trend_signal(ticker)
-            result["ctas"][name] = {
-                "value":     round(val, 2),
-                "direction": "多头" if val > 0.15 else ("空头" if val < -0.15 else "中性"),
-                "ok":        val > 0,
+            px = get_prices(ticker, start="2024-01-01")
+            if px.empty or len(px) < 5:
+                continue
+            chg_1d  = round(float(px.pct_change(1).iloc[-1]) * 100, 2)
+            chg_5d  = round(float(px.pct_change(5).iloc[-1]) * 100, 1)
+            ma20    = px.rolling(20).mean()
+            above_ma20 = float(px.iloc[-1]) > float(ma20.iloc[-1])
+            # 20日趋势斜率
+            slope = float(px.iloc[-1] / px.iloc[-20] - 1) * 100 if len(px) >= 20 else 0
+            trend = "强势" if slope > 5 else ("弱势" if slope < -5 else "震荡")
+            result["markets"][name] = {
+                "chg_1d":    chg_1d,
+                "chg_5d":    chg_5d,
+                "above_ma20": above_ma20,
+                "trend":     trend,
+                "slope":     round(slope, 1),
+                "price":     round(float(px.iloc[-1]), 2),
             }
         except Exception:
-            result["ctas"][name] = {"value": 0, "direction": "未知", "ok": False}
+            result["markets"][name] = None
 
     return result
 
