@@ -50,7 +50,7 @@ def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray) -> n
 
 
 def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
-                   smh_cta: pd.Series, spy_cta: pd.Series):
+                   smh_cta: pd.Series, spy_cta: pd.Series, qqq_cta: pd.Series | None = None):
     """
     用指定参数重建仓位信号序列。
     返回 (prices, ohlcv_aligned, signal_series)
@@ -101,10 +101,12 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
     rsi_deep_os  = rsi < 35
     rsi_ext_os   = rsi < 28
 
-    combo_cta = (
+    combo_cta_s = (
         smh_cta.reindex(prices.index).ffill().fillna(0) +
         spy_cta.reindex(prices.index).ffill().fillna(0)
     ) / 2
+    qqq_s = qqq_cta.reindex(prices.index).ffill().fillna(0) if qqq_cta is not None \
+            else pd.Series(0.0, index=prices.index)
 
     entries = {
         "ema2060":       (e20 > e60).fillna(False).astype(float),
@@ -126,9 +128,11 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
     }
     cta_gates = {
         "none":  pd.Series(1.0, index=prices.index),
-        "combo": (combo_cta > 0).astype(float),
+        "combo": (combo_cta_s > 0).astype(float),
+        "soft":  (combo_cta_s > -0.25).astype(float),
         "spy":   (spy_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
         "smh":   (smh_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
+        "qqq":   (qqq_s > 0).astype(float),
     }
     rsi_was_hot  = rsi.rolling(5).max() > 70
     exits = {
@@ -177,9 +181,9 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
 # 主函数：优化 + 信号提取
 # ──────────────────────────────────────────────
 
-def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta):
+def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta, qqq_cta=None):
     """重建指定策略，返回 candles/markers/trades/metrics dict"""
-    prices, ohlcv, signal = _build_signals(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta)
+    prices, ohlcv, signal = _build_signals(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta, qqq_cta)
     res       = backtest(prices, signal)
     trades_df = res["trades"]
 
@@ -340,12 +344,14 @@ def get_optimal_and_signals(ticker: str) -> dict:
     try:
         smh_px  = get_prices("SMH")
         spy_px  = get_prices("SPY")
+        qqq_px  = get_prices("QQQ")
         smh_cta = _cta_series(smh_px)
         spy_cta = _cta_series(spy_px)
+        qqq_cta = _cta_series(qqq_px)
 
         # ── 找 Top 3 最优策略 ──
         from optimize_stocks import optimize_ticker
-        opt = optimize_ticker(ticker, smh_cta, spy_cta)
+        opt = optimize_ticker(ticker, smh_cta, spy_cta, qqq_cta)
         if opt.get("error"):
             return {"ticker": ticker, "error": opt["error"]}
 
@@ -358,7 +364,7 @@ def get_optimal_and_signals(ticker: str) -> dict:
         for rank, strat in enumerate(top3):
             en, cn, xn = strat["entry"], strat["cta"], strat["exit"]
             try:
-                sig_data = _signals_for_combo(ticker, en, cn, xn, smh_cta, spy_cta)
+                sig_data = _signals_for_combo(ticker, en, cn, xn, smh_cta, spy_cta, qqq_cta)
             except Exception as e:
                 logger.warning(f"  #{rank+1} {en}+{cn}+{xn} failed: {e}")
                 continue

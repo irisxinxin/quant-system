@@ -900,9 +900,11 @@ const ENTRY_INFO = {
   'rsi28':         { name:'RSI极端超卖低买',    desc:'RSI<28极端超卖，高质量底部信号，触发频率低但准确率更高，捕捉真正的恐慌底', style:'reversal' },
 };
 const CTA_INFO = {
-  'none':  { name:'无宏观过滤',   desc:'不依赖宏观CTA，适合独立走强的个股（忽略板块风向）' },
-  'smh':   { name:'SMH半导体CTA', desc:'仅在SMH趋势正向时入场，规避板块系统性下行风险' },
-  'spy':   { name:'SPY大盘CTA',   desc:'仅在大盘趋势正向时入场，减少市场Beta拖累' },
+  'none':  { name:'无宏观过滤',    desc:'不依赖宏观CTA，适合独立走强的个股，或超卖低买不受板块拖累' },
+  'soft':  { name:'宽松CTA过滤',   desc:'SMH+SPY综合趋势>-0.25即可入场，允许市场轻微转弱时捕捉个股机会' },
+  'smh':   { name:'SMH半导体CTA',  desc:'仅在SMH趋势正向时入场，规避板块系统性下行风险' },
+  'spy':   { name:'SPY大盘CTA',    desc:'仅在大盘趋势正向时入场，减少市场Beta拖累' },
+  'qqq':   { name:'QQQ纳指CTA',    desc:'以纳斯达克100趋势为准，比SPY更贴近科技/半导体股行情节奏' },
   'combo': { name:'双CTA严格过滤', desc:'SMH+SPY均须正向才入场，最严格条件，大幅减少假突破' },
 };
 const EXIT_INFO = {

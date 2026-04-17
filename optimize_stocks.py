@@ -191,8 +191,9 @@ def optimize_ticker(
     ticker: str,
     smh_cta: pd.Series,
     spy_cta: pd.Series,
+    qqq_cta: pd.Series | None = None,
 ) -> dict:
-    """对单只股票跑 60 种组合，返回最优策略信息"""
+    """对单只股票跑所有组合，返回最优策略信息"""
     try:
         prices = get_prices(ticker)
         ohlcv  = get_ohlcv(ticker)
@@ -290,11 +291,15 @@ def optimize_ticker(
         }
 
         # ── CTA 过滤 ──
+        qqq_s = qqq_cta.reindex(prices.index).ffill().fillna(0) if qqq_cta is not None \
+                else pd.Series(0.0, index=prices.index)
         cta_gates = {
             "none":  pd.Series(1.0, index=prices.index),
             "combo": (combo_cta_s > 0).astype(float),
+            "soft":  (combo_cta_s > -0.25).astype(float),   # 宽松：SMH+SPY 轻微负向也允许入场
             "spy":   (spy_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
             "smh":   (smh_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
+            "qqq":   (qqq_s > 0).astype(float),             # 纳指趋势，更贴近科技股
         }
 
         # ── 出场条件 ──
@@ -400,16 +405,34 @@ def optimize_ticker(
         results.sort(key=lambda x: x["score"], reverse=True)
         best = results[0]
 
-        # ── 构建 top3：保证至少一个趋势持仓型出场（rsi_fade/ema_x/ma_x）──
-        # 短线策略（trail/rsi80）高频小利，趋势策略吃大波段，两种风格都要展示
+        # ── 构建 top3：三个槽保证三种风格 ──
+        #   #1: 综合最优（任何风格）
+        #   #2: 最佳趋势持仓型出场（rsi_fade/ema_x/ma_x）— 吃大波段
+        #   #3: 最佳低买反弹型入场（rsi35/rsi28/mfi_os/bb_lo）— 低点买入
         TREND_EXITS = {"rsi_fade", "ema_x", "ma_x"}
-        top3 = results[:3]
-        top3_exits = {r["exit"] for r in top3}
-        if not (top3_exits & TREND_EXITS):
-            for r in results[3:]:
-                if r["exit"] in TREND_EXITS:
-                    top3[2] = r   # 替换第3位
-                    break
+        DIP_ENTRIES = {"rsi35", "rsi28", "mfi_os", "bb_lo"}
+
+        seen = {(best["entry"], best["cta"], best["exit"])}
+
+        # #2: 最佳趋势出场
+        slot2 = next((r for r in results
+                      if r["exit"] in TREND_EXITS
+                      and (r["entry"], r["cta"], r["exit"]) not in seen), None)
+        if slot2 is None:   # 无趋势出场时取下一个高分策略
+            slot2 = next((r for r in results
+                          if (r["entry"], r["cta"], r["exit"]) not in seen), None)
+        if slot2:
+            seen.add((slot2["entry"], slot2["cta"], slot2["exit"]))
+
+        # #3: 最佳低买策略
+        slot3 = next((r for r in results
+                      if r["entry"] in DIP_ENTRIES
+                      and (r["entry"], r["cta"], r["exit"]) not in seen), None)
+        if slot3 is None:   # 无低买策略时取下一个高分策略
+            slot3 = next((r for r in results
+                          if (r["entry"], r["cta"], r["exit"]) not in seen), None)
+
+        top3 = [r for r in [best, slot2, slot3] if r is not None]
 
         return {
             "ticker":     ticker,
@@ -442,17 +465,22 @@ def main(tickers: list | None = None) -> list:
     if tickers is None:
         tickers = DEFAULT_TICKERS
 
+    n_entries = 16   # 当前入场数
+    n_ctas    = 6    # 当前CTA数
+    n_exits   = 9    # 当前出场数
     print(f"\n{'='*72}")
-    print(f"  策略批量优化  共 {len(tickers)} 只  (60种组合/只)")
+    print(f"  策略批量优化  共 {len(tickers)} 只  ({n_entries}×{n_ctas}×{n_exits}={n_entries*n_ctas*n_exits}种组合/只)")
     print(f"{'='*72}")
 
     # 预取共用数据
-    print("📥 获取参考数据 SMH / SPY ...")
+    print("📥 获取参考数据 SMH / SPY / QQQ ...")
     smh_px   = get_prices("SMH")
     spy_px   = get_prices("SPY")
+    qqq_px   = get_prices("QQQ")
     smh_cta  = _cta_series(smh_px)
     spy_cta  = _cta_series(spy_px)
-    print(f"   SMH CTA当前: {smh_cta.iloc[-1]:.2f}  SPY CTA当前: {spy_cta.iloc[-1]:.2f}")
+    qqq_cta  = _cta_series(qqq_px)
+    print(f"   SMH CTA: {smh_cta.iloc[-1]:.2f}  SPY CTA: {spy_cta.iloc[-1]:.2f}  QQQ CTA: {qqq_cta.iloc[-1]:.2f}")
 
     print(f"\n⚡ 并行优化中...\n")
 
@@ -470,7 +498,7 @@ def main(tickers: list | None = None) -> list:
     raw_results = {}
     with ThreadPoolExecutor(max_workers=6) as executor:
         futures = {
-            executor.submit(optimize_ticker, t, smh_cta, spy_cta): t
+            executor.submit(optimize_ticker, t, smh_cta, spy_cta, qqq_cta): t
             for t in tickers
         }
         for future in as_completed(futures):
