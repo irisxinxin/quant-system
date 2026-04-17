@@ -700,7 +700,17 @@ def get_macro() -> dict:
             continue
 
     # 关键指数：今日涨跌 + 20日趋势
-    for name, ticker in [("SPY", "SPY"), ("QQQ", "QQQ"), ("SMH", "SMH")]:
+    for name, ticker in [
+        ("SPY",  "SPY"),   # 大盘
+        ("QQQ",  "QQQ"),   # 纳指
+        ("SMH",  "SMH"),   # 半导体
+        ("SOXX", "SOXX"),  # 费城半导体
+        ("XAR",  "XAR"),   # 军工/航天
+        ("IGV",  "IGV"),   # 软件/SaaS
+        ("XLY",  "XLY"),   # 消费
+        ("IBIT", "IBIT"),  # 加密/BTC
+        ("IWM",  "IWM"),   # 小盘（风险偏好）
+    ]:
         try:
             px = get_prices(ticker, start="2024-01-01")
             if px.empty or len(px) < 5:
