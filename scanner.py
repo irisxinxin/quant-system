@@ -548,15 +548,11 @@ def scan_ticker(
                 entry_zone = f"当前价 {px:.1f}，1个策略今日触发入场"
                 signals.append("✓ 1个最优策略今日入场信号")
 
-        # 策略全部在仓：趋势持续，持有或观望追入
+        # 策略全部在仓：趋势持续，但不是新买点
         elif n_intrade == n_strats and n_strats > 0:
-            if score >= 4:
-                verdict, verdict_code = "持仓中·偏强", "green"
-                entry_zone = f"策略已在仓，追入需谨慎（DC20>{dc20h:.0f}）"
-            else:
-                verdict, verdict_code = "持仓中·观望", "yellow"
-                entry_zone = f"策略在仓，不追高，等回踩EMA20≈{e20v:.0f}"
-            signals.append(f"✓ Top{n_strats}策略均在仓中")
+            verdict, verdict_code = "持仓续持", "blue"
+            entry_zone = f"入场点已过，追高有风险，等回踩EMA20≈{e20v:.0f}"
+            signals.append(f"✓ Top{n_strats}策略均在仓中（非新买点）")
 
         # 策略全部等待：按技术面打分
         else:
