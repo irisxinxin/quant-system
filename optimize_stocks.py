@@ -55,8 +55,8 @@ def get_sector(ticker: str) -> str:
     return "其他"
 
 
-# 数据不足时跳过
-MIN_BARS = 400
+# 数据不足时跳过（250≈1年交易日，足以计算1Y/3M/1M分段绩效）
+MIN_BARS = 250
 
 # 近期权重：优化目标 = 50%×近1年Calmar + 25%×近3月收益率 + 15%×2026年初至今Calmar + 10%×全期Calmar
 # 2026年AI量化资金主导市场，YTD权重单独拎出加强
