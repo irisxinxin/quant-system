@@ -468,7 +468,7 @@ function renderEntrySignals(data){
   for(const[grp,stocks]of Object.entries(data)){
     for(const s of stocks){
       const hasEntry = (s.strategies||[]).some(st=>st.state==='entry_today');
-      if(s.verdict_code==='green'||hasEntry) entries.push({...s,grp});
+      if(hasEntry) entries.push({...s,grp});
     }
   }
   const tab = $('tab-entry');
