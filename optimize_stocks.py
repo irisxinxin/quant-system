@@ -33,7 +33,7 @@ SECTOR_GROUPS = {
     "🚚 物流/运输":        ["ODFL", "XPO", "JBHT", "PCAR", "CMI"],
     "🏭 工业/航天制造":    ["CAT", "DE", "HWM", "ITT", "EME", "AME"],
     "💰 金融":             ["MS", "CBOE", "TRV"],
-    "🪙 加密/Fintech":    ["COIN", "MSTR", "IREN", "HOOD", "OKLO"],
+    "🪙 加密/Fintech":    ["COIN", "MSTR", "IREN", "HOOD", "OKLO", "BTC-USD"],
     "🔋 电池/稀土":        ["MP", "ALB", "EOSE"],
     "🚀 太空/机器人":      ["LUNR", "PL", "TER", "RKLB"],
     "🏥 消费/健康":        ["HIMS", "LLY"],
