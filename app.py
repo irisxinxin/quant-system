@@ -5,6 +5,7 @@ Railway 部署：uvicorn app:app --host 0.0.0.0 --port $PORT
 import os
 import time
 import json
+import hashlib
 import logging
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
@@ -15,7 +16,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
-from scanner import scan_all, get_macro, get_flows, get_cta_dashboard, get_sector_full, get_bt_signals
+from scanner import scan_all, get_macro, get_flows, get_cta_dashboard, get_sector_full, get_bt_signals, WATCHLIST
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -25,6 +26,11 @@ app = FastAPI(title="量化交易仪表盘")
 _HTML_PATH  = Path(__file__).parent / "templates" / "index.html"
 _CACHE_DIR  = Path(__file__).parent / "cache"
 _CACHE_DIR.mkdir(exist_ok=True)
+
+# ─── Watchlist 版本哈希（watchlist 变动时自动使旧缓存失效）───
+_wl_hash = hashlib.md5(
+    json.dumps({g: sorted(t) for g, t in WATCHLIST.items()}, sort_keys=True).encode()
+).hexdigest()[:8]
 
 # ─── 内存缓存（进程内快速读取）───
 _mem_cache: dict = {}
@@ -62,6 +68,9 @@ def _trade_date_key() -> str:
 
 
 def _disk_path(key: str, date_key: str) -> Path:
+    # scan / sectors 缓存带 watchlist hash，watchlist 变动时自动失效
+    if key in ("scan", "sectors"):
+        return _CACHE_DIR / f"{key}_{date_key}_{_wl_hash}.json"
     return _CACHE_DIR / f"{key}_{date_key}.json"
 
 
@@ -170,14 +179,15 @@ async def api_backtest(ticker: str):
 async def api_refresh():
     """清除内存缓存，下次请求重新计算并写盘"""
     _mem_cache.clear()
-    # 同时删除今天的磁盘缓存（强制重拉）
-    date_key = _trade_date_key()
-    for p in _CACHE_DIR.glob(f"*_{date_key}.json"):
+    # 删除所有 JSON 磁盘缓存（强制重拉最新数据）
+    deleted = 0
+    for p in _CACHE_DIR.glob("*.json"):
         try:
             p.unlink()
+            deleted += 1
         except Exception:
             pass
-    return JSONResponse({"status": "ok", "message": "缓存已清除"})
+    return JSONResponse({"status": "ok", "message": f"缓存已清除（删除 {deleted} 个文件）"})
 
 
 @app.get("/health")

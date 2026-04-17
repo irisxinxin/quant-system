@@ -1092,8 +1092,8 @@ function btStatsSkeleton(){
 // ── 策略信号说明库 ──────────────────────────────────────
 const ENTRY_INFO = {
   'dc20':          { name:'DC20突破',         desc:'收盘价突破近20日最高点，趋势开启信号', style:'trend' },
-  'dc20|ema':      { name:'DC20或EMA金叉',     desc:'突破20日高点 OR EMA20上穿EMA60均可触发，入场窗口更宽', style:'trend' },
-  'ema2060':       { name:'EMA金叉',           desc:'EMA20上穿EMA60，中期趋势确认', style:'trend' },
+  'dc20|ema':      { name:'DC20突破或EMA金叉当日', desc:'突破20日高点 OR 当天EMA20上穿EMA60（仅金叉当日触发，不持续）', style:'trend' },
+  'ema2060':       { name:'EMA20在EMA60上方',  desc:'EMA20站上EMA60持续有效（趋势持有型，不仅限金叉当日）', style:'trend' },
   'ma5200':        { name:'MA均线金叉',         desc:'MA50上穿MA200，大级别趋势启动（黄金交叉）', style:'trend' },
   'dc20+obv':      { name:'突破+OBV量能',      desc:'价格突破20日高点且OBV同步放量，资金背书的趋势突破', style:'momentum' },
   'dc20+cmf':      { name:'突破+CMF资金',      desc:'突破20日高点且CMF>0，主力资金流入确认', style:'momentum' },

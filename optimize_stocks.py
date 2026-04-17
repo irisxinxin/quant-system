@@ -291,12 +291,15 @@ def optimize_ticker(
         rsi_deep_os = rsi < 35    # RSI深度超卖
         rsi_ext_os  = rsi < 28    # RSI极端超卖（更高质量信号，更少触发）
 
+        # ── 真正的EMA金叉（今天穿上，昨天还在下面）──
+        ema_cross_up = ((e20 > e60) & (e20.shift(1) <= e60.shift(1))).fillna(False)
+
         # ── 入场条件 ──
         entries = {
             # 趋势突破信号
             "ema2060":    (e20 > e60).fillna(False).astype(float),
             "dc20":       (prices > dc20h).fillna(False).astype(float),
-            "dc20|ema":   ((prices > dc20h) | (e20 > e60)).fillna(False).astype(float),
+            "dc20|ema":   ((prices > dc20h) | ema_cross_up).fillna(False).astype(float),
             "ma5200":     (ma50 > ma200).fillna(False).astype(float),
             "bb_lo":      (prices < bb_lo).fillna(False).astype(float),
             # 主力资金信号
