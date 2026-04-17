@@ -455,7 +455,7 @@ function renderScan(data,ts){
           </tr></thead>
           <tbody>`;
     stocks.forEach((s,i)=>{
-      const id=`dr-${grp.replace(/[^\w]/g,'')}-${i}`;
+      const id=`dr-${s.ticker||i}`;
       const bc=verdictBadge(s.verdict_code);
       const cc=(s.price_chg||0)>=0?'#3fb950':'#f85149';
       const ctac=cCTA(s.cta_val);
