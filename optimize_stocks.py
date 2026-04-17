@@ -250,20 +250,28 @@ def optimize_ticker(
             spy_cta.reindex(prices.index).ffill().fillna(0)
         ) / 2
 
+        # ── 更多指标（用于新信号）──
+        hi20_max   = hi.rolling(20).max()          # 近20日最高价（trailing stop 基准）
+        ema20_band = (prices >= e20 * 0.97) & (prices <= e20 * 1.04) & (e20 > e60)  # 回踩EMA20
+        ema_accel  = (e20 - e20.shift(5)) > 0      # EMA20 向上加速（斜率>0）
+
         # ── 入场条件 ──
         entries = {
-            # 原有趋势信号
+            # 趋势突破信号
             "ema2060":    (e20 > e60).fillna(False).astype(float),
             "dc20":       (prices > dc20h).fillna(False).astype(float),
             "dc20|ema":   ((prices > dc20h) | (e20 > e60)).fillna(False).astype(float),
             "ma5200":     (ma50 > ma200).fillna(False).astype(float),
             "bb_lo":      (prices < bb_lo).fillna(False).astype(float),
-            # 主力资金流向信号（新增）
-            "obv_up":     (obv > obv_ma20).fillna(False).astype(float),          # OBV站上均线=主力净买入
-            "cmf_pos":    (cmf > 0.05).fillna(False).astype(float),              # CMF>5%=明显资金流入
-            "mfi_os":     (mfi < 35).fillna(False).astype(float),                # MFI超卖=主力低吸
-            "vol_surge":  vol_surge_up.fillna(False).astype(float),              # 放量站上EMA20=主力拉升
-            # 组合：价格突破 + 主力资金双重确认
+            # 主力资金信号
+            "obv_up":     (obv > obv_ma20).fillna(False).astype(float),
+            "cmf_pos":    (cmf > 0.05).fillna(False).astype(float),
+            "mfi_os":     (mfi < 35).fillna(False).astype(float),
+            "vol_surge":  vol_surge_up.fillna(False).astype(float),
+            # 趋势内回调买入（EMA20 支撑 + 上升趋势）
+            "ema20_dip":  ema20_band.fillna(False).astype(float),                   # 回踩EMA20买入
+            "ema20_dip+obv": (ema20_band & (obv > obv_ma20)).fillna(False).astype(float),  # 回踩+主力支撑
+            # 组合确认
             "dc20+obv":   ((prices > dc20h) & (obv > obv_ma20)).fillna(False).astype(float),
             "dc20+cmf":   ((prices > dc20h) & (cmf > 0.0)).fillna(False).astype(float),
             "vol+ema":    (vol_surge_up & (e20 > e60)).fillna(False).astype(float),
@@ -279,12 +287,15 @@ def optimize_ticker(
 
         # ── 出场条件 ──
         exits = {
-            "ema_x":    (e20 < e60).fillna(False).astype(float),
-            "ma_x":     (ma50 < ma200).fillna(False).astype(float),
-            "rsi80":    (rsi > 80).astype(float),
-            # 资金出逃信号出场
-            "obv_down": (obv < obv_ma20).fillna(False).astype(float),  # OBV跌破均线=主力出逃
-            "cmf_neg":  (cmf < -0.05).fillna(False).astype(float),     # CMF<-5%=明显资金流出
+            "ema_x":     (e20 < e60).fillna(False).astype(float),
+            "ma_x":      (ma50 < ma200).fillna(False).astype(float),
+            "rsi80":     (rsi > 80).astype(float),
+            # 资金出逃信号
+            "obv_down":  (obv < obv_ma20).fillna(False).astype(float),
+            "cmf_neg":   (cmf < -0.05).fillna(False).astype(float),
+            # Trailing stop：从近20日高点回撤触发（适合趋势股持仓更久）
+            "trail_8":   (prices < hi20_max * 0.92).fillna(False).astype(float),   # 回撤8%止损
+            "trail_12":  (prices < hi20_max * 0.88).fillna(False).astype(float),   # 回撤12%止损
         }
 
         results = []
@@ -300,6 +311,8 @@ def optimize_ticker(
                             "rsi80":    (rsi > 80),
                             "obv_down": (obv < obv_ma20).fillna(False),
                             "cmf_neg":  (cmf < -0.05).fillna(False),
+                            "trail_8":  (prices < hi20_max * 0.92).fillna(False),
+                            "trail_12": (prices < hi20_max * 0.88).fillna(False),
                         }.get(xn, pd.Series(False, index=prices.index))
                         eff_exit = (bb_exit_base | add_exit).astype(float)
                     else:

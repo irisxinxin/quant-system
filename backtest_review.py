@@ -96,6 +96,8 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
 
     vol_ratio    = vol / vol.rolling(20).mean().replace(0, np.nan)
     vol_surge_up = (vol_ratio > 1.5) & (prices > e20)
+    hi20_max     = hi.rolling(20).max()
+    ema20_band   = (prices >= e20 * 0.97) & (prices <= e20 * 1.04) & (e20 > e60)
 
     combo_cta = (
         smh_cta.reindex(prices.index).ffill().fillna(0) +
@@ -103,18 +105,20 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
     ) / 2
 
     entries = {
-        "ema2060":  (e20 > e60).fillna(False).astype(float),
-        "dc20":     (prices > dc20h).fillna(False).astype(float),
-        "dc20|ema": ((prices > dc20h) | (e20 > e60)).fillna(False).astype(float),
-        "ma5200":   (ma50 > ma200).fillna(False).astype(float),
-        "bb_lo":    (prices < bb_lo).fillna(False).astype(float),
-        "obv_up":   (obv > obv_ma20).fillna(False).astype(float),
-        "cmf_pos":  (cmf > 0.05).fillna(False).astype(float),
-        "mfi_os":   (mfi < 35).fillna(False).astype(float),
-        "vol_surge": vol_surge_up.fillna(False).astype(float),
-        "dc20+obv": ((prices > dc20h) & (obv > obv_ma20)).fillna(False).astype(float),
-        "dc20+cmf": ((prices > dc20h) & (cmf > 0.0)).fillna(False).astype(float),
-        "vol+ema":  (vol_surge_up & (e20 > e60)).fillna(False).astype(float),
+        "ema2060":       (e20 > e60).fillna(False).astype(float),
+        "dc20":          (prices > dc20h).fillna(False).astype(float),
+        "dc20|ema":      ((prices > dc20h) | (e20 > e60)).fillna(False).astype(float),
+        "ma5200":        (ma50 > ma200).fillna(False).astype(float),
+        "bb_lo":         (prices < bb_lo).fillna(False).astype(float),
+        "obv_up":        (obv > obv_ma20).fillna(False).astype(float),
+        "cmf_pos":       (cmf > 0.05).fillna(False).astype(float),
+        "mfi_os":        (mfi < 35).fillna(False).astype(float),
+        "vol_surge":     vol_surge_up.fillna(False).astype(float),
+        "ema20_dip":     ema20_band.fillna(False).astype(float),
+        "ema20_dip+obv": (ema20_band & (obv > obv_ma20)).fillna(False).astype(float),
+        "dc20+obv":      ((prices > dc20h) & (obv > obv_ma20)).fillna(False).astype(float),
+        "dc20+cmf":      ((prices > dc20h) & (cmf > 0.0)).fillna(False).astype(float),
+        "vol+ema":       (vol_surge_up & (e20 > e60)).fillna(False).astype(float),
     }
     cta_gates = {
         "none":  pd.Series(1.0, index=prices.index),
@@ -128,6 +132,8 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         "rsi80":    (rsi > 80).astype(float),
         "obv_down": (obv < obv_ma20).fillna(False).astype(float),
         "cmf_neg":  (cmf < -0.05).fillna(False).astype(float),
+        "trail_8":  (prices < hi20_max * 0.92).fillna(False).astype(float),
+        "trail_12": (prices < hi20_max * 0.88).fillna(False).astype(float),
     }
 
     e_sig = entries.get(entry_name, entries["dc20"])
@@ -136,9 +142,16 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
 
     if entry_name == "bb_lo":
         bb_exit_base = (prices > bb_hi).fillna(False)
-        add_x = exits.get(exit_name, pd.Series(False, index=prices.index))
-        if hasattr(add_x, "fillna"):
-            add_x = add_x.fillna(False)
+        all_exits = {
+            "ema_x":    (e20 < e60).fillna(False),
+            "ma_x":     (ma50 < ma200).fillna(False),
+            "rsi80":    (rsi > 80),
+            "obv_down": (obv < obv_ma20).fillna(False),
+            "cmf_neg":  (cmf < -0.05).fillna(False),
+            "trail_8":  (prices < hi20_max * 0.92).fillna(False),
+            "trail_12": (prices < hi20_max * 0.88).fillna(False),
+        }
+        add_x = all_exits.get(exit_name, pd.Series(False, index=prices.index))
         x_sig = (bb_exit_base | add_x).astype(float)
 
     pos_arr = _make_pos(
@@ -153,11 +166,118 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
 # 主函数：优化 + 信号提取
 # ──────────────────────────────────────────────
 
+def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta):
+    """重建指定策略，返回 (candles, markers, trades_list, metrics dict)"""
+    prices, ohlcv, signal = _build_signals(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta)
+    res       = backtest(prices, signal)
+    trades_df = res["trades"]
+
+    if not trades_df.empty:
+        n_win    = int((trades_df["pnl_pct"] > 0).sum())
+        win_rate = round(n_win / len(trades_df) * 100, 1)
+        avg_hold = round(float(trades_df["days_held"].mean()), 1)
+    else:
+        win_rate = 0.0
+        avg_hold = 0.0
+
+    def _s(v):
+        if v is None: return None
+        try:
+            f = float(v)
+            return None if (math.isnan(f) or math.isinf(f)) else round(f, 4)
+        except Exception:
+            return None
+
+    # K 线（近 6 个月）
+    cutoff     = prices.index[-1] - pd.Timedelta(days=185)
+    recent_idx = prices.index[prices.index >= cutoff]
+    candles = []
+    for dt in recent_idx:
+        try:
+            row = ohlcv.loc[dt]
+            o = _s(row["Open"]); h = _s(row["High"]); l = _s(row["Low"])
+            v = int(row["Volume"]) if not pd.isna(row["Volume"]) else 0
+        except Exception:
+            o = h = l = None; v = 0
+        c = _s(prices.get(dt))
+        if c is None: continue
+        candles.append({"time": dt.strftime("%Y-%m-%d"),
+                         "open": o or c, "high": h or c, "low": l or c,
+                         "close": c, "volume": v})
+
+    # 买卖点 markers
+    markers = []
+    for _, tr in trades_df.iterrows():
+        ep  = _s(tr["entry_px"]); xp  = _s(tr["exit_px"]); pnl = _s(tr["pnl_pct"])
+        markers.append({"time": tr["entry_date"].strftime("%Y-%m-%d"), "type": "buy",
+                         "price": ep, "text": f"B ${ep:.2f}" if ep else "B"})
+        markers.append({"time": tr["exit_date"].strftime("%Y-%m-%d"), "type": "sell",
+                         "price": xp, "pnl": pnl,
+                         "text": f"S ${xp:.2f} ({pnl:+.1f}%)" if (xp and pnl is not None) else "S"})
+
+    # 交易记录（近 3 年，最新在前）
+    cutoff_trades = prices.index[-1] - pd.Timedelta(days=1095)
+    trades_list   = []
+    for _, tr in trades_df.iterrows():
+        if tr["exit_date"] < cutoff_trades: continue
+        trades_list.append({"entry_date": tr["entry_date"].strftime("%Y-%m-%d"),
+                             "exit_date":  tr["exit_date"].strftime("%Y-%m-%d"),
+                             "entry_px":   _s(tr["entry_px"]), "exit_px": _s(tr["exit_px"]),
+                             "pnl_pct":    _s(tr["pnl_pct"]), "days_held": int(tr["days_held"])})
+    trades_list = list(reversed(trades_list))
+
+    # 买持基准线（close-only，标准化到 1.0）
+    base0 = float(prices[recent_idx[0]]) if len(recent_idx) else 1.0
+    bah = [{"time": dt.strftime("%Y-%m-%d"), "value": round(float(prices[dt]) / base0, 4)}
+           for dt in recent_idx if prices.get(dt) is not None]
+
+    m    = res["metrics"]
+    mets = res.get("returns", pd.Series(dtype=float))
+    # 分段绩效
+    def _pstat(ret):
+        if ret.empty or len(ret) < 2: return {"ret": 0, "calmar": 0, "dd": 0}
+        cum  = (1 + ret).cumprod()
+        tot  = (cum.iloc[-1] - 1) * 100
+        dd   = ((cum - cum.cummax()) / cum.cummax()).min() * 100
+        ny   = len(ret) / 252
+        cagr = ((cum.iloc[-1] ** (1/ny)) - 1) * 100 if ny > 0.05 else tot
+        cal  = abs(cagr / dd) if dd < 0 else 0
+        return {"ret": round(tot,1), "calmar": round(cal,2), "dd": round(dd,1)}
+
+    def _metric(key, default=0):
+        v = m.get(key, default)
+        if isinstance(v, str):
+            v = v.replace("%","").replace("×","").strip()
+            try: v = float(v)
+            except: return default
+        return _s(v)
+
+    p1m = _pstat(mets.iloc[-21:]  if len(mets)>=21  else mets)
+    p3m = _pstat(mets.iloc[-63:]  if len(mets)>=63  else mets)
+    p1y = _pstat(mets.iloc[-252:] if len(mets)>=252 else mets)
+
+    return {
+        "candles":  candles,
+        "bah":      bah,
+        "markers":  markers,
+        "trades":   trades_list,
+        "metrics": {
+            "calmar":    _metric("Calmar比率"),
+            "sharpe":    _metric("Sharpe比率"),
+            "n_trades":  len(trades_df),
+            "win_rate":  win_rate,
+            "avg_hold":  avg_hold,
+            "in_market": _s(float(signal.mean()) * 100),
+            "ret_1m":    p1m["ret"], "ret_3m":    p3m["ret"],
+            "calmar_1y": p1y["calmar"], "dd_1y":  p1y["dd"],
+        },
+    }
+
+
 def get_optimal_and_signals(ticker: str) -> dict:
     """
-    1. 跑批量优化找到最优策略
-    2. 重建该策略的信号序列
-    3. 提取买卖点 + K 线 + 交易记录
+    1. 跑批量优化找到 Top 3 策略
+    2. 对每个策略重建信号 + 提取买卖点
     返回 dict 可直接序列化为 JSON
     """
     try:
@@ -166,147 +286,43 @@ def get_optimal_and_signals(ticker: str) -> dict:
         smh_cta = _cta_series(smh_px)
         spy_cta = _cta_series(spy_px)
 
-        # ── 找最优策略 ──
+        # ── 找 Top 3 最优策略 ──
         from optimize_stocks import optimize_ticker
         opt = optimize_ticker(ticker, smh_cta, spy_cta)
         if opt.get("error"):
             return {"ticker": ticker, "error": opt["error"]}
 
-        entry_name = opt["entry"]
-        cta_name   = opt["cta"]
-        exit_name  = opt["exit"]
+        # Top 3 策略
+        top3 = opt.get("top3", [])[:3]
+        if not top3:
+            return {"ticker": ticker, "error": "无有效策略"}
 
-        # ── 重建信号 ──
-        prices, ohlcv, signal = _build_signals(
-            ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta
-        )
-
-        # ── 完整回测（含交易记录）──
-        res      = backtest(prices, signal)
-        trades_df = res["trades"]
-
-        # 胜率 / 平均持仓
-        if not trades_df.empty:
-            n_win    = int((trades_df["pnl_pct"] > 0).sum())
-            win_rate = round(n_win / len(trades_df) * 100, 1)
-            avg_hold = round(float(trades_df["days_held"].mean()), 1)
-        else:
-            win_rate = 0.0
-            avg_hold = 0.0
-
-        def _s(v):
-            if v is None:
-                return None
+        strategies_out = []
+        for rank, strat in enumerate(top3):
+            en, cn, xn = strat["entry"], strat["cta"], strat["exit"]
             try:
-                f = float(v)
-                return None if (math.isnan(f) or math.isinf(f)) else round(f, 4)
-            except Exception:
-                return None
-
-        # ── K 线（近 6 个月）──
-        cutoff     = prices.index[-1] - pd.Timedelta(days=185)
-        recent_idx = prices.index[prices.index >= cutoff]
-
-        candles = []
-        for dt in recent_idx:
-            try:
-                row = ohlcv.loc[dt]
-                o = _s(row["Open"])
-                h = _s(row["High"])
-                l = _s(row["Low"])
-                v = int(row["Volume"]) if not pd.isna(row["Volume"]) else 0
-            except Exception:
-                o = h = l = _s(prices.get(dt))
-                v = 0
-            c = _s(prices.get(dt))
-            if c is None:
+                sig_data = _signals_for_combo(ticker, en, cn, xn, smh_cta, spy_cta)
+            except Exception as e:
+                logger.warning(f"  #{rank+1} {en}+{cn}+{xn} failed: {e}")
                 continue
-            candles.append({
-                "time":   dt.strftime("%Y-%m-%d"),
-                "open":   o or c,
-                "high":   h or c,
-                "low":    l or c,
-                "close":  c,
-                "volume": v,
+            strategies_out.append({
+                "rank":     rank + 1,
+                "entry":    en,
+                "cta":      cn,
+                "exit":     xn,
+                "label":    f"{en} | {cn} | {xn}",
+                "score":    round(float(strat.get("score", 0)), 2),
+                **sig_data,
             })
 
-        # ── 买卖点 markers（全历史，图表只展示可视范围内的）──
-        markers = []
-        for _, tr in trades_df.iterrows():
-            ep  = _s(tr["entry_px"])
-            xp  = _s(tr["exit_px"])
-            pnl = _s(tr["pnl_pct"])
-            markers.append({
-                "time":  tr["entry_date"].strftime("%Y-%m-%d"),
-                "type":  "buy",
-                "price": ep,
-                "text":  f"B ${ep:.2f}" if ep else "B",
-            })
-            markers.append({
-                "time":  tr["exit_date"].strftime("%Y-%m-%d"),
-                "type":  "sell",
-                "price": xp,
-                "pnl":   pnl,
-                "text":  f"S ${xp:.2f} ({pnl:+.1f}%)" if (xp and pnl is not None) else "S",
-            })
-
-        # ── 交易记录（最近在前，只取近3年）──
-        cutoff_trades = prices.index[-1] - pd.Timedelta(days=1095)
-        trades_list   = []
-        for _, tr in trades_df.iterrows():
-            if tr["exit_date"] < cutoff_trades:
-                continue
-            trades_list.append({
-                "entry_date": tr["entry_date"].strftime("%Y-%m-%d"),
-                "exit_date":  tr["exit_date"].strftime("%Y-%m-%d"),
-                "entry_px":   _s(tr["entry_px"]),
-                "exit_px":    _s(tr["exit_px"]),
-                "pnl_pct":    _s(tr["pnl_pct"]),
-                "days_held":  int(tr["days_held"]),
-            })
-        trades_list = list(reversed(trades_list))
-
-        # ── 绩效摘要 ──
-        p3m = opt["periods"]["3M"]
-        p1m = opt["periods"]["1M"]
-        p1y = opt["periods"]["1Y"]
-
-        m = res["metrics"]
-        def _metric(key, default=0):
-            v = m.get(key, default)
-            if isinstance(v, str):
-                v = v.replace("%", "").replace("×", "").strip()
-                try:
-                    v = float(v)
-                except Exception:
-                    return default
-            return _s(v)
+        if not strategies_out:
+            return {"ticker": ticker, "error": "策略信号重建失败"}
 
         return {
-            "ticker":   ticker,
-            "strategy": {
-                "entry": entry_name,
-                "cta":   cta_name,
-                "exit":  exit_name,
-                "label": f"{entry_name} | {cta_name} | {exit_name}",
-            },
-            "candles":  candles,
-            "markers":  markers,
-            "trades":   trades_list,
-            "metrics": {
-                "calmar":    _metric("Calmar比率"),
-                "sharpe":    _metric("Sharpe比率"),
-                "n_trades":  len(trades_df),
-                "win_rate":  win_rate,
-                "avg_hold":  avg_hold,
-                "in_market": _s(float(signal.mean()) * 100),
-                "ret_1m":    _s(p1m["ret"]),
-                "ret_3m":    _s(p3m["ret"]),
-                "calmar_1y": _s(p1y["calmar"]),
-                "dd_1y":     _s(p1y["dd"]),
-                "score":     _s(opt["score"]),
-            },
-            "error": None,
+            "ticker":     ticker,
+            "strategies": strategies_out,
+            "active":     0,   # 默认展示第1个
+            "error":      None,
         }
 
     except Exception as e:
