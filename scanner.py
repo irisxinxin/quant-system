@@ -392,7 +392,9 @@ def scan_ticker(
         rs20 = float(prices.pct_change(20).iloc[-1]) - float(
             smh_px.pct_change(20).reindex(prices.index).ffill().iloc[-1]
         )
-        cta_val = _cta_combo(smh_px, ref_px, prices)
+        cta_macro = _cta_combo(smh_px, ref_px, prices)   # 宏观门控（SMH+SPY均值）
+        cta_stock = float(_cta_series_full(prices).dropna().iloc[-1]) if len(prices) > 80 else 0.0  # 个股自身动量
+        cta_val   = round(cta_stock, 2)                   # 表格展示用个股CTA
 
         try:
             smc_df  = smc_signal(ticker)
@@ -489,11 +491,11 @@ def scan_ticker(
         elif rs20 < -0.05:
             warnings.append(f"弱于SMH {rs20*100:.1f}%")
 
-        if cta_val < 0:
-            warnings.append(f"板块CTA={cta_val:.2f}，禁止入场")
+        if cta_macro < 0:
+            warnings.append(f"板块CTA={cta_macro:.2f}，禁止入场")
             ema_ok = False
-        elif cta_val < 0.3:
-            warnings.append(f"板块CTA偏弱={cta_val:.2f}")
+        elif cta_macro < 0.3:
+            warnings.append(f"板块CTA偏弱={cta_macro:.2f}")
 
         # ── 止损 ──
         stop_atr   = round(px - atrv * 2, 1)
@@ -520,7 +522,7 @@ def scan_ticker(
         n_strats  = len(strat_states)
 
         # ── 综合判断（策略信号优先级最高）──
-        if not ema_ok or cta_val < 0:
+        if not ema_ok or cta_macro < 0:
             verdict, verdict_code = "回避", "red"
             entry_zone = "不入场"
 
