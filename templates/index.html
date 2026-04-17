@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量化仪表盘</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0e1117;
+  --s1:       #161b22;
+  --s2:       #21262d;
+  --s3:       #2d333b;
+  --border:   rgba(255,255,255,0.08);
+  --border2:  rgba(255,255,255,0.15);
+  --text:     #f0f6fc;
+  --text2:    #8b949e;
+  --text3:    #484f58;
+  --accent:   #f59e0b;
+  --green:    #3fb950;
+  --green2:   #238636;
+  --red:      #f85149;
+  --blue:     #58a6ff;
+  --cyan:     #39c5cf;
+  --purple:   #bc8cff;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+/* ── Layout ── */
+.wrap{max-width:1400px;margin:0 auto;padding:0 16px}
+
+/* ── Cards ── */
+.card{
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.card-hover{transition:transform .2s ease,box-shadow .2s ease}
+.card-hover:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.35)}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:20px;border:1px solid;white-space:nowrap}
+.bg{color:#4ade80;background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.25)}
+.by{color:#fbbf24;background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.25)}
+.br{color:#f87171;background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.25)}
+.bk{color:#8b949e;background:rgba(139,148,158,.08);border-color:rgba(139,148,158,.15)}
+.bb{color:#58a6ff;background:rgba(88,166,255,.12);border-color:rgba(88,166,255,.25)}
+.bc{color:#39c5cf;background:rgba(57,197,207,.12);border-color:rgba(57,197,207,.25)}
+
+/* ── Tabs ── */
+.tab-bar{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border)}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{padding:12px 18px;font-size:13px;font-weight:500;color:var(--text2);border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap}
+.tab-btn:hover{color:#c9d1d9}
+.tab-btn.on{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── Sub-tabs ── */
+.stab{padding:5px 12px;font-size:12px;font-weight:500;color:var(--text2);border:1px solid var(--border);border-radius:20px;transition:all .15s}
+.stab:hover{border-color:var(--border2);color:#c9d1d9}
+.stab.on{background:rgba(245,158,11,.12);color:var(--accent);border-color:rgba(245,158,11,.3)}
+
+/* ── Tables ── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:right;padding:8px 12px;color:var(--text2);font-size:11px;font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.tbl th.tl,.tbl td.tl{text-align:left}
+.tbl td{padding:9px 12px;text-align:right;border-bottom:1px solid rgba(255,255,255,0.03);white-space:nowrap;vertical-align:middle}
+.tbl tbody tr:hover{background:rgba(255,255,255,0.025)}
+.tbl tbody tr:last-child td{border-bottom:none}
+.clickable{cursor:pointer}
+.detail-row{display:none;background:rgba(0,0,0,.25)}
+.detail-row.open{display:table-row}
+
+/* ── Skeleton shimmer ── */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.sk{background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);background-size:800px 100%;animation:shimmer 1.6s infinite;border-radius:6px;display:inline-block}
+
+/* ── Spinner ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .8s linear infinite;display:inline-block}
+
+/* ── CTA bar ── */
+.bar-track{height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;flex-shrink:0}
+.bar-fill{height:100%;border-radius:2px;transition:width .4s ease}
+
+/* ── Metric pill (macro strip) ── */
+.mpill{display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--s1);border:1px solid var(--border);border-radius:8px;font-size:12px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04)}
+
+/* ── Mono ── */
+.mono{font-family:'JetBrains Mono','SF Mono',monospace}
+
+/* ── Refresh button ── */
+.ref-btn{padding:7px 16px;background:rgba(245,158,11,.1);color:var(--accent);border:1px solid rgba(245,158,11,.25);border-radius:8px;font-size:12px;font-weight:500;transition:all .15s}
+.ref-btn:hover{background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.4)}
+.ref-btn:disabled{opacity:.4;cursor:not-allowed}
+.ref-btn:active{transform:scale(.97)}
+
+/* ── Responsive ── */
+@media(max-width:600px){.hxs{display:none}}
+@media(max-width:768px){.hsm{display:none}}
+@media(max-width:960px){.hmd{display:none}}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.18)}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header style="position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)">
+  <div class="wrap" style="height:52px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:16px;font-weight:700;color:var(--accent);letter-spacing:-.01em">⚡ 量化仪表盘</span>
+      <span id="lastUpd" style="font-size:11px;color:var(--text3)"></span>
+    </div>
+    <button class="ref-btn" id="refBtn" onclick="refreshAll()">⟳ 刷新数据</button>
+  </div>
+</header>
+
+<!-- ═══ MACRO STRIP ═══ -->
+<div id="macroWrap" style="background:#0b0f16;border-bottom:1px solid var(--border);position:sticky;top:52px;z-index:90">
+  <div class="wrap" style="padding:8px 16px;display:flex;gap:8px;overflow-x:auto;align-items:center">
+    <div class="mpill" style="color:var(--text3);font-size:12px">
+      <span class="spin">⟳</span> 加载宏观数据...
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN TABS ═══ -->
+<div class="tab-bar" style="background:var(--bg);position:sticky;top:89px;z-index:80">
+  <div class="wrap" style="display:flex">
+    <button class="tab-btn on" id="tab-scan"    onclick="sw('scan')">📈 信号扫描</button>
+    <button class="tab-btn"    id="tab-sectors" onclick="sw('sectors')">🗺 板块追踪</button>
+    <button class="tab-btn"    id="tab-cta"     onclick="sw('cta')">🌐 CTA宏观</button>
+  </div>
+</div>
+
+<!-- ═══ CONTENT ═══ -->
+<main class="wrap" style="padding:20px 16px 48px">
+
+  <!-- TAB 1: 信号扫描 -->
+  <div id="pane-scan">
+    <div id="scanBody">
+      <div style="text-align:center;padding:64px 0;color:var(--text2)">
+        <div style="font-size:40px;margin-bottom:16px;opacity:.4">📡</div>
+        <div style="font-size:14px;margin-bottom:24px">扫描全部自选股信号，约需 30 秒</div>
+        <button onclick="loadScan()" style="padding:10px 28px;background:rgba(245,158,11,.1);color:var(--accent);border:1px solid rgba(245,158,11,.3);border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s"
+          onmouseover="this.style.background='rgba(245,158,11,.18)'" onmouseout="this.style.background='rgba(245,158,11,.1)'">
+          开始扫描
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: 板块追踪 -->
+  <div id="pane-sectors" style="display:none">
+    <div id="sectBody">
+      <div style="text-align:center;padding:64px 0;color:var(--text2)">
+        <div class="spin" style="font-size:28px;display:block;margin-bottom:16px">⟳</div>
+        <div style="font-size:13px">加载板块数据中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: CTA宏观 -->
+  <div id="pane-cta" style="display:none">
+    <div id="ctaBody">
+      <div style="text-align:center;padding:64px 0;color:var(--text2);font-size:13px">切换到此标签后自动加载</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════
+// State
+// ══════════════════════════════════════════
+const TABS = ['scan','sectors','cta'];
+const loaded = {scan:false, sectors:false, cta:false};
+let curTab = 'scan';
+let sectView = 'momentum';
+
+// ══════════════════════════════════════════
+// Helpers
+// ══════════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+function fmt(v, d=1) {
+  if(v==null||isNaN(v)) return '—';
+  const s = v>=0?`+${v.toFixed(d)}%`:`${v.toFixed(d)}%`;
+  return s;
+}
+
+function fnum(v,d=3){
+  if(v==null||isNaN(v))return'—';
+  return v>=0?`+${v.toFixed(d)}`:v.toFixed(d);
+}
+
+function cPct(v,hi=2,lo=-2){
+  if(v==null)return'var(--text2)';
+  if(v>hi)return'#3fb950';
+  if(v>0)return'#7ee787';
+  if(v>lo)return'#f0a742';
+  return'#f85149';
+}
+
+function cCTA(v){
+  if(v==null)return'var(--text2)';
+  if(v> .5)return'#3fb950';
+  if(v> .15)return'#7ee787';
+  if(v>-.15)return'#8b949e';
+  if(v>-.5)return'#f0a742';
+  return'#f85149';
+}
+
+function cCMF(v){
+  if(v==null)return'var(--text2)';
+  if(v>.1)return'#3fb950';
+  if(v>.05)return'#7ee787';
+  if(v>-.05)return'#8b949e';
+  return'#f85149';
+}
+
+function cDelta(v){
+  if(v==null)return'var(--text2)';
+  return v>.02?'#7ee787':v<-.02?'#f0a742':'#8b949e';
+}
+
+function cVol(v){
+  if(v==null)return'#8b949e';
+  if(v>=2)return'#f59e0b';
+  if(v>=1.5)return'#fbbf24';
+  return'#484f58';
+}
+
+function sigBadge(sig){
+  if(!sig)return'bk';
+  if(sig.includes('🚀'))return'bg';
+  if(sig.includes('↗'))return'bc';
+  if(sig.includes('⚡'))return'by';
+  if(sig.includes('⚠'))return'br';
+  if(sig.includes('🔶'))return'by';
+  return'bk';
+}
+
+function verdictBadge(code){
+  return{green:'bg',yellow:'by',red:'br',gray:'bk'}[code]||'bk';
+}
+
+function loading(msg='加载中...'){
+  return`<div style="text-align:center;padding:56px 0;color:var(--text2)">
+    <div class="spin" style="font-size:26px;display:block;margin-bottom:14px">⟳</div>
+    <div style="font-size:13px">${msg}</div>
+  </div>`;
+}
+
+function errHtml(msg){
+  return`<div style="text-align:center;padding:48px 0;color:#f85149;font-size:13px">❌ ${msg}</div>`;
+}
+
+// ══════════════════════════════════════════
+// Tab switching
+// ══════════════════════════════════════════
+function sw(tab){
+  curTab=tab;
+  TABS.forEach(t=>{
+    $('pane-'+t).style.display=t===tab?'block':'none';
+    $('tab-'+t).className='tab-btn'+(t===tab?' on':'');
+  });
+  if(tab==='sectors'&&!loaded.sectors)loadSectors();
+  if(tab==='cta'&&!loaded.cta)loadCta();
+}
+
+// ══════════════════════════════════════════
+// Refresh
+// ══════════════════════════════════════════
+async function refreshAll(){
+  const btn=$('refBtn');
+  btn.innerHTML='<span class="spin">⟳</span> 刷新中';
+  btn.disabled=true;
+  try{
+    await fetch('/api/refresh',{method:'POST'});
+    Object.keys(loaded).forEach(k=>loaded[k]=false);
+    loadMacro();
+    if(curTab==='scan')loadScan();
+    if(curTab==='sectors')loadSectors();
+    if(curTab==='cta')loadCta();
+  }finally{
+    setTimeout(()=>{btn.innerHTML='⟳ 刷新数据';btn.disabled=false},2000);
+  }
+}
+
+// ══════════════════════════════════════════
+// MACRO STRIP
+// ══════════════════════════════════════════
+async function loadMacro(){
+  try{
+    const j=await(await fetch('/api/macro')).json();
+    const d=j.data;
+    const vc={low:'#3fb950',normal:'#8b949e',high:'#f59e0b',extreme:'#f85149'}[d.vix_status]||'#8b949e';
+    let h=`<div class="mpill"><span style="color:${vc};font-weight:600">${d.vix_label||'VIX —'}</span></div>`;
+    for(const[name,c]of Object.entries(d.ctas||{})){
+      const col=c.value>.15?'#3fb950':c.value<-.15?'#f85149':'#8b949e';
+      const arr=c.value>.15?'▲':c.value<-.15?'▼':'─';
+      h+=`<div class="mpill">
+        <span style="color:var(--text2);font-size:11px">${name}</span>
+        <span class="mono" style="color:${col};font-weight:600">${c.value>0?'+':''}${c.value}</span>
+        <span style="color:${col};font-size:10px">${arr}</span>
+      </div>`;
+    }
+    h+=`<span style="margin-left:auto;font-size:11px;color:var(--text3)">${j.cached_at}</span>`;
+    $('macroWrap').querySelector('div').innerHTML=h;
+  }catch{
+    $('macroWrap').querySelector('div').innerHTML='<span style="color:#f85149;font-size:12px">宏观数据加载失败</span>';
+  }
+}
+
+// ══════════════════════════════════════════
+// SIGNAL SCAN
+// ══════════════════════════════════════════
+async function loadScan(){
+  $('scanBody').innerHTML=loading('扫描信号中，约 30 秒...');
+  try{
+    const j=await(await fetch('/api/scan')).json();
+    loaded.scan=true;
+    renderScan(j.data,j.cached_at);
+    $('lastUpd').textContent='扫描于 '+j.cached_at;
+  }catch(e){
+    $('scanBody').innerHTML=errHtml('扫描失败: '+e.message);
+  }
+}
+
+function renderScan(data,ts){
+  let h=`<div style="font-size:11px;color:var(--text3);text-align:right;margin-bottom:16px">数据时间: ${ts}</div>`;
+  for(const[grp,stocks]of Object.entries(data)){
+    const ng=stocks.filter(s=>s.verdict_code==='green').length;
+    const ny=stocks.filter(s=>s.verdict_code==='yellow').length;
+    h+=`<div style="margin-bottom:28px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <h2 style="font-size:13px;font-weight:600;color:var(--blue)">${grp}</h2>
+        <span style="font-size:11px;color:var(--text3)">${stocks.length} 只</span>
+        ${ng?`<span class="badge bg">${ng} 入场</span>`:''}
+        ${ny?`<span class="badge by">${ny} 关注</span>`:''}
+      </div>
+      <div class="card" style="overflow:hidden">
+        <table class="tbl">
+          <thead><tr>
+            <th class="tl" style="width:88px">信号</th>
+            <th class="tl" style="width:68px">股票</th>
+            <th>现价</th><th>涨跌</th>
+            <th class="hxs">得分</th>
+            <th class="tl hsm">入场参考</th>
+            <th class="hmd">CTA</th>
+            <th class="hmd">RSI</th>
+            <th class="hmd">量能</th>
+          </tr></thead>
+          <tbody>`;
+    stocks.forEach((s,i)=>{
+      const id=`dr-${grp.replace(/[^\w]/g,'')}-${i}`;
+      const bc=verdictBadge(s.verdict_code);
+      const cc=(s.price_chg||0)>=0?'#3fb950':'#f85149';
+      const ctac=cCTA(s.cta_val);
+      const sc=s.score||0;
+      const dots=Array.from({length:7},(_,j)=>`<span style="display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:2px;background:${j<sc?'#58a6ff':'rgba(255,255,255,0.08)'}"></span>`).join('');
+      h+=`<tr class="clickable" onclick="toggleDetail('${id}')">
+        <td class="tl"><span class="badge ${bc}">${s.verdict||'—'}</span></td>
+        <td class="tl mono" style="font-weight:700;color:var(--text);font-size:13px">${s.ticker}</td>
+        <td class="mono" style="color:var(--text)">${s.price>0?'$'+s.price:'—'}</td>
+        <td class="mono" style="color:${cc};font-weight:600">${s.price>0?((s.price_chg>=0?'+':'')+s.price_chg+'%'):'—'}</td>
+        <td class="hxs">${dots}</td>
+        <td class="tl hsm" style="color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:11px">${s.entry_zone||'—'}</td>
+        <td class="mono hmd" style="color:${ctac}">${s.cta_val!=null?(s.cta_val>=0?'+':'')+s.cta_val:'—'}</td>
+        <td class="mono hmd" style="color:var(--text2)">${s.rsi||'—'}</td>
+        <td class="mono hmd" style="color:${cVol(s.vol_r)}">${s.vol_r?s.vol_r+'x':'—'}</td>
+      </tr>
+      <tr class="detail-row" id="${id}">
+        <td colspan="9" style="padding:0">
+          <div style="padding:14px 16px">${detailHtml(s)}</div>
+        </td>
+      </tr>`;
+    });
+    h+=`</tbody></table></div></div>`;
+  }
+  $('scanBody').innerHTML=h;
+}
+
+function detailHtml(s){
+  if(s.error)return`<span style="color:#f85149;font-size:12px">${s.error}</span>`;
+  const sigs=(s.signals||[]).map(x=>`<span style="font-size:11px;color:var(--text2);margin-right:10px">• ${x}</span>`).join('');
+  const wars=(s.warnings||[]).map(x=>`<span style="font-size:11px;color:#f59e0b;margin-right:10px">⚠ ${x}</span>`).join('');
+  return`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-bottom:12px">
+    <div>
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">止损参考</div>
+      <div class="mono" style="font-size:12px;color:#f85149">2×ATR: $${s.stop_atr}</div>
+      <div class="mono" style="font-size:12px;color:#fca5a5">EMA60: $${s.stop_ema60}</div>
+      <div class="mono" style="font-size:12px;color:#fca5a5">−10%: $${s.stop_pct10}</div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">均线</div>
+      <div class="mono" style="font-size:12px">EMA20: <span style="color:var(--blue)">$${s.ema20}</span></div>
+      <div class="mono" style="font-size:12px">EMA60: <span style="color:var(--blue)">$${s.ema60}</span></div>
+      <div class="mono" style="font-size:12px;color:var(--text2)">ATR: ${s.atr} (${s.atr_pct}%)</div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">位置</div>
+      <div class="mono" style="font-size:12px">DC20: $${s.dc20_high}</div>
+      <div class="mono" style="font-size:12px">布林: ${s.bb_pct}%</div>
+      <div class="mono" style="font-size:12px;color:var(--text2)">SMC: ${s.smc_val}</div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">动量</div>
+      <div class="mono" style="font-size:12px">${(s.streak||0)>0?'连涨'+(s.streak)+'天':'连跌'+Math.abs(s.streak||0)+'天'}</div>
+      <div class="mono" style="font-size:12px">RS vs SMH: <span style="color:${(s.rs20||0)>0?'#3fb950':'#f85149'}">${(s.rs20||0)>0?'+':''}${s.rs20}%</span></div>
+      <div class="mono" style="font-size:12px;color:var(--text2)">量能: ${s.vol_r}x</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:4px">${sigs}${wars}</div>`;
+}
+
+function toggleDetail(id){
+  const el=$(id);
+  if(el)el.classList.toggle('open');
+}
+
+// ══════════════════════════════════════════
+// SECTOR WATCH
+// ══════════════════════════════════════════
+async function loadSectors(){
+  $('sectBody').innerHTML=loading('加载板块数据...');
+  try{
+    const j=await(await fetch('/api/sectors')).json();
+    loaded.sectors=true;
+    renderSectors(j.data,j.cached_at);
+  }catch(e){
+    $('sectBody').innerHTML=errHtml('加载失败: '+e.message);
+  }
+}
+
+function swSect(view){
+  sectView=view;
+  ['momentum','cta','flows'].forEach(v=>{
+    const b=$('sv-'+v);
+    if(b)b.className='stab'+(v===view?' on':'');
+  });
+  document.querySelectorAll('[data-sv]').forEach(el=>{
+    const vs=el.dataset.sv.split(' ');
+    el.style.display=vs.includes(view)||vs.includes('all')?'':'none';
+  });
+}
+
+function renderSectors(data,ts){
+  if(!data||data.error){$('sectBody').innerHTML=errHtml(data?.error||'无数据');return}
+  const rows=data.rows||[];
+  const sigs=data.signals||{};
+  if(!rows.length){$('sectBody').innerHTML=errHtml('无板块数据');return}
+
+  // Top summary cards
+  const top=[...rows].sort((a,b)=>(b['综合评分']||0)-(a['综合评分']||0)).slice(0,5);
+  let h=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;margin-bottom:24px">`;
+  top.forEach(r=>{
+    const sb=sigBadge(r['信号类型']);
+    const wc=cPct(r['1周%']);
+    const ctac=cCTA(r['CTA']);
+    const cmfc=cCMF(r['CMF']);
+    h+=`<div class="card card-hover" style="padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-weight:600;font-size:14px">${r['板块']}</div>
+          <div style="font-size:11px;color:var(--text2)">${r['ETF']}</div>
+        </div>
+        <span class="badge ${sb}" style="font-size:10px">${r['信号类型']||'—'}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">1周</div>
+          <div class="mono" style="font-size:13px;font-weight:600;color:${wc}">${fmt(r['1周%'])}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">CTA</div>
+          <div class="mono" style="font-size:13px;font-weight:600;color:${ctac}">${fnum(r['CTA'])}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">CMF</div>
+          <div class="mono" style="font-size:13px;font-weight:600;color:${cmfc}">${fnum(r['CMF'])}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+  h+=`</div>`;
+
+  // Sub-tab controls + timestamp
+  h+=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+    <span style="font-size:12px;color:var(--text2)">视图：</span>
+    <button class="stab on" id="sv-momentum" onclick="swSect('momentum')">📊 动量多期</button>
+    <button class="stab"    id="sv-cta"      onclick="swSect('cta')">📡 CTA趋势</button>
+    <button class="stab"    id="sv-flows"    onclick="swSect('flows')">💰 资金流向</button>
+    <span style="margin-left:auto;font-size:11px;color:var(--text3)">${ts}</span>
+  </div>`;
+
+  // Main table
+  h+=`<div class="card" style="overflow-x:auto;margin-bottom:24px"><table class="tbl"><thead><tr>
+    <th class="tl" data-sv="all">板块</th>
+    <th class="tl" data-sv="all" style="min-width:46px">ETF</th>
+    <th data-sv="all">信号</th>
+    <th data-sv="momentum">3天</th>
+    <th data-sv="momentum">1周</th>
+    <th data-sv="momentum">2周</th>
+    <th data-sv="momentum">1月</th>
+    <th data-sv="momentum">3月</th>
+    <th data-sv="momentum">6月</th>
+    <th data-sv="momentum">1年</th>
+    <th data-sv="momentum">量能</th>
+    <th data-sv="cta">CTA值</th>
+    <th data-sv="cta">5D△</th>
+    <th data-sv="cta">10D△</th>
+    <th data-sv="cta">20D△</th>
+    <th data-sv="cta">60D△</th>
+    <th data-sv="cta" class="tl">方向</th>
+    <th data-sv="cta" class="tl">动能</th>
+    <th data-sv="cta" class="tl">体制</th>
+    <th data-sv="flows">CMF</th>
+    <th data-sv="flows">CMF5D</th>
+    <th data-sv="flows">CMF20D</th>
+    <th data-sv="flows">MFI</th>
+    <th data-sv="flows">MFI5D</th>
+    <th data-sv="flows" class="tl">OBV5D</th>
+    <th data-sv="flows" class="tl">OBV20D</th>
+  </tr></thead><tbody>`;
+
+  rows.forEach(r=>{
+    const sb=sigBadge(r['信号类型']);
+    const cta=r['CTA'];
+    const barW=Math.min(Math.abs(cta||0)*100,100);
+    const barCol=(cta||0)>=0?'#3fb950':'#f85149';
+    const mfi=r['MFI'];
+    const mfic=mfi>75?'#f85149':mfi<30?'#3fb950':'#8b949e';
+    const obv5c=r['OBV5D']==='买入▲'?'#3fb950':'#f85149';
+    const obv20c=r['OBV20D']==='积累↑'?'#7ee787':'#f0a742';
+
+    h+=`<tr>
+      <td class="tl" style="font-weight:500" data-sv="all">${r['板块']}</td>
+      <td class="tl mono" style="color:var(--cyan);font-size:11px" data-sv="all">${r['ETF']}</td>
+      <td data-sv="all"><span class="badge ${sb}" style="font-size:10px">${r['信号类型']||'—'}</span></td>
+      <td class="mono" data-sv="momentum" style="color:${cPct(r['3天%'])}">${fmt(r['3天%'])}</td>
+      <td class="mono" data-sv="momentum" style="color:${cPct(r['1周%'])};font-weight:600">${fmt(r['1周%'])}</td>
+      <td class="mono" data-sv="momentum" style="color:${cPct(r['2周%'])}">${fmt(r['2周%'])}</td>
+      <td class="mono" data-sv="momentum" style="color:${cPct(r['1月%'])}">${fmt(r['1月%'])}</td>
+      <td class="mono" data-sv="momentum" style="color:${cPct(r['3月%'])}">${fmt(r['3月%'])}</td>
+      <td class="mono" data-sv="momentum" style="color:${cPct(r['6月%'])}">${fmt(r['6月%'])}</td>
+      <td class="mono" data-sv="momentum" style="color:${cPct(r['1年%'])}">${fmt(r['1年%'])}</td>
+      <td class="mono" data-sv="momentum" style="color:${cVol(r['量能'])}">${r['量能']!=null?r['量能']+'x':'—'}</td>
+      <td data-sv="cta">
+        <div style="display:flex;align-items:center;gap:7px;justify-content:flex-end">
+          <div class="bar-track" style="width:52px"><div class="bar-fill" style="width:${barW}%;background:${barCol}"></div></div>
+          <span class="mono" style="color:${cCTA(cta)};font-weight:600">${fnum(cta)}</span>
+        </div>
+      </td>
+      <td class="mono" data-sv="cta" style="color:${cDelta(r['CTA5D'])}">${fnum(r['CTA5D'])}</td>
+      <td class="mono" data-sv="cta" style="color:${cDelta(r['CTA10D'])}">${fnum(r['CTA10D'])}</td>
+      <td class="mono" data-sv="cta" style="color:${cDelta(r['CTA20D'])};font-weight:600">${fnum(r['CTA20D'])}</td>
+      <td class="mono" data-sv="cta" style="color:${cDelta(r['CTA60D'])}">${fnum(r['CTA60D'])}</td>
+      <td class="tl" data-sv="cta" style="color:${cCTA(cta)};font-size:11px">${r['CTA方向']||'—'}</td>
+      <td class="tl" data-sv="cta" style="font-size:11px;color:${(r['CTA5D']||0)>.05?'#7ee787':(r['CTA5D']||0)<-.05?'#f0a742':'#8b949e'}">${r['CTA加速']||'—'}</td>
+      <td class="tl" data-sv="cta" style="font-size:11px;color:var(--text2)">${r['CTA体制']||'—'}</td>
+      <td class="mono" data-sv="flows" style="color:${cCMF(r['CMF'])};font-weight:600">${fnum(r['CMF'])}</td>
+      <td class="mono" data-sv="flows" style="color:${cDelta(r['CMF5D'])}">${fnum(r['CMF5D'])}</td>
+      <td class="mono" data-sv="flows" style="color:${cDelta(r['CMF20D'])};font-weight:600">${fnum(r['CMF20D'])}</td>
+      <td class="mono" data-sv="flows" style="color:${mfic}">${mfi!=null?mfi.toFixed(1):'—'}</td>
+      <td class="mono" data-sv="flows" style="color:${cDelta((r['MFI5D']||0)/100)}">${r['MFI5D']!=null?(r['MFI5D']>0?'+':'')+r['MFI5D'].toFixed(1):'—'}</td>
+      <td class="tl" data-sv="flows" style="font-size:11px;color:${obv5c}">${r['OBV5D']||'—'}</td>
+      <td class="tl" data-sv="flows" style="font-size:11px;color:${obv20c}">${r['OBV20D']||'—'}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table></div>`;
+
+  // Signal classification
+  const sigMeta={
+    '趋势延续🚀':{cls:'bg',desc:'CTA 强多 + 资金持续流入，可以追涨'},
+    'CTA翻转↗':{cls:'bc',desc:'CTA 从低位快速回升，可能是新趋势起点'},
+    '技术反弹⚡':{cls:'by',desc:'价格弹升但 CTA / 资金未确认，均值回归短线'},
+    '趋势减弱⚠':{cls:'br',desc:'CTA 高位快速下降，注意减仓'},
+    '资金分歧🔶':{cls:'by',desc:'CTA 多但资金流出，需等资金确认'},
+    '观望等待─':{cls:'bk',desc:'方向不明，持观望'},
+  };
+  h+=`<div>
+    <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">🎯 板块信号分类</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px">`;
+  for(const[type,meta]of Object.entries(sigMeta)){
+    const items=sigs[type]||[];
+    if(!items.length)continue;
+    const etfs=items.map(i=>`<span class="badge ${meta.cls}" style="font-size:10px">${i['板块']}(${i['ETF']})</span>`).join(' ');
+    h+=`<div class="card" style="padding:14px 16px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:5px">${type}</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">${meta.desc}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${etfs}</div>
+    </div>`;
+  }
+  h+=`</div></div>`;
+
+  $('sectBody').innerHTML=h;
+  swSect('momentum');
+}
+
+// ══════════════════════════════════════════
+// CTA DASHBOARD
+// ══════════════════════════════════════════
+async function loadCta(){
+  $('ctaBody').innerHTML=loading('加载 CTA 数据...');
+  try{
+    const j=await(await fetch('/api/cta')).json();
+    loaded.cta=true;
+    renderCta(j.data,j.cached_at);
+  }catch(e){
+    $('ctaBody').innerHTML=errHtml('加载失败: '+e.message);
+  }
+}
+
+function renderCta(data,ts){
+  if(!data||data.error){$('ctaBody').innerHTML=errHtml(data?.error||'无数据');return}
+  const rows=data.rows||[];
+  let h=`<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 style="font-size:13px;font-weight:600;color:var(--blue)">🌐 多资产 CTA 趋势信号</h3>
+        <span style="font-size:11px;color:var(--text3)">${ts}</span>
+      </div>
+      <div class="card" style="overflow-x:auto">
+        <table class="tbl"><thead><tr>
+          <th class="tl">资产</th><th class="tl">ETF</th>
+          <th>信号值</th><th>5日变化</th>
+          <th class="tl" style="min-width:120px">趋势强度</th>
+          <th class="tl">方向</th><th class="tl">仓位变化</th>
+        </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const sig=r['信号']||0;
+    const delta=r['5日变化']||0;
+    const sc=cCTA(sig);
+    const dc=delta>0?'#7ee787':delta<0?'#f0a742':'#8b949e';
+    const bw=Math.min(Math.abs(sig)*100,100);
+    const bc=sig>0?'#3fb950':'#f85149';
+    h+=`<tr>
+      <td class="tl" style="font-weight:500">${r['资产']||r['ETF']}</td>
+      <td class="tl mono" style="color:var(--cyan);font-size:11px">${r['ETF']}</td>
+      <td class="mono" style="color:${sc};font-weight:700">${sig>0?'+':''}${sig}</td>
+      <td class="mono" style="color:${dc}">${delta>0?'+':''}${delta}</td>
+      <td class="tl">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="bar-track" style="width:80px"><div class="bar-fill" style="width:${bw}%;background:${bc}"></div></div>
+          <span style="font-size:11px;color:var(--text2)">${(Math.abs(sig)*100).toFixed(0)}%</span>
+        </div>
+      </td>
+      <td class="tl" style="color:${sc};font-size:12px">${r['方向']||'—'}</td>
+      <td class="tl" style="color:var(--text2);font-size:11px">${r['仓位变化']||'—'}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table></div></div>
+    <div class="card" style="padding:18px">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">📖 信号说明</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+        <div style="padding:10px 12px;background:rgba(63,185,80,.07);border-radius:8px;border-left:3px solid #3fb950">
+          <div style="color:#3fb950;font-weight:600;margin-bottom:2px">+1.0  强势多头</div>
+          <div style="color:var(--text2)">CTA 基金大量做多，趋势极强</div>
+        </div>
+        <div style="padding:10px 12px;background:rgba(126,231,135,.05);border-radius:8px;border-left:3px solid #7ee787">
+          <div style="color:#7ee787;font-weight:600;margin-bottom:2px">+0.3 ~ +1.0  多头</div>
+          <div style="color:var(--text2)">趋势向上，允许入场做多</div>
+        </div>
+        <div style="padding:10px 12px;background:rgba(139,148,158,.05);border-radius:8px;border-left:3px solid #484f58">
+          <div style="color:#8b949e;font-weight:600;margin-bottom:2px">−0.15 ~ +0.15  中性</div>
+          <div style="color:var(--text2)">无明确方向，半仓或观望</div>
+        </div>
+        <div style="padding:10px 12px;background:rgba(248,81,73,.05);border-radius:8px;border-left:3px solid #f85149">
+          <div style="color:#f85149;font-weight:600;margin-bottom:2px">< −0.3  空头</div>
+          <div style="color:var(--text2)">趋势向下，禁止做多</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">入场过滤规则</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7">
+          <div>• SMH + SPY CTA 均值 &gt; 0 → 允许做多</div>
+          <div>• 任意 CTA &lt; 0 → 禁止入场</div>
+          <div>• CTA 0 ~ 0.3 → 减半仓操作</div>
+          <div style="margin-top:8px;color:var(--text3)">计算：多周期动量(80/160/260日) ÷ 年化波动率，限幅[−1,+1]均值</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  $('ctaBody').innerHTML=h;
+}
+
+// ══════════════════════════════════════════
+// Init
+// ══════════════════════════════════════════
+loadMacro();
+</script>
+</body>
+</html>
