@@ -4,9 +4,10 @@ Railway 部署：uvicorn app:app --host 0.0.0.0 --port $PORT
 """
 import os
 import time
+import json
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -21,26 +22,91 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="量化交易仪表盘")
 
-_HTML_PATH = Path(__file__).parent / "templates" / "index.html"
+_HTML_PATH  = Path(__file__).parent / "templates" / "index.html"
+_CACHE_DIR  = Path(__file__).parent / "cache"
+_CACHE_DIR.mkdir(exist_ok=True)
 
-# ─── 内存缓存 ───
-_cache: dict = {}
-CACHE_TTL_SCAN  = 4 * 3600   # 扫描结果 4 小时
-CACHE_TTL_MACRO = 30 * 60    # 宏观数据 30 分钟
-CACHE_TTL_FLOWS = 2 * 3600   # 资金流向 2 小时
-CACHE_TTL_CTA   = 2 * 3600   # CTA 2 小时
-CACHE_TTL_SECTORS = 2 * 3600   # 板块全景 2 小时
-CACHE_TTL_BT      = 8 * 3600   # 回测信号 8 小时
+# ─── 内存缓存（进程内快速读取）───
+_mem_cache: dict = {}
+
+# ─── TTL 配置（秒）───
+# 收盘价数据按交易日缓存；盘中实时数据用较短 TTL
+CACHE_TTL = {
+    "scan":    24 * 3600,   # 扫描结果：1天（收盘价固定后不变）
+    "sectors": 24 * 3600,
+    "cta":      2 * 3600,
+    "flows":    2 * 3600,
+    "macro":       30 * 60,  # 宏观/VIX：30分钟（盘中随时变）
+    "bt":       48 * 3600,   # 回测：2天
+}
+
+
+def _trade_date_key() -> str:
+    """
+    返回当前最新的交易日期字符串（用于磁盘缓存文件名）。
+    美股收盘 16:00 ET = 20:00 UTC。收盘后数据稳定，以当天为 key。
+    收盘前（UTC 20:00 前）用前一个自然日，避免盘中缓存脏数据。
+    周末直接用周五。
+    """
+    now_utc = datetime.now(timezone.utc)
+    # 如果还没到 20:00 UTC（美股收盘后约 0 分钟）则用昨天
+    if now_utc.hour < 20:
+        now_utc = now_utc - timedelta(days=1)
+    d = now_utc.date()
+    # 周六→周五，周日→周五
+    if d.weekday() == 5:
+        d -= timedelta(days=1)
+    elif d.weekday() == 6:
+        d -= timedelta(days=2)
+    return d.strftime("%Y-%m-%d")
+
+
+def _disk_path(key: str, date_key: str) -> Path:
+    return _CACHE_DIR / f"{key}_{date_key}.json"
+
+
+def _load_disk(key: str, date_key: str):
+    p = _disk_path(key, date_key)
+    if p.exists():
+        try:
+            payload = json.loads(p.read_text(encoding="utf-8"))
+            return payload["data"], payload["ts"]
+        except Exception:
+            pass
+    return None, None
+
+
+def _save_disk(key: str, date_key: str, data, ts: float):
+    p = _disk_path(key, date_key)
+    try:
+        p.write_text(json.dumps({"data": data, "ts": ts}, ensure_ascii=False, default=str),
+                     encoding="utf-8")
+    except Exception as e:
+        logger.warning(f"disk cache write failed {key}: {e}")
 
 
 def _get_cached(key: str, fn, ttl: int):
     now = time.time()
-    entry = _cache.get(key)
-    if entry and (now - entry["ts"]) < ttl:
-        return entry["data"], entry["ts"]
+    date_key = _trade_date_key()
+
+    # 1. 内存命中
+    mem = _mem_cache.get(key)
+    if mem and mem.get("date_key") == date_key and (now - mem["ts"]) < ttl:
+        return mem["data"], mem["ts"]
+
+    # 2. 磁盘命中（跨重启有效）
+    data, ts = _load_disk(key, date_key)
+    if data is not None and ts is not None and (now - ts) < ttl:
+        _mem_cache[key] = {"data": data, "ts": ts, "date_key": date_key}
+        return data, ts
+
+    # 3. 重新计算
+    logger.info(f"[cache] computing {key} (date={date_key})")
     data = fn()
-    _cache[key] = {"data": data, "ts": now}
-    return data, _cache[key]["ts"]
+    ts   = now
+    _mem_cache[key] = {"data": data, "ts": ts, "date_key": date_key}
+    _save_disk(key, date_key, data, ts)
+    return data, ts
 
 
 def _fmt_age(ts: float | None) -> str:
@@ -51,7 +117,9 @@ def _fmt_age(ts: float | None) -> str:
         return f"{int(age)}秒前"
     if age < 3600:
         return f"{int(age // 60)}分钟前"
-    return f"{int(age // 3600)}小时前"
+    if age < 86400:
+        return f"{int(age // 3600)}小时前"
+    return datetime.fromtimestamp(ts).strftime("%m-%d %H:%M")
 
 
 # ─── 路由 ───
@@ -63,47 +131,58 @@ async def dashboard():
 
 @app.get("/api/macro")
 async def api_macro():
-    data, ts = _get_cached("macro", get_macro, CACHE_TTL_MACRO)
+    data, ts = _get_cached("macro", get_macro, CACHE_TTL["macro"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.get("/api/scan")
 async def api_scan():
-    data, ts = _get_cached("scan", scan_all, CACHE_TTL_SCAN)
+    data, ts = _get_cached("scan", scan_all, CACHE_TTL["scan"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.get("/api/flows")
 async def api_flows():
-    data, ts = _get_cached("flows", get_flows, CACHE_TTL_FLOWS)
+    data, ts = _get_cached("flows", get_flows, CACHE_TTL["flows"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.get("/api/cta")
 async def api_cta():
-    data, ts = _get_cached("cta", get_cta_dashboard, CACHE_TTL_CTA)
+    data, ts = _get_cached("cta", get_cta_dashboard, CACHE_TTL["cta"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.get("/api/sectors")
 async def api_sectors():
-    data, ts = _get_cached("sectors", get_sector_full, CACHE_TTL_SECTORS)
+    data, ts = _get_cached("sectors", get_sector_full, CACHE_TTL["sectors"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.get("/api/backtest/{ticker}")
 async def api_backtest(ticker: str):
     key = f"bt_{ticker.upper()}"
-    data, ts = _get_cached(key, lambda: get_bt_signals(ticker), CACHE_TTL_BT)
+    data, ts = _get_cached(key, lambda: get_bt_signals(ticker), CACHE_TTL["bt"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.post("/api/refresh")
 async def api_refresh():
-    _cache.clear()
+    """清除内存缓存，下次请求重新计算并写盘"""
+    _mem_cache.clear()
+    # 同时删除今天的磁盘缓存（强制重拉）
+    date_key = _trade_date_key()
+    for p in _CACHE_DIR.glob(f"*_{date_key}.json"):
+        try:
+            p.unlink()
+        except Exception:
+            pass
     return JSONResponse({"status": "ok", "message": "缓存已清除"})
 
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "time": datetime.now().isoformat()}
+    date_key = _trade_date_key()
+    cached = [p.stem for p in _CACHE_DIR.glob(f"*_{date_key}.json")]
+    return {"status": "ok", "trade_date": date_key, "cached_keys": cached,
+            "time": datetime.now().isoformat()}
