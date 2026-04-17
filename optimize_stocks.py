@@ -260,6 +260,10 @@ def optimize_ticker(
         ema20_band = (prices >= e20 * 0.97) & (prices <= e20 * 1.04) & (e20 > e60)  # 回踩EMA20
         ema_accel  = (e20 - e20.shift(5)) > 0      # EMA20 向上加速（斜率>0）
 
+        # ── 超卖深度入场（用于低点买入）──
+        rsi_deep_os = rsi < 35    # RSI深度超卖
+        rsi_ext_os  = rsi < 28    # RSI极端超卖（更高质量信号，更少触发）
+
         # ── 入场条件 ──
         entries = {
             # 趋势突破信号
@@ -274,12 +278,15 @@ def optimize_ticker(
             "mfi_os":     (mfi < 35).fillna(False).astype(float),
             "vol_surge":  vol_surge_up.fillna(False).astype(float),
             # 趋势内回调买入（EMA20 支撑 + 上升趋势）
-            "ema20_dip":  ema20_band.fillna(False).astype(float),                   # 回踩EMA20买入
-            "ema20_dip+obv": (ema20_band & (obv > obv_ma20)).fillna(False).astype(float),  # 回踩+主力支撑
+            "ema20_dip":  ema20_band.fillna(False).astype(float),
+            "ema20_dip+obv": (ema20_band & (obv > obv_ma20)).fillna(False).astype(float),
             # 组合确认
             "dc20+obv":   ((prices > dc20h) & (obv > obv_ma20)).fillna(False).astype(float),
             "dc20+cmf":   ((prices > dc20h) & (cmf > 0.0)).fillna(False).astype(float),
             "vol+ema":    (vol_surge_up & (e20 > e60)).fillna(False).astype(float),
+            # 低点买入：超卖反弹（适合大跌后低吸，不依赖趋势方向）
+            "rsi35":      rsi_deep_os.fillna(False).astype(float),        # RSI<35 深度超卖
+            "rsi28":      rsi_ext_os.fillna(False).astype(float),         # RSI<28 极端超卖
         }
 
         # ── CTA 过滤 ──
@@ -304,25 +311,33 @@ def optimize_ticker(
             "trail_12":  (prices < hi20_max * 0.88).fillna(False).astype(float),   # 回撤12%止损
             # 动量衰减：RSI曾高位(>70)后真正回落到60以下才出场，避免追高后被小波动震出
             "rsi_fade":  ((rsi < 60) & rsi_was_hot).fillna(False).astype(float),
+            # 超卖反弹止盈：RSI恢复到70以上，动量修复完成，适合低点买入策略的出场
+            "rsi70":     (rsi > 70).astype(float),
         }
 
         results = []
         for en, e_sig in entries.items():
             for cn, c_sig in cta_gates.items():
                 for xn, x_sig in exits.items():
-                    # bb_lo 是均值回归：出场 = 触及上轨 OR 附加条件
-                    if en == "bb_lo":
-                        bb_exit_base = (prices > bb_hi).fillna(False)
+                    # 超卖入场（bb_lo / rsi35 / rsi28）：均值回归策略
+                    # 基础出场 = 价格恢复到 EMA20 以上（均值修复完成）OR 附加条件
+                    if en in ("bb_lo", "rsi35", "rsi28"):
+                        # bb_lo 用布林上轨作基础；rsi35/rsi28 用 EMA20 回升作基础
+                        if en == "bb_lo":
+                            base_exit = (prices > bb_hi).fillna(False)
+                        else:
+                            base_exit = (prices > e20).fillna(False)   # 价格恢复到 EMA20 以上
                         add_exit = {
                             "ema_x":    (e20 < e60).fillna(False),
                             "ma_x":     (ma50 < ma200).fillna(False),
                             "rsi80":    (rsi > 80),
+                            "rsi70":    (rsi > 70),
                             "obv_down": (obv < obv_ma20).fillna(False),
                             "cmf_neg":  (cmf < -0.05).fillna(False),
                             "trail_8":  (prices < hi20_max * 0.92).fillna(False),
                             "trail_12": (prices < hi20_max * 0.88).fillna(False),
                         }.get(xn, pd.Series(False, index=prices.index))
-                        eff_exit = (bb_exit_base | add_exit).astype(float)
+                        eff_exit = (base_exit | add_exit).astype(float)
                     else:
                         eff_exit = x_sig
 

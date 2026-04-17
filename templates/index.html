@@ -896,6 +896,8 @@ const ENTRY_INFO = {
   'vol_surge':     { name:'放量站上EMA20',      desc:'成交量>1.5倍均量且价格站上EMA20，资金推动型突破', style:'momentum' },
   'vol+ema':       { name:'放量+EMA金叉',      desc:'量能放大同时EMA金叉，趋势+资金双重共振', style:'momentum' },
   'bb_lo':         { name:'布林下轨反弹',       desc:'价格触及布林带下轨（2σ），均值回归买入机会', style:'reversal' },
+  'rsi35':         { name:'RSI超卖低买',        desc:'RSI<35深度超卖，动量触底信号，适合大跌后低吸反弹（如关税暴跌等恐慌性下杀）', style:'reversal' },
+  'rsi28':         { name:'RSI极端超卖低买',    desc:'RSI<28极端超卖，高质量底部信号，触发频率低但准确率更高，捕捉真正的恐慌底', style:'reversal' },
 };
 const CTA_INFO = {
   'none':  { name:'无宏观过滤',   desc:'不依赖宏观CTA，适合独立走强的个股（忽略板块风向）' },
@@ -905,6 +907,7 @@ const CTA_INFO = {
 };
 const EXIT_INFO = {
   'rsi80':    { name:'RSI超买止盈',   desc:'RSI>80时离场，适合高波动、容易快速过热的个股',                  style:'short',   hold:'短 5-15天' },
+  'rsi70':    { name:'RSI修复止盈',   desc:'RSI>70时离场，比rsi80更保守，超卖低买后动量修复即止盈，锁定反弹收益', style:'short',  hold:'短 5-20天' },
   'rsi_fade': { name:'动量衰减离场',  desc:'RSI曾高位(>70)后回落60以下才离场，趋势真正结束再出，不被小震荡震出', style:'medium',  hold:'中 20-50天' },
   'ema_x':    { name:'EMA死叉离场',   desc:'EMA20下穿EMA60时离场，适合捕捉完整中期趋势，持仓较长',            style:'trend',   hold:'长 40-120天' },
   'ma_x':     { name:'MA死叉离场',    desc:'MA50下穿MA200时离场，最慢出场，捕捉月线级别大趋势',              style:'trend',   hold:'超长 60天+' },

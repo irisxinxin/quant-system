@@ -98,6 +98,8 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
     vol_surge_up = (vol_ratio > 1.5) & (prices > e20)
     hi20_max     = hi.rolling(20).max()
     ema20_band   = (prices >= e20 * 0.97) & (prices <= e20 * 1.04) & (e20 > e60)
+    rsi_deep_os  = rsi < 35
+    rsi_ext_os   = rsi < 28
 
     combo_cta = (
         smh_cta.reindex(prices.index).ffill().fillna(0) +
@@ -119,6 +121,8 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         "dc20+obv":      ((prices > dc20h) & (obv > obv_ma20)).fillna(False).astype(float),
         "dc20+cmf":      ((prices > dc20h) & (cmf > 0.0)).fillna(False).astype(float),
         "vol+ema":       (vol_surge_up & (e20 > e60)).fillna(False).astype(float),
+        "rsi35":         rsi_deep_os.fillna(False).astype(float),
+        "rsi28":         rsi_ext_os.fillna(False).astype(float),
     }
     cta_gates = {
         "none":  pd.Series(1.0, index=prices.index),
@@ -136,25 +140,30 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         "trail_8":  (prices < hi20_max * 0.92).fillna(False).astype(float),
         "trail_12": (prices < hi20_max * 0.88).fillna(False).astype(float),
         "rsi_fade": ((rsi < 60) & rsi_was_hot).fillna(False).astype(float),
+        "rsi70":    (rsi > 70).astype(float),
     }
 
     e_sig = entries.get(entry_name, entries["dc20"])
     c_sig = cta_gates.get(cta_name, cta_gates["none"])
     x_sig = exits.get(exit_name, exits["ema_x"])
 
-    if entry_name == "bb_lo":
-        bb_exit_base = (prices > bb_hi).fillna(False)
+    if entry_name in ("bb_lo", "rsi35", "rsi28"):
+        if entry_name == "bb_lo":
+            base_exit = (prices > bb_hi).fillna(False)
+        else:
+            base_exit = (prices > e20).fillna(False)
         all_exits = {
             "ema_x":    (e20 < e60).fillna(False),
             "ma_x":     (ma50 < ma200).fillna(False),
             "rsi80":    (rsi > 80),
+            "rsi70":    (rsi > 70),
             "obv_down": (obv < obv_ma20).fillna(False),
             "cmf_neg":  (cmf < -0.05).fillna(False),
             "trail_8":  (prices < hi20_max * 0.92).fillna(False),
             "trail_12": (prices < hi20_max * 0.88).fillna(False),
         }
         add_x = all_exits.get(exit_name, pd.Series(False, index=prices.index))
-        x_sig = (bb_exit_base | add_x).astype(float)
+        x_sig = (base_exit | add_x).astype(float)
 
     pos_arr = _make_pos(
         e_sig.fillna(0).values,
