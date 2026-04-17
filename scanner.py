@@ -131,6 +131,7 @@ def _quick_strategy_states(
         # ── 入场条件 ──
         entries = {
             "ema2060":       (e20 > e60).fillna(False).astype(float),
+            "ema_cross":     ema_cross_up.astype(float),
             "dc20":          (prices > dc20h).fillna(False).astype(float),
             "dc20|ema":      ((prices > dc20h) | ema_cross_up).fillna(False).astype(float),
             "ma5200":        (ma50 > ma200).fillna(False).astype(float),
@@ -243,6 +244,7 @@ def _quick_strategy_states(
                 "mfi_os":        f"MFI<35（当前{mfi_now}）",
                 "bb_lo":         f"价格跌破布林下轨",
                 "dc20":          f"突破20日高点${dc20_now}",
+                "ema_cross":     f"EMA20上穿EMA60（金叉当日，当前{e20_now}/{e60_now}）",
                 "dc20|ema":      f"突破${dc20_now} 或EMA20上穿EMA60（金叉当日）",
                 "ema2060":       f"EMA20>{e20_now}>EMA60={e60_now}",
                 "ma5200":        f"MA50>{ma50_now}>MA200={ma200_now}",

@@ -298,6 +298,7 @@ def optimize_ticker(
         entries = {
             # 趋势突破信号
             "ema2060":    (e20 > e60).fillna(False).astype(float),
+            "ema_cross":  ema_cross_up.astype(float),                                    # A: 金叉当日事件
             "dc20":       (prices > dc20h).fillna(False).astype(float),
             "dc20|ema":   ((prices > dc20h) | ema_cross_up).fillna(False).astype(float),
             "ma5200":     (ma50 > ma200).fillna(False).astype(float),
