@@ -33,7 +33,7 @@ SECTOR_GROUPS = {
     "🚚 物流/运输":        ["ODFL", "XPO", "JBHT", "PCAR", "CMI"],
     "🏭 工业/航天制造":    ["CAT", "DE", "HWM", "ITT", "EME", "AME"],
     "💰 金融":             ["MS", "CBOE", "TRV"],
-    "🪙 加密/Fintech":    ["COIN", "MSTR", "IREN", "HOOD"],
+    "🪙 加密/Fintech":    ["COIN", "MSTR", "IREN", "HOOD", "OKLO"],
     "🔋 电池/稀土":        ["MP", "ALB", "EOSE"],
     "🚀 太空/机器人":      ["LUNR", "PL", "TER", "RKLB"],
     "🏥 消费/健康":        ["HIMS", "LLY"],
@@ -360,14 +360,14 @@ def optimize_ticker(
         for en, e_sig in entries.items():
             for cn, c_sig in cta_gates.items():
                 for xn, x_sig in exits.items():
-                    # 超卖入场（bb_lo / rsi35 / rsi28）：均值回归策略
-                    # 基础出场 = 价格恢复到 EMA20 以上（均值修复完成）OR 附加条件
-                    if en in ("bb_lo", "rsi35", "rsi28"):
+                    # 超卖/反弹入场：均值回归策略，加 base_exit（价格修复到均线以上）
+                    # mfi_os 与 rsi35/rsi28/bb_lo 同类，统一处理
+                    if en in ("bb_lo", "rsi35", "rsi28", "mfi_os"):
                         # bb_lo 用布林上轨作基础；rsi35/rsi28 用 EMA20 回升作基础
                         if en == "bb_lo":
                             base_exit = (prices > bb_hi).fillna(False)
                         else:
-                            base_exit = (prices > e20).fillna(False)   # 价格恢复到 EMA20 以上
+                            base_exit = (prices > e20).fillna(False)  # 价格恢复到 EMA20 以上
                         add_exit = {
                             "ema_x":    (e20 < e60).fillna(False),
                             "ma_x":     (ma50 < ma200).fillna(False),

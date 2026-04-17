@@ -185,7 +185,7 @@ def _quick_strategy_states(
             if e_sig is None or c_sig is None or x_sig is None:
                 continue
 
-            if en in ("bb_lo", "rsi35", "rsi28"):
+            if en in ("bb_lo", "rsi35", "rsi28", "mfi_os"):
                 base_exit = (prices > bb_hi).fillna(False) if en == "bb_lo" else (prices > e20).fillna(False)
                 add_exit  = {
                     "ema_x": (e20 < e60).fillna(False), "ma_x": (ma50 < ma200).fillna(False),
@@ -310,7 +310,7 @@ WATCHLIST = {
     "🚚 物流/运输":       ["ODFL", "XPO", "JBHT", "PCAR", "CMI"],
     "🏭 工业/航天制造":   ["CAT", "DE", "HWM", "ITT", "EME", "AME"],
     "💰 金融":            ["MS", "CBOE", "TRV"],
-    "🪙 加密/Fintech":   ["COIN", "MSTR", "IREN", "HOOD"],
+    "🪙 加密/Fintech":   ["COIN", "MSTR", "IREN", "HOOD", "OKLO"],
     "🔋 电池/稀土":       ["MP", "ALB", "EOSE"],
     "🚀 太空/机器人":     ["LUNR", "PL", "TER", "RKLB"],
     "🏥 消费/健康":       ["HIMS", "LLY"],
@@ -604,12 +604,16 @@ def scan_ticker(
         n_strats  = len(strat_states)
 
         # 需要上升趋势（EMA20>EMA60）才有意义的入场条件
-        TREND_ENTRIES = {"ema2060", "ema_cross", "dc20|ema", "vol+ema",
-                         "ema20_dip", "ema20_dip+obv"}
+        # dc20|ema 不在此列：dc20 部分（价格突破高点）不依赖趋势方向
+        TREND_ENTRIES = {"ema2060", "ema_cross", "vol+ema", "ema20_dip", "ema20_dip+obv"}
+        # 反弹/超卖类入场：专门在弱势/超卖时买，不受 ema_ok 和轻度负向 CTA 限制
+        REVERSAL_ENTRIES = {"mfi_os", "rsi35", "rsi28", "bb_lo", "cmf_pos", "obv_up"}
         entry_today_strats = [s for s in strat_states if s["state"] == "entry_today"]
-        # 所有触发入场的策略都需要趋势支持时，才受 ema_ok 门控
         all_need_trend = bool(entry_today_strats) and all(
             s["entry"] in TREND_ENTRIES for s in entry_today_strats
+        )
+        all_reversal = bool(entry_today_strats) and all(
+            s["entry"] in REVERSAL_ENTRIES for s in entry_today_strats
         )
 
         # ── 综合判断 ──
@@ -640,9 +644,11 @@ def scan_ticker(
 
         # 3. 有策略今日入场
         elif n_entry > 0:
-            # 只有"全部触发策略都需要趋势"时才受 ema_ok 限制
-            # 资金流/超卖反弹类策略（cmf_pos/obv_up/mfi_os/vol_surge等）不受趋势门控
-            trend_blocked = (all_need_trend and not ema_ok) or cta_macro < 0
+            # 趋势门控：仅当全部触发策略都需要趋势时才受 ema_ok 限制
+            # 反弹/超卖类策略不受 ema_ok 限制，且允许轻度负向 CTA（>-0.5）
+            ema_blocked = all_need_trend and not ema_ok
+            cta_blocked = cta_macro < (-0.5 if all_reversal else 0)
+            trend_blocked = ema_blocked or cta_blocked
             if trend_blocked:
                 verdict, verdict_code = "回避", "red"
                 entry_zone = f"策略触发但宏观/趋势不支持，不入场"
