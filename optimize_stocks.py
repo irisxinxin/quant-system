@@ -26,7 +26,7 @@ from config import CTA_LOOKBACKS, CTA_VOL_WIN
 SECTOR_GROUPS = {
     "🔵 大盘/核心":        ["QQQ", "SPY", "GOOG", "META", "TSLA", "AMZN"],
     "⚡ 半导体/AI算力":    ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC"],
-    "💾 存储":             ["MU", "WDC", "STX", "SNDK"],
+    "💾 存储":             ["MU", "WDC", "STX"],   # SNDK上市时间短，数据不足暂不纳入
     "🏗 AI电力/数据中心":  ["BE", "VRT", "ETN", "GEV", "PWR"],
     "🌐 光子/高速连接":    ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM"],
     "🚚 物流/运输":        ["ODFL", "XPO", "JBHT", "PCAR", "CMI"],
@@ -58,10 +58,14 @@ def get_sector(ticker: str) -> str:
 # 数据不足时跳过
 MIN_BARS = 400
 
-# 近期权重：优化目标 = 60%×近1年Calmar + 25%×近3月收益率 + 15%×全期Calmar
-W_1Y  = 0.60
+# 近期权重：优化目标 = 50%×近1年Calmar + 25%×近3月收益率 + 15%×2026年初至今Calmar + 10%×全期Calmar
+# 2026年AI量化资金主导市场，YTD权重单独拎出加强
+W_1Y  = 0.50
 W_3M  = 0.25
-W_ALL = 0.15
+W_YTD = 0.15   # 2026 YTD：重点奖励在今年上涨行情中表现好的策略
+W_ALL = 0.10
+
+YTD_START = "2026-01-01"   # 2026年初至今
 
 # 热门板块 ETF（资金追踪用）
 HOT_SECTOR_ETFS = {
@@ -113,10 +117,12 @@ def _period_stats(ret: pd.Series) -> dict:
 
 
 def _multi_period(strat_ret: pd.Series) -> dict:
-    """返回 1M/3M/1Y/全期 四段绩效"""
+    """返回 1M/3M/YTD/1Y/全期 五段绩效"""
+    ytd = strat_ret[strat_ret.index >= YTD_START] if not strat_ret.empty else strat_ret.iloc[0:0]
     return {
         "1M":  _period_stats(strat_ret.iloc[-21:]  if len(strat_ret) >= 21  else strat_ret),
         "3M":  _period_stats(strat_ret.iloc[-63:]  if len(strat_ret) >= 63  else strat_ret),
+        "YTD": _period_stats(ytd if len(ytd) >= 10 else strat_ret.iloc[-63:]),  # 2026至今，不足时降级3M
         "1Y":  _period_stats(strat_ret.iloc[-252:] if len(strat_ret) >= 252 else strat_ret),
         "All": _period_stats(strat_ret),
     }
@@ -124,15 +130,27 @@ def _multi_period(strat_ret: pd.Series) -> dict:
 
 CALMAR_CAP = 4.0   # 防止极少笔交易的过拟合策略"垄断"排名
 
-def _recency_score(periods: dict, avg_hold: float = 1.0) -> float:
-    """近期加权综合评分（越高越好）"""
+def _recency_score(periods: dict, avg_hold: float = 1.0, win_rate: float = 0.5) -> float:
+    """近期加权综合评分（越高越好）
+
+    权重组成：
+      50% × 近1年Calmar（风险收益）
+      25% × 近3月总收益（最近行情实战）
+      15% × 2026 YTD Calmar（AI量化资金主导年份）
+      10% × 全期Calmar（长期稳健性）
+      +持仓时长加成（趋势型策略奖励）
+      +胜率加成（高胜率策略额外奖励，低胜率惩罚）
+    """
     c1y  = min(periods["1Y"]["calmar"], CALMAR_CAP)
     r3m  = periods["3M"]["ret"] / 30.0   # 标准化到 ~0~1 范围
+    cytd = min(periods["YTD"]["calmar"], CALMAR_CAP)  # 2026 YTD
     call = min(periods["All"]["calmar"], CALMAR_CAP)
     # 持仓时长加成：平均持仓越长（趋势型）得分越高，上限0.5分
-    # 旨在让 rsi_fade/ema_x 等趋势退出策略与高频 trail_8 更好区分
     hold_bonus = min(avg_hold / 20.0, 0.5)
-    return W_1Y * c1y + W_3M * r3m + W_ALL * call + 0.15 * hold_bonus
+    # 胜率加成：以50%为中轴，每高1%加0.02，每低1%减0.02，上限±0.3
+    # 55%胜率 → +0.1；45%胜率 → -0.1；60%以上 → +0.2封顶
+    wr_bonus = max(-0.3, min(0.3, (win_rate - 0.50) * 2.0))
+    return W_1Y * c1y + W_3M * r3m + W_YTD * cytd + W_ALL * call + 0.15 * hold_bonus + 0.10 * wr_bonus
 
 
 # ──────────────────────────────────────────────
@@ -389,9 +407,13 @@ def optimize_ticker(
                         # 平均持仓天数（趋势型策略加成）
                         avg_hold = float(res["trades"]["days_held"].mean()) if n_tr > 0 else 1.0
 
-                        # 分段绩效（近1年/3月/1月）
+                        # 交易胜率（盈利笔数/总笔数）
+                        trades_df = res["trades"]
+                        win_rate = float((trades_df["pnl_pct"] > 0).mean()) if n_tr > 0 else 0.5
+
+                        # 分段绩效（近1年/3月/1月/YTD）
                         periods = _multi_period(strat_ret)
-                        score   = _recency_score(periods, avg_hold)
+                        score   = _recency_score(periods, avg_hold, win_rate)
 
                         results.append({
                             "entry":     en,
@@ -403,6 +425,7 @@ def optimize_ticker(
                             "dd":        dd,
                             "sharpe":    sharpe,
                             "n_trades":  n_tr,
+                            "win_rate":  win_rate,
                             "in_market": in_mkt,
                             "periods":   periods,
                         })
@@ -458,6 +481,7 @@ def optimize_ticker(
             "dd":         round(best["dd"] * 100, 1),
             "sharpe":     round(best["sharpe"], 2),
             "n_trades":   best["n_trades"],
+            "win_rate":   round(best["win_rate"] * 100, 1),
             "in_market":  round(best["in_market"] * 100, 1),
             "periods":    best["periods"],
             "top3":       top3,
@@ -533,7 +557,8 @@ def main(tickers: list | None = None) -> list:
                     f"{res['entry']}+{res['cta']}+{res['exit']:10s}  "
                     f"评分={res['score']:4.2f}  "
                     f"1M={p['1M']['ret']:+5.1f}%  3M={p['3M']['ret']:+6.1f}%  "
-                    f"1Y_Calmar={p['1Y']['calmar']:4.2f}"
+                    f"1Y_Calmar={p['1Y']['calmar']:4.2f}  "
+                    f"胜率={res.get('win_rate', 0):4.1f}%"
                 )
 
     valid  = [raw_results[t] for t in tickers if not raw_results[t].get("error")]
@@ -547,7 +572,7 @@ def main(tickers: list | None = None) -> list:
 
     # ── 按板块分组汇总 ──
     print(f"\n{'='*108}")
-    print(f"  最优策略汇总（按板块分组）  排序权重: 1Y_Calmar×60% + 3M收益×25% + 全期×15%")
+    print(f"  最优策略汇总（按板块分组）  排序权重: 1Y_Calmar×50% + 3M收益×25% + YTD(2026)×15% + 全期×10% + 胜率加成")
     print(f"{'='*108}")
 
     # 确定板块顺序（按 SECTOR_GROUPS 顺序，再加"其他"）
@@ -562,8 +587,8 @@ def main(tickers: list | None = None) -> list:
             continue
         print(f"\n  {sec}")
         print(f"  {'─'*104}")
-        print(f"  {'股票':7s}  {'类':2s}  {'最优策略':30s}  {'评分':>5s}  {'全期CAGR':>8s}  │  {'1月':>6s}  {'3月':>7s}  {'1年':>7s}  {'1年DD':>7s}")
-        print(f"  {'─'*104}")
+        print(f"  {'股票':7s}  {'类':2s}  {'最优策略':30s}  {'评分':>5s}  {'全期CAGR':>8s}  │  {'1月':>6s}  {'3月':>7s}  {'YTD':>7s}  {'1年':>7s}  {'1年DD':>7s}  {'胜率':>6s}")
+        print(f"  {'─'*120}")
         for r in rows_sec:
             p     = r["periods"]
             strat = f"{r['entry']}+{r['cta']}+{r['exit']}"
@@ -572,7 +597,9 @@ def main(tickers: list | None = None) -> list:
                 f"  {r['ticker']:7s}  {r['type']:2s}  {strat:30s}  {r['score']:>5.2f}  "
                 f"{r['cagr']:>+7.1f}%  │  "
                 f"{p['1M']['ret']:>+5.1f}%  {p['3M']['ret']:>+6.1f}%  "
-                f"{p['1Y']['cagr']:>+6.1f}%  {p['1Y']['dd']:>+6.1f}%  {mark}"
+                f"{p['YTD']['ret']:>+6.1f}%  "
+                f"{p['1Y']['cagr']:>+6.1f}%  {p['1Y']['dd']:>+6.1f}%  "
+                f"{r.get('win_rate', 0):>5.1f}%  {mark}"
             )
 
     if errors:
@@ -604,11 +631,12 @@ def main(tickers: list | None = None) -> list:
               f"1Y_Calmar:{p['1Y']['calmar']:.2f}")
         for i, s in enumerate(r.get("top3", [])[:3], 1):
             sp = s["periods"]
+            wr = s.get("win_rate", 0)
             print(
                 f"    #{i} {s['entry']}+{s['cta']}+{s['exit']:15s}  "
-                f"评分={s['score']:.2f}  "
+                f"评分={s['score']:.2f}  胜率={wr*100:.0f}%  "
                 f"1Y_CAGR={sp['1Y']['cagr']:+.1f}%  1Y_DD={sp['1Y']['dd']:+.1f}%  "
-                f"3M={sp['3M']['ret']:+.1f}%  1M={sp['1M']['ret']:+.1f}%"
+                f"YTD={sp['YTD']['ret']:+.1f}%  3M={sp['3M']['ret']:+.1f}%  1M={sp['1M']['ret']:+.1f}%"
             )
 
     # ── 保存 ──

@@ -324,9 +324,11 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta
                 return default
         return _s(v)
 
-    p1m = _pstat(mets.iloc[-21:]  if len(mets) >= 21  else mets)
-    p3m = _pstat(mets.iloc[-63:]  if len(mets) >= 63  else mets)
-    p1y = _pstat(mets.iloc[-252:] if len(mets) >= 252 else mets)
+    p1m  = _pstat(mets.iloc[-21:]  if len(mets) >= 21  else mets)
+    p3m  = _pstat(mets.iloc[-63:]  if len(mets) >= 63  else mets)
+    p1y  = _pstat(mets.iloc[-252:] if len(mets) >= 252 else mets)
+    ytd_mets = mets[mets.index >= "2026-01-01"]
+    pytd = _pstat(ytd_mets if len(ytd_mets) >= 10 else mets.iloc[-63:])
 
     return {
         "candles":  candles,
@@ -341,6 +343,7 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta
             "avg_hold":  avg_hold,
             "in_market": _s(float(signal.mean()) * 100),
             "ret_1m":    p1m["ret"], "ret_3m":    p3m["ret"],
+            "ret_ytd":   pytd["ret"],
             "calmar_1y": p1y["calmar"], "dd_1y":  p1y["dd"],
         },
     }

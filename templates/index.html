@@ -261,7 +261,7 @@ let btActiveStrat = 0;   // index into strategies[]
 const BT_SECTORS = {
   "🔵 大盘/核心":      ["QQQ","SPY","GOOG","META","TSLA","AMZN"],
   "⚡ 半导体/AI算力":  ["NVDA","ASML","TSM","AMD","ARM","AVGO","AEHR","TXN","MRVL","KLAC"],
-  "💾 存储":           ["MU","WDC","STX","SNDK"],
+  "💾 存储":           ["MU","WDC","STX"],
   "🏗 AI电力/数据中心":["BE","VRT","ETN","GEV","PWR"],
   "🌐 光子/高速连接":  ["LITE","COHR","FN","AAOI","LWLG","VIAV","CLS","CIEN","GLW","TSEM"],
   "🚚 物流/运输":      ["ODFL","XPO","JBHT","PCAR","CMI"],
@@ -1001,6 +1001,7 @@ function renderBtDetail(s){
 
   // ── 指标条 ──
   const stats = [
+    {label:'2026YTD收益',val: m.ret_ytd!=null?(m.ret_ytd>=0?'+':'')+m.ret_ytd.toFixed(1)+'%':'—', color:m.ret_ytd>0?'#3fb950':m.ret_ytd<0?'#f85149':'#8b949e'},
     {label:'近3月收益', val: m.ret_3m!=null?(m.ret_3m>=0?'+':'')+m.ret_3m.toFixed(1)+'%':'—', color:m.ret_3m>0?'#3fb950':m.ret_3m<0?'#f85149':'#8b949e'},
     {label:'近1月收益', val: m.ret_1m!=null?(m.ret_1m>=0?'+':'')+m.ret_1m.toFixed(1)+'%':'—', color:m.ret_1m>0?'#3fb950':m.ret_1m<0?'#f85149':'#8b949e'},
     {label:'1年Calmar', val: m.calmar_1y!=null?m.calmar_1y.toFixed(2):'—',                    color:m.calmar_1y>2?'#3fb950':m.calmar_1y>0.5?'#fbbf24':'#f85149'},
