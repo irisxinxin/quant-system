@@ -72,6 +72,16 @@ def _quick_strategy_states(
     try:
         from optimize_stocks import _make_pos, CALMAR_CAP
 
+        # ── 防御性处理：展平 MultiIndex 列（旧缓存 pickle 可能仍为 MultiIndex）──
+        if isinstance(ohlcv.columns, pd.MultiIndex):
+            ohlcv = ohlcv.copy()
+            ohlcv.columns = ohlcv.columns.get_level_values(0)
+        # 确认必要列存在
+        for _col in ("High", "Low", "Volume"):
+            if _col not in ohlcv.columns:
+                logger.warning(f"_quick_strategy_states {ticker}: missing column {_col}, cols={ohlcv.columns.tolist()}")
+                return []
+
         # ── 指标（和 optimize_ticker 保持一致）──
         hi  = ohlcv["High"].reindex(prices.index).fillna(prices)
         lo  = ohlcv["Low"].reindex(prices.index).fillna(prices)

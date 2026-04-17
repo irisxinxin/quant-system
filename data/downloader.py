@@ -122,7 +122,11 @@ def get_ohlcv(
     cpath = _cache_path(cache_key)
 
     if not force_refresh and _is_fresh(cpath):
-        return _load(cpath)
+        cached = _load(cpath)
+        # 旧缓存可能保存了 MultiIndex 列，展平后返回
+        if isinstance(cached, pd.DataFrame) and isinstance(cached.columns, pd.MultiIndex):
+            cached.columns = cached.columns.get_level_values(0)
+        return cached
 
     logger.info(f"[download OHLCV] {ticker}")
     try:
