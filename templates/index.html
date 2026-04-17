@@ -203,6 +203,9 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
       <!-- 绩效指标条 -->
       <div id="bt-stats" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px"></div>
 
+      <!-- 策略说明卡 -->
+      <div id="bt-strat-info" style="margin-bottom:16px"></div>
+
       <!-- K线图 -->
       <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">
         <div style="padding:12px 16px 0;display:flex;align-items:center;gap:10px">
@@ -877,6 +880,109 @@ function btStatsSkeleton(){
     </div>`).join('');
 }
 
+// ── 策略信号说明库 ──────────────────────────────────────
+const ENTRY_INFO = {
+  'dc20':          { name:'DC20突破',         desc:'收盘价突破近20日最高点，趋势开启信号', style:'trend' },
+  'dc20|ema':      { name:'DC20或EMA金叉',     desc:'突破20日高点 OR EMA20上穿EMA60均可触发，入场窗口更宽', style:'trend' },
+  'ema2060':       { name:'EMA金叉',           desc:'EMA20上穿EMA60，中期趋势确认', style:'trend' },
+  'ma5200':        { name:'MA均线金叉',         desc:'MA50上穿MA200，大级别趋势启动（黄金交叉）', style:'trend' },
+  'dc20+obv':      { name:'突破+OBV量能',      desc:'价格突破20日高点且OBV同步放量，资金背书的趋势突破', style:'momentum' },
+  'dc20+cmf':      { name:'突破+CMF资金',      desc:'突破20日高点且CMF>0，主力资金流入确认', style:'momentum' },
+  'ema20_dip':     { name:'EMA20回踩',         desc:'价格在EMA20附近±4%（上升趋势中），逢低布局的低风险入场', style:'pullback' },
+  'ema20_dip+obv': { name:'EMA20回踩+OBV',    desc:'EMA20回调 + OBV主力未出货，高质量低吸：趋势不变、主力不走', style:'pullback' },
+  'obv_up':        { name:'OBV放量突破',       desc:'成交量能（OBV）超过20日均值，主力资金开始建仓', style:'momentum' },
+  'cmf_pos':       { name:'CMF资金流入',       desc:'CMF>0.05，主力资金净流入，量化买盘压力确认', style:'momentum' },
+  'mfi_os':        { name:'MFI超卖反弹',       desc:'量价RSI<35，资金面超卖，适合短线逆势反弹', style:'reversal' },
+  'vol_surge':     { name:'放量站上EMA20',      desc:'成交量>1.5倍均量且价格站上EMA20，资金推动型突破', style:'momentum' },
+  'vol+ema':       { name:'放量+EMA金叉',      desc:'量能放大同时EMA金叉，趋势+资金双重共振', style:'momentum' },
+  'bb_lo':         { name:'布林下轨反弹',       desc:'价格触及布林带下轨（2σ），均值回归买入机会', style:'reversal' },
+};
+const CTA_INFO = {
+  'none':  { name:'无宏观过滤',   desc:'不依赖宏观CTA，适合独立走强的个股（忽略板块风向）' },
+  'smh':   { name:'SMH半导体CTA', desc:'仅在SMH趋势正向时入场，规避板块系统性下行风险' },
+  'spy':   { name:'SPY大盘CTA',   desc:'仅在大盘趋势正向时入场，减少市场Beta拖累' },
+  'combo': { name:'双CTA严格过滤', desc:'SMH+SPY均须正向才入场，最严格条件，大幅减少假突破' },
+};
+const EXIT_INFO = {
+  'rsi80':    { name:'RSI超买止盈',   desc:'RSI>80时离场，适合高波动、容易快速过热的个股',                  style:'short',   hold:'短 5-15天' },
+  'rsi_fade': { name:'动量衰减离场',  desc:'RSI曾高位(>70)后回落60以下才离场，趋势真正结束再出，不被小震荡震出', style:'medium',  hold:'中 20-50天' },
+  'ema_x':    { name:'EMA死叉离场',   desc:'EMA20下穿EMA60时离场，适合捕捉完整中期趋势，持仓较长',            style:'trend',   hold:'长 40-120天' },
+  'ma_x':     { name:'MA死叉离场',    desc:'MA50下穿MA200时离场，最慢出场，捕捉月线级别大趋势',              style:'trend',   hold:'超长 60天+' },
+  'trail_8':  { name:'8%移动止损',    desc:'从近20日最高价回撤8%触发离场，锁定大部分利润同时给趋势运行空间',    style:'medium',  hold:'中 10-30天' },
+  'trail_12': { name:'12%移动止损',   desc:'回撤12%才离场，给高波动趋势股更大的喘息空间，减少被震出',          style:'medium',  hold:'中 15-40天' },
+  'obv_down': { name:'OBV资金离场',   desc:'OBV跌破20日均值，主力资金开始撤离，量价背离预警',               style:'short',   hold:'短 5-20天' },
+  'cmf_neg':  { name:'CMF资金外流',   desc:'CMF<-0.05，资金净流出，主力出货信号明确',                       style:'short',   hold:'短 5-20天' },
+};
+const STYLE_RISKS = {
+  trend:    { label:'趋势型', color:'#58a6ff', risks:['回调期间须忍受浮亏，考验持仓纪律','趋势结束前无法精确判断顶部'] },
+  momentum: { label:'动量型', color:'#bc8cff', risks:['假突破风险：可能追高在局部顶部','放量后若主力出货，止损必须到位'] },
+  pullback: { label:'回踩型', color:'#39c5cf', risks:['震荡市中EMA20频繁被穿，容易反复触发','需确认大趋势完好，否则"接刀"风险'] },
+  reversal: { label:'逆势型', color:'#fbbf24', risks:['下跌趋势中可能接飞刀，每笔都须严格止损','均值回归失败（趋势延续）时损失大'] },
+  short:    { label:'短线型', color:'#f59e0b', risks:['出场过早，趋势强劲时容易踏空大行情','频繁进出带来更多滑点和摩擦成本'] },
+  medium:   { label:'波段型', color:'#3fb950', risks:['持仓期间需承受一定浮动回撤','高波动股可能频繁触发移动止损'] },
+};
+const CTA_RISKS = {
+  none:  '无宏观过滤时，板块系统性下跌中仍会入场，需靠个股止损保护',
+  smh:   '半导体景气度转弱时会拒绝所有入场，可能错过个股独立行情',
+  spy:   '大盘下跌期间全面禁止入场，低波动环境下在场时间可能很短',
+  combo: '双重过滤极严，牛市末期或板块轮换时可能长时间空仓，错失机会',
+};
+
+function getStratInfo(entry, cta, exit){
+  const ei = ENTRY_INFO[entry] || { name:entry, desc:'自定义入场信号', style:'momentum' };
+  const ci = CTA_INFO[cta]    || { name:cta,   desc:'宏观过滤' };
+  const xi = EXIT_INFO[exit]  || { name:exit,  desc:'出场信号', style:'medium', hold:'—' };
+  const entryStyle = STYLE_RISKS[ei.style] || STYLE_RISKS.momentum;
+  const exitStyle  = STYLE_RISKS[xi.style] || STYLE_RISKS.medium;
+  // 综合风格：优先出场风格决定持仓长度
+  const styleLabel = exitStyle.label;
+  const styleColor = exitStyle.color;
+  const risks = [
+    ...entryStyle.risks,
+    ...exitStyle.risks,
+    CTA_RISKS[cta] || '',
+  ].filter(Boolean);
+  return { ei, ci, xi, styleLabel, styleColor, risks };
+}
+
+function renderStratInfo(s){
+  if(!s){ $('bt-strat-info').innerHTML=''; return; }
+  const { ei, ci, xi, styleLabel, styleColor, risks } = getStratInfo(s.entry, s.cta, s.exit);
+  $('bt-strat-info').innerHTML = `
+  <div class="card" style="padding:16px 20px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+                   background:${styleColor}22;color:${styleColor};
+                   border:1px solid ${styleColor}44;border-radius:20px;padding:2px 10px">${styleLabel}</span>
+      <span style="font-size:11px;color:var(--text3)">预期持仓：<span style="color:var(--text2)">${xi.hold}</span></span>
+      <span style="font-size:11px;color:var(--text3);margin-left:4px">胜率参考：<span style="color:${s.metrics?.win_rate>55?'#3fb950':s.metrics?.win_rate>40?'#fbbf24':'#f85149'}">${s.metrics?.win_rate!=null?s.metrics.win_rate.toFixed(0)+'%':'—'}</span></span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">
+      <div style="background:var(--s2);border-radius:8px;padding:12px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">📥 入场信号</div>
+        <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:4px">${ei.name}</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.5">${ei.desc}</div>
+      </div>
+      <div style="background:var(--s2);border-radius:8px;padding:12px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">🌐 宏观过滤</div>
+        <div style="font-size:12px;font-weight:600;color:var(--purple);margin-bottom:4px">${ci.name}</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.5">${ci.desc}</div>
+      </div>
+      <div style="background:var(--s2);border-radius:8px;padding:12px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">📤 出场信号</div>
+        <div style="font-size:12px;font-weight:600;color:var(--cyan);margin-bottom:4px">${xi.name}</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.5">${xi.desc}</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:12px">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">⚠️ 主要风险点</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${risks.map(r=>`<span style="font-size:11px;color:#fbbf24;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:6px;padding:3px 10px;line-height:1.5">${r}</span>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderBtDetail(s){
   if(!s) return;
   const m = s.metrics || {};
@@ -897,6 +1003,9 @@ function renderBtDetail(s){
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${st.label}</div>
       <div class="mono" style="font-size:16px;font-weight:600;color:${st.color}">${st.val}</div>
     </div>`).join('');
+
+  // ── 策略说明卡 ──
+  renderStratInfo(s);
 
   // ── K线图 ──
   renderBtChart(s.candles||[], s.markers||[], s.bah||[]);
