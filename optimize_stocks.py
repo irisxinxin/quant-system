@@ -37,7 +37,7 @@ SECTOR_GROUPS = {
     "🔋 电池/稀土":        ["MP", "ALB", "EOSE"],
     "🚀 太空/机器人":      ["LUNR", "PL", "TER", "RKLB"],
     "🏥 消费/健康":        ["HIMS", "LLY"],
-    "🥇 黄金/避险":        ["GLD"],
+    "🥇 黄金/避险":        ["GLD", "GDX"],
 }
 
 # 所有 ticker（去重保序）

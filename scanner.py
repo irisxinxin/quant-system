@@ -314,7 +314,7 @@ WATCHLIST = {
     "🔋 电池/稀土":       ["MP", "ALB", "EOSE"],
     "🚀 太空/机器人":     ["LUNR", "PL", "TER", "RKLB"],
     "🏥 消费/健康":       ["HIMS", "LLY"],
-    "🥇 黄金/避险":       ["GLD"],
+    "🥇 黄金/避险":       ["GLD", "GDX"],
 }
 
 # 额外监控的板块 ETF（资金流向用）
@@ -603,6 +603,15 @@ def scan_ticker(
         n_wait    = sum(1 for s in strat_states if s["state"] == "waiting")
         n_strats  = len(strat_states)
 
+        # 需要上升趋势（EMA20>EMA60）才有意义的入场条件
+        TREND_ENTRIES = {"ema2060", "ema_cross", "dc20|ema", "vol+ema",
+                         "ema20_dip", "ema20_dip+obv"}
+        entry_today_strats = [s for s in strat_states if s["state"] == "entry_today"]
+        # 所有触发入场的策略都需要趋势支持时，才受 ema_ok 门控
+        all_need_trend = bool(entry_today_strats) and all(
+            s["entry"] in TREND_ENTRIES for s in entry_today_strats
+        )
+
         # ── 综合判断 ──
         # 优先级：已在仓/出场信号 > 新入场信号 > 宏观过滤 > 技术评分
 
@@ -629,9 +638,12 @@ def scan_ticker(
                 entry_zone = f"部分策略出场（{n_exit}/{n_strats}），等信号明朗"
                 warnings.append(f"⚠ {n_exit}个策略今日出场")
 
-        # 3. 有策略今日入场，但宏观/趋势不对则拒绝
+        # 3. 有策略今日入场
         elif n_entry > 0:
-            if not ema_ok or cta_macro < 0:
+            # 只有"全部触发策略都需要趋势"时才受 ema_ok 限制
+            # 资金流/超卖反弹类策略（cmf_pos/obv_up/mfi_os/vol_surge等）不受趋势门控
+            trend_blocked = (all_need_trend and not ema_ok) or cta_macro < 0
+            if trend_blocked:
                 verdict, verdict_code = "回避", "red"
                 entry_zone = f"策略触发但宏观/趋势不支持，不入场"
             elif n_entry >= 2 or (n_entry == 1 and score >= 3):
