@@ -21,19 +21,17 @@ logger = logging.getLogger(__name__)
 # Watchlist
 # ──────────────────────────────────────────────
 WATCHLIST = {
-    "A类·高波动": [
-        "LITE", "IREN", "COIN", "QUBT", "IONQ", "RGTI",
-        "OKLO", "NNE", "SMR", "BWXT",
-        "SOUN", "BBAI", "PLTR",
-        "MSTR", "HOOD", "RIOT", "MARA",
-    ],
-    "B类·成长股": [
-        "MRVL", "SNDK", "ANET", "SMCI",
-        "VRT", "VST", "CEG", "ETN", "HUBB",
-        "BE", "AXTI", "WOLF", "ENPH", "FSLR",
-        "HIMS", "DKNG", "SOFI", "UPST", "AFRM",
-        "UBER", "LYFT", "SNOW", "DDOG", "NET",
-    ],
+    "🔵 大盘/核心":       ["QQQ", "SPY", "GOOG", "META", "TSLA", "AMZN"],
+    "⚡ 半导体/AI算力":   ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC"],
+    "💾 存储":            ["MU", "WDC", "STX", "SNDK"],
+    "🏗 AI电力/数据中心": ["BE", "VRT", "ETN", "GEV", "PWR"],
+    "🌐 光子/高速连接":   ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM"],
+    "🚚 物流/运输":       ["ODFL", "XPO", "JBHT", "PCAR", "CMI"],
+    "🏭 工业/航天制造":   ["CAT", "DE", "HWM", "ITT", "EME", "AME"],
+    "💰 金融":            ["MS", "CBOE", "TRV"],
+    "🪙 加密/Fintech":   ["COIN", "MSTR", "IREN"],
+    "🔋 电池/稀土":       ["MP", "ALB", "EOSE"],
+    "🚀 太空/机器人":     ["LUNR", "PL", "TER", "RKLB"],
 }
 
 # 额外监控的板块 ETF（资金流向用）
