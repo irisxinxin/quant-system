@@ -27,9 +27,12 @@ _HTML_PATH  = Path(__file__).parent / "templates" / "index.html"
 _CACHE_DIR  = Path(__file__).parent / "cache"
 _CACHE_DIR.mkdir(exist_ok=True)
 
+# ─── 代码逻辑版本号（信号逻辑变更时手动递增，自动使旧缓存失效）───
+_CODE_VER = "v6"   # bump this whenever signal logic in scanner.py changes
+
 # ─── Watchlist 版本哈希（watchlist 变动时自动使旧缓存失效）───
 _wl_hash = hashlib.md5(
-    json.dumps({g: sorted(t) for g, t in WATCHLIST.items()}, sort_keys=True).encode()
+    (json.dumps({g: sorted(t) for g, t in WATCHLIST.items()}, sort_keys=True) + _CODE_VER).encode()
 ).hexdigest()[:8]
 
 # ─── 内存缓存（进程内快速读取）───
@@ -68,10 +71,11 @@ def _trade_date_key() -> str:
 
 
 def _disk_path(key: str, date_key: str) -> Path:
-    # scan / sectors 缓存带 watchlist hash，watchlist 变动时自动失效
+    # 所有缓存都带版本号，代码逻辑变更时自动失效
+    # scan/sectors 额外带 watchlist hash（watchlist 变动时也失效）
     if key in ("scan", "sectors"):
         return _CACHE_DIR / f"{key}_{date_key}_{_wl_hash}.json"
-    return _CACHE_DIR / f"{key}_{date_key}.json"
+    return _CACHE_DIR / f"{key}_{date_key}_{_CODE_VER}.json"
 
 
 def _load_disk(key: str, date_key: str):
