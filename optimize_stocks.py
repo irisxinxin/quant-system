@@ -118,11 +118,13 @@ def _multi_period(strat_ret: pd.Series) -> dict:
     }
 
 
+CALMAR_CAP = 4.0   # 防止极少笔交易的过拟合策略"垄断"排名
+
 def _recency_score(periods: dict) -> float:
     """近期加权综合评分（越高越好）"""
-    c1y  = periods["1Y"]["calmar"]
+    c1y  = min(periods["1Y"]["calmar"], CALMAR_CAP)
     r3m  = periods["3M"]["ret"] / 30.0   # 标准化到 ~0~1 范围
-    call = periods["All"]["calmar"]
+    call = min(periods["All"]["calmar"], CALMAR_CAP)
     return W_1Y * c1y + W_3M * r3m + W_ALL * call
 
 
@@ -340,6 +342,12 @@ def optimize_ticker(
                         dd     = float(m.get("最大回撤", "0%").replace("%", "")) / 100
                         sharpe = float(m.get("Sharpe比率", 0))
                         n_tr   = len(res["trades"])
+
+                        # 过滤过拟合策略：全期交易次数太少 or 全期 CAGR 太低
+                        if n_tr < 5:
+                            continue
+                        if cagr < 0.03:   # 全期 CAGR < 3%
+                            continue
 
                         # 分段绩效（近1年/3月/1月）
                         periods = _multi_period(strat_ret)
