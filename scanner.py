@@ -203,19 +203,60 @@ def _quick_strategy_states(
             else:
                 state = "waiting"
 
-            # 入场价（当前持仓的成本）
-            entry_price = None
-            if cur == 1:
-                in_trade_idx = pos[::-1].eq(0).idxmax()
-                start_idx = pos.index.get_loc(in_trade_idx) + 1 if in_trade_idx != pos.index[-1] else len(pos) - 1
-                if start_idx < len(prices):
-                    entry_price = round(float(prices.iloc[start_idx]), 2)
+            # 当前关键指标值（用于出场/入场条件描述）
+            px_now   = round(float(prices.iloc[-1]), 2)
+            rsi_now  = round(float(rsi.dropna().iloc[-1]), 1) if not rsi.dropna().empty else 50.0
+            e20_now  = round(float(e20.iloc[-1]), 2)
+            e60_now  = round(float(e60.iloc[-1]), 2)
+            ma50_now = round(float(ma50.dropna().iloc[-1]), 2) if not ma50.dropna().empty else px_now
+            ma200_now= round(float(ma200.dropna().iloc[-1]), 2) if not ma200.dropna().empty else px_now
+            hi20_now = round(float(hi20_max.dropna().iloc[-1]), 2) if not hi20_max.dropna().empty else px_now
+            mfi_now  = round(float(mfi.dropna().iloc[-1]), 1) if not mfi.dropna().empty else 50.0
+            dc20_now = round(float(dc20h.dropna().iloc[-1]), 2) if not dc20h.dropna().empty else px_now * 1.05
+
+            # 出场条件说明
+            exit_desc = {
+                "rsi80":    f"RSI>80（当前{rsi_now}）",
+                "rsi70":    f"RSI>70（当前{rsi_now}）",
+                "rsi_fade": f"RSI曾超70后回落<60（当前{rsi_now}）",
+                "trail_8":  f"20日高点回撤8%  止损≈${hi20_now*0.92:.2f}",
+                "trail_12": f"20日高点回撤12% 止损≈${hi20_now*0.88:.2f}",
+                "ema_x":    f"EMA20<EMA60（当前{e20_now}/{e60_now}）",
+                "ma_x":     f"MA50<MA200（当前{ma50_now}/{ma200_now}）",
+                "obv_down": "OBV跌破均线（资金出逃）",
+                "cmf_neg":  "CMF<-0.05（主力净流出）",
+            }.get(xn, xn)
+
+            # 入场条件说明（waiting时用）
+            entry_desc = {
+                "rsi28":         f"RSI<28（当前{rsi_now}）",
+                "rsi35":         f"RSI<35（当前{rsi_now}）",
+                "mfi_os":        f"MFI<35（当前{mfi_now}）",
+                "bb_lo":         f"价格跌破布林下轨",
+                "dc20":          f"突破20日高点${dc20_now}",
+                "dc20|ema":      f"突破${dc20_now} 或EMA金叉",
+                "ema2060":       f"EMA20>{e20_now}>EMA60={e60_now}",
+                "ma5200":        f"MA50>{ma50_now}>MA200={ma200_now}",
+                "cmf_pos":       f"CMF>0.05（主力净流入）",
+                "obv_up":        f"OBV站上20日均线",
+                "ema20_dip":     f"回踩EMA20≈${e20_now}（趋势内）",
+                "ema20_dip+obv": f"回踩EMA20≈${e20_now}+OBV确认",
+                "vol+ema":       f"放量突破+EMA金叉",
+                "vol_surge":     f"成交量>1.5x均量+价格站上EMA20",
+                "dc20+obv":      f"突破${dc20_now}+OBV确认",
+                "dc20+cmf":      f"突破${dc20_now}+CMF正值",
+            }.get(en, en)
 
             results.append({
                 **s,
                 "state":       state,
                 "in_trade":    cur == 1,
-                "entry_price": entry_price,
+                "exit_desc":   exit_desc,
+                "entry_desc":  entry_desc,
+                "rsi_now":     rsi_now,
+                "e20_now":     e20_now,
+                "e60_now":     e60_now,
+                "trail_stop":  round(hi20_now * 0.92, 2) if xn == "trail_8" else round(hi20_now * 0.88, 2) if xn == "trail_12" else None,
             })
     except Exception as e:
         logger.warning(f"_quick_strategy_states {ticker}: {e}")
@@ -228,7 +269,7 @@ def _quick_strategy_states(
 # Watchlist
 # ──────────────────────────────────────────────
 WATCHLIST = {
-    "🔵 大盘/核心":       ["QQQ", "SPY", "GOOG", "META", "TSLA", "AMZN"],
+    "🔵 大盘/核心":       ["QQQ", "SPY", "SMH", "GOOG", "META", "TSLA", "AMZN"],
     "⚡ 半导体/AI算力":   ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC"],
     "💾 存储":            ["MU", "WDC", "STX", "SNDK"],
     "🏗 AI电力/数据中心": ["BE", "VRT", "ETN", "GEV", "PWR"],
