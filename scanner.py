@@ -73,9 +73,14 @@ def _quick_strategy_states(
         from optimize_stocks import _make_pos, CALMAR_CAP
 
         # ── 指标（和 optimize_ticker 保持一致）──
-        hi  = ohlcv["High"].reindex(prices.index)
-        lo  = ohlcv["Low"].reindex(prices.index)
+        hi  = ohlcv["High"].reindex(prices.index).fillna(prices)
+        lo  = ohlcv["Low"].reindex(prices.index).fillna(prices)
         vol = ohlcv["Volume"].reindex(prices.index).fillna(0)
+
+        # ATR (14日)
+        prev_close = prices.shift(1)
+        tr = pd.concat([hi - lo, (hi - prev_close).abs(), (lo - prev_close).abs()], axis=1).max(axis=1)
+        atr14 = tr.rolling(14).mean()
 
         e20  = prices.ewm(span=20, adjust=False).mean()
         e60  = prices.ewm(span=60, adjust=False).mean()
@@ -213,6 +218,7 @@ def _quick_strategy_states(
             hi20_now = round(float(hi20_max.dropna().iloc[-1]), 2) if not hi20_max.dropna().empty else px_now
             mfi_now  = round(float(mfi.dropna().iloc[-1]), 1) if not mfi.dropna().empty else 50.0
             dc20_now = round(float(dc20h.dropna().iloc[-1]), 2) if not dc20h.dropna().empty else px_now * 1.05
+            atr_now  = round(float(atr14.dropna().iloc[-1]), 2) if not atr14.dropna().empty else px_now * 0.03
 
             # 出场条件说明
             exit_desc = {
@@ -247,6 +253,25 @@ def _quick_strategy_states(
                 "dc20+cmf":      f"突破${dc20_now}+CMF正值",
             }.get(en, en)
 
+            # ── 止损价计算（策略出场价优先，ATR×2兜底）──
+            if xn == "trail_8":
+                stop_px = round(hi20_now * 0.92, 2)
+                stop_src = "移动止损"
+            elif xn == "trail_12":
+                stop_px = round(hi20_now * 0.88, 2)
+                stop_src = "移动止损"
+            elif xn == "ema_x":
+                stop_px = round(min(e60_now, px_now - atr_now * 1.5), 2)
+                stop_src = "EMA60参考"
+            elif xn == "ma_x":
+                stop_px = round(min(ma200_now, px_now - atr_now * 1.5), 2)
+                stop_src = "MA200参考"
+            else:
+                # RSI/OBV/CMF类出场无固定价位，用ATR×2硬止损
+                stop_px = round(px_now - atr_now * 2, 2)
+                stop_src = "ATR×2硬止损"
+            stop_pct = round((px_now - stop_px) / px_now * 100, 1) if px_now > 0 else 0
+
             results.append({
                 **s,
                 "state":       state,
@@ -256,7 +281,9 @@ def _quick_strategy_states(
                 "rsi_now":     rsi_now,
                 "e20_now":     e20_now,
                 "e60_now":     e60_now,
-                "trail_stop":  round(hi20_now * 0.92, 2) if xn == "trail_8" else round(hi20_now * 0.88, 2) if xn == "trail_12" else None,
+                "stop_px":     stop_px,
+                "stop_pct":    stop_pct,
+                "stop_src":    stop_src,
             })
     except Exception as e:
         logger.warning(f"_quick_strategy_states {ticker}: {e}")

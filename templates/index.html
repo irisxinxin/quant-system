@@ -520,6 +520,15 @@ function stratStateHtml(strategies){
       } else if(s.state==='exit_today'){
         condLine = s.exit_desc  ? `<div style="font-size:10px;color:#f85149;margin-top:3px">${s.exit_desc}</div>` : '';
       }
+      // 止损行
+      const stopLine = s.stop_px!=null
+        ? `<div style="display:flex;align-items:center;gap:4px;margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,0.06)">
+            <span style="font-size:10px;color:#f87171;font-weight:600">止损</span>
+            <span class="mono" style="font-size:11px;color:#f87171;font-weight:700">$${s.stop_px.toFixed(2)}</span>
+            <span style="font-size:10px;color:var(--text3)">(-${s.stop_pct}%)</span>
+            <span style="font-size:9px;color:var(--text3);margin-left:auto">${s.stop_src||''}</span>
+           </div>`
+        : '';
       return `<div style="padding:8px 12px;border-radius:8px;border:1px solid ${cfg.border};background:${cfg.bg}">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
           <span style="width:7px;height:7px;border-radius:50%;background:${cfg.dot};flex-shrink:0"></span>
@@ -529,6 +538,7 @@ function stratStateHtml(strategies){
         <div class="mono" style="font-size:10px;color:var(--text3)">${stratLabel}</div>
         <div style="font-size:10px;color:var(--text2);margin-top:2px">${r3m}</div>
         ${condLine}
+        ${stopLine}
       </div>`;
     }catch(e){ return ''; }
   }).join('');
