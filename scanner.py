@@ -578,7 +578,13 @@ def scan_ticker(
         # 策略全部在仓：趋势持续，但不是新买点
         elif n_intrade == n_strats and n_strats > 0:
             verdict, verdict_code = "持仓续持", "blue"
-            entry_zone = f"入场点已过，追高有风险，等回踩EMA20≈{e20v:.0f}"
+            gap_pct = round((px - e20v) / e20v * 100, 1)  # 当前价距EMA20的距离
+            if gap_pct <= 3:
+                entry_zone = f"距EMA20仅{gap_pct}%，接近回踩区间，可关注"
+            elif gap_pct <= 8:
+                entry_zone = f"距EMA20 {gap_pct}%，等回踩≈${e20v:.1f}再入"
+            else:
+                entry_zone = f"距EMA20 {gap_pct}%（追高风险大），等回踩≈${e20v:.1f}"
             signals.append(f"✓ Top{n_strats}策略均在仓中（非新买点）")
 
         # 策略全部等待：按技术面打分
@@ -611,6 +617,7 @@ def scan_ticker(
             "stop_ema60":    stop_ema60,
             "stop_pct10":    stop_pct10,
             "ema20":         round(e20v, 1),
+            "ema20_gap_pct": round((px - e20v) / e20v * 100, 1),  # 距EMA20%（正=在上方）
             "ema60":         round(e60v, 1),
             "atr":           round(atrv, 1),
             "atr_pct":       round(atrv / px * 100, 1),
