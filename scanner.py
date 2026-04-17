@@ -323,7 +323,7 @@ WATCHLIST = {
     "🪙 加密/Fintech":   ["COIN", "MSTR", "IREN", "HOOD", "OKLO", "BTC-USD"],
     "🔋 电池/稀土":       ["MP", "ALB", "EOSE"],
     "🚀 太空/机器人":     ["LUNR", "PL", "TER", "RKLB"],
-    "🏥 消费/健康":       ["HIMS", "LLY"],
+    "🏥 消费/健康":       ["HIMS", "LLY", "RCL"],
     "🥇 黄金/避险":       ["GLD", "GDX"],
 }
 
@@ -444,18 +444,29 @@ def scan_ticker(
 ) -> dict:
     """扫描单只股票，返回结构化分析结果"""
     try:
-        prices = get_prices(ticker, start="2024-01-01")
+        # 使用完整历史（与优化器一致），确保事件型策略(ema_cross/dc20等)的持仓状态正确
+        prices = get_prices(ticker)
         if smh_px is None:
-            smh_px = get_prices("SMH", start="2024-01-01")
+            smh_px = get_prices("SMH")
         if ref_px is None:
-            ref_px = get_prices("SPY", start="2024-01-01")
+            ref_px = get_prices("SPY")
         if qqq_px is None:
-            qqq_px = get_prices("QQQ", start="2024-01-01")
+            qqq_px = get_prices("QQQ")
         ohlcv = get_ohlcv(ticker)
 
         if prices.empty or len(prices) < 65:
             return {"ticker": ticker, "error": "数据不足", "verdict_code": "gray",
                     "price": 0, "price_chg": 0, "verdict": "无数据", "entry_zone": "-"}
+
+        # 防御性处理：ohlcv 为空时用空列回退，避免 KeyError
+        if ohlcv.empty:
+            ohlcv = pd.DataFrame(
+                {"High": prices, "Low": prices, "Close": prices, "Volume": pd.Series(0, index=prices.index)},
+                index=prices.index,
+            )
+        elif isinstance(ohlcv.columns, pd.MultiIndex):
+            ohlcv = ohlcv.copy()
+            ohlcv.columns = ohlcv.columns.get_level_values(0)
 
         # ── 技术指标 ──
         e20 = prices.ewm(span=20, adjust=False).mean()
@@ -738,9 +749,10 @@ def scan_ticker(
 
 def scan_all() -> dict:
     """并行扫描所有 watchlist 股票"""
-    smh_px = get_prices("SMH", start="2024-01-01")
-    ref_px = get_prices("SPY", start="2024-01-01")
-    qqq_px = get_prices("QQQ", start="2024-01-01")
+    # 使用完整历史与优化器保持一致（策略状态机需要足够的历史数据）
+    smh_px = get_prices("SMH")
+    ref_px = get_prices("SPY")
+    qqq_px = get_prices("QQQ")
 
     # 行业 CTA（和 optimize_stocks 保持一致）
     _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT"}
