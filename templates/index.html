@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 :root {
   --bg:       #0e1117;
@@ -141,6 +142,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <button class="tab-btn on" id="tab-scan"    onclick="sw('scan')">📈 信号扫描</button>
     <button class="tab-btn"    id="tab-sectors" onclick="sw('sectors')">🗺 板块追踪</button>
     <button class="tab-btn"    id="tab-cta"     onclick="sw('cta')">🌐 CTA宏观</button>
+    <button class="tab-btn"    id="tab-bt"      onclick="sw('bt')">📊 回测验证</button>
   </div>
 </div>
 
@@ -178,16 +180,92 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     </div>
   </div>
 
+  <!-- TAB 4: 回测验证 -->
+  <div id="pane-bt" style="display:none">
+    <!-- 股票选择器 -->
+    <div id="bt-selector" style="margin-bottom:20px">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:14px">选择标的 — 点击查看最优策略买卖历史</div>
+      <div id="bt-grid"></div>
+    </div>
+
+    <!-- 图表区（选股后显示）-->
+    <div id="bt-detail" style="display:none">
+      <!-- 标题行 -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="bt-ticker-label" style="font-size:20px;font-weight:700;color:var(--text)"></span>
+          <span id="bt-strategy-label" style="font-size:11px;color:var(--text3);background:var(--s2);padding:3px 10px;border-radius:20px;font-family:'JetBrains Mono',monospace;border:1px solid var(--border)"></span>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+          <span id="bt-loading-msg" style="font-size:12px;color:var(--text3)"></span>
+          <button onclick="sw('bt')" style="font-size:12px;color:var(--text2);padding:4px 12px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer">← 返回</button>
+        </div>
+      </div>
+
+      <!-- 绩效指标条 -->
+      <div id="bt-stats" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px"></div>
+
+      <!-- K线图 -->
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">
+        <div style="padding:12px 16px 0;display:flex;align-items:center;gap:10px">
+          <span style="font-size:12px;font-weight:600;color:var(--text2)">价格 + 买卖点（近6个月）</span>
+          <div style="margin-left:auto;display:flex;gap:12px;font-size:11px;color:var(--text3)">
+            <span><span style="color:#58a6ff;font-size:14px">▲</span> 买入</span>
+            <span><span style="color:#3fb950;font-size:14px">▼</span> 盈利卖出</span>
+            <span><span style="color:#f85149;font-size:14px">▼</span> 亏损卖出</span>
+          </div>
+        </div>
+        <div id="bt-chart" style="height:380px;width:100%"></div>
+      </div>
+
+      <!-- 交易记录 -->
+      <div class="card" style="overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;font-weight:600;color:var(--text2)">交易记录（近3年，最新在前）</span>
+          <span id="bt-trade-count" style="font-size:11px;color:var(--text3)"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr>
+              <th class="tl">买入日期</th>
+              <th class="tl">卖出日期</th>
+              <th>持仓天数</th>
+              <th>买入价</th>
+              <th>卖出价</th>
+              <th>盈亏</th>
+              <th class="tl">结果</th>
+            </tr></thead>
+            <tbody id="bt-trades-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script>
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-const TABS = ['scan','sectors','cta'];
-const loaded = {scan:false, sectors:false, cta:false};
+const TABS = ['scan','sectors','cta','bt'];
+const loaded = {scan:false, sectors:false, cta:false, bt:false};
 let curTab = 'scan';
 let sectView = 'momentum';
+let btChart = null;
+let btActiveTicker = null;
+
+const BT_SECTORS = {
+  "🔵 大盘/核心":      ["QQQ","SPY","GOOG","META","TSLA","AMZN"],
+  "⚡ 半导体/AI算力":  ["NVDA","ASML","TSM","AMD","ARM","AVGO","AEHR","TXN","MRVL","KLAC"],
+  "💾 存储":           ["MU","WDC","STX"],
+  "🏗 AI电力/数据中心":["BE","VRT","ETN","GEV","PWR"],
+  "🌐 光子/高速连接":  ["LITE","COHR","FN","AAOI","LWLG","VIAV","CLS","CIEN","GLW","TSEM"],
+  "🚚 物流/运输":      ["ODFL","XPO","JBHT","PCAR","CMI"],
+  "🏭 工业/航天制造":  ["CAT","DE","HWM","ITT","EME","AME"],
+  "💰 金融":           ["MS","CBOE","TRV"],
+  "🚀 太空/机器人":    ["LUNR","PL","TER","RKLB"],
+};
 
 // ══════════════════════════════════════════
 // Helpers
@@ -278,6 +356,13 @@ function sw(tab){
   });
   if(tab==='sectors'&&!loaded.sectors)loadSectors();
   if(tab==='cta'&&!loaded.cta)loadCta();
+  if(tab==='bt'&&!loaded.bt)loadBt();
+  // 返回回测tab时隐藏详情，显示选股器
+  if(tab==='bt'){
+    $('bt-detail').style.display='none';
+    $('bt-selector').style.display='block';
+    btActiveTicker=null;
+  }
 }
 
 // ══════════════════════════════════════════
@@ -695,6 +780,179 @@ function renderCta(data,ts){
     </div>
   </div>`;
   $('ctaBody').innerHTML=h;
+}
+
+// ══════════════════════════════════════════
+// BACKTEST TAB
+// ══════════════════════════════════════════
+function loadBt(){
+  loaded.bt = true;
+  renderBtGrid();
+}
+
+function renderBtGrid(){
+  let h = '';
+  for(const [sec, tickers] of Object.entries(BT_SECTORS)){
+    h += `<div style="margin-bottom:18px">
+      <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;letter-spacing:.04em">${sec}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">`;
+    for(const t of tickers){
+      h += `<button onclick="loadBtTicker('${t}')"
+        style="padding:6px 14px;background:var(--s1);border:1px solid var(--border);border-radius:20px;
+               font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;font-family:inherit"
+        onmouseover="this.style.borderColor='rgba(245,158,11,.4)';this.style.color='var(--accent)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'"
+        >${t}</button>`;
+    }
+    h += `</div></div>`;
+  }
+  $('bt-grid').innerHTML = h;
+}
+
+async function loadBtTicker(ticker){
+  btActiveTicker = ticker;
+  $('bt-selector').style.display = 'none';
+  $('bt-detail').style.display = 'block';
+  $('bt-ticker-label').textContent = ticker;
+  $('bt-strategy-label').textContent = '优化中...';
+  $('bt-loading-msg').textContent = '⟳ 运行回测约 15 秒...';
+  $('bt-stats').innerHTML = btStatsSkeleton();
+  $('bt-trades-body').innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)"><span class="spin">⟳</span> 计算中...</td></tr>`;
+  if(btChart){ btChart.remove(); btChart=null; }
+  $('bt-chart').innerHTML = '';
+
+  try{
+    const j = await (await fetch(`/api/backtest/${ticker}`)).json();
+    $('bt-loading-msg').textContent = '缓存于 ' + j.cached_at;
+    if(j.data && j.data.error){
+      $('bt-strategy-label').textContent = '错误';
+      $('bt-stats').innerHTML = `<div style="color:#f85149;font-size:13px">❌ ${j.data.error}</div>`;
+      return;
+    }
+    renderBtDetail(j.data);
+  }catch(e){
+    $('bt-stats').innerHTML = `<div style="color:#f85149;font-size:13px">❌ 请求失败: ${e.message}</div>`;
+  }
+}
+
+function btStatsSkeleton(){
+  return Array(6).fill(0).map(()=>`
+    <div style="padding:10px 16px;background:var(--s1);border:1px solid var(--border);border-radius:10px;min-width:100px">
+      <div class="sk" style="width:40px;height:10px;margin-bottom:6px"></div>
+      <div class="sk" style="width:60px;height:18px"></div>
+    </div>`).join('');
+}
+
+function renderBtDetail(d){
+  const m = d.metrics || {};
+  const s = d.strategy || {};
+  $('bt-strategy-label').textContent = s.label || '—';
+
+  // ── 指标条 ──
+  const stats = [
+    {label:'近3月收益', val: m.ret_3m!=null ? (m.ret_3m>=0?'+':'')+m.ret_3m.toFixed(1)+'%' : '—', color: m.ret_3m>0?'#3fb950':m.ret_3m<0?'#f85149':'#8b949e'},
+    {label:'近1月收益', val: m.ret_1m!=null ? (m.ret_1m>=0?'+':'')+m.ret_1m.toFixed(1)+'%' : '—', color: m.ret_1m>0?'#3fb950':m.ret_1m<0?'#f85149':'#8b949e'},
+    {label:'1年Calmar',  val: m.calmar_1y!=null ? m.calmar_1y.toFixed(2) : '—',                   color: m.calmar_1y>2?'#3fb950':m.calmar_1y>0.5?'#fbbf24':'#f85149'},
+    {label:'Sharpe',     val: m.sharpe!=null    ? m.sharpe.toFixed(2)    : '—',                   color: m.sharpe>1?'#3fb950':m.sharpe>0?'#fbbf24':'#8b949e'},
+    {label:'胜率',       val: m.win_rate!=null  ? m.win_rate.toFixed(1)+'%' : '—',               color: m.win_rate>55?'#3fb950':m.win_rate>40?'#fbbf24':'#f85149'},
+    {label:'平均持仓',   val: m.avg_hold!=null  ? m.avg_hold.toFixed(0)+'天' : '—',              color:'var(--text)'},
+    {label:'总交易次数', val: m.n_trades!=null  ? m.n_trades+'次'           : '—',               color:'var(--text)'},
+    {label:'在场时间',   val: m.in_market!=null ? m.in_market.toFixed(0)+'%' : '—',              color:'var(--text2)'},
+  ];
+  $('bt-stats').innerHTML = stats.map(s=>`
+    <div style="padding:10px 16px;background:var(--s1);border:1px solid var(--border);border-radius:10px;flex:1;min-width:90px">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${s.label}</div>
+      <div class="mono" style="font-size:16px;font-weight:600;color:${s.color}">${s.val}</div>
+    </div>`).join('');
+
+  // ── K线图 ──
+  renderBtChart(d.candles || [], d.markers || []);
+
+  // ── 交易记录 ──
+  const trades = d.trades || [];
+  $('bt-trade-count').textContent = `共 ${trades.length} 笔`;
+  if(!trades.length){
+    $('bt-trades-body').innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)">无交易记录</td></tr>`;
+    return;
+  }
+  $('bt-trades-body').innerHTML = trades.slice(0,60).map(t=>{
+    const pnl = t.pnl_pct;
+    const win = pnl!=null && pnl>0;
+    const pnlCol = pnl==null?'#8b949e':win?'#3fb950':'#f85149';
+    const pnlStr = pnl==null?'—':(pnl>=0?'+':'')+pnl.toFixed(2)+'%';
+    const badge = pnl==null?'<span class="badge bk">持仓中</span>':win
+      ?'<span class="badge bg">盈利</span>'
+      :'<span class="badge br">亏损</span>';
+    return `<tr>
+      <td class="tl mono" style="color:var(--blue)">${t.entry_date}</td>
+      <td class="tl mono" style="color:var(--text2)">${t.exit_date||'—'}</td>
+      <td style="color:var(--text2)">${t.days_held}</td>
+      <td class="mono">${t.entry_px!=null?'$'+t.entry_px.toFixed(2):'—'}</td>
+      <td class="mono">${t.exit_px!=null?'$'+t.exit_px.toFixed(2):'—'}</td>
+      <td class="mono" style="color:${pnlCol};font-weight:600">${pnlStr}</td>
+      <td class="tl">${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderBtChart(candles, markers){
+  if(btChart){ btChart.remove(); btChart=null; }
+  const el = $('bt-chart');
+  el.innerHTML = '';
+  if(!candles.length){ el.innerHTML='<div style="text-align:center;padding:60px;color:var(--text3)">无K线数据</div>'; return; }
+
+  btChart = LightweightCharts.createChart(el, {
+    width:  el.clientWidth  || 900,
+    height: 360,
+    layout: { background:{color:'#161b22'}, textColor:'#8b949e' },
+    grid:   { vertLines:{color:'rgba(255,255,255,0.04)'}, horzLines:{color:'rgba(255,255,255,0.04)'} },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    rightPriceScale: { borderColor:'#21262d' },
+    timeScale: { borderColor:'#21262d', timeVisible:true },
+    handleScroll: true,
+    handleScale:  true,
+  });
+
+  // Candlestick series
+  const series = btChart.addCandlestickSeries({
+    upColor:'#3fb950', downColor:'#f85149',
+    borderUpColor:'#3fb950', borderDownColor:'#f85149',
+    wickUpColor:'#3fb950', wickDownColor:'#f85149',
+  });
+
+  // Filter valid candles
+  const validCandles = candles.filter(c=>c.open&&c.high&&c.low&&c.close);
+  series.setData(validCandles);
+
+  // Buy/sell markers
+  const mks = markers
+    .filter(m => validCandles.some(c=>c.time===m.time))
+    .sort((a,b)=>a.time<b.time?-1:1)
+    .map(m=>({
+      time:     m.time,
+      position: m.type==='buy' ? 'belowBar' : 'aboveBar',
+      color:    m.type==='buy' ? '#58a6ff' : (m.pnl!=null&&m.pnl>0 ? '#3fb950' : '#f85149'),
+      shape:    m.type==='buy' ? 'arrowUp' : 'arrowDown',
+      text:     m.text || '',
+      size:     1.5,
+    }));
+  series.setMarkers(mks);
+
+  // Volume histogram
+  const volSeries = btChart.addHistogramSeries({
+    color:'rgba(88,166,255,0.15)',
+    priceFormat:{type:'volume'},
+    priceScaleId:'vol',
+    scaleMargins:{top:0.85,bottom:0},
+  });
+  volSeries.setData(validCandles.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(63,185,80,0.2)':'rgba(248,81,73,0.2)'})));
+
+  // Fit to last 90 days
+  btChart.timeScale().fitContent();
+
+  // Resize on window resize
+  const ro = new ResizeObserver(()=>{ if(btChart) btChart.applyOptions({width:el.clientWidth}); });
+  ro.observe(el);
 }
 
 // ══════════════════════════════════════════

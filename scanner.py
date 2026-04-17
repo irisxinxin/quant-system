@@ -492,3 +492,13 @@ def get_sector_full() -> dict:
     except Exception as e:
         logger.error(f"get_sector_full: {e}")
         return {"rows": [], "signals": {}, "error": str(e)}
+
+
+def get_bt_signals(ticker: str) -> dict:
+    """运行最优策略回测，返回 K 线 + 买卖点 + 交易记录（供 /api/backtest/{ticker} 使用）"""
+    try:
+        from backtest_review import get_optimal_and_signals
+        return get_optimal_and_signals(ticker.upper())
+    except Exception as e:
+        logger.error(f"get_bt_signals {ticker}: {e}")
+        return {"ticker": ticker, "error": str(e)}

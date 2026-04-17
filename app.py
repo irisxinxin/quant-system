@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
-from scanner import scan_all, get_macro, get_flows, get_cta_dashboard, get_sector_full
+from scanner import scan_all, get_macro, get_flows, get_cta_dashboard, get_sector_full, get_bt_signals
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -30,6 +30,7 @@ CACHE_TTL_MACRO = 30 * 60    # 宏观数据 30 分钟
 CACHE_TTL_FLOWS = 2 * 3600   # 资金流向 2 小时
 CACHE_TTL_CTA   = 2 * 3600   # CTA 2 小时
 CACHE_TTL_SECTORS = 2 * 3600   # 板块全景 2 小时
+CACHE_TTL_BT      = 8 * 3600   # 回测信号 8 小时
 
 
 def _get_cached(key: str, fn, ttl: int):
@@ -87,6 +88,13 @@ async def api_cta():
 @app.get("/api/sectors")
 async def api_sectors():
     data, ts = _get_cached("sectors", get_sector_full, CACHE_TTL_SECTORS)
+    return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
+
+
+@app.get("/api/backtest/{ticker}")
+async def api_backtest(ticker: str):
+    key = f"bt_{ticker.upper()}"
+    data, ts = _get_cached(key, lambda: get_bt_signals(ticker), CACHE_TTL_BT)
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
