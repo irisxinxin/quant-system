@@ -26,7 +26,7 @@ from config import CTA_LOOKBACKS, CTA_VOL_WIN
 SECTOR_GROUPS = {
     "🔵 大盘/核心":        ["QQQ", "SPY", "GOOG", "META", "TSLA", "AMZN"],
     "⚡ 半导体/AI算力":    ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC"],
-    "💾 存储":             ["MU", "WDC", "STX"],   # SNDK上市时间短，数据不足暂不纳入
+    "💾 存储":             ["MU", "WDC", "STX", "SNDK"],
     "🏗 AI电力/数据中心":  ["BE", "VRT", "ETN", "GEV", "PWR"],
     "🌐 光子/高速连接":    ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM"],
     "🚚 物流/运输":        ["ODFL", "XPO", "JBHT", "PCAR", "CMI"],
