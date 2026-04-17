@@ -508,7 +508,10 @@ function stratStateHtml(strategies){
   const cards = (strategies||[]).map(s=>{
     try{
       const cfg = STATE_CFG[s.state] || STATE_CFG['waiting'];
-      const stratLabel = `${s.entry||''}+${s.cta||''}+${s.exit||''}`;
+      const ei = ENTRY_INFO[s.entry] || {name: s.entry};
+      const ci = CTA_INFO[s.cta]    || {name: s.cta};
+      const xi = EXIT_INFO[s.exit]  || {name: s.exit};
+      const stratLabel = `${ei.name} · ${ci.name} · ${xi.name}`;
       const wr  = s.win_rate  ? `胜率${s.win_rate}%` : '';
       const r3m = s.ret_3m!=null ? `3M ${s.ret_3m>=0?'+':''}${s.ret_3m}%` : '';
       // 出场或入场条件说明
