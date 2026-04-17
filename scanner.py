@@ -18,6 +18,213 @@ from config import CTA_LOOKBACKS, CTA_VOL_WIN
 logger = logging.getLogger(__name__)
 
 # ──────────────────────────────────────────────
+# Top3 策略缓存（从 CSV 加载，扫描时实时检查信号状态）
+# ──────────────────────────────────────────────
+_TOP3_CSV = Path(__file__).parent / "output" / "top3_strategies.csv"
+
+def _load_top3() -> dict:
+    """加载 top3_strategies.csv，返回 {ticker: [策略列表]} """
+    if not _TOP3_CSV.exists():
+        return {}
+    try:
+        df = pd.read_csv(_TOP3_CSV)
+        result = {}
+        for _, row in df.iterrows():
+            t = row["ticker"]
+            if t not in result:
+                result[t] = []
+            result[t].append({
+                "rank":     int(row["rank"]),
+                "entry":    row["entry"],
+                "cta":      row["cta"],
+                "exit":     row["exit"],
+                "score":    float(row["score"]),
+                "win_rate": float(row["win_rate"]),
+                "ret_1m":   float(row["ret_1m"]),
+                "ret_3m":   float(row["ret_3m"]),
+                "ret_ytd":  float(row.get("ret_ytd", 0)),
+                "cagr_1y":  float(row["cagr_1y"]),
+            })
+        return result
+    except Exception as e:
+        logger.warning(f"load_top3 failed: {e}")
+        return {}
+
+
+def _quick_strategy_states(
+    ticker: str,
+    strategies: list,
+    prices: pd.Series,
+    ohlcv: pd.DataFrame,
+    smh_cta: pd.Series,
+    spy_cta: pd.Series,
+    qqq_cta: pd.Series,
+    extra_ctas: dict,
+) -> list:
+    """
+    对给定的策略列表，快速计算当前信号状态，不跑完整回测。
+    返回: [{rank, entry, cta, exit, state, in_trade, win_rate, ret_3m, ...}, ...]
+    state: 'in_trade' | 'entry_today' | 'exit_today' | 'waiting'
+    """
+    if prices.empty or len(prices) < 60:
+        return []
+
+    try:
+        from optimize_stocks import _make_pos, CALMAR_CAP
+
+        # ── 指标（和 optimize_ticker 保持一致）──
+        hi  = ohlcv["High"].reindex(prices.index)
+        lo  = ohlcv["Low"].reindex(prices.index)
+        vol = ohlcv["Volume"].reindex(prices.index).fillna(0)
+
+        e20  = prices.ewm(span=20, adjust=False).mean()
+        e60  = prices.ewm(span=60, adjust=False).mean()
+        ma50 = prices.rolling(50).mean()
+        ma200= prices.rolling(200).mean()
+        dc20h = hi.rolling(20).max().shift(1)
+
+        bb_m  = prices.rolling(20).mean()
+        bb_s  = prices.rolling(20).std()
+        bb_lo = bb_m - 2 * bb_s
+        bb_hi = bb_m + 2 * bb_s
+
+        d    = prices.diff()
+        gain = d.clip(lower=0).rolling(10).mean()
+        loss = (-d.clip(upper=0)).rolling(10).mean()
+        rsi  = (100 - 100 / (1 + gain / loss.replace(0, np.nan))).fillna(50)
+
+        obv_dir  = np.sign(prices.diff().fillna(0))
+        obv      = (vol * obv_dir).cumsum()
+        obv_ma20 = obv.rolling(20).mean()
+
+        hl     = (hi - lo).replace(0, np.nan)
+        mf_mult= ((prices - lo) - (hi - prices)) / hl
+        cmf    = (mf_mult * vol).rolling(20).sum() / vol.rolling(20).sum().replace(0, np.nan)
+
+        tp     = (hi + lo + prices) / 3
+        raw_mf = tp * vol
+        pos_mf = raw_mf.where(tp > tp.shift(1), 0.0)
+        neg_mf = raw_mf.where(tp < tp.shift(1), 0.0)
+        mf_rat = pos_mf.rolling(14).sum() / neg_mf.rolling(14).sum().replace(0, np.nan)
+        mfi    = (100 - 100 / (1 + mf_rat)).fillna(50)
+
+        vol_ratio    = vol / vol.rolling(20).mean().replace(0, np.nan)
+        vol_surge_up = (vol_ratio > 1.5) & (prices > e20)
+        hi20_max     = hi.rolling(20).max()
+        ema20_band   = (prices >= e20 * 0.97) & (prices <= e20 * 1.04) & (e20 > e60)
+
+        combo_cta_s = (
+            smh_cta.reindex(prices.index).ffill().fillna(0) +
+            spy_cta.reindex(prices.index).ffill().fillna(0)
+        ) / 2
+        qqq_s = qqq_cta.reindex(prices.index).ffill().fillna(0) if qqq_cta is not None \
+                else pd.Series(0.0, index=prices.index)
+
+        # ── 入场条件 ──
+        entries = {
+            "ema2060":       (e20 > e60).fillna(False).astype(float),
+            "dc20":          (prices > dc20h).fillna(False).astype(float),
+            "dc20|ema":      ((prices > dc20h) | (e20 > e60)).fillna(False).astype(float),
+            "ma5200":        (ma50 > ma200).fillna(False).astype(float),
+            "dc20+obv":      ((prices > dc20h) & (obv > obv_ma20)).fillna(False).astype(float),
+            "dc20+cmf":      ((prices > dc20h) & (cmf > 0.0)).fillna(False).astype(float),
+            "vol+ema":       (vol_surge_up & (e20 > e60)).fillna(False).astype(float),
+            "obv_up":        (obv > obv_ma20).fillna(False).astype(float),
+            "cmf_pos":       (cmf > 0.05).fillna(False).astype(float),
+            "mfi_os":        (mfi < 35).fillna(False).astype(float),
+            "vol_surge":     vol_surge_up.fillna(False).astype(float),
+            "ema20_dip":     ema20_band.fillna(False).astype(float),
+            "ema20_dip+obv": (ema20_band & (obv > obv_ma20)).fillna(False).astype(float),
+            "bb_lo":         (prices < bb_lo).fillna(False).astype(float),
+            "rsi35":         (rsi < 35).fillna(False).astype(float),
+            "rsi28":         (rsi < 28).fillna(False).astype(float),
+        }
+
+        # ── CTA 过滤 ──
+        cta_gates = {
+            "none":  pd.Series(1.0, index=prices.index),
+            "combo": (combo_cta_s > 0).astype(float),
+            "soft":  (combo_cta_s > -0.25).astype(float),
+            "spy":   (spy_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
+            "smh":   (smh_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
+            "qqq":   (qqq_s > 0).astype(float),
+        }
+        for _cn, _cs in (extra_ctas or {}).items():
+            if _cn not in cta_gates:
+                cta_gates[_cn] = (_cs.reindex(prices.index).ffill().fillna(0) > 0).astype(float)
+
+        # ── 出场条件 ──
+        rsi_was_hot = rsi.rolling(5).max() > 70
+        exits = {
+            "ema_x":    (e20 < e60).fillna(False).astype(float),
+            "ma_x":     (ma50 < ma200).fillna(False).astype(float),
+            "rsi80":    (rsi > 80).astype(float),
+            "rsi70":    (rsi > 70).astype(float),
+            "obv_down": (obv < obv_ma20).fillna(False).astype(float),
+            "cmf_neg":  (cmf < -0.05).fillna(False).astype(float),
+            "trail_8":  (prices < hi20_max * 0.92).fillna(False).astype(float),
+            "trail_12": (prices < hi20_max * 0.88).fillna(False).astype(float),
+            "rsi_fade": ((rsi < 60) & rsi_was_hot).fillna(False).astype(float),
+        }
+
+        results = []
+        for s in strategies:
+            en, cn, xn = s["entry"], s["cta"], s["exit"]
+            e_sig = entries.get(en)
+            c_sig = cta_gates.get(cn)
+            x_sig = exits.get(xn)
+            if e_sig is None or c_sig is None or x_sig is None:
+                continue
+
+            if en in ("bb_lo", "rsi35", "rsi28"):
+                base_exit = (prices > bb_hi).fillna(False) if en == "bb_lo" else (prices > e20).fillna(False)
+                add_exit  = {
+                    "ema_x": (e20 < e60).fillna(False), "ma_x": (ma50 < ma200).fillna(False),
+                    "rsi80": (rsi > 80), "rsi70": (rsi > 70),
+                    "obv_down": (obv < obv_ma20).fillna(False), "cmf_neg": (cmf < -0.05).fillna(False),
+                    "trail_8": (prices < hi20_max * 0.92).fillna(False),
+                    "trail_12": (prices < hi20_max * 0.88).fillna(False),
+                }.get(xn, pd.Series(False, index=prices.index))
+                eff_exit = (base_exit | add_exit).astype(float)
+            else:
+                eff_exit = x_sig
+
+            pos_arr = _make_pos(e_sig.fillna(0).values, c_sig.fillna(0).values, eff_exit.fillna(0).values)
+            pos     = pd.Series(pos_arr, index=prices.index)
+
+            cur  = int(pos.iloc[-1])
+            prev = int(pos.iloc[-2]) if len(pos) > 1 else 0
+            if cur == 1 and prev == 0:
+                state = "entry_today"
+            elif cur == 0 and prev == 1:
+                state = "exit_today"
+            elif cur == 1:
+                state = "in_trade"
+            else:
+                state = "waiting"
+
+            # 入场价（当前持仓的成本）
+            entry_price = None
+            if cur == 1:
+                in_trade_idx = pos[::-1].eq(0).idxmax()
+                start_idx = pos.index.get_loc(in_trade_idx) + 1 if in_trade_idx != pos.index[-1] else len(pos) - 1
+                if start_idx < len(prices):
+                    entry_price = round(float(prices.iloc[start_idx]), 2)
+
+            results.append({
+                **s,
+                "state":       state,
+                "in_trade":    cur == 1,
+                "entry_price": entry_price,
+            })
+    except Exception as e:
+        logger.warning(f"_quick_strategy_states {ticker}: {e}")
+        return []
+
+    return results
+
+
+# ──────────────────────────────────────────────
 # Watchlist
 # ──────────────────────────────────────────────
 WATCHLIST = {
@@ -47,6 +254,22 @@ FLOW_ETFS = {
 # ──────────────────────────────────────────────
 # 内部工具
 # ──────────────────────────────────────────────
+
+def _cta_series_full(px: pd.Series) -> pd.Series:
+    """返回完整 CTA 信号序列（和 optimize_stocks._cta_series 相同逻辑）"""
+    r = px.pct_change().dropna()
+    sigs = []
+    for lk in CTA_LOOKBACKS:
+        m = r.rolling(lk).mean() * 252
+        v = r.rolling(CTA_VOL_WIN).std() * np.sqrt(252)
+        sigs.append((m / v.replace(0, np.nan)).clip(-1, 1))
+    return pd.concat(sigs, axis=1).mean(axis=1)
+
+
+def _cta_combo_series(ref_px: pd.Series, target_prices: pd.Series) -> pd.Series:
+    """返回对齐到 target_prices 索引的 CTA 序列"""
+    return _cta_series_full(ref_px).reindex(target_prices.index).ffill().fillna(0)
+
 
 def _cta_combo(smh_px: pd.Series, ref_px: pd.Series, prices: pd.Series) -> float:
     def _cta_s(px):
@@ -78,7 +301,14 @@ def _rsi(prices: pd.Series, period: int = 10) -> float:
 # 单股扫描
 # ──────────────────────────────────────────────
 
-def scan_ticker(ticker: str, smh_px: pd.Series = None, ref_px: pd.Series = None) -> dict:
+def scan_ticker(
+    ticker: str,
+    smh_px: pd.Series = None,
+    ref_px: pd.Series = None,
+    qqq_px: pd.Series = None,
+    extra_ctas: dict = None,
+    top3_map: dict = None,
+) -> dict:
     """扫描单只股票，返回结构化分析结果"""
     try:
         prices = get_prices(ticker, start="2024-01-01")
@@ -86,6 +316,8 @@ def scan_ticker(ticker: str, smh_px: pd.Series = None, ref_px: pd.Series = None)
             smh_px = get_prices("SMH", start="2024-01-01")
         if ref_px is None:
             ref_px = get_prices("SPY", start="2024-01-01")
+        if qqq_px is None:
+            qqq_px = get_prices("QQQ", start="2024-01-01")
         ohlcv = get_ohlcv(ticker)
 
         if prices.empty or len(prices) < 65:
@@ -250,33 +482,46 @@ def scan_ticker(ticker: str, smh_px: pd.Series = None, ref_px: pd.Series = None)
             verdict, verdict_code = "观望", "gray"
             entry_zone = f"等DC20>{dc20h:.0f} 或回踩EMA20≈{e20v:.0f}"
 
+        # ── 最优策略实时信号状态 ──
+        strat_states = []
+        top3_list = (top3_map or {}).get(ticker, [])
+        if top3_list:
+            smh_cta_s = _cta_combo_series(smh_px, prices)
+            spy_cta_s = _cta_combo_series(ref_px, prices)
+            qqq_cta_s = _cta_combo_series(qqq_px, prices)
+            strat_states = _quick_strategy_states(
+                ticker, top3_list, prices, ohlcv,
+                smh_cta_s, spy_cta_s, qqq_cta_s, extra_ctas or {},
+            )
+
         return {
-            "ticker":       ticker,
-            "date":         str(date),
-            "price":        round(px, 2),
-            "price_chg":    round(px_chg, 2),
-            "verdict":      verdict,
-            "verdict_code": verdict_code,
-            "entry_zone":   entry_zone,
-            "score":        score,
-            "signals":      signals,
-            "warnings":     warnings,
-            "stop_atr":     stop_atr,
-            "stop_ema60":   stop_ema60,
-            "stop_pct10":   stop_pct10,
-            "ema20":        round(e20v, 1),
-            "ema60":        round(e60v, 1),
-            "atr":          round(atrv, 1),
-            "atr_pct":      round(atrv / px * 100, 1),
-            "dc20_high":    round(dc20h, 1),
-            "cta_val":      round(cta_val, 2),
-            "smc_val":      smc_val,
-            "rsi":          round(rsiv, 1),
-            "bb_pct":       round(bbpct, 1),
-            "vol_r":        round(volr, 2),
-            "streak":       streak,
-            "rs20":         round(rs20 * 100, 1),
-            "error":        None,
+            "ticker":        ticker,
+            "date":          str(date),
+            "price":         round(px, 2),
+            "price_chg":     round(px_chg, 2),
+            "verdict":       verdict,
+            "verdict_code":  verdict_code,
+            "entry_zone":    entry_zone,
+            "score":         score,
+            "signals":       signals,
+            "warnings":      warnings,
+            "stop_atr":      stop_atr,
+            "stop_ema60":    stop_ema60,
+            "stop_pct10":    stop_pct10,
+            "ema20":         round(e20v, 1),
+            "ema60":         round(e60v, 1),
+            "atr":           round(atrv, 1),
+            "atr_pct":       round(atrv / px * 100, 1),
+            "dc20_high":     round(dc20h, 1),
+            "cta_val":       round(cta_val, 2),
+            "smc_val":       smc_val,
+            "rsi":           round(rsiv, 1),
+            "bb_pct":        round(bbpct, 1),
+            "vol_r":         round(volr, 2),
+            "streak":        streak,
+            "rs20":          round(rs20 * 100, 1),
+            "strategies":    strat_states,   # top3 策略当前状态
+            "error":         None,
         }
 
     except Exception as e:
@@ -296,12 +541,25 @@ def scan_all() -> dict:
     """并行扫描所有 watchlist 股票"""
     smh_px = get_prices("SMH", start="2024-01-01")
     ref_px = get_prices("SPY", start="2024-01-01")
+    qqq_px = get_prices("QQQ", start="2024-01-01")
+
+    # 行业 CTA（和 optimize_stocks 保持一致）
+    _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT"}
+    extra_ctas = {}
+    for _name, _sym in _sector_etfs.items():
+        try:
+            extra_ctas[_name] = _cta_series_full(get_prices(_sym))
+        except Exception:
+            pass
+
+    # 加载已保存的 top3 策略
+    top3_map = _load_top3()
 
     group_results: dict[str, dict] = {g: {} for g in WATCHLIST}
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = {
-            executor.submit(scan_ticker, ticker, smh_px, ref_px): (group, ticker)
+            executor.submit(scan_ticker, ticker, smh_px, ref_px, qqq_px, extra_ctas, top3_map): (group, ticker)
             for group, tickers in WATCHLIST.items()
             for ticker in tickers
         }

@@ -643,25 +643,50 @@ def main(tickers: list | None = None) -> list:
     out_dir = Path(__file__).parent / "output"
     out_dir.mkdir(exist_ok=True)
     if valid:
+        # ── 主表（每股最优策略）──
         rows = []
         for r in valid:
             rows.append({
-                "ticker":      r["ticker"],
-                "sector":      r.get("sector", "其他"),
-                "type":        r["type"],
-                "ann_vol_pct": r["ann_vol"],
-                "entry":       r["entry"],
-                "cta":         r["cta"],
-                "exit":        r["exit"],
-                "calmar":      r["calmar"],
-                "cagr_pct":    r["cagr"],
-                "max_dd_pct":  r["dd"],
-                "sharpe":      r["sharpe"],
-                "n_trades":    r["n_trades"],
+                "ticker":        r["ticker"],
+                "sector":        r.get("sector", "其他"),
+                "type":          r["type"],
+                "ann_vol_pct":   r["ann_vol"],
+                "entry":         r["entry"],
+                "cta":           r["cta"],
+                "exit":          r["exit"],
+                "score":         r["score"],
+                "calmar":        r["calmar"],
+                "cagr_pct":      r["cagr"],
+                "max_dd_pct":    r["dd"],
+                "sharpe":        r["sharpe"],
+                "win_rate":      r.get("win_rate", 0),
+                "n_trades":      r["n_trades"],
                 "in_market_pct": r["in_market"],
             })
         pd.DataFrame(rows).to_csv(out_dir / "strategy_optimization.csv", index=False)
-        print(f"\n  💾 已保存 output/strategy_optimization.csv")
+
+        # ── Top3 详细表（scanner 用于实时信号状态）──
+        top3_rows = []
+        for r in valid:
+            for rank, s in enumerate(r.get("top3", [])[:3], 1):
+                sp = s["periods"]
+                top3_rows.append({
+                    "ticker":    r["ticker"],
+                    "sector":    r.get("sector", "其他"),
+                    "rank":      rank,
+                    "entry":     s["entry"],
+                    "cta":       s["cta"],
+                    "exit":      s["exit"],
+                    "score":     round(s["score"], 2),
+                    "win_rate":  round(s.get("win_rate", 0) * 100, 1),
+                    "ret_1m":    sp["1M"]["ret"],
+                    "ret_3m":    sp["3M"]["ret"],
+                    "ret_ytd":   sp["YTD"]["ret"],
+                    "cagr_1y":   sp["1Y"]["cagr"],
+                    "dd_1y":     sp["1Y"]["dd"],
+                })
+        pd.DataFrame(top3_rows).to_csv(out_dir / "top3_strategies.csv", index=False)
+        print(f"\n  💾 已保存 output/strategy_optimization.csv + top3_strategies.csv")
 
     print()
     return valid

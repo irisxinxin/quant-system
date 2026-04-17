@@ -483,11 +483,41 @@ function renderScan(data,ts){
   $('scanBody').innerHTML=h;
 }
 
+function stratStateHtml(strategies){
+  if(!strategies||!strategies.length) return '';
+  const STATE_CFG = {
+    'entry_today': {bg:'rgba(63,185,80,.15)', border:'rgba(63,185,80,.5)', dot:'#3fb950', label:'今日入场 ▲'},
+    'in_trade':    {bg:'rgba(88,166,255,.12)', border:'rgba(88,166,255,.4)', dot:'#58a6ff', label:'持仓中'},
+    'exit_today':  {bg:'rgba(248,81,73,.12)', border:'rgba(248,81,73,.4)', dot:'#f85149', label:'今日出场 ▼'},
+    'waiting':     {bg:'rgba(255,255,255,.04)', border:'rgba(255,255,255,.1)', dot:'#6e7681', label:'等待'},
+  };
+  const cards = strategies.map(s=>{
+    const cfg = STATE_CFG[s.state] || STATE_CFG['waiting'];
+    const label = `${s.entry}+${s.cta}+${s.exit}`;
+    const ep = s.entry_price ? ` @ $${s.entry_price}` : '';
+    const wr = s.win_rate ? `胜率${s.win_rate}%` : '';
+    const r3m = s.ret_3m != null ? `3M ${s.ret_3m>=0?'+':''}${s.ret_3m}%` : '';
+    return `<div style="padding:8px 12px;border-radius:8px;border:1px solid ${cfg.border};background:${cfg.bg};min-width:0">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span style="width:7px;height:7px;border-radius:50%;background:${cfg.dot};flex-shrink:0"></span>
+        <span style="font-size:11px;font-weight:600;color:${cfg.dot}">${cfg.label}${ep}</span>
+      </div>
+      <div class="mono" style="font-size:10px;color:var(--text3);word-break:break-all">${label}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px">${[wr,r3m].filter(Boolean).join('  ')}</div>
+    </div>`;
+  }).join('');
+  return `<div style="margin-bottom:12px">
+    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">最优策略信号</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px">${cards}</div>
+  </div>`;
+}
+
 function detailHtml(s){
   if(s.error)return`<span style="color:#f85149;font-size:12px">${s.error}</span>`;
   const sigs=(s.signals||[]).map(x=>`<span style="font-size:11px;color:var(--text2);margin-right:10px">• ${x}</span>`).join('');
   const wars=(s.warnings||[]).map(x=>`<span style="font-size:11px;color:#f59e0b;margin-right:10px">⚠ ${x}</span>`).join('');
-  return`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-bottom:12px">
+  return stratStateHtml(s.strategies)+
+  `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-bottom:12px">
     <div>
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">止损参考</div>
       <div class="mono" style="font-size:12px;color:#f85149">2×ATR: $${s.stop_atr}</div>
