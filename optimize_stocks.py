@@ -23,11 +23,35 @@ from strategies.router import classify_ticker
 from backtest.engine import backtest
 from config import CTA_LOOKBACKS, CTA_VOL_WIN
 
-DEFAULT_TICKERS = [
-    "SNOW", "SNDK", "CRCL", "PLTR", "HIMS", "VRT", "INTC", "GOOG",
-    "MSFT", "OKLO", "VST", "ALB", "HOOD", "IREN", "RKLB", "SOXX",
-    "BE", "AMD", "ORCL", "AVGO", "EOSE", "GLD",
-]
+SECTOR_GROUPS = {
+    "🔵 大盘/核心":        ["QQQ", "SPY", "GOOG", "META", "TSLA", "AMZN"],
+    "⚡ 半导体/AI算力":    ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC"],
+    "💾 存储":             ["MU", "WDC", "STX", "SNDK"],
+    "🏗 AI电力/数据中心":  ["BE", "VRT", "ETN", "GEV", "PWR"],
+    "🌐 光子/高速连接":    ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM"],
+    "🚚 物流/运输":        ["ODFL", "XPO", "JBHT", "PCAR", "CMI"],
+    "🏭 工业/航天制造":    ["CAT", "DE", "HWM", "ITT", "EME", "AME"],
+    "💰 金融":             ["MS", "CBOE", "TRV"],
+    "🚀 太空/机器人":      ["LUNR", "PL", "TER", "RKLB"],
+}
+
+# 所有 ticker（去重保序）
+_seen: set = set()
+DEFAULT_TICKERS: list = []
+for _tickers in SECTOR_GROUPS.values():
+    for _t in _tickers:
+        if _t not in _seen:
+            _seen.add(_t)
+            DEFAULT_TICKERS.append(_t)
+
+
+def get_sector(ticker: str) -> str:
+    """返回 ticker 所属板块名，未知返回 '其他'"""
+    for sec, tks in SECTOR_GROUPS.items():
+        if ticker.upper() in tks:
+            return sec
+    return "其他"
+
 
 # 数据不足时跳过
 MIN_BARS = 400
@@ -411,28 +435,42 @@ def main(tickers: list | None = None) -> list:
 
     valid  = [raw_results[t] for t in tickers if not raw_results[t].get("error")]
     errors = [raw_results[t] for t in tickers if raw_results[t].get("error")]
+
+    # 按近期评分降序（板块内排序用）
     valid.sort(key=lambda x: x["score"], reverse=True)
-
-    # ── 汇总表（含分段表现）──
-    print(f"\n{'='*100}")
-    print(f"  最优策略汇总（近期加权评分降序）  排序权重: 1Y_Calmar×60% + 3M收益×25% + 全期×15%")
-    print(f"{'='*100}")
-    print(f"  {'股票':6s}  {'类':2s}  {'最优策略':28s}  {'评分':>5s}  {'全期':>7s}  │  {'1月':>6s}  {'3月':>7s}  {'1年':>7s}  {'1年DD':>7s}")
-    print(f"  {'-'*98}")
-
+    # 附加板块信息
     for r in valid:
-        p    = r["periods"]
-        strat = f"{r['entry']}+{r['cta']}+{r['exit']}"
-        # 近期颜色标记（用文字代替颜色）
-        m1  = f"{p['1M']['ret']:>+5.1f}%"
-        m3  = f"{p['3M']['ret']:>+6.1f}%"
-        m1y = f"{p['1Y']['cagr']:>+6.1f}%"
-        dd1y= f"{p['1Y']['dd']:>+6.1f}%"
-        mark = "🔥" if p["3M"]["ret"] > 15 else ("📈" if p["3M"]["ret"] > 0 else "📉")
-        print(
-            f"  {r['ticker']:6s}  {r['type']:2s}  {strat:28s}  {r['score']:>5.2f}  "
-            f"{r['cagr']:>+6.1f}%  │  {m1}  {m3}  {m1y}  {dd1y}  {mark}"
-        )
+        r["sector"] = get_sector(r["ticker"])
+
+    # ── 按板块分组汇总 ──
+    print(f"\n{'='*108}")
+    print(f"  最优策略汇总（按板块分组）  排序权重: 1Y_Calmar×60% + 3M收益×25% + 全期×15%")
+    print(f"{'='*108}")
+
+    # 确定板块顺序（按 SECTOR_GROUPS 顺序，再加"其他"）
+    ordered_sectors = list(SECTOR_GROUPS.keys()) + ["其他"]
+    sector_map: dict[str, list] = {s: [] for s in ordered_sectors}
+    for r in valid:
+        sector_map.setdefault(r["sector"], []).append(r)
+
+    for sec in ordered_sectors:
+        rows_sec = sector_map.get(sec, [])
+        if not rows_sec:
+            continue
+        print(f"\n  {sec}")
+        print(f"  {'─'*104}")
+        print(f"  {'股票':7s}  {'类':2s}  {'最优策略':30s}  {'评分':>5s}  {'全期CAGR':>8s}  │  {'1月':>6s}  {'3月':>7s}  {'1年':>7s}  {'1年DD':>7s}")
+        print(f"  {'─'*104}")
+        for r in rows_sec:
+            p     = r["periods"]
+            strat = f"{r['entry']}+{r['cta']}+{r['exit']}"
+            mark  = "🔥" if p["3M"]["ret"] > 15 else ("📈" if p["3M"]["ret"] > 0 else "📉")
+            print(
+                f"  {r['ticker']:7s}  {r['type']:2s}  {strat:30s}  {r['score']:>5.2f}  "
+                f"{r['cagr']:>+7.1f}%  │  "
+                f"{p['1M']['ret']:>+5.1f}%  {p['3M']['ret']:>+6.1f}%  "
+                f"{p['1Y']['cagr']:>+6.1f}%  {p['1Y']['dd']:>+6.1f}%  {mark}"
+            )
 
     if errors:
         print(f"\n  ❌ 跳过（数据不足）: {', '.join(r['ticker'] for r in errors)}")
@@ -478,6 +516,7 @@ def main(tickers: list | None = None) -> list:
         for r in valid:
             rows.append({
                 "ticker":      r["ticker"],
+                "sector":      r.get("sector", "其他"),
                 "type":        r["type"],
                 "ann_vol_pct": r["ann_vol"],
                 "entry":       r["entry"],
