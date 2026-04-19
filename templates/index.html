@@ -454,8 +454,9 @@ function earningsBadge(e){
   return ` <span title="财报临近：${e.date}（${e.days_left}天后）" style="cursor:help;font-size:10px;color:#f59e0b;vertical-align:middle">📅${e.days_left}天</span>`;
 }
 
-// 跳转回测
+// 跳转回测（左键在当前页切 tab；中键/右键新 tab 通过 href="?bt=TICKER" 打开）
 function goToBt(ticker, e){
+  e.preventDefault();
   e.stopPropagation();
   sw('bt');
   loadBtTicker(ticker);
@@ -507,7 +508,7 @@ function renderEntrySignals(data){
         <span style="font-size:14px;font-weight:600;color:${cc}">${s.price_chg>=0?'+':''}${s.price_chg}%</span>
         <span style="margin-left:auto;display:flex;gap:8px">
           <button onclick="toggleDetail('entry-dr-${s.ticker}')" style="padding:5px 12px;border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;background:var(--s2)">详情 ▾</button>
-          <button onclick="goToBt('${s.ticker}',event)" style="padding:5px 14px;border:1px solid rgba(88,166,255,.4);border-radius:6px;color:#58a6ff;font-size:12px;cursor:pointer;background:rgba(88,166,255,.08)">📊 查看回测</button>
+          <a href="?bt=${s.ticker}" onclick="goToBt('${s.ticker}',event)" style="padding:5px 14px;border:1px solid rgba(88,166,255,.4);border-radius:6px;color:#58a6ff;font-size:12px;cursor:pointer;background:rgba(88,166,255,.08);text-decoration:none">📊 查看回测</a>
         </span>
       </div>
 
@@ -721,7 +722,7 @@ function detailHtml(s){
     </div>
   </div>
   <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">${sigs}${wars}</div>
-  <button onclick="goToBt('${s.ticker}',event)" style="padding:5px 14px;border:1px solid rgba(88,166,255,.35);border-radius:6px;color:#58a6ff;font-size:12px;cursor:pointer;background:rgba(88,166,255,.07)">📊 查看完整回测 →</button>`;
+  <a href="?bt=${s.ticker}" onclick="goToBt('${s.ticker}',event)" style="padding:5px 14px;border:1px solid rgba(88,166,255,.35);border-radius:6px;color:#58a6ff;font-size:12px;cursor:pointer;background:rgba(88,166,255,.07);text-decoration:none">📊 查看完整回测 →</a>`;
 }
 
 function toggleDetail(id){
@@ -1338,6 +1339,11 @@ function renderBtChart(candles, markers, bah){
 // Init
 // ══════════════════════════════════════════
 loadMacro();
+// 支持 ?bt=TICKER 直接在新 tab 打开回测（右键→在新标签页中打开）
+(function(){
+  const bt = new URLSearchParams(location.search).get('bt');
+  if(bt){ sw('bt'); loadBtTicker(bt.toUpperCase()); }
+})();
 </script>
 </body>
 </html>
