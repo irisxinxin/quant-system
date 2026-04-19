@@ -11,7 +11,8 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
@@ -23,9 +24,14 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="量化交易仪表盘")
 
-_HTML_PATH  = Path(__file__).parent / "templates" / "index.html"
-_CACHE_DIR  = Path(__file__).parent / "cache"
+_HTML_PATH   = Path(__file__).parent / "templates" / "index.html"
+_CACHE_DIR   = Path(__file__).parent / "cache"
+_CHARTS_DIR  = Path(__file__).parent / "output" / "charts"
 _CACHE_DIR.mkdir(exist_ok=True)
+_CHARTS_DIR.mkdir(parents=True, exist_ok=True)
+
+# 挂载 K线图静态文件目录
+app.mount("/charts", StaticFiles(directory=str(_CHARTS_DIR)), name="charts")
 
 # ─── 代码逻辑版本号（信号逻辑变更时手动递增，自动使旧缓存失效）───
 _CODE_VER = "v7"   # bump this whenever signal logic in scanner.py changes

@@ -202,6 +202,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
       <!-- 标题行 -->
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap">
         <span id="bt-ticker-label" style="font-size:20px;font-weight:700;color:var(--text)"></span>
+        <button id="btn-kline-chart" onclick="openKlineChart()" style="padding:4px 12px;border:1px solid rgba(100,200,100,.4);border-radius:6px;color:#7ee787;font-size:12px;cursor:pointer;background:rgba(100,200,100,.08)">📈 K线图</button>
         <div id="bt-strat-tabs" style="display:flex;gap:6px;flex-wrap:wrap"></div>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
           <span id="bt-loading-msg" style="font-size:12px;color:var(--text3)"></span>
@@ -1336,6 +1337,63 @@ function renderBtChart(candles, markers, bah){
 }
 
 // ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// K线图弹窗
+// ══════════════════════════════════════════
+function openKlineChart(){
+  const ticker = btActiveTicker;
+  if(!ticker) return;
+  const url = `/charts/${ticker}.png`;
+  // 先检查图片是否存在
+  const img = new Image();
+  img.onload = () => showKlineModal(ticker, url);
+  img.onerror = () => {
+    // 图片不存在，提示用户
+    alert(`K线图尚未生成，请先运行：\npython3 generate_charts.py ${ticker}`);
+  };
+  img.src = url + '?t=' + Date.now();
+}
+
+function showKlineModal(ticker, url){
+  // 移除已有弹窗
+  const existing = document.getElementById('kline-modal');
+  if(existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'kline-modal';
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);
+    display:flex;align-items:center;justify-content:center;
+    cursor:zoom-out;backdrop-filter:blur(4px);
+  `;
+  overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+
+  overlay.innerHTML = `
+    <div style="position:relative;max-width:95vw;max-height:92vh;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
+        <span style="color:#e6edf3;font-size:15px;font-weight:700">${ticker} — 近1年K线 + 买卖点</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <a href="${url}" download="${ticker}_kline.png"
+             style="font-size:12px;color:#58a6ff;padding:4px 10px;border:1px solid rgba(88,166,255,.4);border-radius:5px;text-decoration:none"
+             onclick="event.stopPropagation()">⬇ 下载</a>
+          <button onclick="document.getElementById('kline-modal').remove()"
+            style="background:#21262d;border:1px solid #30363d;color:#8b949e;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:12px">✕ 关闭</button>
+        </div>
+      </div>
+      <img src="${url}?t=${Date.now()}" alt="${ticker} K线图"
+        style="max-width:100%;max-height:85vh;border-radius:8px;border:1px solid #30363d;box-shadow:0 8px 32px rgba(0,0,0,.6)"
+      />
+      <div style="text-align:center;font-size:11px;color:#484f58">点击图片外区域关闭 · 按 ESC 关闭</div>
+    </div>
+  `;
+
+  // ESC 关闭
+  const esc = (e) => { if(e.key==='Escape'){ overlay.remove(); document.removeEventListener('keydown', esc); } };
+  document.addEventListener('keydown', esc);
+
+  document.body.appendChild(overlay);
+}
+
 // Init
 // ══════════════════════════════════════════
 loadMacro();
