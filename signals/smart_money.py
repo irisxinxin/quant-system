@@ -300,7 +300,7 @@ def detect_fvg(df: pd.DataFrame, min_size: float = SMC_FVG_MIN) -> pd.DataFrame:
 # 5. SMC 综合信号
 # ──────────────────────────────────────────────
 
-def smc_signal(ticker: str) -> pd.DataFrame:
+def smc_signal(ticker: str, df: pd.DataFrame = None) -> pd.DataFrame:
     """
     SMC 综合信号：OB + FVG + BOS/CHOCH 三层确认
 
@@ -314,10 +314,15 @@ def smc_signal(ticker: str) -> pd.DataFrame:
       - 价格在看跌 OB 内
       - 价格在看跌 FVG 内
 
+    Args:
+        ticker: 股票代码（当 df=None 时从缓存加载）
+        df:     已有 OHLCV DataFrame（传入则不重复下载，节省时间）
+
     Returns:
         DataFrame + signal 列：2=强多，1=多，-1=空，-2=强空
     """
-    df = get_ohlcv(ticker)
+    if df is None:
+        df = get_ohlcv(ticker)
     if df.empty:
         return pd.DataFrame()
 

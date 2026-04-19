@@ -56,7 +56,7 @@ def _quick_strategy_states(
     strategies: list,
     prices: pd.Series,
     ohlcv: pd.DataFrame,
-    smh_cta: pd.Series,
+    sect_cta: pd.Series,   # 板块参考ETF的CTA（加密用IBIT，半导体用SMH，等）
     spy_cta: pd.Series,
     qqq_cta: pd.Series,
     extra_ctas: dict,
@@ -129,7 +129,7 @@ def _quick_strategy_states(
         ema20_band   = (prices >= e20 * 0.97) & (prices <= e20 * 1.04) & (e20 > e60)
 
         combo_cta_s = (
-            smh_cta.reindex(prices.index).ffill().fillna(0) +
+            sect_cta.reindex(prices.index).ffill().fillna(0) +
             spy_cta.reindex(prices.index).ffill().fillna(0)
         ) / 2
         qqq_s = qqq_cta.reindex(prices.index).ffill().fillna(0) if qqq_cta is not None \
@@ -160,12 +160,13 @@ def _quick_strategy_states(
         }
 
         # ── CTA 过滤 ──
+        # "smh" gate 保留名称（兼容 top3_strategies.csv 中的历史策略名），但实际用板块ETF CTA
         cta_gates = {
             "none":  pd.Series(1.0, index=prices.index),
             "combo": (combo_cta_s > 0).astype(float),
             "soft":  (combo_cta_s > -0.25).astype(float),
             "spy":   (spy_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
-            "smh":   (smh_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
+            "smh":   (sect_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
             "qqq":   (qqq_s > 0).astype(float),
         }
         for _cn, _cs in (extra_ctas or {}).items():
@@ -441,6 +442,7 @@ def scan_ticker(
     qqq_px: pd.Series = None,
     extra_ctas: dict = None,
     top3_map: dict = None,
+    sector_ref_px: pd.Series = None,   # 板块参考ETF（加密用IBIT，默认用smh_px）
 ) -> dict:
     """扫描单只股票，返回结构化分析结果"""
     try:
@@ -468,45 +470,53 @@ def scan_ticker(
             ohlcv = ohlcv.copy()
             ohlcv.columns = ohlcv.columns.get_level_values(0)
 
-        # ── 技术指标 ──
-        e20 = prices.ewm(span=20, adjust=False).mean()
-        e60 = prices.ewm(span=60, adjust=False).mean()
-        hi  = ohlcv["High"].reindex(prices.index)
-        lo  = ohlcv["Low"].reindex(prices.index)
-        vol = ohlcv["Volume"].reindex(prices.index)
+        # ── 技术指标（仅用近500行做显示，减少计算量；状态机独立用全量）──
+        _DISP = 500
+        prices_disp = prices.iloc[-_DISP:]
+        ohlcv_disp  = ohlcv.reindex(prices_disp.index)
 
-        tr  = pd.concat([hi-lo, (hi-prices.shift()).abs(), (lo-prices.shift()).abs()], axis=1).max(axis=1)
+        e20 = prices_disp.ewm(span=20, adjust=False).mean()
+        e60 = prices_disp.ewm(span=60, adjust=False).mean()
+        hi  = ohlcv_disp["High"]
+        lo  = ohlcv_disp["Low"]
+        vol = ohlcv_disp["Volume"]
+
+        p = prices_disp   # 别名，后续显示计算用近500行
+        tr  = pd.concat([hi-lo, (hi-p.shift()).abs(), (lo-p.shift()).abs()], axis=1).max(axis=1)
         atr = tr.ewm(span=14, adjust=False).mean()
 
-        d    = prices.diff()
+        d    = p.diff()
         gain = d.clip(lower=0).rolling(10).mean()
         loss = (-d.clip(upper=0)).rolling(10).mean()
         rsi  = 100 - 100 / (1 + gain / loss.replace(0, np.nan))
 
-        bb_m   = prices.rolling(20).mean()
-        bb_s   = prices.rolling(20).std()
+        bb_m   = p.rolling(20).mean()
+        bb_s   = p.rolling(20).std()
         bb_lo  = bb_m - 2 * bb_s
-        bb_pct = ((prices - bb_lo) / (4 * bb_s) * 100)
+        bb_pct = ((p - bb_lo) / (4 * bb_s) * 100)
 
         dc20_high  = hi.rolling(20).max().shift(1)
-        dc20_break = prices > dc20_high
+        dc20_break = p > dc20_high
         vol_r      = vol / vol.rolling(20).mean()
 
-        rs20 = float(prices.pct_change(20).iloc[-1]) - float(
-            smh_px.pct_change(20).reindex(prices.index).ffill().iloc[-1]
+        # 板块参考：加密/Fintech用IBIT，其他用SMH
+        _sect_ref = sector_ref_px if sector_ref_px is not None else smh_px
+        rs20 = float(p.pct_change(20).iloc[-1]) - float(
+            _sect_ref.pct_change(20).reindex(p.index).ffill().iloc[-1]
         )
-        cta_macro = _cta_combo(smh_px, ref_px, prices)   # 宏观门控（SMH+SPY均值）
-        cta_stock = float(_cta_series_full(prices).dropna().iloc[-1]) if len(prices) > 80 else 0.0  # 个股自身动量
-        cta_val   = round(cta_stock, 2)                   # 表格展示用个股CTA
+        cta_macro = _cta_combo(_sect_ref, ref_px, prices)   # 宏观门控：板块ETF + SPY
+        cta_stock = float(_cta_series_full(prices).dropna().iloc[-1]) if len(prices) > 80 else 0.0
+        cta_val   = round(cta_stock, 2)
 
         try:
-            smc_df  = smc_signal(ticker)
+            # 只传近300行给 SMC（行级迭代，避免在2800行上运行）
+            smc_df  = smc_signal(ticker, df=ohlcv.iloc[-300:].copy())
             smc_val = int(smc_df["signal"].iloc[-1])
         except Exception:
             smc_val = 0
 
         # ── 最新值 ──
-        px    = float(prices.iloc[-1])
+        px    = float(p.iloc[-1])
         e20v  = float(e20.iloc[-1])
         e60v  = float(e60.iloc[-1])
         atrv  = float(atr.iloc[-1])
@@ -515,12 +525,12 @@ def scan_ticker(
         volr  = float(vol_r.dropna().iloc[-1]) if not vol_r.dropna().empty else 1.0
         dc_ok = bool(dc20_break.iloc[-1])
         dc20h = float(dc20_high.dropna().iloc[-1]) if not dc20_high.dropna().empty else px * 1.1
-        date  = prices.index[-1].date()
+        date  = p.index[-1].date()
 
-        px_chg = float(prices.pct_change().iloc[-1]) * 100
+        px_chg = float(p.pct_change().iloc[-1]) * 100
 
         # 连续涨跌天数
-        rets = prices.pct_change().tail(10)
+        rets = p.pct_change().tail(10)
         streak = 0
         for r in reversed(rets.values):
             if np.isnan(r): break
@@ -535,10 +545,15 @@ def scan_ticker(
         signals  = []
         warnings = []
         score    = 0
-        ema_ok   = e20v > e60v
+        # EMA差距需超过0.5%才算明确死叉，避免微小差异误判趋势
+        _ema_gap_pct = (e20v - e60v) / e60v * 100
+        ema_ok = _ema_gap_pct > -0.5   # EMA20 在 EMA60 的 0.5% 以内视为中性
 
         if ema_ok:
-            signals.append("EMA金叉（趋势向上）")
+            if _ema_gap_pct > 0:
+                signals.append("EMA金叉（趋势向上）")
+            else:
+                signals.append(f"EMA趋势中性（差距{_ema_gap_pct:.1f}%）")
             score += 1
         else:
             warnings.append("EMA死叉（趋势向下）")
@@ -589,10 +604,11 @@ def scan_ticker(
         elif smc_val == 1:
             signals.append("SMC=1（有建仓迹象）")
 
+        _sect_etf_name = getattr(_sect_ref, "name", "板块ETF") or "板块ETF"
         if rs20 > 0.05:
-            signals.append(f"跑赢SMH +{rs20*100:.1f}%")
+            signals.append(f"跑赢{_sect_etf_name} +{rs20*100:.1f}%")
         elif rs20 < -0.05:
-            warnings.append(f"弱于SMH {rs20*100:.1f}%")
+            warnings.append(f"弱于{_sect_etf_name} {rs20*100:.1f}%")
 
         if cta_macro < 0:
             warnings.append(f"板块CTA={cta_macro:.2f}，禁止入场")
@@ -609,12 +625,13 @@ def scan_ticker(
         strat_states = []
         top3_list = (top3_map or {}).get(ticker, [])
         if top3_list:
-            smh_cta_s = _cta_combo_series(smh_px, prices)
-            spy_cta_s = _cta_combo_series(ref_px, prices)
-            qqq_cta_s = _cta_combo_series(qqq_px, prices)
+            # 策略状态机的 "combo" gate 用板块参考ETF，而非固定的 SMH
+            sect_cta_s = _cta_combo_series(_sect_ref, prices)
+            spy_cta_s  = _cta_combo_series(ref_px, prices)
+            qqq_cta_s  = _cta_combo_series(qqq_px, prices)
             strat_states = _quick_strategy_states(
                 ticker, top3_list, prices, ohlcv,
-                smh_cta_s, spy_cta_s, qqq_cta_s, extra_ctas or {},
+                sect_cta_s, spy_cta_s, qqq_cta_s, extra_ctas or {},
             )
 
         # 策略状态统计（用于修正 verdict）
@@ -640,8 +657,9 @@ def scan_ticker(
         # ── 综合判断 ──
         # 优先级：已在仓/出场信号 > 新入场信号 > 宏观过滤 > 技术评分
 
-        # 1. 策略全部在仓：已入场，不受 ema_ok 限制
-        if n_intrade == n_strats and n_strats > 0:
+        # 1. 有策略在仓（全部或部分）：持仓续持，不受 ema_ok 限制
+        #    注意：即使只有部分策略在仓，也不能显示"回避"，否则误导用户平仓
+        if n_intrade > 0 and n_entry == 0 and n_exit == 0 and n_strats > 0:
             verdict, verdict_code = "持仓续持", "blue"
             gap_pct = round((px - e20v) / e20v * 100, 1)
             if gap_pct <= 3:
@@ -650,7 +668,8 @@ def scan_ticker(
                 entry_zone = f"距EMA20 {gap_pct}%，等回踩≈${e20v:.1f}再入"
             else:
                 entry_zone = f"距EMA20 {gap_pct}%（追高风险大），等回踩≈${e20v:.1f}"
-            signals.append(f"✓ Top{n_strats}策略均在仓中（非新买点）")
+            in_label = f"Top{n_strats}策略均在仓" if n_intrade == n_strats else f"{n_intrade}/{n_strats}策略在仓"
+            signals.append(f"✓ {in_label}（非新买点）")
 
         # 2. 有策略今日出场
         elif n_exit > 0 and n_entry == 0:
@@ -750,14 +769,40 @@ def scan_ticker(
 def scan_all() -> dict:
     """并行扫描所有 watchlist 股票"""
     # 使用完整历史与优化器保持一致（策略状态机需要足够的历史数据）
-    smh_px = get_prices("SMH")
     ref_px = get_prices("SPY")
     qqq_px = get_prices("QQQ")
 
-    # 行业 CTA（和 optimize_stocks 保持一致）
-    _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT"}
+    # 板块 → 参考ETF（从 optimize_stocks 导入，单一来源避免两份定义不同步）
+    from optimize_stocks import GROUP_SECTOR_ETF
+
+    # 预下载所有唯一板块ETF（并行）
+    unique_etfs = set(GROUP_SECTOR_ETF.values())
+    sector_px: dict[str, pd.Series] = {}
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        fs = {ex.submit(get_prices, sym): sym for sym in unique_etfs}
+        for f in as_completed(fs):
+            sym = fs[f]
+            try:
+                sector_px[sym] = f.result()
+            except Exception:
+                pass
+
+    # 构建 ticker → sector_ref_px 映射
+    ticker_sector_ref: dict[str, pd.Series] = {}
+    for group, tickers in WATCHLIST.items():
+        etf_sym = GROUP_SECTOR_ETF.get(group, "SPY")
+        ref = sector_px.get(etf_sym, ref_px)
+        for t in tickers:
+            ticker_sector_ref[t] = ref
+
+    # smh_px 保留供 _quick_strategy_states 内部固定的 "smh" CTA gate 使用
+    smh_px = sector_px.get("SMH", get_prices("SMH"))
+
+    # 行业 CTA（和 optimize_stocks 保持一致，必须覆盖所有优化器用到的 CTA 名称）
+    _sector_etf_keys = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT",
+                        "xme": "XME", "xlf": "XLF", "xli": "XLI"}
     extra_ctas = {}
-    for _name, _sym in _sector_etfs.items():
+    for _name, _sym in _sector_etf_keys.items():
         try:
             extra_ctas[_name] = _cta_series_full(get_prices(_sym))
         except Exception:
@@ -770,7 +815,10 @@ def scan_all() -> dict:
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = {
-            executor.submit(scan_ticker, ticker, smh_px, ref_px, qqq_px, extra_ctas, top3_map): (group, ticker)
+            executor.submit(
+                scan_ticker, ticker, smh_px, ref_px, qqq_px, extra_ctas, top3_map,
+                ticker_sector_ref.get(ticker),   # 每个板块用对应ETF
+            ): (group, ticker)
             for group, tickers in WATCHLIST.items()
             for ticker in tickers
         }
@@ -785,7 +833,7 @@ def scan_all() -> dict:
                     "score": 0, "signals": [], "warnings": [],
                 }
 
-    order_map = {"green": 0, "yellow": 1, "gray": 2, "red": 3}
+    order_map = {"green": 0, "blue": 1, "yellow": 2, "gray": 3, "red": 4}  # blue=持仓续持排黄色前
     ordered = {}
     for group, tickers in WATCHLIST.items():
         lst = [group_results[group].get(t, {"ticker": t, "verdict_code": "gray", "price": 0,

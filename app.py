@@ -28,7 +28,7 @@ _CACHE_DIR  = Path(__file__).parent / "cache"
 _CACHE_DIR.mkdir(exist_ok=True)
 
 # ─── 代码逻辑版本号（信号逻辑变更时手动递增，自动使旧缓存失效）───
-_CODE_VER = "v6"   # bump this whenever signal logic in scanner.py changes
+_CODE_VER = "v7"   # bump this whenever signal logic in scanner.py changes
 
 # ─── Watchlist 版本哈希（watchlist 变动时自动使旧缓存失效）───
 _wl_hash = hashlib.md5(

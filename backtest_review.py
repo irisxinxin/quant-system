@@ -50,7 +50,7 @@ def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray) -> n
 
 
 def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
-                   smh_cta: pd.Series, spy_cta: pd.Series, qqq_cta: pd.Series | None = None,
+                   sect_cta: pd.Series, spy_cta: pd.Series, qqq_cta: pd.Series | None = None,
                    extra_ctas: dict | None = None):
     """
     用指定参数重建仓位信号序列。
@@ -99,11 +99,13 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
     vol_surge_up = (vol_ratio > 1.5) & (prices > e20)
     hi20_max     = hi.rolling(20).max()
     ema20_band   = (prices >= e20 * 0.97) & (prices <= e20 * 1.04) & (e20 > e60)
+    # EMA金叉：今天穿上，昨天还在下面（事件型，和 optimize_stocks 保持一致）
+    ema_cross_up = ((e20 > e60) & (e20.shift(1) <= e60.shift(1))).fillna(False)
     rsi_deep_os  = rsi < 35
     rsi_ext_os   = rsi < 28
 
     combo_cta_s = (
-        smh_cta.reindex(prices.index).ffill().fillna(0) +
+        sect_cta.reindex(prices.index).ffill().fillna(0) +
         spy_cta.reindex(prices.index).ffill().fillna(0)
     ) / 2
     qqq_s = qqq_cta.reindex(prices.index).ffill().fillna(0) if qqq_cta is not None \
@@ -111,8 +113,9 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
 
     entries = {
         "ema2060":       (e20 > e60).fillna(False).astype(float),
+        "ema_cross":     ema_cross_up.astype(float),                                 # 金叉当日事件
         "dc20":          (prices > dc20h).fillna(False).astype(float),
-        "dc20|ema":      ((prices > dc20h) | (e20 > e60)).fillna(False).astype(float),
+        "dc20|ema":      ((prices > dc20h) | ema_cross_up).fillna(False).astype(float),  # DC20突破 OR 金叉当日
         "ma5200":        (ma50 > ma200).fillna(False).astype(float),
         "bb_lo":         (prices < bb_lo).fillna(False).astype(float),
         "obv_up":        (obv > obv_ma20).fillna(False).astype(float),
@@ -132,7 +135,7 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         "combo": (combo_cta_s > 0).astype(float),
         "soft":  (combo_cta_s > -0.25).astype(float),
         "spy":   (spy_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
-        "smh":   (smh_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
+        "smh":   (sect_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
         "qqq":   (qqq_s > 0).astype(float),
     }
     if extra_ctas:
@@ -186,9 +189,9 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
 # 主函数：优化 + 信号提取
 # ──────────────────────────────────────────────
 
-def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta, qqq_cta=None, extra_ctas=None):
+def _signals_for_combo(ticker, entry_name, cta_name, exit_name, sect_cta, spy_cta, qqq_cta=None, extra_ctas=None):
     """重建指定策略，返回 candles/markers/trades/metrics dict"""
-    prices, ohlcv, signal = _build_signals(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta, qqq_cta, extra_ctas)
+    prices, ohlcv, signal = _build_signals(ticker, entry_name, cta_name, exit_name, sect_cta, spy_cta, qqq_cta, extra_ctas)
     res       = backtest(prices, signal)
     trades_df = res["trades"]
 
@@ -386,18 +389,32 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, smh_cta, spy_cta
 
 def get_optimal_and_signals(ticker: str) -> dict:
     """
-    1. 跑批量优化找到 Top 3 策略
-    2. 对每个策略重建信号 + 提取买卖点
+    1. 优先从 top3_strategies.csv 读取已优化策略（与扫描页保持一致）
+    2. 若 CSV 无该股票，则跑批量优化找到 Top 3 策略
+    3. 对每个策略重建信号 + 提取买卖点
     返回 dict 可直接序列化为 JSON
     """
     try:
-        smh_px  = get_prices("SMH")
+        from optimize_stocks import SECTOR_GROUPS, GROUP_SECTOR_ETF
+        import pandas as pd
+        from pathlib import Path as _Path
+
         spy_px  = get_prices("SPY")
         qqq_px  = get_prices("QQQ")
-        smh_cta = _cta_series(smh_px)
         spy_cta = _cta_series(spy_px)
         qqq_cta = _cta_series(qqq_px)
-        _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT"}
+
+        # 根据 ticker 所属板块选择正确的参考 ETF
+        ticker_sect_etf = "SPY"
+        for group, tickers in SECTOR_GROUPS.items():
+            if ticker in tickers:
+                ticker_sect_etf = GROUP_SECTOR_ETF.get(group, "SPY")
+                break
+        sect_px  = get_prices(ticker_sect_etf)
+        sect_cta = _cta_series(sect_px)
+
+        _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR",
+                        "ibit": "IBIT", "xme": "XME", "xlf": "XLF", "xli": "XLI"}
         extra_ctas = {}
         for _name, _sym in _sector_etfs.items():
             try:
@@ -405,14 +422,34 @@ def get_optimal_and_signals(ticker: str) -> dict:
             except Exception:
                 pass
 
-        # ── 找 Top 3 最优策略 ──
-        from optimize_stocks import optimize_ticker
-        opt = optimize_ticker(ticker, smh_cta, spy_cta, qqq_cta, extra_ctas)
-        if opt.get("error"):
-            return {"ticker": ticker, "error": opt["error"]}
+        # ── 优先从 CSV 读取 Top 3（与扫描页保持一致，避免回测页和扫描页不同）──
+        top3 = []
+        _csv = _Path(__file__).parent / "output" / "top3_strategies.csv"
+        if _csv.exists():
+            try:
+                _df = pd.read_csv(_csv)
+                _rows = _df[_df["ticker"] == ticker].sort_values("rank")
+                if len(_rows) > 0:
+                    for _, row in _rows.iterrows():
+                        top3.append({
+                            "entry": row["entry"],
+                            "cta":   row["cta"],
+                            "exit":  row["exit"],
+                            "score": float(row["score"]),
+                        })
+                    logger.info(f"  {ticker}: 从CSV读取{len(top3)}个策略")
+            except Exception as _e:
+                logger.warning(f"  {ticker}: 读CSV失败 ({_e})，将重新优化")
+                top3 = []
 
-        # Top 3 策略
-        top3 = opt.get("top3", [])[:3]
+        # 若 CSV 无此 ticker，回退到在线优化
+        if not top3:
+            from optimize_stocks import optimize_ticker
+            opt = optimize_ticker(ticker, sect_cta, spy_cta, qqq_cta, extra_ctas)
+            if opt.get("error"):
+                return {"ticker": ticker, "error": opt["error"]}
+            top3 = opt.get("top3", [])[:3]
+
         if not top3:
             return {"ticker": ticker, "error": "无有效策略"}
 
@@ -420,7 +457,7 @@ def get_optimal_and_signals(ticker: str) -> dict:
         for rank, strat in enumerate(top3):
             en, cn, xn = strat["entry"], strat["cta"], strat["exit"]
             try:
-                sig_data = _signals_for_combo(ticker, en, cn, xn, smh_cta, spy_cta, qqq_cta, extra_ctas=extra_ctas)
+                sig_data = _signals_for_combo(ticker, en, cn, xn, sect_cta, spy_cta, qqq_cta, extra_ctas=extra_ctas)
             except Exception as e:
                 logger.warning(f"  #{rank+1} {en}+{cn}+{xn} failed: {e}")
                 continue

@@ -50,6 +50,26 @@ for _tickers in SECTOR_GROUPS.values():
             DEFAULT_TICKERS.append(_t)
 
 
+# 板块 → 参考ETF（CTA门控和RS比较用）
+# 注意：黄金/大盘用SPY避免循环引用
+GROUP_SECTOR_ETF = {
+    "🔵 大盘/核心":        "SPY",
+    "⚡ 半导体/AI算力":    "SMH",
+    "💾 存储":             "SMH",
+    "🏗 AI电力/数据中心":  "XLI",
+    "🌐 光子/高速连接":    "SMH",
+    "💼 软件/AI数据":      "IGV",
+    "🚚 物流/运输":        "XLI",
+    "🏭 工业/航天制造":    "XAR",
+    "💰 金融":             "XLF",
+    "🪙 加密/Fintech":     "IBIT",
+    "🔋 电池/稀土":        "XME",
+    "🚀 太空/机器人":      "XAR",
+    "🏥 消费/健康":        "XLY",
+    "🥇 黄金/避险":        "SPY",
+}
+
+
 def get_sector(ticker: str) -> str:
     """返回 ticker 所属板块名，未知返回 '其他'"""
     for sec, tks in SECTOR_GROUPS.items():
@@ -61,12 +81,15 @@ def get_sector(ticker: str) -> str:
 # 数据不足时跳过（250≈1年交易日，足以计算1Y/3M/1M分段绩效）
 MIN_BARS = 250
 
-# 近期权重：优化目标 = 50%×近1年Calmar + 25%×近3月收益率 + 15%×2026年初至今Calmar + 10%×全期Calmar
-# 2026年AI量化资金主导市场，YTD权重单独拎出加强
-W_1Y  = 0.50
-W_3M  = 0.25
-W_YTD = 0.15   # 2026 YTD：重点奖励在今年上涨行情中表现好的策略
-W_ALL = 0.10
+# 近期权重：优化目标 = 近期胜率&收益优先，全期历史仅做参考
+# 1M 10% + 3M 25% + 6M 20% + 1Y 40% + 全期 5%
+# 近期活跃性已通过硬过滤保证（近2年无交易直接拒绝），
+# 评分排序进一步向近6月、近3月、近1月倾斜
+W_1Y  = 0.40   # 近1年Calmar（风险收益，最重要的单项）
+W_6M  = 0.20   # 近6月Calmar（中期实战）
+W_3M  = 0.25   # 近3月总收益（近期行情实战，标准化）
+W_1M  = 0.10   # 近1月总收益（最新动量）
+W_ALL = 0.05   # 全期Calmar（仅作稳健性参考）
 
 YTD_START = "2026-01-01"   # 2026年初至今
 
@@ -114,17 +137,18 @@ def _period_stats(ret: pd.Series) -> dict:
     dd      = ((cum - cum.cummax()) / cum.cummax()).min() * 100
     n_years = len(ret) / 252
     cagr    = ((cum.iloc[-1] ** (1 / n_years)) - 1) * 100 if n_years > 0.05 else total
-    calmar  = abs(cagr / dd) if dd < 0 else 0.0
+    calmar  = cagr / abs(dd) if dd < 0 and cagr > 0 else 0.0   # 负收益不给正Calmar
     return {"ret": round(total, 1), "cagr": round(cagr, 1),
             "dd": round(dd, 1), "calmar": round(calmar, 2)}
 
 
 def _multi_period(strat_ret: pd.Series) -> dict:
-    """返回 1M/3M/YTD/1Y/全期 五段绩效"""
+    """返回 1M/3M/6M/YTD/1Y/全期 六段绩效"""
     ytd = strat_ret[strat_ret.index >= YTD_START] if not strat_ret.empty else strat_ret.iloc[0:0]
     return {
         "1M":  _period_stats(strat_ret.iloc[-21:]  if len(strat_ret) >= 21  else strat_ret),
         "3M":  _period_stats(strat_ret.iloc[-63:]  if len(strat_ret) >= 63  else strat_ret),
+        "6M":  _period_stats(strat_ret.iloc[-126:] if len(strat_ret) >= 126 else strat_ret),
         "YTD": _period_stats(ytd if len(ytd) >= 10 else strat_ret.iloc[-63:]),  # 2026至今，不足时降级3M
         "1Y":  _period_stats(strat_ret.iloc[-252:] if len(strat_ret) >= 252 else strat_ret),
         "All": _period_stats(strat_ret),
@@ -136,24 +160,26 @@ CALMAR_CAP = 4.0   # 防止极少笔交易的过拟合策略"垄断"排名
 def _recency_score(periods: dict, avg_hold: float = 1.0, win_rate: float = 0.5) -> float:
     """近期加权综合评分（越高越好）
 
-    权重组成：
-      50% × 近1年Calmar（风险收益）
-      25% × 近3月总收益（最近行情实战）
-      15% × 2026 YTD Calmar（AI量化资金主导年份）
-      10% × 全期Calmar（长期稳健性）
+    权重组成（近期活跃优先，全期历史仅做参考）：
+      40% × 近1年Calmar（风险收益，最重要的单项）
+      20% × 近6月Calmar（中期实战表现）
+      25% × 近3月总收益（近期行情实战，已标准化）
+      10% × 近1月总收益（最新动量，已标准化）
+       5% × 全期Calmar（长期稳健性参考，权重极小）
       +持仓时长加成（趋势型策略奖励）
-      +胜率加成（高胜率策略额外奖励，低胜率惩罚）
+      +胜率加成（高胜率额外奖励，低胜率惩罚）
     """
     c1y  = min(periods["1Y"]["calmar"], CALMAR_CAP)
-    r3m  = periods["3M"]["ret"] / 30.0   # 标准化到 ~0~1 范围
-    cytd = min(periods["YTD"]["calmar"], CALMAR_CAP)  # 2026 YTD
+    c6m  = min(periods["6M"]["calmar"], CALMAR_CAP)   # 近6月Calmar
+    r3m  = periods["3M"]["ret"] / 30.0                # 标准化到 ~0~1（30%≈1.0）
+    r1m  = periods["1M"]["ret"] / 15.0                # 标准化到 ~0~1（15%≈1.0）
     call = min(periods["All"]["calmar"], CALMAR_CAP)
     # 持仓时长加成：平均持仓越长（趋势型）得分越高，上限0.5分
     hold_bonus = min(avg_hold / 20.0, 0.5)
     # 胜率加成：以50%为中轴，每高1%加0.02，每低1%减0.02，上限±0.3
-    # 55%胜率 → +0.1；45%胜率 → -0.1；60%以上 → +0.2封顶
     wr_bonus = max(-0.3, min(0.3, (win_rate - 0.50) * 2.0))
-    return W_1Y * c1y + W_3M * r3m + W_YTD * cytd + W_ALL * call + 0.15 * hold_bonus + 0.10 * wr_bonus
+    return (W_1Y * c1y + W_6M * c6m + W_3M * r3m + W_1M * r1m + W_ALL * call
+            + 0.15 * hold_bonus + 0.10 * wr_bonus)
 
 
 # ──────────────────────────────────────────────
@@ -214,7 +240,7 @@ def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray) -> n
 
 def optimize_ticker(
     ticker: str,
-    smh_cta: pd.Series,
+    sect_cta: pd.Series,   # 板块参考ETF CTA（加密用IBIT，半导体用SMH，等）
     spy_cta: pd.Series,
     qqq_cta: pd.Series | None = None,
     extra_ctas: dict | None = None,
@@ -278,7 +304,7 @@ def optimize_ticker(
 
         # ── CTA 日线序列（对齐到本股票日期）──
         combo_cta_s = (
-            smh_cta.reindex(prices.index).ffill().fillna(0) +
+            sect_cta.reindex(prices.index).ffill().fillna(0) +
             spy_cta.reindex(prices.index).ffill().fillna(0)
         ) / 2
 
@@ -326,9 +352,9 @@ def optimize_ticker(
         cta_gates = {
             "none":  pd.Series(1.0, index=prices.index),
             "combo": (combo_cta_s > 0).astype(float),
-            "soft":  (combo_cta_s > -0.25).astype(float),   # 宽松：SMH+SPY 轻微负向也允许入场
+            "soft":  (combo_cta_s > -0.25).astype(float),   # 宽松：板块ETF+SPY 轻微负向也允许入场
             "spy":   (spy_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
-            "smh":   (smh_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
+            "smh":   (sect_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),  # "smh"保留名称兼容CSV，实际用板块ETF
             "qqq":   (qqq_s > 0).astype(float),             # 纳指趋势，更贴近科技股
         }
 
@@ -393,6 +419,15 @@ def optimize_ticker(
                     if in_mkt < 0.03 or in_mkt > 0.98:   # 过滤极端情况
                         continue
 
+                    # 近期活跃过滤：近2年内必须有新入场 OR 当前在仓
+                    # 防止选出"历史绩效好但近2年零交易"的死策略
+                    _RECENCY_BARS = 504   # ≈ 2年交易日
+                    _recent_sig = sig_s.iloc[-_RECENCY_BARS:]
+                    _new_entries_recent = ((_recent_sig > 0) & (_recent_sig.shift(1, fill_value=0) == 0)).sum()
+                    _in_trade_now = sig_s.iloc[-1] == 1.0
+                    if _new_entries_recent == 0 and not _in_trade_now:
+                        continue  # 近2年无新入场且当前未持仓 → 策略已失效，跳过
+
                     try:
                         res    = backtest(prices, sig_s)
                         m      = res["metrics"]
@@ -420,21 +455,37 @@ def optimize_ticker(
 
                         # 分段绩效（近1年/3月/1月/YTD）
                         periods = _multi_period(strat_ret)
+
+                        # 近期绩效过滤（多层保险）
+                        # 1) 近1年亏损超过10% → 直接跳过，无论近期是否反弹
+                        if periods["1Y"]["cagr"] < -10:
+                            continue
+                        # 2) 近1年亏损超过5% + 近3月不盈利 → 持续失效
+                        if periods["1Y"]["cagr"] < -5 and periods["3M"]["ret"] <= 0:
+                            continue
+                        # 3) 近1年和近3月都亏损 → 持续失效，跳过
+                        if periods["1Y"]["cagr"] < 0 and periods["3M"]["cagr"] < 0:
+                            continue
+                        # 4) 近3月大幅亏损（>15%）且1年收益偏低（<30%）→ 近期严重失效
+                        if periods["3M"]["ret"] < -15 and periods["1Y"]["cagr"] < 30:
+                            continue
+
                         score   = _recency_score(periods, avg_hold, win_rate)
 
                         results.append({
-                            "entry":     en,
-                            "cta":       cn,
-                            "exit":      xn,
-                            "score":     score,      # 近期加权综合评分（排序用）
-                            "calmar":    calmar,
-                            "cagr":      cagr,
-                            "dd":        dd,
-                            "sharpe":    sharpe,
-                            "n_trades":  n_tr,
-                            "win_rate":  win_rate,
-                            "in_market": in_mkt,
-                            "periods":   periods,
+                            "entry":          en,
+                            "cta":            cn,
+                            "exit":           xn,
+                            "score":          score,      # 近期加权综合评分（排序用）
+                            "calmar":         calmar,
+                            "cagr":           cagr,
+                            "dd":             dd,
+                            "sharpe":         sharpe,
+                            "n_trades":       n_tr,
+                            "avg_hold_days":  round(avg_hold, 1),
+                            "win_rate":       win_rate,
+                            "in_market":      in_mkt,
+                            "periods":        periods,
                         })
                     except Exception:
                         pass
@@ -446,32 +497,57 @@ def optimize_ticker(
         results.sort(key=lambda x: x["score"], reverse=True)
         best = results[0]
 
-        # ── 构建 top3：三个槽保证三种风格 ──
+        # ── 过滤质量太差的策略 ──
+        # 平均持仓天数 < 3 天 → 超短线噪音，交易成本会吃掉收益
+        # 交易次数 > 80 次 → 过度交易，实盘交易成本会大幅侵蚀收益
+        MIN_AVG_HOLD_DAYS = 3
+        MIN_TRADES = 3
+        MAX_TRADES = 80
+        results = [
+            r for r in results
+            if r.get("n_trades", 0) >= MIN_TRADES
+            and r.get("n_trades", 999) <= MAX_TRADES
+            and (r.get("avg_hold_days") is None or r.get("avg_hold_days", 999) >= MIN_AVG_HOLD_DAYS)
+        ]
+
+        if not results:
+            return {"ticker": ticker, "type": asset_type, "error": "无有效策略（过滤后为空）"}
+
+        results.sort(key=lambda x: x["score"], reverse=True)
+        best = results[0]
+
+        # ── 构建 top3：强制三种不同入场条件 ──
         #   #1: 综合最优（任何风格）
-        #   #2: 最佳趋势持仓型出场（rsi_fade/ema_x/ma_x）— 吃大波段
-        #   #3: 最佳低买反弹型入场（rsi35/rsi28/mfi_os/bb_lo）— 低点买入
+        #   #2: 最佳趋势型出场（rsi_fade/ema_x/ma_x）且入场条件不同于#1
+        #   #3: 最佳低买型入场（rsi35/rsi28/mfi_os/bb_lo）且入场条件不同于#1/#2
         TREND_EXITS = {"rsi_fade", "ema_x", "ma_x"}
         DIP_ENTRIES = {"rsi35", "rsi28", "mfi_os", "bb_lo"}
 
-        seen = {(best["entry"], best["cta"], best["exit"])}
+        used_entries = {best["entry"]}
+        seen_combos  = {(best["entry"], best["cta"], best["exit"])}
 
-        # #2: 最佳趋势出场
+        # #2: 不同入场 + 最佳趋势出场
         slot2 = next((r for r in results
-                      if r["exit"] in TREND_EXITS
-                      and (r["entry"], r["cta"], r["exit"]) not in seen), None)
-        if slot2 is None:   # 无趋势出场时取下一个高分策略
+                      if r["entry"] not in used_entries
+                      and r["exit"] in TREND_EXITS
+                      and (r["entry"], r["cta"], r["exit"]) not in seen_combos), None)
+        if slot2 is None:   # 趋势出场找不到就放宽：不同入场即可
             slot2 = next((r for r in results
-                          if (r["entry"], r["cta"], r["exit"]) not in seen), None)
+                          if r["entry"] not in used_entries
+                          and (r["entry"], r["cta"], r["exit"]) not in seen_combos), None)
         if slot2:
-            seen.add((slot2["entry"], slot2["cta"], slot2["exit"]))
+            used_entries.add(slot2["entry"])
+            seen_combos.add((slot2["entry"], slot2["cta"], slot2["exit"]))
 
-        # #3: 最佳低买策略
+        # #3: 不同入场 + 最佳低买型入场
         slot3 = next((r for r in results
-                      if r["entry"] in DIP_ENTRIES
-                      and (r["entry"], r["cta"], r["exit"]) not in seen), None)
-        if slot3 is None:   # 无低买策略时取下一个高分策略
+                      if r["entry"] not in used_entries
+                      and r["entry"] in DIP_ENTRIES
+                      and (r["entry"], r["cta"], r["exit"]) not in seen_combos), None)
+        if slot3 is None:   # 低买找不到就放宽：不同入场即可
             slot3 = next((r for r in results
-                          if (r["entry"], r["cta"], r["exit"]) not in seen), None)
+                          if r["entry"] not in used_entries
+                          and (r["entry"], r["cta"], r["exit"]) not in seen_combos), None)
 
         top3 = [r for r in [best, slot2, slot3] if r is not None]
 
@@ -514,23 +590,43 @@ def main(tickers: list | None = None) -> list:
     print(f"  策略批量优化  共 {len(tickers)} 只  ({n_entries}×{n_ctas}×{n_exits}={n_entries*n_ctas*n_exits}种组合/只)")
     print(f"{'='*72}")
 
+    # 构建 ticker → 板块ETF 映射
+    ticker_sect_etf: dict[str, str] = {}
+    for group, gtickers in SECTOR_GROUPS.items():
+        etf_sym = GROUP_SECTOR_ETF.get(group, "SPY")
+        for t in gtickers:
+            ticker_sect_etf[t] = etf_sym
+
     # 预取共用数据
-    print("📥 获取参考数据 SMH / SPY / QQQ ...")
-    smh_px   = get_prices("SMH")
+    unique_sect_etfs = set(ticker_sect_etf.get(t, "SPY") for t in tickers)
+    print(f"📥 获取参考数据 SPY / QQQ + 板块ETF {unique_sect_etfs} ...")
     spy_px   = get_prices("SPY")
     qqq_px   = get_prices("QQQ")
-    smh_cta  = _cta_series(smh_px)
     spy_cta  = _cta_series(spy_px)
     qqq_cta  = _cta_series(qqq_px)
+
+    # 预下载所有需要的板块ETF（并行）
+    sect_px: dict[str, pd.Series] = {}
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        fs = {ex.submit(get_prices, sym): sym for sym in unique_sect_etfs}
+        for f in as_completed(fs):
+            sym = fs[f]
+            try:
+                sect_px[sym] = f.result()
+            except Exception:
+                pass
+    sect_cta_map: dict[str, pd.Series] = {sym: _cta_series(px) for sym, px in sect_px.items()}
+
     # 行业 CTA：soxx=费城半导体, igv=软件, xly=消费, xar=军工, ibit=加密
-    _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT"}
+    _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT", "xme": "XME", "xlf": "XLF", "xli": "XLI"}
     extra_ctas = {}
     for _name, _sym in _sector_etfs.items():
         try:
-            extra_ctas[_name] = _cta_series(get_prices(_sym))
+            _px = sect_px.get(_sym) or get_prices(_sym)
+            extra_ctas[_name] = _cta_series(_px)
         except Exception:
             pass
-    print(f"   SMH CTA: {smh_cta.iloc[-1]:.2f}  SPY CTA: {spy_cta.iloc[-1]:.2f}  QQQ CTA: {qqq_cta.iloc[-1]:.2f}")
+    print(f"   SPY CTA: {spy_cta.iloc[-1]:.2f}  QQQ CTA: {qqq_cta.iloc[-1]:.2f}")
 
     print(f"\n⚡ 并行优化中...\n")
 
@@ -548,7 +644,11 @@ def main(tickers: list | None = None) -> list:
     raw_results = {}
     with ThreadPoolExecutor(max_workers=6) as executor:
         futures = {
-            executor.submit(optimize_ticker, t, smh_cta, spy_cta, qqq_cta, extra_ctas): t
+            executor.submit(
+                optimize_ticker, t,
+                sect_cta_map.get(ticker_sect_etf.get(t, "SPY"), spy_cta),  # 板块对应CTA
+                spy_cta, qqq_cta, extra_ctas
+            ): t
             for t in tickers
         }
         for future in as_completed(futures):
@@ -579,7 +679,7 @@ def main(tickers: list | None = None) -> list:
 
     # ── 按板块分组汇总 ──
     print(f"\n{'='*108}")
-    print(f"  最优策略汇总（按板块分组）  排序权重: 1Y_Calmar×50% + 3M收益×25% + YTD(2026)×15% + 全期×10% + 胜率加成")
+    print(f"  最优策略汇总（按板块分组）  排序权重: 1Y_Calmar×40% + 6M×20% + 3M收益×25% + 1M×10% + 全期×5% + 胜率/持仓加成")
     print(f"{'='*108}")
 
     # 确定板块顺序（按 SECTOR_GROUPS 顺序，再加"其他"）
@@ -670,7 +770,15 @@ def main(tickers: list | None = None) -> list:
                 "n_trades":      r["n_trades"],
                 "in_market_pct": r["in_market"],
             })
-        pd.DataFrame(rows).to_csv(out_dir / "strategy_optimization.csv", index=False)
+        # ── 合并写入：只更新本次优化的 ticker，保留其他 ticker 已有结果 ──
+        opt_csv = out_dir / "strategy_optimization.csv"
+        new_df = pd.DataFrame(rows)
+        if opt_csv.exists():
+            old_df = pd.read_csv(opt_csv)
+            optimized_tickers = set(new_df["ticker"].unique())
+            old_df = old_df[~old_df["ticker"].isin(optimized_tickers)]
+            new_df = pd.concat([old_df, new_df], ignore_index=True)
+        new_df.to_csv(opt_csv, index=False)
 
         # ── Top3 详细表（scanner 用于实时信号状态）──
         top3_rows = []
@@ -692,7 +800,14 @@ def main(tickers: list | None = None) -> list:
                     "cagr_1y":   sp["1Y"]["cagr"],
                     "dd_1y":     sp["1Y"]["dd"],
                 })
-        pd.DataFrame(top3_rows).to_csv(out_dir / "top3_strategies.csv", index=False)
+        top3_csv = out_dir / "top3_strategies.csv"
+        new_top3 = pd.DataFrame(top3_rows)
+        if top3_csv.exists():
+            old_top3 = pd.read_csv(top3_csv)
+            optimized_tickers = set(new_top3["ticker"].unique())
+            old_top3 = old_top3[~old_top3["ticker"].isin(optimized_tickers)]
+            new_top3 = pd.concat([old_top3, new_top3], ignore_index=True)
+        new_top3.to_csv(top3_csv, index=False)
         print(f"\n  💾 已保存 output/strategy_optimization.csv + top3_strategies.csv")
 
     print()
