@@ -102,13 +102,14 @@ def fetch_trades(ticker: str):
 def compute_channels(df: pd.DataFrame, pivot_window: int = 8):
     """
     检测近期趋势通道与震荡区间。
+    使用真实 pivot 点连线（非回归外推），确保通道贴近实际价格。
     返回 dict:
       {
         "type": "ascending" | "descending" | "consolidation" | "none",
-        "support":    [(xi, price), ...],   # 支撑线两点（x为整数位置）
-        "resistance": [(xi, price), ...],   # 阻力线两点
-        "consol_band": (low, high) | None,  # 震荡区间价格上下界
-        "consol_x": (x0, x1) | None,       # 震荡区间 x 范围
+        "support":    [(xi, price), (xi, price)],  # 支撑线两端点
+        "resistance": [(xi, price), (xi, price)],  # 阻力线两端点
+        "consol_band": (low, high) | None,
+        "consol_x": (x0, x1) | None,
       }
     """
     n = len(df)
@@ -119,10 +120,14 @@ def compute_channels(df: pd.DataFrame, pivot_window: int = 8):
     highs  = df["High"].values
     lows   = df["Low"].values
 
-    # ── 1. 找 pivot high / low（最近 180 根 K 线）────────────────────────
-    window = pivot_window
-    lookback = min(n, 180)
+    # ── 1. 找 pivot high / low（最近 90 根 K 线）────────────────────────
+    window   = pivot_window
+    lookback = min(n, 90)
     start_i  = n - lookback
+    x_end    = n - 1
+
+    avg_price = closes[-lookback:].mean()
+    avg_range = (highs[-lookback:] - lows[-lookback:]).mean()  # 平均日内振幅
 
     pivot_hi, pivot_lo = [], []
     for i in range(start_i + window, n - window):
@@ -131,87 +136,97 @@ def compute_channels(df: pd.DataFrame, pivot_window: int = 8):
         if lows[i]  == lows[i  - window : i + window + 1].min():
             pivot_lo.append((i, lows[i]))
 
-    # 取最近 6 个 pivot（用于回归）
-    recent_hi = pivot_hi[-6:] if len(pivot_hi) >= 2 else pivot_hi
-    recent_lo = pivot_lo[-6:] if len(pivot_lo) >= 2 else pivot_lo
-
-    # ── 2. 线性回归求斜率 ─────────────────────────────────────────────────
-    def regress(pts):
-        if len(pts) < 2:
-            return None
-        xs = np.array([p[0] for p in pts], dtype=float)
-        ys = np.array([p[1] for p in pts], dtype=float)
-        slope, intercept, r, _, _ = sp_stats.linregress(xs, ys)
-        return slope, intercept, r ** 2
-
-    res_hi = regress(recent_hi)
-    res_lo = regress(recent_lo)
-
-    # ── 3. 判断通道类型 ───────────────────────────────────────────────────
-    # 斜率归一化为 每根K线的百分比变化
-    avg_price = closes[-lookback:].mean()
-
-    slope_hi = (res_hi[0] / avg_price * 100) if res_hi else 0.0
-    slope_lo = (res_lo[0] / avg_price * 100) if res_lo else 0.0
-    avg_slope = (slope_hi + slope_lo) / 2
-
-    # ── 4. 组装线段坐标（整数 x 位置，供 ax.plot 使用）─────────────────────
-    def line_pts(slope, intercept, x0, x1):
-        """返回从 x0 到 x1 的两个 (x, y) 坐标"""
-        return [(x0, slope * x0 + intercept),
-                (x1, slope * x1 + intercept)]
-
-    x_start = start_i
-    x_end   = n - 1
-
-    # 震荡区间检测：Bollinger Band 宽度（最近 20 根）
-    bb_window = 20
-    bb_std    = pd.Series(closes).rolling(bb_window).std().iloc[-1]
-    bb_mean   = closes[-bb_window:].mean()
-    bb_width_pct = bb_std / bb_mean * 100 if bb_mean else 99
-
     result = {"type": "none", "support": [], "resistance": [],
               "consol_band": None, "consol_x": None}
 
-    # 用 slope_hi / slope_lo 单独判断，不需要两者同方向
-    # R² 至少 0.15 才有意义
-    hi_valid = res_hi and res_hi[2] >= 0.15
-    lo_valid = res_lo and res_lo[2] >= 0.15
+    SLOPE_UP   =  0.04   # %/bar
+    SLOPE_DOWN = -0.04
+    MIN_WIDTH  = avg_price * 0.018   # 最小通道宽度：均价的 1.8%
 
-    SLOPE_UP   =  0.04   # >+0.04%/bar 视为上行
-    SLOPE_DOWN = -0.04   # <-0.04%/bar 视为下行
+    def proj(x, x0, y0, slope):
+        """从 (x0,y0) 用斜率 slope 算出 x 处的 y 值"""
+        return y0 + slope * (x - x0)
 
-    # 有效支撑上行 + 阻力不明显下行 → 上升通道
-    if lo_valid and slope_lo >= SLOPE_UP:
-        s_hi = res_hi if hi_valid else res_lo   # 没有清晰阻力时用支撑线平移
-        s_lo = res_lo
-        # 平移阻力线：如果 hi 无效，用 lo 截距 + 平均(hi-lo)
-        if not hi_valid:
-            avg_spread = (df["High"].values[-lookback:] - df["Low"].values[-lookback:]).mean()
-            s_hi = (s_lo[0], s_lo[1] + avg_spread, 0.0)
-        result["type"] = "ascending"
-        result["resistance"] = line_pts(s_hi[0], s_hi[1], x_start, x_end)
-        result["support"]    = line_pts(s_lo[0], s_lo[1], x_start, x_end)
+    # ── 2. 上升通道：找连续上升的 pivot low ───────────────────────────────
+    # 筛选出单调递增的 pivot lows（每个比前一个高）
+    asc_lows = []
+    for pt in pivot_lo:
+        if not asc_lows or pt[1] > asc_lows[-1][1]:
+            asc_lows.append(pt)
+    asc_lows = asc_lows[-3:]   # 取最近 3 个
 
-    # 有效阻力下行 + 支撑不明显上行 → 下降通道
-    elif hi_valid and slope_hi <= SLOPE_DOWN:
-        s_hi = res_hi
-        s_lo = res_lo if lo_valid else res_hi   # 没有清晰支撑时，用阻力线平移
-        if not lo_valid:
-            avg_spread = (df["High"].values[-lookback:] - df["Low"].values[-lookback:]).mean()
-            s_lo = (s_hi[0], s_hi[1] - avg_spread, 0.0)
-        result["type"] = "descending"
-        result["resistance"] = line_pts(s_hi[0], s_hi[1], x_start, x_end)
-        result["support"]    = line_pts(s_lo[0], s_lo[1], x_start, x_end)
+    if len(asc_lows) >= 2:
+        x0_lo, y0_lo = asc_lows[0]
+        x1_lo, y1_lo = asc_lows[-1]
+        slope = (y1_lo - y0_lo) / max(x1_lo - x0_lo, 1)
+        slope_pct = slope / avg_price * 100
 
-    elif bb_width_pct < 6.0:
-        # 震荡区间（BB 宽度收窄）
-        consol_start = max(0, n - 60)
-        zone_lo = np.percentile(lows[consol_start:],   8)
-        zone_hi = np.percentile(highs[consol_start:], 92)
-        result["type"]        = "consolidation"
-        result["consol_band"] = (zone_lo, zone_hi)
-        result["consol_x"]    = (consol_start, x_end)
+        if slope_pct >= SLOPE_UP:
+            # 在 x0_lo ~ x_end 范围内找最高的 pivot high → 平行阻力线
+            hi_in_range = [ph for ph in pivot_hi if ph[0] >= x0_lo]
+            if hi_in_range:
+                x_hi, y_hi = max(hi_in_range, key=lambda p: p[1])
+            else:
+                x_hi, y_hi = x1_lo, y1_lo + avg_range * 1.5
+
+            # 平行阻力线：斜率相同，过 (x_hi, y_hi)
+            y_res_x0 = proj(x0_lo, x_hi, y_hi, slope)
+            y_res_end = proj(x_end, x_hi, y_hi, slope)
+            y_sup_x0  = proj(x0_lo, x0_lo, y0_lo, slope)  # = y0_lo
+            y_sup_end = proj(x_end, x0_lo, y0_lo, slope)
+
+            width_end = y_res_end - y_sup_end
+            if width_end >= MIN_WIDTH:
+                result["type"]       = "ascending"
+                result["support"]    = [(x0_lo, y_sup_x0),  (x_end, y_sup_end)]
+                result["resistance"] = [(x0_lo, y_res_x0), (x_end, y_res_end)]
+
+    # ── 3. 下降通道：找连续下降的 pivot high ──────────────────────────────
+    if result["type"] == "none":
+        desc_highs = []
+        for pt in pivot_hi:
+            if not desc_highs or pt[1] < desc_highs[-1][1]:
+                desc_highs.append(pt)
+        desc_highs = desc_highs[-3:]
+
+        if len(desc_highs) >= 2:
+            x0_hi, y0_hi = desc_highs[0]
+            x1_hi, y1_hi = desc_highs[-1]
+            slope = (y1_hi - y0_hi) / max(x1_hi - x0_hi, 1)
+            slope_pct = slope / avg_price * 100
+
+            if slope_pct <= SLOPE_DOWN:
+                # 在范围内找最低 pivot low → 平行支撑线
+                lo_in_range = [pl for pl in pivot_lo if pl[0] >= x0_hi]
+                if lo_in_range:
+                    x_lo, y_lo = min(lo_in_range, key=lambda p: p[1])
+                else:
+                    x_lo, y_lo = x1_hi, y1_hi - avg_range * 1.5
+
+                y_sup_x0  = proj(x0_hi, x_lo, y_lo, slope)
+                y_sup_end = proj(x_end, x_lo, y_lo, slope)
+                y_res_x0  = proj(x0_hi, x0_hi, y0_hi, slope)  # = y0_hi
+                y_res_end = proj(x_end, x0_hi, y0_hi, slope)
+
+                width_end = abs(y_res_end - y_sup_end)
+                if width_end >= MIN_WIDTH:
+                    result["type"]       = "descending"
+                    result["support"]    = [(x0_hi, y_sup_x0),  (x_end, y_sup_end)]
+                    result["resistance"] = [(x0_hi, y_res_x0), (x_end, y_res_end)]
+
+    # ── 4. 震荡区间：BB 宽度收窄 ──────────────────────────────────────────
+    if result["type"] == "none":
+        bb_std = pd.Series(closes).rolling(20).std().iloc[-1]
+        bb_mean = closes[-20:].mean()
+        bb_width_pct = bb_std / bb_mean * 100 if bb_mean else 99
+
+        if bb_width_pct < 6.0:
+            consol_start = max(0, n - 60)
+            zone_lo = np.percentile(lows[consol_start:],   8)
+            zone_hi = np.percentile(highs[consol_start:], 92)
+            result["type"]        = "consolidation"
+            result["consol_band"] = (zone_lo, zone_hi)
+            result["consol_x"]    = (consol_start, x_end)
 
     return result
 
@@ -249,7 +264,7 @@ def draw_channels(ax, channels: dict, n_bars: int):
         ys_fill_s = ys_s[0] + slope_s * (xs_fill - xs_s[0])
         ys_fill_r = ys_r[0] + slope_r * (xs_fill - xs_r[0])
         ax.fill_between(xs_fill, ys_fill_s, ys_fill_r,
-                        color=color_line, alpha=0.12, zorder=2)
+                        color=color_line, alpha=0.18, zorder=2)
 
         # 标注通道类型
         label = "↗ 上升通道" if ctype == "ascending" else "↘ 下降通道"
