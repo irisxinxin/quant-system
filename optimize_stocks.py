@@ -35,7 +35,7 @@ SECTOR_GROUPS = {
     "💰 金融":             ["MS", "CBOE", "TRV"],
     "🪙 加密/Fintech":    ["COIN", "MSTR", "IREN", "HOOD", "OKLO", "BTC-USD"],
     "🔋 电池/稀土":        ["MP", "ALB", "EOSE"],
-    "🚀 太空/机器人":      ["LUNR", "PL", "TER", "RKLB"],
+    "🚀 太空/机器人":      ["LUNR", "PL", "TER", "RKLB", "ASTS"],
     "🏥 消费/健康":        ["HIMS", "LLY", "RCL"],
     "🥇 黄金/避险":        ["GLD", "GDX"],
 }
