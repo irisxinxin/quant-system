@@ -1753,7 +1753,7 @@ function renderSWTable(trades){
     <thead><tr>
       <th class="tl">状态</th>
       <th class="tl">股票</th>
-      <th>类型</th>
+      <th style="display:none"></th>
       <th>入场日</th>
       <th>入场价</th>
       <th>止损</th>
@@ -1768,13 +1768,14 @@ function renderSWTable(trades){
     <tbody>
     ${rows.map(t=>`
       <tr class="clickable" onclick="loadSWChart('${t.ticker}')" title="点击查看K线">
-        <td class="tl"><span style="display:inline-flex;align-items:center;gap:5px">
+        <td class="tl"><span style="display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap">
           <span style="width:8px;height:8px;border-radius:50%;background:${STATUS_COLOR[t.display_status||t.status]||'#888'};flex-shrink:0"></span>
           <span style="font-size:11px;color:${STATUS_COLOR[t.display_status||t.status]||'#888'}">${STATUS_LABEL[t.display_status||t.status]||t.status}</span>
+          <span style="font-size:10px;color:var(--text3);background:rgba(255,255,255,.06);border-radius:3px;padding:1px 5px">${TYPE_LABEL[t.type]||t.type}</span>
         </span></td>
         <td class="tl"><span style="font-weight:600;color:var(--text)">${t.ticker}</span>
           ${t.note?`<span style="font-size:10px;color:var(--text3);margin-left:4px">${t.note}</span>`:''}</td>
-        <td><span style="font-size:11px;color:var(--text2)">${TYPE_LABEL[t.type]||t.type}</span></td>
+        <td style="display:none"></td>
         <td style="color:var(--text3);font-size:11px">${t.date}</td>
         <td>$${t.entry}</td>
         <td style="color:#f87171">$${t.stop}</td>
