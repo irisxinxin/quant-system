@@ -213,40 +213,56 @@ def scan_hot_sectors() -> list:
 # ──────────────────────────────────────────────
 
 def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray,
-              prices: np.ndarray | None = None, stop_pct: float | None = None) -> np.ndarray:
+              prices: np.ndarray | None = None, stop_pct: float | None = None,
+              cooldown_bars: int = 0) -> np.ndarray:
     """
     Logic:
-      - 入场: entry==1 且 cta_ok==1（当天触发，次日由 backtest engine shift执行）
+      - 入场: entry==1 且 cta_ok==1，且不在冷却期
       - 持仓: 只要 exit_cond==0 就继续持有
-      - 离场: exit_cond==1 立即清仓，或触及动态追踪止损
-      - stop_pct: 从入场后最高价动态追踪止损（如0.15=峰值跌15%强制出场）
-                  初始止损 = 入场价 * (1 - stop_pct)，价格上涨后自动上移
+      - 离场: exit_cond==1 或触及动态追踪止损（峰值回撤 stop_pct）
+      - 止损出场后进入冷却期（cooldown_bars 根），期间不允许重新入场
+        避免连续止损被反复震仓
     """
     pos = np.zeros(len(entry), dtype=float)
     in_trade = False
-    peak_price = np.nan
-    stop_price = np.nan
+    entry_price = np.nan
+    peak_price  = np.nan
+    stop_price  = np.nan
+    cooldown = 0
+
     for i in range(len(entry)):
+        if cooldown > 0:
+            cooldown -= 1
+            continue
+
         if not in_trade:
             if entry[i] and cta_ok[i]:
                 in_trade = True
                 pos[i] = 1.0
-                if prices is not None and stop_pct is not None:
-                    peak_price = prices[i]
-                    stop_price = prices[i] * (1.0 - stop_pct)
+                if prices is not None:
+                    entry_price = prices[i]
+                    peak_price  = prices[i]
+                    if stop_pct is not None:
+                        stop_price = prices[i] * (1.0 - stop_pct)
         else:
             if prices is not None and stop_pct is not None:
-                # 峰值上移，止损同步上移
                 if prices[i] > peak_price:
                     peak_price = prices[i]
                     stop_price = peak_price * (1.0 - stop_pct)
                 hit_stop = prices[i] <= stop_price
             else:
                 hit_stop = False
-            if exit_cond[i] or hit_stop:
-                in_trade = False
-                peak_price = np.nan
-                stop_price = np.nan
+
+            if hit_stop or exit_cond[i]:
+                # 亏损出场（含止损、或正常出场但价格低于入场价）→ 冷却
+                exited_at_loss = (prices is not None and not np.isnan(entry_price)
+                                  and prices[i] < entry_price)
+                in_trade    = False
+                entry_price = np.nan
+                peak_price  = np.nan
+                stop_price  = np.nan
+                if (hit_stop or exited_at_loss) and cooldown_bars > 0:
+                    cooldown = cooldown_bars
             else:
                 pos[i] = 1.0
     return pos
@@ -276,9 +292,11 @@ def optimize_ticker(
         asset_type = info["type"]
         ann_vol    = info.get("vol") or round(float(prices.pct_change().tail(252).std() * 252**0.5), 2)
 
-        # 动态追踪止损比例（从入场后峰值追踪）：A类15%，B/C类10%
-        # 价格上涨时止损上移保护盈利，价格未涨时最大损失=止损比例
-        entry_stop_pct = 0.15 if asset_type == "A" else 0.10
+        # 动态追踪止损 + 止损冷却期
+        # A类高波动股：峰值追踪15%，止损后冷却20个交易日
+        # B/C类：峰值追踪10%，止损后冷却15个交易日
+        entry_stop_pct  = 0.15 if asset_type == "A" else 0.10
+        stop_cooldown   = 20   if asset_type == "A" else 15
 
         # ── 指标 ──
         e20  = prices.ewm(span=20, adjust=False).mean()
@@ -443,6 +461,7 @@ def optimize_ticker(
                         eff_exit.fillna(0).values,
                         prices=prices.values,
                         stop_pct=entry_stop_pct,
+                        cooldown_bars=stop_cooldown,
                     )
                     sig_s = pd.Series(pos, index=prices.index)
 

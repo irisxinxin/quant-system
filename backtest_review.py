@@ -34,20 +34,28 @@ def _cta_series(px: pd.Series) -> pd.Series:
 
 
 def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray,
-              prices: np.ndarray | None = None, stop_pct: float | None = None) -> np.ndarray:
-    """从入场后峰值价格动态追踪止损（stop_pct：峰值回撤比例）"""
+              prices: np.ndarray | None = None, stop_pct: float | None = None,
+              cooldown_bars: int = 0) -> np.ndarray:
+    """峰值动态追踪止损 + 止损后冷却期（防止连续震仓）"""
     pos = np.zeros(len(entry), dtype=float)
-    in_trade = False
-    peak_price = np.nan
-    stop_price = np.nan
+    in_trade    = False
+    entry_price = np.nan
+    peak_price  = np.nan
+    stop_price  = np.nan
+    cooldown    = 0
     for i in range(len(entry)):
+        if cooldown > 0:
+            cooldown -= 1
+            continue
         if not in_trade:
             if entry[i] and cta_ok[i]:
-                in_trade = True
-                pos[i] = 1.0
-                if prices is not None and stop_pct is not None:
-                    peak_price = prices[i]
-                    stop_price = prices[i] * (1.0 - stop_pct)
+                in_trade    = True
+                pos[i]      = 1.0
+                if prices is not None:
+                    entry_price = prices[i]
+                    peak_price  = prices[i]
+                    if stop_pct is not None:
+                        stop_price = prices[i] * (1.0 - stop_pct)
         else:
             if prices is not None and stop_pct is not None:
                 if prices[i] > peak_price:
@@ -56,10 +64,15 @@ def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray,
                 hit_stop = prices[i] <= stop_price
             else:
                 hit_stop = False
-            if exit_cond[i] or hit_stop:
-                in_trade = False
-                peak_price = np.nan
-                stop_price = np.nan
+            if hit_stop or exit_cond[i]:
+                exited_at_loss = (prices is not None and not np.isnan(entry_price)
+                                  and prices[i] < entry_price)
+                in_trade    = False
+                entry_price = np.nan
+                peak_price  = np.nan
+                stop_price  = np.nan
+                if (hit_stop or exited_at_loss) and cooldown_bars > 0:
+                    cooldown = cooldown_bars
             else:
                 pos[i] = 1.0
     return pos
@@ -193,13 +206,14 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         add_x = all_exits.get(exit_name, pd.Series(False, index=prices.index))
         x_sig = (base_exit | add_x).astype(float)
 
-    # 动态追踪止损（从入场后峰值追踪）：A类15%，B/C类10%
+    # 动态追踪止损 + 止损冷却期：A类15%+20日冷却，B/C类10%+15日冷却
     try:
         from optimize_stocks import classify_ticker
         _atype = classify_ticker(ticker).get("type", "B")
     except Exception:
         _atype = "B"
-    stop_pct = 0.15 if _atype == "A" else 0.10
+    stop_pct      = 0.15 if _atype == "A" else 0.10
+    stop_cooldown = 20   if _atype == "A" else 15
 
     pos_arr = _make_pos(
         e_sig.fillna(0).values,
@@ -207,6 +221,7 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         x_sig.fillna(0).values,
         prices=prices.values,
         stop_pct=stop_pct,
+        cooldown_bars=stop_cooldown,
     )
     return prices, ohlcv, pd.Series(pos_arr, index=prices.index), e_sig
 
