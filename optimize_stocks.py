@@ -617,8 +617,8 @@ def main(tickers: list | None = None) -> list:
                 pass
     sect_cta_map: dict[str, pd.Series] = {sym: _cta_series(px) for sym, px in sect_px.items()}
 
-    # 行业 CTA：soxx=费城半导体, igv=软件, xly=消费, xar=军工, ibit=加密
-    _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT", "xme": "XME", "xlf": "XLF", "xli": "XLI"}
+    # 行业 CTA：soxx=费城半导体, igv=软件, xly=消费, xar=军工, ibit=加密, xlv=医疗健康
+    _sector_etfs = {"soxx": "SOXX", "igv": "IGV", "xly": "XLY", "xar": "XAR", "ibit": "IBIT", "xme": "XME", "xlf": "XLF", "xli": "XLI", "xlv": "XLV"}
     extra_ctas = {}
     for _name, _sym in _sector_etfs.items():
         try:
