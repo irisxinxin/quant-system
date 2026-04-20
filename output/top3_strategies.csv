@@ -161,9 +161,6 @@ PLTR,💼 软件/AI数据,3,rsi28,smh,ma_x,0.85,80.8,0.0,0.0,0.0,14.3,-9.7
 EOSE,🔋 电池/稀土,1,ema_cross,none,trail_8,2.55,69.2,0.0,1.2,21.7,45.8,-7.9
 EOSE,🔋 电池/稀土,2,dc20+cmf,xly,rsi_fade,1.56,53.8,0.0,0.0,0.0,65.2,-18.0
 EOSE,🔋 电池/稀土,3,dc20|ema,soft,trail_12,1.61,31.7,1.0,-3.3,16.2,116.8,-27.3
-MSTR,🪙 加密/Fintech,1,vol+ema,combo,rsi80,1.1,68.0,0.0,0.0,0.0,18.4,-7.7
-MSTR,🪙 加密/Fintech,2,ema_cross,combo,rsi_fade,1.06,57.1,0.0,0.0,0.0,14.5,-6.0
-MSTR,🪙 加密/Fintech,3,bb_lo,smh,ma_x,0.22,77.8,0.0,0.0,0.0,5.8,-25.2
 MRVL,⚡ 半导体/AI算力,1,ema20_dip,smh,rsi80,3.34,68.4,46.5,59.7,51.2,98.3,-21.4
 MRVL,⚡ 半导体/AI算力,2,ema_cross,combo,ma_x,3.33,80.0,59.5,49.6,49.6,49.8,-10.8
 MRVL,⚡ 半导体/AI算力,3,rsi28,xme,rsi80,2.68,81.1,0.0,15.8,15.8,62.3,-5.8
@@ -185,9 +182,6 @@ TXN,⚡ 半导体/AI算力,3,bb_lo,none,rsi_fade,1.23,78.8,9.3,2.8,2.8,36.8,-14.
 NVDA,⚡ 半导体/AI算力,1,rsi28,soxx,rsi80,2.63,83.9,7.1,7.1,7.1,10.9,-2.7
 NVDA,⚡ 半导体/AI算力,2,rsi35,smh,rsi_fade,2.3,85.9,0.9,10.9,11.1,24.3,-7.6
 NVDA,⚡ 半导体/AI算力,3,bb_lo,soxx,cmf_neg,2.57,61.8,2.7,3.7,3.7,22.2,-4.3
-CBOE,💰 金融,1,ema20_dip,xli,trail_12,2.62,50.0,4.5,11.0,19.8,41.6,-10.3
-CBOE,💰 金融,2,rsi35,smh,rsi_fade,2.54,77.9,0.0,1.5,1.5,11.0,-2.5
-CBOE,💰 金融,3,bb_lo,smh,rsi70,2.54,92.6,0.0,0.0,3.6,13.7,-3.1
 IREN,🪙 加密/Fintech,1,vol_surge,smh,rsi80,2.57,82.4,0.0,0.0,0.0,139.0,-18.9
 IREN,🪙 加密/Fintech,2,bb_lo,combo,rsi_fade,2.44,66.7,12.1,18.7,58.0,104.3,-31.5
 IREN,🪙 加密/Fintech,3,rsi35,qqq,rsi80,1.47,69.0,11.7,32.9,50.1,56.1,-30.8
@@ -215,6 +209,11 @@ ORCL,💼 软件/AI数据,3,bb_lo,smh,ema_x,1.46,52.4,0.0,0.0,0.0,30.5,-8.9
 COIN,🪙 加密/Fintech,1,cmf_pos,smh,trail_12,1.77,44.8,0.0,0.0,0.0,77.2,-18.3
 COIN,🪙 加密/Fintech,2,ema20_dip+obv,smh,rsi_fade,1.72,70.0,0.0,0.0,0.0,80.4,-11.9
 COIN,🪙 加密/Fintech,3,bb_lo,soxx,rsi80,0.37,73.3,23.6,7.8,14.1,5.1,-55.6
-BTC-USD,🪙 加密/Fintech,1,vol+ema,xlv,rsi80,1.71,66.7,0.0,0.0,0.0,0.7,-0.1
-BTC-USD,🪙 加密/Fintech,2,bb_lo,soxx,rsi_fade,0.14,64.5,0.0,4.1,-5.4,-0.7,-32.5
-BTC-USD,🪙 加密/Fintech,3,ema_cross,combo,rsi80,0.63,66.7,-2.0,-2.0,-2.0,2.7,-2.0
+CBOE,💰 金融,1,rsi35,smh,rsi80,2.54,77.9,0.0,1.5,1.5,11.0,-2.5
+CBOE,💰 金融,2,ema20_dip,xme,trail_12,2.63,57.1,4.5,11.0,19.8,41.6,-10.3
+CBOE,💰 金融,3,bb_lo,xar,rsi_fade,2.54,87.0,0.0,0.0,3.6,13.7,-3.1
+BTC-USD,🪙 加密/Fintech,1,ema_cross,combo,rsi80,0.63,66.7,-2.0,-2.0,-2.0,2.7,-2.0
+BTC-USD,🪙 加密/Fintech,2,bb_lo,igv,ema_x,1.64,55.4,0.0,0.0,0.0,8.5,-3.7
+MSTR,🪙 加密/Fintech,1,vol_surge,none,cmf_neg,0.31,41.1,-0.1,-0.1,-5.1,12.3,-20.8
+MSTR,🪙 加密/Fintech,2,ma5200,smh,cmf_neg,0.4,43.3,0.0,0.0,0.0,24.2,-16.5
+MSTR,🪙 加密/Fintech,3,bb_lo,smh,ma_x,0.15,77.8,0.0,0.0,0.0,5.8,-25.2

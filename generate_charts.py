@@ -294,6 +294,66 @@ def draw_channels(ax, channels: dict, n_bars: int):
                                   ec="#ffd700", alpha=0.9, linewidth=1.2))
 
 
+def compute_entry_signal(df: pd.DataFrame, label: str) -> pd.Series:
+    """
+    根据策略标签解析进场条件，返回布尔 Series（每根K线是否满足进场信号）。
+    不含门控（gate）条件，只看原始进场信号是否触发。
+    """
+    # 提取进场部分：label = "dc20+cmf | soxx | ma_x" → entry = "dc20+cmf"
+    entry = label.split("|")[0].strip().lower() if label else ""
+
+    close  = df["Close"]
+    high   = df["High"]
+    low    = df["Low"]
+    volume = df["Volume"]
+
+    # ── DC20 ───────────────────────────────────────────────────────────────
+    dc20 = close > high.rolling(20).max().shift(1)
+
+    # ── CMF (14) ───────────────────────────────────────────────────────────
+    mf  = ((close - low) - (high - close)) / (high - low).replace(0, np.nan) * volume
+    cmf = mf.rolling(14).sum() / volume.rolling(14).sum()
+
+    # ── RSI (14) ───────────────────────────────────────────────────────────
+    delta = close.diff()
+    gain  = delta.clip(lower=0).rolling(14).mean()
+    loss  = (-delta.clip(upper=0)).rolling(14).mean()
+    rsi   = 100 - (100 / (1 + gain / loss.replace(0, np.nan)))
+
+    # ── Bollinger Band ─────────────────────────────────────────────────────
+    bb_mean = close.rolling(20).mean()
+    bb_std  = close.rolling(20).std()
+    bb_lo   = bb_mean - 2 * bb_std
+    bb_hi   = bb_mean + 2 * bb_std
+
+    # ── EMA cross ──────────────────────────────────────────────────────────
+    ema20 = close.ewm(span=20, adjust=False).mean()
+    ema60 = close.ewm(span=60, adjust=False).mean()
+    ema_cross = (ema20 > ema60) & (ema20.shift(1) <= ema60.shift(1))
+
+    # ── 匹配 ───────────────────────────────────────────────────────────────
+    import re
+    if "dc20" in entry and "cmf" in entry:
+        return dc20 & (cmf > 0)
+    elif "dc20" in entry and "ema" in entry:
+        return dc20 | ema_cross
+    elif "dc20" in entry:
+        return dc20
+    elif "bb_lo" in entry or "bb_hi" in entry:
+        return (close < bb_lo) | (close > bb_hi)
+    elif "rsi" in entry:
+        m = re.search(r'rsi(\d+)', entry)
+        thresh = int(m.group(1)) if m else 35
+        return rsi < thresh
+    elif "ema" in entry:
+        return ema_cross
+    elif "vol" in entry:
+        vol_ma = volume.rolling(20).mean()
+        return (volume > vol_ma * 1.5) & (close > close.shift(1))
+    else:
+        return pd.Series(False, index=df.index)
+
+
 def nearest_date(target: pd.Timestamp, index: pd.DatetimeIndex) -> pd.Timestamp | None:
     """找离 target 最近的交易日（±5天内）"""
     if target in index:
@@ -368,6 +428,20 @@ def make_chart(ticker: str, force: bool = False) -> bool:
     n_buy  = buy_series.notna().sum()
     n_sell = sell_series.notna().sum()
 
+    # 4b. 信号确认标记：近90天内满足进场条件但未产生新买点（持仓中继续触发）
+    signal_series = pd.Series(np.nan, index=df.index, dtype=float)
+    n_signal = 0
+    try:
+        raw_signal = compute_entry_signal(df, label)
+        cutoff_90  = df.index[-90] if len(df) >= 90 else df.index[0]
+        recent_sig = raw_signal[df.index >= cutoff_90]
+        for idx in recent_sig[recent_sig].index:
+            if pd.isna(buy_series.get(idx, np.nan)):   # 没有已有买点才画
+                signal_series[idx] = df.loc[idx, "Low"] * 0.975
+                n_signal += 1
+    except Exception:
+        pass
+
     if n_buy:
         add_plots.append(mpf.make_addplot(buy_series,  type="scatter",
                                           markersize=90, marker="^",
@@ -376,6 +450,10 @@ def make_chart(ticker: str, force: bool = False) -> bool:
         add_plots.append(mpf.make_addplot(sell_series, type="scatter",
                                           markersize=90, marker="v",
                                           color="#ff1744", alpha=0.95, panel=0))
+    if n_signal:
+        add_plots.append(mpf.make_addplot(signal_series, type="scatter",
+                                          markersize=35, marker="^",
+                                          color="#ffd700", alpha=0.70, panel=0))
 
     # 5. 持仓横线
     extra_kwargs = {}
@@ -430,6 +508,8 @@ def make_chart(ticker: str, force: bool = False) -> bool:
                    markersize=9, label=f"Buy ({n_buy})"),
         plt.Line2D([0], [0], marker="v", color="w", markerfacecolor="#ff1744",
                    markersize=9, label=f"Sell ({n_sell})"),
+        plt.Line2D([0], [0], marker="^", color="w", markerfacecolor="#ffd700",
+                   markersize=7, alpha=0.8, label=f"Signal ({n_signal})"),
     ]
     if open_trade:
         legend_items.append(
@@ -480,7 +560,7 @@ def make_chart(ticker: str, force: bool = False) -> bool:
     fig.savefig(out_path, dpi=130, bbox_inches="tight",
                 facecolor="#0d1117", edgecolor="none")
     plt.close(fig)
-    print(f"OK  (buy:{n_buy} sell:{n_sell})")
+    print(f"OK  (buy:{n_buy} sell:{n_sell} sig:{n_signal})")
     return True
 
 

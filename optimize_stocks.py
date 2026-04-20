@@ -428,6 +428,16 @@ def optimize_ticker(
                     if _new_entries_recent == 0 and not _in_trade_now:
                         continue  # 近2年无新入场且当前未持仓 → 策略已失效，跳过
 
+                    # 计算距上次入场的 bar 数（用于 recency 惩罚）
+                    _entries_mask = (sig_s > 0) & (sig_s.shift(1, fill_value=0) == 0)
+                    _entries_arr = _entries_mask.values
+                    if _entries_arr.any():
+                        # 从最后一根 bar 往前找最近的 True（入场信号）
+                        _rev = _entries_arr[::-1]
+                        _last_entry_ago = int(np.argmax(_rev))  # argmax找第一个True
+                    else:
+                        _last_entry_ago = len(sig_s)
+
                     try:
                         res    = backtest(prices, sig_s)
                         m      = res["metrics"]
@@ -470,7 +480,20 @@ def optimize_ticker(
                         if periods["3M"]["ret"] < -15 and periods["1Y"]["cagr"] < 30:
                             continue
 
-                        score   = _recency_score(periods, avg_hold, win_rate)
+                        # 近期入场惩罚
+                        # - 当前持仓中（in_trade_now）：不惩罚（策略处于活跃持仓状态）
+                        # - 未持仓且 >180 bar 无新入场：直接淘汰（策略已失活）
+                        # - 未持仓且 90-180 bar 无新入场：软惩罚 0~-0.4
+                        _recency_penalty = 0.0
+                        if _in_trade_now:
+                            _recency_penalty = 0.0   # 持仓中，不额外惩罚
+                        elif _last_entry_ago > 180:
+                            continue  # 硬淘汰：>180天无入场且不在仓
+                        else:
+                            _overshoot = max(0, _last_entry_ago - 90)
+                            _recency_penalty = -min(0.4, _overshoot / 90 * 0.4)
+
+                        score   = _recency_score(periods, avg_hold, win_rate) + _recency_penalty
 
                         results.append({
                             "entry":          en,
