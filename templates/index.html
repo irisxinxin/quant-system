@@ -1232,7 +1232,7 @@ function renderBtDetail(s){
   renderStratInfo(s);
 
   // ── K线图 ──
-  renderBtChart(s.candles||[], s.markers||[], s.bah||[]);
+  renderBtChart(s.candles||[], s.markers||[], s.bah||[], s.ma_lines||null, s.channel||null);
 
   // ── 交易记录 ──
   const trades = s.trades || [];
@@ -1265,7 +1265,7 @@ function renderBtDetail(s){
   }).join('');
 }
 
-function renderBtChart(candles, markers, bah){
+function renderBtChart(candles, markers, bah, maLines, channel){
   if(btChart){ btChart.remove(); btChart=null; }
   const el = $('bt-chart');
   el.innerHTML='';
@@ -1314,13 +1314,54 @@ function renderBtChart(candles, markers, bah){
     .sort((a,b)=>a.time<b.time?-1:1)
     .map(m=>({
       time:     m.time,
-      position: (m.type==='buy'||m.type==='signal')?'belowBar':'aboveBar',
-      color:    m.type==='buy'?'#58a6ff':m.type==='signal'?'#ffd700':(m.pnl!=null&&m.pnl>0?'#3fb950':'#f85149'),
-      shape:    (m.type==='buy'||m.type==='signal')?'arrowUp':'arrowDown',
+      position: m.type==='buy'?'belowBar':'aboveBar',
+      color:    m.type==='buy'?'#58a6ff':(m.pnl!=null&&m.pnl>0?'#3fb950':'#f85149'),
+      shape:    m.type==='buy'?'arrowUp':'arrowDown',
       text:     m.text||'',
-      size:     m.type==='signal'?1.2:1.5,
+      size:     1.5,
     }));
   cSeries.setMarkers(mks);
+
+  // ── MA 指标线 ──
+  const maConfigs = [
+    {key:'ema20',  color:'rgba(247,201,72,0.8)',  width:1,   title:'EMA20'},
+    {key:'ema60',  color:'rgba(255,149,0,0.8)',   width:1,   title:'EMA60'},
+    {key:'ma200',  color:'rgba(139,148,158,0.6)', width:1, title:'MA200', style:2},
+  ];
+  if(maLines){
+    const maTimeSet = new Set(validCandles.map(c=>c.time));
+    maConfigs.forEach(cfg=>{
+      const pts = (maLines[cfg.key]||[]).filter(d=>maTimeSet.has(d.time));
+      if(!pts.length) return;
+      const s = btChart.addLineSeries({
+        color: cfg.color, lineWidth: cfg.width,
+        lineStyle: cfg.style||0,
+        title: cfg.title,
+        lastValueVisible: false, priceLineVisible: false,
+        crosshairMarkerVisible: false,
+      });
+      s.setData(pts);
+    });
+  }
+
+  // ── 趋势通道 ──
+  if(channel && channel.type !== 'none'){
+    const chTimeSet = new Set(validCandles.map(c=>c.time));
+    const isAsc = channel.type === 'ascending';
+    const supColor = isAsc ? 'rgba(63,185,80,0.7)'  : 'rgba(248,81,73,0.7)';
+    const resColor = isAsc ? 'rgba(248,81,73,0.7)'  : 'rgba(63,185,80,0.7)';
+    const fillColor= isAsc ? 'rgba(63,185,80,0.06)' : 'rgba(248,81,73,0.06)';
+    if(channel.support?.length){
+      const s = btChart.addLineSeries({color:supColor, lineWidth:1.5, lineStyle:1,
+        lastValueVisible:false, priceLineVisible:false, crosshairMarkerVisible:false});
+      s.setData(channel.support.filter(d=>chTimeSet.has(d.time)));
+    }
+    if(channel.resistance?.length){
+      const s = btChart.addLineSeries({color:resColor, lineWidth:1.5, lineStyle:1,
+        lastValueVisible:false, priceLineVisible:false, crosshairMarkerVisible:false});
+      s.setData(channel.resistance.filter(d=>chTimeSet.has(d.time)));
+    }
+  }
 
   // ── 成交量 ──
   const vSeries = btChart.addHistogramSeries({

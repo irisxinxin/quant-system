@@ -212,8 +212,8 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, sect_cta, spy_ct
         except Exception:
             return None
 
-    # ── K 线（近 6 个月）——用 iloc 位置索引避免 tz / dtype 不匹配 ──
-    cutoff     = prices.index[-1] - pd.Timedelta(days=185)
+    # ── K 线（近 12 个月）——用 iloc 位置索引避免 tz / dtype 不匹配 ──
+    cutoff     = prices.index[-1] - pd.Timedelta(days=365)
     mask       = prices.index >= cutoff
     recent_prices = prices[mask]       # Series
     recent_ohlcv  = ohlcv[mask]        # DataFrame（已 reindex 对齐）
@@ -280,19 +280,6 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, sect_cta, spy_ct
         except Exception:
             pass
 
-    # ── 原始入场信号（最近90根K线，无CTA过滤）──
-    try:
-        cutoff_90 = prices.index[-90] if len(prices) >= 90 else prices.index[0]
-        raw_recent = raw_entry[prices.index >= cutoff_90]
-        existing_buy_times = {m["time"] for m in markers if m["type"] == "buy"}
-        for idx in raw_recent[raw_recent > 0].index:
-            t_str = idx.strftime("%Y-%m-%d")
-            if t_str not in existing_buy_times:
-                markers.append({"time": t_str, "type": "signal",
-                                 "text": f"▲ ${float(prices.loc[idx]):.0f}"})
-    except Exception:
-        pass
-
     # ── 检测当前是否有未平仓持仓 ──
     open_trade = None
     try:
@@ -321,6 +308,61 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, sect_cta, spy_ct
             ep = _s(open_entry_px)
             markers.append({"time": open_entry_date.strftime("%Y-%m-%d"), "type": "buy",
                              "price": ep, "text": f"B ${ep:.2f}" if ep else "B"})
+    except Exception:
+        pass
+
+    # ── MA 指标线（与 candles 同范围，基于完整历史计算）──
+    ma_lines = {}
+    try:
+        e20_full   = prices.ewm(span=20, adjust=False).mean()
+        e60_full   = prices.ewm(span=60, adjust=False).mean()
+        ma200_full = prices.rolling(200, min_periods=80).mean()
+
+        def _to_lc(series_full):
+            return [{"time": dt.strftime("%Y-%m-%d"), "value": round(float(v), 4)}
+                    for dt, v in series_full[mask].items() if not pd.isna(v)]
+
+        ma_lines = {
+            "ema20":  _to_lc(e20_full),
+            "ema60":  _to_lc(e60_full),
+            "ma200":  _to_lc(ma200_full),
+        }
+    except Exception:
+        pass
+
+    # ── 趋势通道（基于最近6个月 OHLCV，bar 索引转日期）──
+    channel = {"type": "none"}
+    try:
+        from generate_charts import compute_channels
+        ch_df = pd.DataFrame({
+            "Close": recent_prices.values,
+            "High":  recent_ohlcv["High"].fillna(recent_prices).values,
+            "Low":   recent_ohlcv["Low"].fillna(recent_prices).values,
+        }, index=recent_prices.index)
+        ch_raw = compute_channels(ch_df)
+        ch_type = ch_raw.get("type", "none")
+        if ch_type in ("ascending", "descending"):
+            sup     = ch_raw["support"]      # [(x0, y0), (x_end, y_end)]
+            ch_res  = ch_raw["resistance"]
+            x0    = sup[0][0]
+            y0_s  = sup[0][1]
+            y0_r  = ch_res[0][1]
+            slope = (sup[1][1] - y0_s) / max(sup[1][0] - x0, 1)
+            sup_lc, res_lc = [], []
+            for i in range(x0, len(ch_df)):
+                dt = ch_df.index[i].strftime("%Y-%m-%d")
+                sup_lc.append({"time": dt, "value": round(float(y0_s + slope * (i - x0)), 4)})
+                res_lc.append({"time": dt, "value": round(float(y0_r + slope * (i - x0)), 4)})
+            channel = {"type": ch_type, "support": sup_lc, "resistance": res_lc}
+        elif ch_type == "consolidation":
+            cx = ch_raw.get("consol_x"); cb = ch_raw.get("consol_band")
+            if cx and cb:
+                x0_c = cx[0]
+                sup_lc = [{"time": ch_df.index[i].strftime("%Y-%m-%d"), "value": round(float(cb[0]), 4)}
+                           for i in range(x0_c, len(ch_df))]
+                res_lc = [{"time": ch_df.index[i].strftime("%Y-%m-%d"), "value": round(float(cb[1]), 4)}
+                           for i in range(x0_c, len(ch_df))]
+                channel = {"type": "consolidation", "support": sup_lc, "resistance": res_lc}
     except Exception:
         pass
 
@@ -385,6 +427,8 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, sect_cta, spy_ct
         "candles":  candles,
         "bah":      bah,
         "markers":  markers,
+        "ma_lines": ma_lines,
+        "channel":  channel,
         "trades":   trades_list,
         "metrics": {
             "calmar":    _metric("Calmar比率"),
