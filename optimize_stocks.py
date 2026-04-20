@@ -389,16 +389,24 @@ def optimize_ticker(
         # ── CTA 过滤 ──
         qqq_s = qqq_cta.reindex(prices.index).ffill().fillna(0) if qqq_cta is not None \
                 else pd.Series(0.0, index=prices.index)
+        sect_s = sect_cta.reindex(prices.index).ffill().fillna(0)
+
+        # "smh" key 保留兼容名，实际存的是该股对应板块ETF的CTA信号
+        # "spy" 只对大盘/核心类股票（SPY/QQQ/GOOG/META等）开放
+        # 非大盘股用 "combo"（板块ETF+SPY均值）代替纯SPY，避免大盘涨而板块跌时误入场
+        is_index_stock = get_sector(ticker) == "🔵 大盘/核心"
         cta_gates = {
             "none":  pd.Series(1.0, index=prices.index),
             "combo": (combo_cta_s > 0).astype(float),
-            "soft":  (combo_cta_s > -0.25).astype(float),   # 宽松：板块ETF+SPY 轻微负向也允许入场
-            "spy":   (spy_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),
-            "smh":   (sect_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float),  # "smh"保留名称兼容CSV，实际用板块ETF
-            "qqq":   (qqq_s > 0).astype(float),             # 纳指趋势，更贴近科技股
+            "soft":  (combo_cta_s > -0.25).astype(float),
+            "smh":   (sect_s > 0).astype(float),             # 板块ETF（对LITE=SMH, 对半导体=SMH, 等）
+            "qqq":   (qqq_s > 0).astype(float),
         }
+        if is_index_stock:
+            # 大盘/核心股票允许纯SPY过滤
+            cta_gates["spy"] = (spy_cta.reindex(prices.index).ffill().fillna(0) > 0).astype(float)
 
-        # 动态注入行业 CTA（soxx/igv/xly/xar/ibit 等）
+        # 动态注入行业 CTA（soxx/igv/xly/xar/ibit/xme/xlf/xli/xlv 等）
         if extra_ctas:
             for _cn, _cs in extra_ctas.items():
                 if _cn not in cta_gates:
