@@ -204,37 +204,37 @@ async def dashboard():
 
 
 @app.get("/api/macro")
-async def api_macro():
+def api_macro():
     data, ts = _get_cached("macro", get_macro, CACHE_TTL["macro"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.get("/api/scan")
-async def api_scan():
+def api_scan():
     data, ts = _get_cached("scan", scan_all, CACHE_TTL["scan"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.get("/api/flows")
-async def api_flows():
+def api_flows():
     data, ts = _get_cached("flows", get_flows, CACHE_TTL["flows"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.get("/api/cta")
-async def api_cta():
+def api_cta():
     data, ts = _get_cached("cta", get_cta_dashboard, CACHE_TTL["cta"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.get("/api/sectors")
-async def api_sectors():
+def api_sectors():
     data, ts = _get_cached("sectors", get_sector_full, CACHE_TTL["sectors"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
 
 
 @app.get("/api/backtest/{ticker}")
-async def api_backtest(ticker: str):
+def api_backtest(ticker: str):
     key = f"bt_{ticker.upper()}"
     data, ts = _get_cached(key, lambda: get_bt_signals(ticker), CACHE_TTL["bt"])
     return JSONResponse({"data": data, "cached_at": _fmt_age(ts)})
@@ -364,7 +364,7 @@ _SW_TRADES = [
 ]
 
 @app.get("/api/stockwhale")
-async def api_stockwhale_list():
+def api_stockwhale_list():
     """返回 StockWhale 全部持仓 + 实时价格"""
     from data.downloader import get_prices
     result = []
@@ -384,7 +384,7 @@ async def api_stockwhale_list():
 
 
 @app.get("/api/stockwhale/chart/{ticker}")
-async def api_stockwhale_chart(ticker: str):
+def api_stockwhale_chart(ticker: str):
     """返回指定 ticker 的 OHLCV 数据（供 K 线图使用）"""
     import math
     from data.downloader import get_ohlcv
