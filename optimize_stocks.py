@@ -212,23 +212,41 @@ def scan_hot_sectors() -> list:
 # 状态机：把入场/CTA/出场信号合成仓位
 # ──────────────────────────────────────────────
 
-def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray) -> np.ndarray:
+def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray,
+              prices: np.ndarray | None = None, stop_pct: float | None = None) -> np.ndarray:
     """
     Logic:
       - 入场: entry==1 且 cta_ok==1（当天触发，次日由 backtest engine shift执行）
       - 持仓: 只要 exit_cond==0 就继续持有
-      - 离场: exit_cond==1 立即清仓
+      - 离场: exit_cond==1 立即清仓，或触及动态追踪止损
+      - stop_pct: 从入场后最高价动态追踪止损（如0.15=峰值跌15%强制出场）
+                  初始止损 = 入场价 * (1 - stop_pct)，价格上涨后自动上移
     """
     pos = np.zeros(len(entry), dtype=float)
     in_trade = False
+    peak_price = np.nan
+    stop_price = np.nan
     for i in range(len(entry)):
         if not in_trade:
             if entry[i] and cta_ok[i]:
                 in_trade = True
                 pos[i] = 1.0
+                if prices is not None and stop_pct is not None:
+                    peak_price = prices[i]
+                    stop_price = prices[i] * (1.0 - stop_pct)
         else:
-            if exit_cond[i]:
+            if prices is not None and stop_pct is not None:
+                # 峰值上移，止损同步上移
+                if prices[i] > peak_price:
+                    peak_price = prices[i]
+                    stop_price = peak_price * (1.0 - stop_pct)
+                hit_stop = prices[i] <= stop_price
+            else:
+                hit_stop = False
+            if exit_cond[i] or hit_stop:
                 in_trade = False
+                peak_price = np.nan
+                stop_price = np.nan
             else:
                 pos[i] = 1.0
     return pos
@@ -257,6 +275,10 @@ def optimize_ticker(
         info = classify_ticker(ticker)
         asset_type = info["type"]
         ann_vol    = info.get("vol") or round(float(prices.pct_change().tail(252).std() * 252**0.5), 2)
+
+        # 动态追踪止损比例（从入场后峰值追踪）：A类15%，B/C类10%
+        # 价格上涨时止损上移保护盈利，价格未涨时最大损失=止损比例
+        entry_stop_pct = 0.15 if asset_type == "A" else 0.10
 
         # ── 指标 ──
         e20  = prices.ewm(span=20, adjust=False).mean()
@@ -419,6 +441,8 @@ def optimize_ticker(
                         e_sig.fillna(0).values,
                         c_sig.fillna(0).values,
                         eff_exit.fillna(0).values,
+                        prices=prices.values,
+                        stop_pct=entry_stop_pct,
                     )
                     sig_s = pd.Series(pos, index=prices.index)
 

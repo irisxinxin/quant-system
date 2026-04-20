@@ -33,17 +33,33 @@ def _cta_series(px: pd.Series) -> pd.Series:
     return pd.concat(sigs, axis=1).mean(axis=1)
 
 
-def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray) -> np.ndarray:
+def _make_pos(entry: np.ndarray, cta_ok: np.ndarray, exit_cond: np.ndarray,
+              prices: np.ndarray | None = None, stop_pct: float | None = None) -> np.ndarray:
+    """从入场后峰值价格动态追踪止损（stop_pct：峰值回撤比例）"""
     pos = np.zeros(len(entry), dtype=float)
     in_trade = False
+    peak_price = np.nan
+    stop_price = np.nan
     for i in range(len(entry)):
         if not in_trade:
             if entry[i] and cta_ok[i]:
                 in_trade = True
                 pos[i] = 1.0
+                if prices is not None and stop_pct is not None:
+                    peak_price = prices[i]
+                    stop_price = prices[i] * (1.0 - stop_pct)
         else:
-            if exit_cond[i]:
+            if prices is not None and stop_pct is not None:
+                if prices[i] > peak_price:
+                    peak_price = prices[i]
+                    stop_price = peak_price * (1.0 - stop_pct)
+                hit_stop = prices[i] <= stop_price
+            else:
+                hit_stop = False
+            if exit_cond[i] or hit_stop:
                 in_trade = False
+                peak_price = np.nan
+                stop_price = np.nan
             else:
                 pos[i] = 1.0
     return pos
@@ -177,10 +193,20 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         add_x = all_exits.get(exit_name, pd.Series(False, index=prices.index))
         x_sig = (base_exit | add_x).astype(float)
 
+    # 动态追踪止损（从入场后峰值追踪）：A类15%，B/C类10%
+    try:
+        from optimize_stocks import classify_ticker
+        _atype = classify_ticker(ticker).get("type", "B")
+    except Exception:
+        _atype = "B"
+    stop_pct = 0.15 if _atype == "A" else 0.10
+
     pos_arr = _make_pos(
         e_sig.fillna(0).values,
         c_sig.fillna(0).values,
         x_sig.fillna(0).values,
+        prices=prices.values,
+        stop_pct=stop_pct,
     )
     return prices, ohlcv, pd.Series(pos_arr, index=prices.index), e_sig
 
