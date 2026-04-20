@@ -7,6 +7,8 @@ import time
 import json
 import hashlib
 import logging
+import threading
+from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
@@ -22,7 +24,58 @@ from scanner import scan_all, get_macro, get_flows, get_cta_dashboard, get_secto
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="量化交易仪表盘")
+
+def _bg_generate_charts():
+    """
+    启动后在后台线程里生成所有 K 线图（不阻塞服务器启动）。
+    每个交易日只生成一次：检查图片修改日期，当天已有则跳过。
+    """
+    try:
+        import warnings
+        warnings.filterwarnings("ignore")
+        from generate_charts import make_chart
+        import pandas as pd
+        from pathlib import Path as P
+        from datetime import date
+
+        csv = P(__file__).parent / "output" / "top3_strategies.csv"
+        if not csv.exists():
+            return
+
+        tickers = sorted(pd.read_csv(csv)["ticker"].unique().tolist())
+        charts_dir = P(__file__).parent / "output" / "charts"
+        today = date.today()
+
+        # 检查是否已经是今天生成的（取第一只票的图片日期）
+        sample_png = charts_dir / f"{tickers[0]}.png"
+        if sample_png.exists():
+            mtime = date.fromtimestamp(sample_png.stat().st_mtime)
+            if mtime >= today:
+                logger.warning(f"[charts] 今日已生成，跳过 ({mtime})")
+                return
+
+        logger.warning(f"[charts] 开始后台生成 {len(tickers)} 张 K 线图...")
+        ok = 0
+        for t in tickers:
+            try:
+                make_chart(t, force=True)
+                ok += 1
+            except Exception as e:
+                logger.warning(f"[charts] {t} 失败: {e}")
+        logger.warning(f"[charts] 完成 {ok}/{len(tickers)}")
+    except Exception as e:
+        logger.warning(f"[charts] 后台生成异常: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app):
+    # 启动时在后台线程生成 K 线图（不阻塞请求）
+    t = threading.Thread(target=_bg_generate_charts, daemon=True)
+    t.start()
+    yield
+
+
+app = FastAPI(title="量化交易仪表盘", lifespan=lifespan)
 
 _HTML_PATH   = Path(__file__).parent / "templates" / "index.html"
 _CACHE_DIR   = Path(__file__).parent / "cache"
