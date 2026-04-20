@@ -392,9 +392,17 @@ def _get_earnings(ticker: str) -> dict | None:
     """返回下次财报信息，若无或出错返回 None"""
     try:
         import yfinance as yf
+        import logging as _logging
         from datetime import date, datetime
-        t = yf.Ticker(ticker)
-        cal = t.calendar
+        # 压制 yfinance 的 404/401 噪音日志（ETF 没有财报数据属正常）
+        _yf_log = _logging.getLogger("yfinance")
+        _prev_level = _yf_log.level
+        _yf_log.setLevel(_logging.CRITICAL)
+        try:
+            t = yf.Ticker(ticker)
+            cal = t.calendar
+        finally:
+            _yf_log.setLevel(_prev_level)
         if cal is None:
             return None
         # calendar 返回格式可能是 dict 或 DataFrame
