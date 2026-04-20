@@ -227,7 +227,6 @@ def draw_channels(ax, channels: dict, n_bars: int):
 
     if ctype in ("ascending", "descending"):
         color_line = "#26a69a" if ctype == "ascending" else "#ef5350"
-        color_fill = "#26a69a18" if ctype == "ascending" else "#ef535018"
 
         sup = channels["support"]      # [(x0,y0),(x1,y1)]
         res = channels["resistance"]
@@ -237,28 +236,29 @@ def draw_channels(ax, channels: dict, n_bars: int):
         xs_r = [res[0][0], res[1][0]]
         ys_r = [res[0][1], res[1][1]]
 
-        ax.plot(xs_s, ys_s, color=color_line, linewidth=0.9,
-                linestyle="--", alpha=0.75, zorder=3)
-        ax.plot(xs_r, ys_r, color=color_line, linewidth=0.9,
-                linestyle="--", alpha=0.75, zorder=3)
+        # 通道边界线：更粗、实线
+        ax.plot(xs_s, ys_s, color=color_line, linewidth=1.8,
+                linestyle="--", alpha=0.90, zorder=4)
+        ax.plot(xs_r, ys_r, color=color_line, linewidth=1.8,
+                linestyle="--", alpha=0.90, zorder=4)
 
-        # 通道填充
+        # 通道填充（明显可见）
         xs_fill = np.linspace(xs_s[0], xs_s[1], 50)
         slope_s  = (ys_s[1] - ys_s[0]) / max(xs_s[1] - xs_s[0], 1)
         slope_r  = (ys_r[1] - ys_r[0]) / max(xs_r[1] - xs_r[0], 1)
         ys_fill_s = ys_s[0] + slope_s * (xs_fill - xs_s[0])
         ys_fill_r = ys_r[0] + slope_r * (xs_fill - xs_r[0])
         ax.fill_between(xs_fill, ys_fill_s, ys_fill_r,
-                        color=color_fill, zorder=2)
+                        color=color_line, alpha=0.12, zorder=2)
 
         # 标注通道类型
         label = "↗ 上升通道" if ctype == "ascending" else "↘ 下降通道"
         mid_x = xs_r[1] - 2
         mid_y = (ys_r[1] + ys_s[1]) / 2
-        ax.annotate(label, xy=(mid_x, mid_y), fontsize=7,
-                    color=color_line, ha="right", alpha=0.85,
-                    bbox=dict(boxstyle="round,pad=0.15", fc="#0d1117",
-                              ec=f"{color_line}55", alpha=0.8))
+        ax.annotate(label, xy=(mid_x, mid_y), fontsize=8,
+                    color=color_line, ha="right", fontweight="bold",
+                    bbox=dict(boxstyle="round,pad=0.2", fc="#0d1117",
+                              ec=color_line, alpha=0.9, linewidth=1.2))
 
     elif ctype == "consolidation":
         band = channels["consol_band"]
@@ -267,18 +267,16 @@ def draw_channels(ax, channels: dict, n_bars: int):
             lo, hi = band
             x0, x1 = cx
             ax.fill_between([x0, x1], lo, hi,
-                            color="#ffd70018", zorder=2, alpha=0.5)
-            ax.axhline(y=lo, xmin=x0 / n_bars, xmax=1.0,
-                       color="#ffd700", linewidth=0.6,
-                       linestyle="--", alpha=0.5)
-            ax.axhline(y=hi, xmin=x0 / n_bars, xmax=1.0,
-                       color="#ffd700", linewidth=0.6,
-                       linestyle="--", alpha=0.5)
+                            color="#ffd700", alpha=0.10, zorder=2)
+            ax.plot([x0, x1], [lo, lo],
+                    color="#ffd700", linewidth=1.5, linestyle="--", alpha=0.80)
+            ax.plot([x0, x1], [hi, hi],
+                    color="#ffd700", linewidth=1.5, linestyle="--", alpha=0.80)
             ax.annotate("⬌ 震荡区间",
-                        xy=(x1 - 2, hi * 1.002), fontsize=7,
-                        color="#ffd700", ha="right", alpha=0.85,
-                        bbox=dict(boxstyle="round,pad=0.15", fc="#0d1117",
-                                  ec="#ffd70055", alpha=0.8))
+                        xy=(x1 - 2, hi * 1.003), fontsize=8,
+                        color="#ffd700", ha="right", fontweight="bold",
+                        bbox=dict(boxstyle="round,pad=0.2", fc="#0d1117",
+                                  ec="#ffd700", alpha=0.9, linewidth=1.2))
 
 
 def nearest_date(target: pd.Timestamp, index: pd.DatetimeIndex) -> pd.Timestamp | None:
