@@ -724,6 +724,25 @@ def main(tickers: list | None = None) -> list:
             extra_ctas[_name] = _cta_series(_px)
         except Exception:
             pass
+
+    # 每个板块允许的 extra_cta 白名单（防止优化器选无关板块ETF做过滤）
+    # 逻辑：只允许与本股票业务相关的宏观/板块指标
+    SECTOR_ALLOWED_CTAS: dict[str, set] = {
+        "🔵 大盘/核心":       {"soxx", "igv", "qqq"},          # 大盘科技
+        "⚡ 半导体/AI算力":   {"soxx", "igv", "qqq"},          # 半导体/AI
+        "💾 存储":            {"soxx", "qqq"},                  # 存储芯片
+        "🏗 AI电力/数据中心": {"soxx", "xli", "qqq"},          # 工业+科技
+        "🌐 光子/高速连接":   {"soxx", "igv", "qqq"},          # 光通信（接近半导体）
+        "💼 软件/AI数据":     {"igv", "soxx", "qqq"},          # 软件
+        "🚚 物流/运输":       {"xli"},                          # 工业/运输
+        "🏭 工业/航天制造":   {"xar", "xli"},                   # 军工/工业
+        "💰 金融":            {"xlf"},                          # 金融
+        "🪙 加密/Fintech":    {"ibit", "soxx", "qqq"},         # 加密
+        "🔋 电池/稀土":       {"xme", "xli"},                   # 原材料/工业
+        "🚀 太空/机器人":     {"xar", "soxx", "qqq"},          # 航天/AI
+        "🏥 消费/健康":       {"xly", "xlv", "qqq"},           # 消费/医疗
+        "🥇 黄金/避险":       {"xme"},                          # 贵金属
+    }
     print(f"   SPY CTA: {spy_cta.iloc[-1]:.2f}  QQQ CTA: {qqq_cta.iloc[-1]:.2f}")
 
     print(f"\n⚡ 并行优化中...\n")
@@ -745,7 +764,10 @@ def main(tickers: list | None = None) -> list:
             executor.submit(
                 optimize_ticker, t,
                 sect_cta_map.get(ticker_sect_etf.get(t, "SPY"), spy_cta),  # 板块对应CTA
-                spy_cta, qqq_cta, extra_ctas
+                spy_cta, qqq_cta,
+                # 只传该板块白名单内的 extra_ctas，避免优化器选无关板块ETF
+                {k: v for k, v in extra_ctas.items()
+                 if k in SECTOR_ALLOWED_CTAS.get(get_sector(t), set())}
             ): t
             for t in tickers
         }
