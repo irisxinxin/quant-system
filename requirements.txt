@@ -20,6 +20,7 @@ cot_reports>=0.0.7      # CFTC COT 报告下载
 # ─── 可视化 ───
 matplotlib>=3.7.0
 seaborn>=0.12.0
+mplfinance>=0.12.10b0
 
 # ─── Web 服务 ───
 fastapi>=0.111.0
