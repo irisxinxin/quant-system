@@ -1773,8 +1773,10 @@ function renderSWTable(trades){
           <span style="font-size:11px;color:${STATUS_COLOR[t.display_status||t.status]||'#888'}">${STATUS_LABEL[t.display_status||t.status]||t.status}</span>
           <span style="font-size:10px;color:var(--text3);background:rgba(255,255,255,.06);border-radius:3px;padding:1px 5px">${TYPE_LABEL[t.type]||t.type}</span>
         </span></td>
-        <td class="tl"><span style="font-weight:600;color:var(--text)">${t.ticker}</span>
-          ${t.note?`<span style="font-size:10px;color:var(--text3);margin-left:4px">${t.note}</span>`:''}</td>
+        <td class="tl">
+          <span style="font-weight:600;color:var(--text)">${t.ticker}</span>
+          ${t.sector?`<span style="font-size:10px;color:var(--text3);margin-left:5px">${t.sector}</span>`:''}
+          ${t.note?`<div style="font-size:10px;color:var(--text3);margin-top:1px">${t.note}</div>`:''}</td>
         <td style="display:none"></td>
         <td style="color:var(--text3);font-size:11px">${t.date}</td>
         <td>$${t.entry}</td>
