@@ -1265,6 +1265,31 @@ function renderBtDetail(s){
   }).join('');
 }
 
+function _addChartLabel(container, chart, series, price, text, color, bgColor){
+  // 在图表右侧以浮动 HTML 标签标注通道/区间名称
+  // 使用 RAF 等 chart 渲染完成后再定位
+  const label = document.createElement('div');
+  label.textContent = text;
+  label.style.cssText = [
+    'position:absolute', 'right:68px', 'pointer-events:none',
+    'font-size:10px', 'font-weight:600', 'font-family:monospace',
+    'padding:2px 6px', 'border-radius:4px',
+    `color:${color}`, `background:${bgColor}`,
+    `border:1px solid ${color.replace('0.9','0.3').replace('0.85','0.3')}`,
+    'white-space:nowrap', 'z-index:10',
+  ].join(';');
+  container.style.position = 'relative';
+  container.appendChild(label);
+  // 定位到对应价格的 Y 坐标
+  requestAnimationFrame(()=>{
+    try{
+      const y = series.priceToCoordinate(price);
+      if(y != null) label.style.top = Math.max(4, y - 10) + 'px';
+      else label.remove();
+    }catch(e){ label.remove(); }
+  });
+}
+
 function renderBtChart(candles, markers, bah, maLines, channel){
   if(btChart){ btChart.remove(); btChart=null; }
   const el = $('bt-chart');
@@ -1344,22 +1369,58 @@ function renderBtChart(candles, markers, bah, maLines, channel){
     });
   }
 
-  // ── 趋势通道 ──
+  // ── 趋势通道 / 震荡区间 ──
   if(channel && channel.type !== 'none'){
     const chTimeSet = new Set(validCandles.map(c=>c.time));
-    const isAsc = channel.type === 'ascending';
-    const supColor = isAsc ? 'rgba(63,185,80,0.7)'  : 'rgba(248,81,73,0.7)';
-    const resColor = isAsc ? 'rgba(248,81,73,0.7)'  : 'rgba(63,185,80,0.7)';
-    const fillColor= isAsc ? 'rgba(63,185,80,0.06)' : 'rgba(248,81,73,0.06)';
-    if(channel.support?.length){
-      const s = btChart.addLineSeries({color:supColor, lineWidth:1.5, lineStyle:1,
-        lastValueVisible:false, priceLineVisible:false, crosshairMarkerVisible:false});
-      s.setData(channel.support.filter(d=>chTimeSet.has(d.time)));
-    }
-    if(channel.resistance?.length){
-      const s = btChart.addLineSeries({color:resColor, lineWidth:1.5, lineStyle:1,
-        lastValueVisible:false, priceLineVisible:false, crosshairMarkerVisible:false});
-      s.setData(channel.resistance.filter(d=>chTimeSet.has(d.time)));
+
+    if(channel.type === 'consolidation'){
+      // 震荡区间：价格轴两条带标签的水平线 + 填色
+      const loVal = channel.support?.[0]?.value;
+      const hiVal = channel.resistance?.[0]?.value;
+      if(loVal != null && hiVal != null){
+        cSeries.createPriceLine({price:hiVal, color:'rgba(255,215,0,0.55)',
+          lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'震荡上轨'});
+        cSeries.createPriceLine({price:loVal, color:'rgba(255,215,0,0.55)',
+          lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'震荡下轨'});
+        // 填色：用 areaSeries 在两轨之间填黄色半透明
+        const fillS = btChart.addAreaSeries({
+          topColor:'rgba(255,215,0,0.08)', bottomColor:'rgba(255,215,0,0.02)',
+          lineColor:'transparent', lineWidth:0,
+          lastValueVisible:false, priceLineVisible:false, crosshairMarkerVisible:false,
+          priceScaleId:'right',
+        });
+        const hiPts = (channel.resistance||[]).filter(d=>chTimeSet.has(d.time));
+        if(hiPts.length) fillS.setData(hiPts);
+        _addChartLabel(el, btChart, cSeries, (loVal+hiVal)/2, '⬌ 震荡区间',
+          'rgba(255,215,0,0.85)', 'rgba(255,215,0,0.15)');
+      }
+    } else {
+      // 上升 / 下降通道：两条斜线 + 标签
+      const isAsc   = channel.type === 'ascending';
+      const supColor= isAsc ? 'rgba(63,185,80,0.75)' : 'rgba(248,81,73,0.75)';
+      const resColor= isAsc ? 'rgba(248,81,73,0.75)' : 'rgba(63,185,80,0.75)';
+      const labelTxt= isAsc ? '↗ 上升通道' : '↘ 下降通道';
+      const labelClr= isAsc ? 'rgba(63,185,80,0.9)' : 'rgba(248,81,73,0.9)';
+      const labelBg = isAsc ? 'rgba(63,185,80,0.12)' : 'rgba(248,81,73,0.12)';
+      let supS, resS;
+      if(channel.support?.length){
+        supS = btChart.addLineSeries({color:supColor, lineWidth:1.5, lineStyle:0,
+          lastValueVisible:true, priceLineVisible:false, crosshairMarkerVisible:false,
+          title: isAsc?'支撑':'压力'});
+        supS.setData(channel.support.filter(d=>chTimeSet.has(d.time)));
+      }
+      if(channel.resistance?.length){
+        resS = btChart.addLineSeries({color:resColor, lineWidth:1.5, lineStyle:0,
+          lastValueVisible:true, priceLineVisible:false, crosshairMarkerVisible:false,
+          title: isAsc?'压力':'支撑'});
+        resS.setData(channel.resistance.filter(d=>chTimeSet.has(d.time)));
+      }
+      // 通道中线价格 → 在价格轴右侧显示浮动标签
+      if(supS && channel.support?.length && channel.resistance?.length){
+        const lastSup = channel.support[channel.support.length-1].value;
+        const lastRes = channel.resistance[channel.resistance.length-1].value;
+        _addChartLabel(el, btChart, supS, (lastSup+lastRes)/2, labelTxt, labelClr, labelBg);
+      }
     }
   }
 
