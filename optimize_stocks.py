@@ -480,16 +480,33 @@ def optimize_ticker(
                         if periods["3M"]["ret"] < -15 and periods["1Y"]["cagr"] < 30:
                             continue
 
+                        # ── 2026 年有无入场检查（强制约束）──────────────────
+                        # 策略必须在今年（YTD_START 之后）产生过至少一次新入场信号。
+                        # 否则无论历史多好，用户在 2026 年都无法用它实际进场。
+                        # 注意：必须在完整 sig_s 上计算转换点，不能切片后再 shift
+                        # （切片后 shift 会把持仓延续误判为新入场）
+                        _all_entries_mask = (sig_s > 0) & (sig_s.shift(1, fill_value=0) == 0)
+                        _has_ytd_entry = bool(
+                            _all_entries_mask[sig_s.index >= YTD_START].any()
+                        )
+
                         # 近期入场惩罚
-                        # - 当前持仓中（in_trade_now）：不惩罚（策略处于活跃持仓状态）
-                        # - 未持仓且 >180 bar 无新入场：直接淘汰（策略已失活）
-                        # - 未持仓且 90-180 bar 无新入场：软惩罚 0~-0.4
+                        # - 今年有入场 + 持仓中：最优，无惩罚
+                        # - 今年有入场 + 空仓：正常 recency 惩罚
+                        # - 今年无入场 + 持仓中（入场在2025或更早）：重惩罚 -0.6
+                        # - 今年无入场 + 空仓 + >180 bar：硬淘汰
                         _recency_penalty = 0.0
-                        if _in_trade_now:
-                            _recency_penalty = 0.0   # 持仓中，不额外惩罚
-                        elif _last_entry_ago > 180:
-                            continue  # 硬淘汰：>180天无入场且不在仓
+                        if _has_ytd_entry and _in_trade_now:
+                            _recency_penalty = 0.0
+                        elif _has_ytd_entry and not _in_trade_now:
+                            _overshoot = max(0, _last_entry_ago - 90)
+                            _recency_penalty = -min(0.4, _overshoot / 90 * 0.4)
+                        elif not _has_ytd_entry and _in_trade_now:
+                            _recency_penalty = -0.6  # 持仓但入场在今年之前，用户无法跟进
                         else:
+                            # 今年无入场 + 空仓
+                            if _last_entry_ago > 180:
+                                continue  # 硬淘汰
                             _overshoot = max(0, _last_entry_ago - 90)
                             _recency_penalty = -min(0.4, _overshoot / 90 * 0.4)
 
