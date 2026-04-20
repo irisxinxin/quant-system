@@ -1,0 +1,55 @@
+[
+  {
+    "id": "8bc6930f",
+    "kol": "顺哥",
+    "platform": "Discord",
+    "tickers": [
+      "SPY",
+      "QQQ",
+      "SPXU",
+      "SNDK",
+      "BTC-USD",
+      "POET"
+    ],
+    "sentiment": "bullish",
+    "date": "2026-04-20",
+    "created_at": "2026-04-20T09:32:00",
+    "reviewed": false,
+    "content": "短期：先跌破7000再去7360-7400目标。80% cash等待。\n策略：先跑空单(SPXU/SNDK)，观察几天，然后120-150% margin做多大盘。\nSNDK 860本周强支撑，跌破就瀑布，不破震荡860-1000。\nPOET：9.3全跑了，等待。\n$8万亿sideline money等待进场。\n中长期：到7400新高后清仓，2027迎世纪大熊市（SPX低点4300-4800，持续2年，类比2008）。\nBTC：年底或明年破10万甚至12万，然后跟随大盘大跌，6万是支撑。"
+  },
+  {
+    "id": "ac79f492",
+    "kol": "二级研究员",
+    "platform": "Discord",
+    "tickers": [
+      "ALAB",
+      "ARM",
+      "MRVL",
+      "GFS",
+      "DRAM",
+      "POET",
+      "MU",
+      "TSEM"
+    ],
+    "sentiment": "bullish",
+    "date": "2026-04-20",
+    "created_at": "2026-04-20T21:44:00",
+    "reviewed": false,
+    "content": "操作：止盈MU/TSEM/LMND/GOOG/TSLA，全部清仓AI应用股。\n加仓方向：集中光子+存储+GPU链\n- DRAM加仓至6%，GFS加仓至4%，MRVL加仓至4.5%\n- ARM买入2%，POET买入1.8%\n- ALAB进一步加仓至5%（主仓）\n\nALAB晋升主仓核心逻辑——三重乘数效应：\n① 数量乘数：CPU:GPU比降（1:8→1:2），连接总数非线性增加×2\n② 规格乘数：PCIe Gen6→Gen7单价递增×1.5\n③ 运营乘数：75%毛利+固定费用=运营杠杆\n→ 营收3x潜力，利润增速远超营收，EPS弹性爆炸式放大\n\nCPU持续紧缺→CXL扩容需求→单台服务器ALAB芯片Content Per Box显著提升。\nAMD/INTC/ARM/ALAB中，ALAB乘数效应最强，发酵程度最小，先建仓后研究。"
+  },
+  {
+    "id": "53d5c339",
+    "kol": "二级研究员",
+    "platform": "Discord",
+    "tickers": [
+      "COHR",
+      "LITE",
+      "TSEM"
+    ],
+    "sentiment": "neutral",
+    "date": "2026-04-20",
+    "created_at": "2026-04-20T11:02:00",
+    "reviewed": false,
+    "content": "深度讨论：光模块价值链的利润悖论\n问：光模块组装利润本应微薄，为何中际/新易盛毛利率反而高于LITE？\n\n结论：价值链利润不按设计高、制造低、组装低固定分配，谁卡住瓶颈谁拿超额利润。\n中际卡住了能把DSP+EML+驱动+TIA+PCB+散热+固件全部稳定跑通的大规模模块平台这个稀缺口。\n台积电同理：从普通代工升维成全球最稀缺的先进工艺+先进封装操作系统。\n\n→ 评估任何公司都要看：谁是真正的瓶颈？不是谁的理论价值高。"
+  }
+]
