@@ -25,10 +25,10 @@ from config import CTA_LOOKBACKS, CTA_VOL_WIN
 
 SECTOR_GROUPS = {
     "🔵 大盘/核心":        ["QQQ", "SPY", "GOOG", "META", "TSLA", "AMZN"],
-    "⚡ 半导体/AI算力":    ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC", "SOXX", "NBIS"],
-    "💾 存储":             ["MU", "WDC", "STX", "SNDK"],
+    "⚡ 半导体/AI算力":    ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC", "SOXX", "NBIS", "GFS", "ASX"],
+    "💾 存储":             ["MU", "WDC", "STX", "SNDK", "DRAM"],
     "🏗 AI电力/数据中心":  ["BE", "VRT", "ETN", "GEV", "PWR"],
-    "🌐 光子/高速连接":    ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM"],
+    "🌐 光子/高速连接":    ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM", "ALAB"],
     "💼 软件/AI数据":      ["PLTR", "ORCL", "ADBE", "CRM"],
     "🚚 物流/运输":        ["ODFL", "XPO", "JBHT", "PCAR", "CMI"],
     "🏭 工业/航天制造":    ["CAT", "DE", "HWM", "ITT", "EME", "AME"],
@@ -393,13 +393,13 @@ def optimize_ticker(
         # "smh" key 保留兼容名，实际存的是该股对应板块ETF的CTA信号
         # "spy" 只对大盘/核心类股票（SPY/QQQ/GOOG/META等）开放
         # 非大盘股用 "combo"（板块ETF+SPY均值）代替纯SPY，避免大盘涨而板块跌时误入场
+        # "qqq" 已移出默认门控，改由 SECTOR_ALLOWED_CTAS 白名单注入 extra_ctas
         is_index_stock = get_sector(ticker) == "🔵 大盘/核心"
         cta_gates = {
             "none":  pd.Series(1.0, index=prices.index),
             "combo": (combo_cta_s > 0).astype(float),
             "soft":  (combo_cta_s > -0.25).astype(float),
             "smh":   (sect_s > 0).astype(float),             # 板块ETF（对LITE=SMH, 对半导体=SMH, 等）
-            "qqq":   (qqq_s > 0).astype(float),
         }
         if is_index_stock:
             # 大盘/核心股票允许纯SPY过滤
@@ -524,6 +524,10 @@ def optimize_ticker(
                         periods = _multi_period(strat_ret)
 
                         # 近期绩效过滤（多层保险）
+                        # 0) 近1年最大回撤超过20% → 直接跳过（用户硬约束）
+                        # dd 已是负数百分比，如 -25.3 表示最大回撤 25.3%
+                        if periods["1Y"]["dd"] < -20:
+                            continue
                         # 1) 近1年亏损超过10% → 直接跳过，无论近期是否反弹
                         if periods["1Y"]["cagr"] < -10:
                             continue
@@ -723,24 +727,26 @@ def main(tickers: list | None = None) -> list:
             extra_ctas[_name] = _cta_series(_px)
         except Exception:
             pass
+    # qqq 复用已下载的 qqq_cta，不重复下载；供大盘/核心板块白名单使用
+    extra_ctas["qqq"] = qqq_cta
 
     # 每个板块允许的 extra_cta 白名单（防止优化器选无关板块ETF做过滤）
-    # 逻辑：只允许与本股票业务相关的宏观/板块指标
+    # 原则：每个板块只允许最直接相关的行业指数，避免逻辑错误的跨板块门控
     SECTOR_ALLOWED_CTAS: dict[str, set] = {
-        "🔵 大盘/核心":       {"soxx", "igv", "qqq"},          # 大盘科技
-        "⚡ 半导体/AI算力":   {"soxx", "igv", "qqq"},          # 半导体/AI
-        "💾 存储":            {"soxx", "qqq"},                  # 存储芯片
-        "🏗 AI电力/数据中心": {"soxx", "xli", "qqq"},          # 工业+科技
-        "🌐 光子/高速连接":   {"soxx", "igv", "qqq"},          # 光通信（接近半导体）
-        "💼 软件/AI数据":     {"igv", "soxx", "qqq"},          # 软件
-        "🚚 物流/运输":       {"xli"},                          # 工业/运输
-        "🏭 工业/航天制造":   {"xar", "xli"},                   # 军工/工业
-        "💰 金融":            {"xlf"},                          # 金融
-        "🪙 加密/Fintech":    {"ibit", "soxx", "qqq"},         # 加密
-        "🔋 电池/稀土":       {"xme", "xli"},                   # 原材料/工业
-        "🚀 太空/机器人":     {"xar", "soxx", "qqq"},          # 航天/AI
-        "🏥 消费/健康":       {"xly", "xlv", "qqq"},           # 消费/医疗
-        "🥇 黄金/避险":       {"xme"},                          # 贵金属
+        "🔵 大盘/核心":       {"qqq"},           # 宽基科技指数
+        "⚡ 半导体/AI算力":   {"soxx"},           # 半导体指数
+        "💾 存储":            {"soxx"},           # 存储芯片属于半导体
+        "🏗 AI电力/数据中心": {"soxx"},           # AI基础设施与芯片景气度联动
+        "🌐 光子/高速连接":   {"soxx"},           # 光子/连接IC，半导体相关
+        "💼 软件/AI数据":     {"igv"},            # 软件ETF，IGV完全对口
+        "🚚 物流/运输":       {"xli"},            # 工业/运输
+        "🏭 工业/航天制造":   {"xar", "xli"},     # 航天防务+大工业
+        "💰 金融":            {"xlf"},            # 金融ETF
+        "🪙 加密/Fintech":    {"ibit"},           # BTC代理，移除soxx/qqq
+        "🔋 电池/稀土":       {"xme", "xli"},     # 金属矿产+工业
+        "🚀 太空/机器人":     {"xar"},            # 航天防务ETF，移除soxx/qqq
+        "🏥 消费/健康":       {"xly", "xlv"},     # 消费+医疗
+        "🥇 黄金/避险":       {"xme"},            # 金属/黄金
     }
     print(f"   SPY CTA: {spy_cta.iloc[-1]:.2f}  QQQ CTA: {qqq_cta.iloc[-1]:.2f}")
 
