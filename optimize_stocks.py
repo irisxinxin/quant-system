@@ -25,7 +25,7 @@ from config import CTA_LOOKBACKS, CTA_VOL_WIN
 
 SECTOR_GROUPS = {
     "🔵 大盘/核心":        ["QQQ", "SPY", "GOOG", "META", "TSLA", "AMZN"],
-    "⚡ 半导体/AI算力":    ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC", "SOXX", "NBIS", "GFS", "ASX"],
+    "⚡ 半导体/AI算力":    ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC", "SOXX", "NBIS", "GFS", "ASX", "SOXS"],
     "💾 存储":             ["MU", "WDC", "STX", "SNDK", "DRAM"],
     "🏗 AI电力/数据中心":  ["BE", "VRT", "ETN", "GEV", "PWR"],
     "🌐 光子/高速连接":    ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM", "ALAB"],
@@ -174,6 +174,13 @@ def _recency_score(periods: dict, avg_hold: float = 1.0, win_rate: float = 0.5) 
     r3m  = periods["3M"]["ret"] / 30.0                # 标准化到 ~0~1（30%≈1.0）
     r1m  = periods["1M"]["ret"] / 15.0                # 标准化到 ~0~1（15%≈1.0）
     call = min(periods["All"]["calmar"], CALMAR_CAP)
+    # 绝对收益门槛：近1年CAGR太低时降低Calmar贡献
+    # 防止"几乎不入场"的策略靠近零回撤虚高评分（如 ema_cross 全年只触发1次）
+    cagr1y = periods["1Y"]["cagr"]
+    if cagr1y < 5:
+        c1y = c1y * 0.25   # 年化<5%：Calmar贡献打2.5折
+    elif cagr1y < 12:
+        c1y = c1y * 0.6    # 年化5-12%：Calmar贡献打6折
     # 持仓时长加成：平均持仓越长（趋势型）得分越高，上限0.5分
     hold_bonus = min(avg_hold / 20.0, 0.5)
     # 胜率加成：以50%为中轴，每高1%加0.02，每低1%减0.02，上限±0.3
