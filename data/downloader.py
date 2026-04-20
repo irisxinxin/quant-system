@@ -11,8 +11,13 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, Union
 
+import random
 import pandas as pd
 import yfinance as yf
+
+# 下载重试参数
+_MAX_RETRIES = 4
+_RETRY_BASE  = 2.0   # 指数退避底数（秒）
 
 # 引入全局配置
 import sys
@@ -82,27 +87,38 @@ def get_prices(
         return _load(cpath)
 
     logger.info(f"[download] {ticker} {start} → {end_str}")
-    try:
-        raw = yf.download(ticker, start=start, end=end_str,
-                          auto_adjust=True, progress=False)
-        if raw.empty:
-            logger.warning(f"[empty] {ticker} returned no data")
-            return pd.Series(name=ticker, dtype=float)
+    last_exc = None
+    for attempt in range(_MAX_RETRIES):
+        try:
+            raw = yf.download(ticker, start=start, end=end_str,
+                              auto_adjust=True, progress=False)
+            if raw.empty:
+                logger.warning(f"[empty] {ticker} returned no data")
+                return pd.Series(name=ticker, dtype=float)
 
-        # yfinance 有时返回 MultiIndex columns
-        if isinstance(raw.columns, pd.MultiIndex):
-            raw.columns = raw.columns.get_level_values(0)
+            # yfinance 有时返回 MultiIndex columns
+            if isinstance(raw.columns, pd.MultiIndex):
+                raw.columns = raw.columns.get_level_values(0)
 
-        series = raw[field].rename(ticker)
-        series.index = pd.to_datetime(series.index)
-        series = series.dropna()
+            series = raw[field].rename(ticker)
+            series.index = pd.to_datetime(series.index)
+            series = series.dropna()
 
-        _save(cpath, series)
-        return series
+            _save(cpath, series)
+            return series
 
-    except Exception as e:
-        logger.error(f"[error] {ticker}: {e}")
-        return pd.Series(name=ticker, dtype=float)
+        except Exception as e:
+            last_exc = e
+            err_str = str(e).lower()
+            if any(kw in err_str for kw in ("rate limit", "too many requests", "401", "invalid crumb")):
+                wait = _RETRY_BASE ** attempt + random.uniform(0.5, 2.0)
+                logger.warning(f"[rate limit] {ticker} attempt {attempt+1}/{_MAX_RETRIES}, retry in {wait:.1f}s")
+                time.sleep(wait)
+            else:
+                break   # 非限速错误，不重试
+
+    logger.error(f"[error] {ticker}: {last_exc}")
+    return pd.Series(name=ticker, dtype=float)
 
 
 def get_ohlcv(
@@ -129,25 +145,36 @@ def get_ohlcv(
         return cached
 
     logger.info(f"[download OHLCV] {ticker}")
-    try:
-        raw = yf.download(ticker, start=start, end=end_str,
-                          auto_adjust=True, progress=False)
-        if raw.empty:
-            return pd.DataFrame()
+    last_exc = None
+    for attempt in range(_MAX_RETRIES):
+        try:
+            raw = yf.download(ticker, start=start, end=end_str,
+                              auto_adjust=True, progress=False)
+            if raw.empty:
+                return pd.DataFrame()
 
-        if isinstance(raw.columns, pd.MultiIndex):
-            raw.columns = raw.columns.get_level_values(0)
+            if isinstance(raw.columns, pd.MultiIndex):
+                raw.columns = raw.columns.get_level_values(0)
 
-        df = raw[["Open", "High", "Low", "Close", "Volume"]].copy()
-        df.index = pd.to_datetime(df.index)
-        df = df.dropna()
+            df = raw[["Open", "High", "Low", "Close", "Volume"]].copy()
+            df.index = pd.to_datetime(df.index)
+            df = df.dropna()
 
-        _save(cpath, df)
-        return df
+            _save(cpath, df)
+            return df
 
-    except Exception as e:
-        logger.error(f"[error] {ticker}: {e}")
-        return pd.DataFrame()
+        except Exception as e:
+            last_exc = e
+            err_str = str(e).lower()
+            if any(kw in err_str for kw in ("rate limit", "too many requests", "401", "invalid crumb")):
+                wait = _RETRY_BASE ** attempt + random.uniform(0.5, 2.0)
+                logger.warning(f"[rate limit] {ticker} OHLCV attempt {attempt+1}/{_MAX_RETRIES}, retry in {wait:.1f}s")
+                time.sleep(wait)
+            else:
+                break
+
+    logger.error(f"[error] {ticker}: {last_exc}")
+    return pd.DataFrame()
 
 
 def get_multi(
@@ -173,26 +200,40 @@ def get_multi(
 
     logger.info(f"[download multi] {len(tickers)} tickers")
     results = {}
-    # 分批下载，避免 yfinance 超时（每批 50 个）
-    batch_size = 50
+    # 分批下载，每批 20 个，批间随机延时防止限速
+    batch_size = 20
     for i in range(0, len(tickers), batch_size):
         batch = tickers[i:i + batch_size]
-        try:
-            raw = yf.download(batch, start=start, end=end_str,
-                              auto_adjust=True, progress=False)
-            if raw.empty:
-                continue
-            if isinstance(raw.columns, pd.MultiIndex):
-                price_df = raw[field]
-            else:
-                price_df = raw[[field]].rename(columns={field: batch[0]})
+        last_exc = None
+        for attempt in range(_MAX_RETRIES):
+            try:
+                raw = yf.download(batch, start=start, end=end_str,
+                                  auto_adjust=True, progress=False)
+                if raw.empty:
+                    break
+                if isinstance(raw.columns, pd.MultiIndex):
+                    price_df = raw[field]
+                else:
+                    price_df = raw[[field]].rename(columns={field: batch[0]})
 
-            for t in price_df.columns:
-                results[t] = price_df[t].dropna()
+                for t in price_df.columns:
+                    results[t] = price_df[t].dropna()
+                break  # 成功，退出重试
 
-        except Exception as e:
-            logger.error(f"[error] batch {batch}: {e}")
-        time.sleep(0.3)   # 避免频率限制
+            except Exception as e:
+                last_exc = e
+                err_str = str(e).lower()
+                if any(kw in err_str for kw in ("rate limit", "too many requests", "401", "invalid crumb")):
+                    wait = _RETRY_BASE ** attempt + random.uniform(1.0, 3.0)
+                    logger.warning(f"[rate limit] multi batch {i//batch_size+1} attempt {attempt+1}/{_MAX_RETRIES}, retry in {wait:.1f}s")
+                    time.sleep(wait)
+                else:
+                    logger.error(f"[error] batch {batch}: {e}")
+                    break
+        if last_exc and attempt == _MAX_RETRIES - 1:
+            logger.error(f"[error] batch {batch} failed after {_MAX_RETRIES} retries: {last_exc}")
+        # 批间随机延时 1~3s，避免触发频率限制
+        time.sleep(random.uniform(1.0, 3.0))
 
     if not results:
         return pd.DataFrame()
