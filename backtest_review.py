@@ -182,7 +182,7 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
         c_sig.fillna(0).values,
         x_sig.fillna(0).values,
     )
-    return prices, ohlcv, pd.Series(pos_arr, index=prices.index)
+    return prices, ohlcv, pd.Series(pos_arr, index=prices.index), e_sig
 
 
 # ──────────────────────────────────────────────
@@ -191,7 +191,7 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
 
 def _signals_for_combo(ticker, entry_name, cta_name, exit_name, sect_cta, spy_cta, qqq_cta=None, extra_ctas=None):
     """重建指定策略，返回 candles/markers/trades/metrics dict"""
-    prices, ohlcv, signal = _build_signals(ticker, entry_name, cta_name, exit_name, sect_cta, spy_cta, qqq_cta, extra_ctas)
+    prices, ohlcv, signal, raw_entry = _build_signals(ticker, entry_name, cta_name, exit_name, sect_cta, spy_cta, qqq_cta, extra_ctas)
     res       = backtest(prices, signal)
     trades_df = res["trades"]
 
@@ -279,6 +279,19 @@ def _signals_for_combo(ticker, entry_name, cta_name, exit_name, sect_cta, spy_ct
                                  "text": f"S ${xp:.2f} ({pnl:+.1f}%)" if (xp and pnl is not None) else "S"})
         except Exception:
             pass
+
+    # ── 原始入场信号（最近90根K线，无CTA过滤）──
+    try:
+        cutoff_90 = prices.index[-90] if len(prices) >= 90 else prices.index[0]
+        raw_recent = raw_entry[prices.index >= cutoff_90]
+        existing_buy_times = {m["time"] for m in markers if m["type"] == "buy"}
+        for idx in raw_recent[raw_recent > 0].index:
+            t_str = idx.strftime("%Y-%m-%d")
+            if t_str not in existing_buy_times:
+                markers.append({"time": t_str, "type": "signal",
+                                 "text": f"▲ ${float(prices.loc[idx]):.0f}"})
+    except Exception:
+        pass
 
     # ── 检测当前是否有未平仓持仓 ──
     open_trade = None

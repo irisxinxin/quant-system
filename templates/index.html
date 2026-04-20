@@ -1314,11 +1314,11 @@ function renderBtChart(candles, markers, bah){
     .sort((a,b)=>a.time<b.time?-1:1)
     .map(m=>({
       time:     m.time,
-      position: m.type==='buy'?'belowBar':'aboveBar',
-      color:    m.type==='buy'?'#58a6ff':(m.pnl!=null&&m.pnl>0?'#3fb950':'#f85149'),
-      shape:    m.type==='buy'?'arrowUp':'arrowDown',
+      position: (m.type==='buy'||m.type==='signal')?'belowBar':'aboveBar',
+      color:    m.type==='buy'?'#58a6ff':m.type==='signal'?'#ffd700':(m.pnl!=null&&m.pnl>0?'#3fb950':'#f85149'),
+      shape:    (m.type==='buy'||m.type==='signal')?'arrowUp':'arrowDown',
       text:     m.text||'',
-      size:     1.5,
+      size:     m.type==='signal'?1.2:1.5,
     }));
   cSeries.setMarkers(mks);
 
