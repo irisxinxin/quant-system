@@ -292,11 +292,10 @@ def optimize_ticker(
         asset_type = info["type"]
         ann_vol    = info.get("vol") or round(float(prices.pct_change().tail(252).std() * 252**0.5), 2)
 
-        # 动态追踪止损 + 止损冷却期
-        # A类高波动股：峰值追踪15%，止损后冷却20个交易日
-        # B/C类：峰值追踪10%，止损后冷却15个交易日
-        entry_stop_pct  = 0.15 if asset_type == "A" else 0.10
-        stop_cooldown   = 20   if asset_type == "A" else 15
+        # 动态追踪止损（从入场后峰值追踪）：A类15%，B/C类10%
+        # 冷却期已移除——依赖CTA板块门控过滤下行趋势，固定冷却期会误杀强势反弹
+        entry_stop_pct = 0.15 if asset_type == "A" else 0.10
+        stop_cooldown  = 0
 
         # ── 指标 ──
         e20  = prices.ewm(span=20, adjust=False).mean()

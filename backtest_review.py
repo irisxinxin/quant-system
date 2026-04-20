@@ -213,7 +213,7 @@ def _build_signals(ticker: str, entry_name: str, cta_name: str, exit_name: str,
     except Exception:
         _atype = "B"
     stop_pct      = 0.15 if _atype == "A" else 0.10
-    stop_cooldown = 20   if _atype == "A" else 15
+    stop_cooldown = 0  # 冷却期移除，依赖CTA板块门控过滤下行趋势
 
     pos_arr = _make_pos(
         e_sig.fillna(0).values,
