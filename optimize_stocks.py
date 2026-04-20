@@ -366,6 +366,8 @@ def optimize_ticker(
 
         # ── 出场条件 ──
         rsi_was_hot  = rsi.rolling(5).max() > 70          # 近5天RSI曾超70
+        # 安全止损：从近20日高点回撤15%触发，作为所有趋势出场信号的兜底
+        trail_15_stop = (prices < hi20_max * 0.85).fillna(False)
         exits = {
             "ema_x":     (e20 < e60).fillna(False).astype(float),
             "ma_x":      (ma50 < ma200).fillna(False).astype(float),
@@ -406,7 +408,12 @@ def optimize_ticker(
                         }.get(xn, pd.Series(False, index=prices.index))
                         eff_exit = (base_exit | add_exit).astype(float)
                     else:
-                        eff_exit = x_sig
+                        # 趋势入场：所选出场信号 OR 15%追踪止损兜底
+                        # trail_8/trail_12 已含止损，无需叠加
+                        if xn in ("trail_8", "trail_12"):
+                            eff_exit = x_sig
+                        else:
+                            eff_exit = (x_sig.astype(bool) | trail_15_stop).astype(float)
 
                     pos = _make_pos(
                         e_sig.fillna(0).values,
