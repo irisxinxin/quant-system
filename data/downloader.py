@@ -1,54 +1,54 @@
 """
 data/downloader.py — 统一数据下载 + 本地缓存
-所有模块调用 get_prices() / get_multi() 获取数据，不直接用 yfinance
+优先使用 Tiingo（稳定，不封数据中心IP），fallback yfinance（本地开发）
+所有模块调用 get_prices() / get_ohlcv() / get_multi()，不直接用 yfinance/requests
 """
 import os
 import time
 import pickle
 import hashlib
 import logging
-from datetime import datetime, timedelta
+import random
+import threading
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
 
-import random
-import threading
 import pandas as pd
+import requests as _requests
 import yfinance as yf
 
-# 下载重试参数
-_MAX_RETRIES = 4
-_RETRY_BASE  = 2.0   # 指数退避底数（秒）
-
-# 全局限速：最多同时 2 个并发下载，防止多线程同时打 Yahoo 触发 rate limit
-_download_sem   = threading.Semaphore(2)
-_last_dl_time   = 0.0
-_dl_time_lock   = threading.Lock()
-_MIN_DL_INTERVAL = 0.6   # 两次真实请求的最小间隔（秒）
-
-
-def _yf_download(ticker_or_batch, start, end_str, **kwargs):
-    """所有 yf.download 调用都经过这里，全局限速"""
-    global _last_dl_time
-    with _download_sem:
-        # 保证两次请求间隔 >= _MIN_DL_INTERVAL
-        with _dl_time_lock:
-            gap = time.time() - _last_dl_time
-            if gap < _MIN_DL_INTERVAL:
-                time.sleep(_MIN_DL_INTERVAL - gap + random.uniform(0.0, 0.3))
-            _last_dl_time = time.time()
-        return yf.download(ticker_or_batch, start=start, end=end_str, **kwargs)
-
-# 引入全局配置
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import CACHE_DIR, DATA_START, DATA_END, CACHE_EXPIRE_H
 
 logger = logging.getLogger(__name__)
 
+# ─────────────────────────────────────────────
+# Tiingo 配置
+# ─────────────────────────────────────────────
+_TIINGO_KEY = os.environ.get("TIINGO_API_KEY", "")
+
+# 这些 ticker 不在 Tiingo 日线接口，走 yfinance
+_TIINGO_SKIP = {"^VIX", "VIX"}
+
+# 加密货币 ticker → Tiingo crypto 符号
+_CRYPTO_MAP = {
+    "BTC-USD":  "btcusd",
+    "ETH-USD":  "ethusd",
+    "SOL-USD":  "solusd",
+    "BNB-USD":  "bnbusd",
+}
+
+# yfinance 全局限速（本地开发 fallback 用）
+_yf_sem           = threading.Semaphore(2)
+_yf_last_time     = 0.0
+_yf_time_lock     = threading.Lock()
+_YF_MIN_INTERVAL  = 0.6
+
 
 # ─────────────────────────────────────────────
-# 内部工具
+# 缓存工具
 # ─────────────────────────────────────────────
 
 def _cache_path(key: str) -> Path:
@@ -57,11 +57,9 @@ def _cache_path(key: str) -> Path:
 
 
 def _is_fresh(path: Path, hours: float = CACHE_EXPIRE_H) -> bool:
-    """缓存文件是否在有效期内"""
     if not path.exists():
         return False
-    age = time.time() - path.stat().st_mtime
-    return age < hours * 3600
+    return (time.time() - path.stat().st_mtime) < hours * 3600
 
 
 def _save(path: Path, obj) -> None:
@@ -75,7 +73,147 @@ def _load(path: Path):
 
 
 # ─────────────────────────────────────────────
-# 核心接口
+# Tiingo 下载（主路径）
+# ─────────────────────────────────────────────
+
+def _tiingo_ohlcv(ticker: str, start: str, end_str: str) -> pd.DataFrame:
+    """
+    从 Tiingo 下载 OHLCV（复权价，等效于 yfinance auto_adjust=True）
+    返回 DataFrame[Open, High, Low, Close, Volume]，失败返回空 DataFrame
+    """
+    if not _TIINGO_KEY or ticker in _TIINGO_SKIP:
+        return pd.DataFrame()
+
+    headers = {"Authorization": f"Token {_TIINGO_KEY}", "Content-Type": "application/json"}
+
+    try:
+        # ── 加密货币走独立接口 ──
+        if ticker in _CRYPTO_MAP:
+            sym = _CRYPTO_MAP[ticker]
+            resp = _requests.get(
+                "https://api.tiingo.com/tiingo/crypto/prices",
+                headers=headers,
+                params={"tickers": sym, "startDate": start, "endDate": end_str, "resampleFreq": "1Day"},
+                timeout=30,
+            )
+            if resp.status_code != 200 or not resp.json():
+                return pd.DataFrame()
+            raw = resp.json()[0].get("priceData", [])
+            if not raw:
+                return pd.DataFrame()
+            df = pd.DataFrame(raw)
+            df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
+            df = df.set_index("date").sort_index()
+            df = df.rename(columns={"open": "Open", "high": "High",
+                                    "low": "Low", "close": "Close", "volume": "Volume"})
+            cols = [c for c in ["Open", "High", "Low", "Close", "Volume"] if c in df.columns]
+            return df[cols].dropna(subset=["Close"])
+
+        # ── 普通股票/ETF ──
+        resp = _requests.get(
+            f"https://api.tiingo.com/tiingo/daily/{ticker}/prices",
+            headers=headers,
+            params={"startDate": start, "endDate": end_str, "resampleFreq": "daily"},
+            timeout=30,
+        )
+        if resp.status_code != 200:
+            logger.warning(f"[tiingo] {ticker} HTTP {resp.status_code}")
+            return pd.DataFrame()
+
+        data = resp.json()
+        if not data:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(data)
+        df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
+        df = df.set_index("date").sort_index()
+
+        # 优先使用复权价（adjClose 等），与 yfinance auto_adjust=True 一致
+        col_map = {
+            "adjOpen":   "Open",
+            "adjHigh":   "High",
+            "adjLow":    "Low",
+            "adjClose":  "Close",
+            "adjVolume": "Volume",
+        }
+        df = df.rename(columns=col_map)
+        # 若 Tiingo 没有 adjVolume，用原始 volume
+        if "Volume" not in df.columns and "volume" in df.columns:
+            df = df.rename(columns={"volume": "Volume"})
+
+        cols = [c for c in ["Open", "High", "Low", "Close", "Volume"] if c in df.columns]
+        return df[cols].dropna(subset=["Close"])
+
+    except Exception as e:
+        logger.warning(f"[tiingo] {ticker}: {e}")
+        return pd.DataFrame()
+
+
+# ─────────────────────────────────────────────
+# yfinance 下载（fallback）
+# ─────────────────────────────────────────────
+
+def _yf_ohlcv(ticker: str, start: str, end_str: str) -> pd.DataFrame:
+    """yfinance 下载，带全局限速 semaphore + 指数退避重试"""
+    global _yf_last_time
+    MAX_RETRIES = 4
+    RETRY_BASE  = 2.0
+
+    last_exc = None
+    for attempt in range(MAX_RETRIES):
+        try:
+            with _yf_sem:
+                with _yf_time_lock:
+                    gap = time.time() - _yf_last_time
+                    if gap < _YF_MIN_INTERVAL:
+                        time.sleep(_YF_MIN_INTERVAL - gap + random.uniform(0, 0.3))
+                    _yf_last_time = time.time()
+                raw = yf.download(ticker, start=start, end=end_str,
+                                  auto_adjust=True, progress=False)
+
+            if raw.empty:
+                return pd.DataFrame()
+            if isinstance(raw.columns, pd.MultiIndex):
+                raw.columns = raw.columns.get_level_values(0)
+            df = raw[["Open", "High", "Low", "Close", "Volume"]].copy()
+            df.index = pd.to_datetime(df.index)
+            return df.dropna(subset=["Close"])
+
+        except Exception as e:
+            last_exc = e
+            err_str = str(e).lower()
+            if any(kw in err_str for kw in ("rate limit", "too many requests", "401", "invalid crumb")):
+                wait = RETRY_BASE ** attempt + random.uniform(0.5, 2.0)
+                logger.warning(f"[yf rate limit] {ticker} attempt {attempt+1}/{MAX_RETRIES}, retry in {wait:.1f}s")
+                time.sleep(wait)
+            else:
+                break
+
+    logger.error(f"[yf error] {ticker}: {last_exc}")
+    return pd.DataFrame()
+
+
+# ─────────────────────────────────────────────
+# 统一路由
+# ─────────────────────────────────────────────
+
+def _download_ohlcv(ticker: str, start: str, end_str: str) -> pd.DataFrame:
+    """
+    优先 Tiingo（设置了 TIINGO_API_KEY 时），fallback yfinance
+    返回 DataFrame[Open, High, Low, Close, Volume]
+    """
+    if _TIINGO_KEY and ticker not in _TIINGO_SKIP:
+        df = _tiingo_ohlcv(ticker, start, end_str)
+        if not df.empty:
+            logger.debug(f"[tiingo ok] {ticker}")
+            return df
+        logger.warning(f"[tiingo miss] {ticker}, falling back to yfinance")
+
+    return _yf_ohlcv(ticker, start, end_str)
+
+
+# ─────────────────────────────────────────────
+# 公开接口
 # ─────────────────────────────────────────────
 
 def get_prices(
@@ -87,16 +225,7 @@ def get_prices(
 ) -> pd.Series:
     """
     下载单个 ticker 的日线价格，带本地缓存。
-
-    Args:
-        ticker:        股票/ETF 代码，如 'SPY'
-        start:         起始日期，'YYYY-MM-DD'
-        end:           结束日期，None = 今天
-        field:         价格字段，'Close' / 'Open' / 'High' / 'Low' / 'Volume'
-        force_refresh: 强制重新下载
-
-    Returns:
-        pd.Series，index 为日期，name 为 ticker
+    优先 Tiingo，fallback yfinance。
     """
     end_str = end or datetime.today().strftime("%Y-%m-%d")
     cache_key = f"{ticker}_{start}_{end_str}_{field}"
@@ -107,38 +236,15 @@ def get_prices(
         return _load(cpath)
 
     logger.info(f"[download] {ticker} {start} → {end_str}")
-    last_exc = None
-    for attempt in range(_MAX_RETRIES):
-        try:
-            raw = _yf_download(ticker, start, end_str,
-                               auto_adjust=True, progress=False)
-            if raw.empty:
-                logger.warning(f"[empty] {ticker} returned no data")
-                return pd.Series(name=ticker, dtype=float)
+    df = _download_ohlcv(ticker, start, end_str)
 
-            # yfinance 有时返回 MultiIndex columns
-            if isinstance(raw.columns, pd.MultiIndex):
-                raw.columns = raw.columns.get_level_values(0)
+    if df.empty or field not in df.columns:
+        logger.warning(f"[empty] {ticker} field={field}")
+        return pd.Series(name=ticker, dtype=float)
 
-            series = raw[field].rename(ticker)
-            series.index = pd.to_datetime(series.index)
-            series = series.dropna()
-
-            _save(cpath, series)
-            return series
-
-        except Exception as e:
-            last_exc = e
-            err_str = str(e).lower()
-            if any(kw in err_str for kw in ("rate limit", "too many requests", "401", "invalid crumb")):
-                wait = _RETRY_BASE ** attempt + random.uniform(0.5, 2.0)
-                logger.warning(f"[rate limit] {ticker} attempt {attempt+1}/{_MAX_RETRIES}, retry in {wait:.1f}s")
-                time.sleep(wait)
-            else:
-                break   # 非限速错误，不重试
-
-    logger.error(f"[error] {ticker}: {last_exc}")
-    return pd.Series(name=ticker, dtype=float)
+    series = df[field].rename(ticker).dropna()
+    _save(cpath, series)
+    return series
 
 
 def get_ohlcv(
@@ -148,10 +254,8 @@ def get_ohlcv(
     force_refresh: bool = False,
 ) -> pd.DataFrame:
     """
-    下载完整 OHLCV 日线数据（用于裸K、SMC等需要高低开收的模块）
-
-    Returns:
-        pd.DataFrame，columns = [Open, High, Low, Close, Volume]
+    下载完整 OHLCV 日线数据。
+    优先 Tiingo，fallback yfinance。
     """
     end_str = end or datetime.today().strftime("%Y-%m-%d")
     cache_key = f"{ticker}_{start}_{end_str}_OHLCV"
@@ -159,42 +263,16 @@ def get_ohlcv(
 
     if not force_refresh and _is_fresh(cpath):
         cached = _load(cpath)
-        # 旧缓存可能保存了 MultiIndex 列，展平后返回
         if isinstance(cached, pd.DataFrame) and isinstance(cached.columns, pd.MultiIndex):
             cached.columns = cached.columns.get_level_values(0)
         return cached
 
     logger.info(f"[download OHLCV] {ticker}")
-    last_exc = None
-    for attempt in range(_MAX_RETRIES):
-        try:
-            raw = _yf_download(ticker, start, end_str,
-                               auto_adjust=True, progress=False)
-            if raw.empty:
-                return pd.DataFrame()
+    df = _download_ohlcv(ticker, start, end_str)
 
-            if isinstance(raw.columns, pd.MultiIndex):
-                raw.columns = raw.columns.get_level_values(0)
-
-            df = raw[["Open", "High", "Low", "Close", "Volume"]].copy()
-            df.index = pd.to_datetime(df.index)
-            df = df.dropna()
-
-            _save(cpath, df)
-            return df
-
-        except Exception as e:
-            last_exc = e
-            err_str = str(e).lower()
-            if any(kw in err_str for kw in ("rate limit", "too many requests", "401", "invalid crumb")):
-                wait = _RETRY_BASE ** attempt + random.uniform(0.5, 2.0)
-                logger.warning(f"[rate limit] {ticker} OHLCV attempt {attempt+1}/{_MAX_RETRIES}, retry in {wait:.1f}s")
-                time.sleep(wait)
-            else:
-                break
-
-    logger.error(f"[error] {ticker}: {last_exc}")
-    return pd.DataFrame()
+    if not df.empty:
+        _save(cpath, df)
+    return df
 
 
 def get_multi(
@@ -206,9 +284,7 @@ def get_multi(
 ) -> pd.DataFrame:
     """
     批量下载多个 ticker 的价格，返回宽表。
-
-    Returns:
-        pd.DataFrame，index 为日期，columns 为 ticker
+    复用 get_prices() 的单股缓存（Tiingo/yfinance 路由在内部处理）。
     """
     end_str = end or datetime.today().strftime("%Y-%m-%d")
     cache_key = f"multi_{'_'.join(sorted(tickers))}_{start}_{end_str}_{field}"
@@ -220,40 +296,13 @@ def get_multi(
 
     logger.info(f"[download multi] {len(tickers)} tickers")
     results = {}
-    # 分批下载，每批 20 个，批间随机延时防止限速
-    batch_size = 20
-    for i in range(0, len(tickers), batch_size):
-        batch = tickers[i:i + batch_size]
-        last_exc = None
-        for attempt in range(_MAX_RETRIES):
-            try:
-                raw = _yf_download(batch, start, end_str,
-                                   auto_adjust=True, progress=False)
-                if raw.empty:
-                    break
-                if isinstance(raw.columns, pd.MultiIndex):
-                    price_df = raw[field]
-                else:
-                    price_df = raw[[field]].rename(columns={field: batch[0]})
-
-                for t in price_df.columns:
-                    results[t] = price_df[t].dropna()
-                break  # 成功，退出重试
-
-            except Exception as e:
-                last_exc = e
-                err_str = str(e).lower()
-                if any(kw in err_str for kw in ("rate limit", "too many requests", "401", "invalid crumb")):
-                    wait = _RETRY_BASE ** attempt + random.uniform(1.0, 3.0)
-                    logger.warning(f"[rate limit] multi batch {i//batch_size+1} attempt {attempt+1}/{_MAX_RETRIES}, retry in {wait:.1f}s")
-                    time.sleep(wait)
-                else:
-                    logger.error(f"[error] batch {batch}: {e}")
-                    break
-        if last_exc and attempt == _MAX_RETRIES - 1:
-            logger.error(f"[error] batch {batch} failed after {_MAX_RETRIES} retries: {last_exc}")
-        # 批间随机延时 1~3s，避免触发频率限制
-        time.sleep(random.uniform(1.0, 3.0))
+    for ticker in tickers:
+        try:
+            s = get_prices(ticker, start=start, end=end_str, field=field, force_refresh=force_refresh)
+            if not s.empty:
+                results[ticker] = s
+        except Exception as e:
+            logger.error(f"[multi error] {ticker}: {e}")
 
     if not results:
         return pd.DataFrame()
@@ -270,13 +319,7 @@ def get_returns(
     end: Optional[str] = DATA_END,
     log_return: bool = False,
 ) -> pd.Series:
-    """
-    计算日收益率
-
-    Args:
-        ticker_or_df: ticker 字符串，或已有价格 Series/DataFrame
-        log_return:   True = 对数收益率，False = 简单收益率
-    """
+    """计算日收益率"""
     if isinstance(ticker_or_df, str):
         prices = get_prices(ticker_or_df, start=start, end=end)
     else:
@@ -285,8 +328,7 @@ def get_returns(
     if log_return:
         import numpy as np
         return np.log(prices / prices.shift(1)).dropna()
-    else:
-        return prices.pct_change().dropna()
+    return prices.pct_change().dropna()
 
 
 def clear_cache(ticker: Optional[str] = None) -> None:
@@ -296,7 +338,6 @@ def clear_cache(ticker: Optional[str] = None) -> None:
             f.unlink()
         logger.info("[cache] 全部清除")
     else:
-        # 找到该 ticker 相关的缓存
         removed = 0
         for f in CACHE_DIR.glob("*.pkl"):
             try:
@@ -315,21 +356,18 @@ def clear_cache(ticker: Optional[str] = None) -> None:
 # ─────────────────────────────────────────────
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    src = "Tiingo" if _TIINGO_KEY else "yfinance"
+    print(f"=== 数据源: {src} ===")
 
-    print("=== 测试 get_prices ===")
     spy = get_prices("SPY", start="2022-01-01")
     print(f"SPY: {len(spy)} 条, 最新价 {spy.iloc[-1]:.2f}")
 
-    print("\n=== 测试 get_ohlcv ===")
     ohlcv = get_ohlcv("QQQ", start="2023-01-01")
     print(ohlcv.tail(3))
 
-    print("\n=== 测试 get_multi ===")
-    tickers = ["SPY", "QQQ", "TLT", "GLD"]
-    multi = get_multi(tickers, start="2023-01-01")
+    multi = get_multi(["SPY", "QQQ", "TLT"], start="2023-01-01")
     print(multi.tail(3))
 
-    print("\n=== 测试 get_returns ===")
     ret = get_returns("SPY", start="2023-01-01")
     print(f"年化波动率: {ret.std() * (252**0.5) * 100:.1f}%")
     print("✅ downloader 测试通过")
