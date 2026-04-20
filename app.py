@@ -367,6 +367,8 @@ _SW_TRADES = [
 def api_stockwhale_list():
     """返回 StockWhale 全部持仓 + 实时价格"""
     from data.downloader import get_prices
+    # 买入区阈值：当前价 ≤ 入场价 × (1 + threshold) 时显示为 buy_zone
+    BUY_ZONE_THRESH = {1: 0.05, 2: 0.08, 3: 0.12}  # 短/中/长线
     result = []
     for t in _SW_TRADES:
         ticker = t["ticker"]
@@ -378,8 +380,17 @@ def api_stockwhale_list():
             cur, chg = None, None
         gain = round((cur - t["entry"]) / t["entry"] * 100, 1) if cur else None
         vs_target = round((t["target"] - cur) / cur * 100, 1) if cur else None
+
+        # 自动判断 buy_zone：原始状态 in_trade 且当前价仍在入场区
+        display_status = t["status"]
+        if display_status == "in_trade" and cur is not None:
+            thresh = BUY_ZONE_THRESH.get(t.get("type", 2), 0.08)
+            if cur <= t["entry"] * (1 + thresh):
+                display_status = "buy_zone"
+
         result.append({**t, "cur": cur, "chg_1d": round(chg,1) if chg else None,
-                       "gain": gain, "vs_target": vs_target})
+                       "gain": gain, "vs_target": vs_target,
+                       "display_status": display_status})
     return JSONResponse({"trades": result})
 
 
