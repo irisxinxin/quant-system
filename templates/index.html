@@ -145,6 +145,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <button class="tab-btn"    id="tab-sectors" onclick="sw('sectors')">🗺 板块追踪</button>
     <button class="tab-btn"    id="tab-cta"     onclick="sw('cta')">🌐 CTA宏观</button>
     <button class="tab-btn"    id="tab-bt"      onclick="sw('bt')">📊 回测验证</button>
+    <button class="tab-btn"    id="tab-sw"      onclick="sw('sw')">🐋 StockWhale</button>
     <button class="tab-btn"    id="tab-kol"     onclick="sw('kol')">📝 大V观点 <span id="kol-badge" style="display:none;background:#f59e0b;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
   </div>
 </div>
@@ -267,6 +268,41 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     </div>
   </div>
 
+  <!-- TAB: StockWhale -->
+  <div id="pane-sw" style="display:none">
+
+    <!-- 图例 -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:11px;color:var(--text2)">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#fbbf24;border-radius:2px;margin-right:4px;vertical-align:middle"></span>等待建仓</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:2px;margin-right:4px;vertical-align:middle"></span>已在仓中</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px;margin-right:4px;vertical-align:middle"></span>可追入</span>
+      <span>Type 1=短线  2=中线  3=长线 &nbsp;│&nbsp; 风险每笔 1-2%，不追中途入场</span>
+    </div>
+
+    <!-- 汇总表 -->
+    <div class="card" style="margin-bottom:20px;overflow-x:auto">
+      <div id="sw-table-wrap">
+        <div style="text-align:center;padding:48px;color:var(--text3)">
+          <div style="font-size:32px;margin-bottom:12px">🐋</div>
+          <button onclick="loadSW()" style="padding:9px 24px;background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.25);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer">加载 StockWhale 持仓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- K线详情 -->
+    <div id="sw-detail" style="display:none">
+      <div class="card" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <button onclick="$('sw-detail').style.display='none'" style="padding:4px 10px;border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer">← 返回</button>
+          <span id="sw-chart-title" style="font-size:18px;font-weight:700"></span>
+          <div id="sw-level-legend" style="display:flex;gap:12px;font-size:11px;flex-wrap:wrap"></div>
+        </div>
+        <div id="sw-chart" style="height:420px;width:100%"></div>
+        <div id="sw-trades-detail" style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- TAB: 大V观点 -->
   <div id="pane-kol" style="display:none">
 
@@ -332,8 +368,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-const TABS = ['scan','entry','sectors','cta','bt','kol'];
-const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, kol:false};
+const TABS = ['scan','entry','sectors','cta','bt','sw','kol'];
+const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, kol:false};
 let curTab = 'scan';
 let sectView = 'momentum';
 let btChart = null;
@@ -453,6 +489,7 @@ function sw(tab){
   if(tab==='sectors'&&!loaded.sectors)loadSectors();
   if(tab==='cta'&&!loaded.cta)loadCta();
   if(tab==='bt'&&!loaded.bt)loadBt();
+  if(tab==='sw'&&!loaded.sw)loadSW();
   if(tab==='kol'&&!loaded.kol)loadKol();
   // 返回回测tab时隐藏详情，显示选股器
   if(tab==='bt'){
@@ -1683,6 +1720,165 @@ loadMacro();
   const bt = new URLSearchParams(location.search).get('bt');
   if(bt){ sw('bt'); loadBtTicker(bt.toUpperCase()); }
 })();
+
+// ══════════════════════════════════════════
+// StockWhale
+// ══════════════════════════════════════════
+let _swChart = null;
+
+async function loadSW(){
+  loaded.sw = true;
+  $('sw-table-wrap').innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3)">加载中...</div>';
+  const r = await fetch('/api/stockwhale');
+  const j = await r.json();
+  renderSWTable(j.trades||[]);
+}
+
+function renderSWTable(trades){
+  const STATUS_LABEL = {waiting:'等待建仓', in_trade:'已在仓中', buy_zone:'可追入', exit:'出场'};
+  const STATUS_COLOR = {waiting:'#fbbf24', in_trade:'#3b82f6', buy_zone:'#22c55e', exit:'#f87171'};
+  const TYPE_LABEL = {1:'短线',2:'中线',3:'长线'};
+
+  // 去重 ticker（同一只股票多个入场合并显示最新一条）
+  const seen = {};
+  trades.forEach(t => {
+    if(!seen[t.ticker] || t.date > seen[t.ticker].date) seen[t.ticker] = t;
+  });
+  const rows = Object.values(seen).sort((a,b)=> b.date.localeCompare(a.date));
+
+  const gainColor = g => g == null ? 'var(--text3)' : g >= 0 ? '#4ade80' : '#f87171';
+
+  $('sw-table-wrap').innerHTML = `
+  <table class="tbl">
+    <thead><tr>
+      <th class="tl">状态</th>
+      <th class="tl">股票</th>
+      <th>类型</th>
+      <th>入场日</th>
+      <th>入场价</th>
+      <th>止损</th>
+      <th>半仓止盈</th>
+      <th>目标价</th>
+      <th>现价</th>
+      <th>今日</th>
+      <th>浮盈</th>
+      <th>距目标</th>
+      <th>R:R</th>
+    </tr></thead>
+    <tbody>
+    ${rows.map(t=>`
+      <tr class="clickable" onclick="loadSWChart('${t.ticker}')" title="点击查看K线">
+        <td class="tl"><span style="display:inline-flex;align-items:center;gap:5px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${STATUS_COLOR[t.status]||'#888'};flex-shrink:0"></span>
+          <span style="font-size:11px;color:${STATUS_COLOR[t.status]||'#888'}">${STATUS_LABEL[t.status]||t.status}</span>
+        </span></td>
+        <td class="tl"><span style="font-weight:600;color:var(--text)">${t.ticker}</span>
+          ${t.note?`<span style="font-size:10px;color:var(--text3);margin-left:4px">${t.note}</span>`:''}</td>
+        <td><span style="font-size:11px;color:var(--text2)">${TYPE_LABEL[t.type]||t.type}</span></td>
+        <td style="color:var(--text3);font-size:11px">${t.date}</td>
+        <td>$${t.entry}</td>
+        <td style="color:#f87171">$${t.stop}</td>
+        <td style="color:#fbbf24">${t.half?'$'+t.half:'—'}</td>
+        <td style="color:#4ade80">$${t.target}</td>
+        <td style="font-weight:600">${t.cur!=null?'$'+t.cur.toFixed(2):'—'}</td>
+        <td style="color:${gainColor(t.chg_1d)}">${t.chg_1d!=null?(t.chg_1d>0?'+':'')+t.chg_1d+'%':'—'}</td>
+        <td style="color:${gainColor(t.gain)};font-weight:600">${t.gain!=null?(t.gain>0?'+':'')+t.gain+'%':'—'}</td>
+        <td style="color:#58a6ff">${t.vs_target!=null?'+'+t.vs_target+'%':'—'}</td>
+        <td style="color:var(--text2)">${t.rr}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function loadSWChart(ticker){
+  $('sw-detail').style.display = 'block';
+  $('sw-chart-title').textContent = ticker + ' — K线 + StockWhale 点位';
+  $('sw-chart').innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3)">加载中...</div>';
+  $('sw-level-legend').innerHTML = '';
+  $('sw-trades-detail').innerHTML = '';
+
+  const r = await fetch('/api/stockwhale/chart/'+ticker);
+  const j = await r.json();
+  if(j.error){ $('sw-chart').innerHTML='<div style="padding:24px;color:#f87171">'+j.error+'</div>'; return; }
+
+  // 滚动到图表位置
+  $('sw-detail').scrollIntoView({behavior:'smooth', block:'start'});
+
+  // 绘制 K 线
+  $('sw-chart').innerHTML = '';
+  if(_swChart){ try{_swChart.remove();}catch(e){} _swChart=null; }
+
+  _swChart = LightweightCharts.createChart($('sw-chart'), {
+    layout:      {background:{color:'#0e1117'}, textColor:'#8b949e'},
+    grid:        {vertLines:{color:'rgba(255,255,255,0.04)'}, horzLines:{color:'rgba(255,255,255,0.04)'}},
+    crosshair:   {mode: LightweightCharts.CrosshairMode.Normal},
+    rightPriceScale:{borderColor:'rgba(255,255,255,0.1)'},
+    timeScale:   {borderColor:'rgba(255,255,255,0.1)', timeVisible:true},
+    width:  $('sw-chart').offsetWidth,
+    height: 420,
+  });
+
+  const series = _swChart.addCandlestickSeries({
+    upColor:'#3fb950', downColor:'#f85149',
+    borderUpColor:'#3fb950', borderDownColor:'#f85149',
+    wickUpColor:'#3fb950', wickDownColor:'#f85149',
+  });
+  series.setData(j.candles);
+
+  // 每个入场记录画线
+  const COLORS = {entry:'#22c55e', stop:'#f87171', half:'#fbbf24', target:'#58a6ff'};
+  const LABELS = {entry:'入场', stop:'止损', half:'半仓止盈', target:'目标'};
+  const legendItems = [];
+
+  j.trades.forEach((t, idx)=>{
+    const suffix = j.trades.length > 1 ? ` #${idx+1}` : '';
+    [{key:'entry',color:'#22c55e'},{key:'stop',color:'#f87171'},{key:'half',color:'#fbbf24'},{key:'target',color:'#58a6ff'}]
+    .forEach(({key,color})=>{
+      if(t[key]==null) return;
+      series.createPriceLine({
+        price: t[key],
+        color: color,
+        lineWidth: key==='entry'||key==='target' ? 2 : 1,
+        lineStyle: key==='stop' ? LightweightCharts.LineStyle.Dashed : LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true,
+        title: LABELS[key]+suffix+' $'+t[key],
+      });
+    });
+
+    // 入场日竖线（用标注近似）
+    legendItems.push({key:'entry', color:'#22c55e',  label:`入场${suffix} $${t.entry}`});
+    legendItems.push({key:'stop',  color:'#f87171',  label:`止损 $${t.stop}`});
+    if(t.half) legendItems.push({key:'half', color:'#fbbf24', label:`半仓 $${t.half}`});
+    legendItems.push({key:'target',color:'#58a6ff', label:`目标 $${t.target}`});
+  });
+
+  // 图例
+  $('sw-level-legend').innerHTML = legendItems.map(l=>
+    `<span style="display:flex;align-items:center;gap:4px;font-size:11px">
+      <span style="width:16px;height:2px;background:${l.color};display:inline-block"></span>
+      <span style="color:${l.color}">${l.label}</span>
+    </span>`
+  ).join('');
+
+  // 详细卡片
+  $('sw-trades-detail').innerHTML = j.trades.map((t,i)=>{
+    const suffix = j.trades.length>1?` (入场${i+1})`:'';
+    return `<div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;min-width:200px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${t.date} · Type${t.type}${suffix}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:12px">
+        <span style="color:var(--text3)">入场</span><span style="color:#22c55e;font-weight:600">$${t.entry}</span>
+        <span style="color:var(--text3)">止损</span><span style="color:#f87171">$${t.stop}</span>
+        ${t.half?`<span style="color:var(--text3)">半仓止盈</span><span style="color:#fbbf24">$${t.half}</span>`:''}
+        <span style="color:var(--text3)">目标</span><span style="color:#58a6ff">$${t.target}</span>
+        <span style="color:var(--text3)">R:R</span><span style="color:var(--text)">${t.rr}</span>
+        <span style="color:var(--text3)">风险</span><span style="color:var(--text)">${t.risk}%</span>
+      </div>
+      ${t.note?`<div style="margin-top:8px;font-size:11px;color:var(--accent);background:rgba(245,158,11,.08);border-radius:4px;padding:4px 8px">${t.note}</div>`:''}
+    </div>`;
+  }).join('');
+
+  _swChart.timeScale().fitContent();
+}
 
 // ══════════════════════════════════════════
 // 大V观点
