@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
+import uuid
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -77,9 +78,10 @@ async def lifespan(app):
 
 app = FastAPI(title="量化交易仪表盘", lifespan=lifespan)
 
-_HTML_PATH   = Path(__file__).parent / "templates" / "index.html"
-_CACHE_DIR   = Path(__file__).parent / "cache"
-_CHARTS_DIR  = Path(__file__).parent / "output" / "charts"
+_HTML_PATH     = Path(__file__).parent / "templates" / "index.html"
+_CACHE_DIR     = Path(__file__).parent / "cache"
+_CHARTS_DIR    = Path(__file__).parent / "output" / "charts"
+_KOL_NOTES_PATH = Path(__file__).parent / "output" / "kol_notes.json"
 _CACHE_DIR.mkdir(exist_ok=True)
 _CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -251,6 +253,72 @@ async def api_refresh():
         except Exception:
             pass
     return JSONResponse({"status": "ok", "message": f"缓存已清除（删除 {deleted} 个文件）"})
+
+
+# ─── 大V观点 CRUD ───
+
+def _load_kol() -> list:
+    if _KOL_NOTES_PATH.exists():
+        try:
+            return json.loads(_KOL_NOTES_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+def _save_kol(notes: list) -> None:
+    _KOL_NOTES_PATH.write_text(
+        json.dumps(notes, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+@app.get("/api/kol")
+async def api_kol_list():
+    notes = _load_kol()
+    notes.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    return JSONResponse({"notes": notes})
+
+@app.post("/api/kol")
+async def api_kol_add(request: Request):
+    body = await request.json()
+    notes = _load_kol()
+    note = {
+        "id":         str(uuid.uuid4())[:8],
+        "kol":        body.get("kol", "").strip(),
+        "platform":   body.get("platform", "Discord"),
+        "content":    body.get("content", "").strip(),
+        "tickers":    [t.upper().strip() for t in body.get("tickers", []) if t.strip()],
+        "sentiment":  body.get("sentiment", "neutral"),
+        "date":       body.get("date", datetime.now().strftime("%Y-%m-%d")),
+        "created_at": datetime.now().isoformat(),
+        "reviewed":   False,
+    }
+    if not note["content"]:
+        return JSONResponse({"ok": False, "error": "内容不能为空"}, status_code=400)
+    notes.append(note)
+    _save_kol(notes)
+    return JSONResponse({"ok": True, "note": note})
+
+@app.delete("/api/kol/{note_id}")
+async def api_kol_delete(note_id: str):
+    notes = [n for n in _load_kol() if n.get("id") != note_id]
+    _save_kol(notes)
+    return JSONResponse({"ok": True})
+
+@app.patch("/api/kol/{note_id}/review")
+async def api_kol_review(note_id: str):
+    notes = _load_kol()
+    for n in notes:
+        if n.get("id") == note_id:
+            n["reviewed"] = True
+    _save_kol(notes)
+    return JSONResponse({"ok": True})
+
+@app.patch("/api/kol/review-all")
+async def api_kol_review_all():
+    notes = _load_kol()
+    for n in notes:
+        n["reviewed"] = True
+    _save_kol(notes)
+    return JSONResponse({"ok": True})
 
 
 @app.get("/health")

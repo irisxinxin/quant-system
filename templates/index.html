@@ -145,6 +145,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <button class="tab-btn"    id="tab-sectors" onclick="sw('sectors')">🗺 板块追踪</button>
     <button class="tab-btn"    id="tab-cta"     onclick="sw('cta')">🌐 CTA宏观</button>
     <button class="tab-btn"    id="tab-bt"      onclick="sw('bt')">📊 回测验证</button>
+    <button class="tab-btn"    id="tab-kol"     onclick="sw('kol')">📝 大V观点 <span id="kol-badge" style="display:none;background:#f59e0b;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
   </div>
 </div>
 
@@ -266,14 +267,73 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     </div>
   </div>
 
+  <!-- TAB: 大V观点 -->
+  <div id="pane-kol" style="display:none">
+
+    <!-- 提醒横幅 -->
+    <div id="kol-remind" style="display:none;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:18px">🔔</span>
+      <span id="kol-remind-text" style="color:var(--accent);font-size:13px;flex:1"></span>
+      <button onclick="kolReviewAll()" style="padding:4px 12px;background:rgba(245,158,11,.15);color:var(--accent);border:1px solid rgba(245,158,11,.3);border-radius:6px;font-size:12px;cursor:pointer">全部标记已读</button>
+    </div>
+
+    <!-- 录入表单 -->
+    <div class="card" style="padding:20px;margin-bottom:20px">
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">＋ 记录观点</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">大V / 来源</div>
+          <input id="kol-name" list="kol-name-list" placeholder="如：木头姐、Kobeissi..." style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none">
+          <datalist id="kol-name-list"></datalist>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">平台</div>
+          <select id="kol-platform" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none">
+            <option>Discord</option><option>Twitter/X</option><option>YouTube</option><option>微信/公众号</option><option>其他</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">涉及股票（空格分隔）</div>
+          <input id="kol-tickers" placeholder="如：NVDA AMD QQQ" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none">
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:5px">观点内容</div>
+        <textarea id="kol-content" rows="3" placeholder="粘贴或输入原文/摘要..." style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none;resize:vertical;font-family:inherit"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:11px;color:var(--text2)">多空：</div>
+        <button id="sent-bull" onclick="setSent('bullish')" class="sent-btn" style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.1);color:#4ade80">看多</button>
+        <button id="sent-bear" onclick="setSent('bearish')" class="sent-btn" style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.08);color:#f87171">看空</button>
+        <button id="sent-neut" onclick="setSent('neutral')" class="sent-btn" style="padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(139,148,158,.25);background:rgba(139,148,158,.1);color:var(--text2)">中性</button>
+        <div style="flex:1"></div>
+        <button onclick="kolAdd()" style="padding:8px 22px;background:rgba(245,158,11,.15);color:var(--accent);border:1px solid rgba(245,158,11,.3);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">保存记录</button>
+      </div>
+    </div>
+
+    <!-- 筛选 + 今日复制 -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <input id="kol-filter" oninput="kolRender()" placeholder="🔍  筛选股票或大V..." style="padding:7px 12px;background:var(--s2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;width:220px">
+      <select id="kol-sent-filter" onchange="kolRender()" style="padding:7px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none">
+        <option value="">全部多空</option><option value="bullish">看多</option><option value="bearish">看空</option><option value="neutral">中性</option>
+      </select>
+      <div style="flex:1"></div>
+      <button onclick="kolCopyToday()" style="padding:7px 14px;background:rgba(88,166,255,.08);color:var(--blue);border:1px solid rgba(88,166,255,.2);border-radius:7px;font-size:12px;cursor:pointer">📋 复制今日 → 粘给Claude汇总</button>
+    </div>
+
+    <!-- 列表 -->
+    <div id="kol-list"></div>
+
+  </div>
+
 </main>
 
 <script>
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-const TABS = ['scan','entry','sectors','cta','bt'];
-const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false};
+const TABS = ['scan','entry','sectors','cta','bt','kol'];
+const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, kol:false};
 let curTab = 'scan';
 let sectView = 'momentum';
 let btChart = null;
@@ -393,6 +453,7 @@ function sw(tab){
   if(tab==='sectors'&&!loaded.sectors)loadSectors();
   if(tab==='cta'&&!loaded.cta)loadCta();
   if(tab==='bt'&&!loaded.bt)loadBt();
+  if(tab==='kol'&&!loaded.kol)loadKol();
   // 返回回测tab时隐藏详情，显示选股器
   if(tab==='bt'){
     $('bt-detail').style.display='none';
@@ -1622,6 +1683,182 @@ loadMacro();
   const bt = new URLSearchParams(location.search).get('bt');
   if(bt){ sw('bt'); loadBtTicker(bt.toUpperCase()); }
 })();
+
+// ══════════════════════════════════════════
+// 大V观点
+// ══════════════════════════════════════════
+let _kolNotes = [];
+let _kolSentiment = 'neutral';
+
+function setSent(s){
+  _kolSentiment = s;
+  ['bull','bear','neut'].forEach(k=>{
+    const btn = $('sent-'+k);
+    const active = (k==='bull'&&s==='bullish')||(k==='bear'&&s==='bearish')||(k==='neut'&&s==='neutral');
+    btn.style.opacity = active ? '1' : '0.4';
+    btn.style.transform = active ? 'scale(1.05)' : 'scale(1)';
+  });
+}
+setSent('neutral');
+
+async function loadKol(){
+  loaded.kol = true;
+  const r = await fetch('/api/kol');
+  const j = await r.json();
+  _kolNotes = j.notes || [];
+  _updateKolSuggestions();
+  kolRender();
+  _kolUpdateBadge();
+}
+
+function _updateKolSuggestions(){
+  const dl = $('kol-name-list');
+  const names = [...new Set(_kolNotes.map(n=>n.kol).filter(Boolean))];
+  dl.innerHTML = names.map(n=>`<option value="${n}">`).join('');
+}
+
+function _kolUpdateBadge(){
+  const today = new Date().toISOString().slice(0,10);
+  const unread = _kolNotes.filter(n=>!n.reviewed).length;
+  const badge = $('kol-badge');
+  const remind = $('kol-remind');
+  if(unread > 0){
+    badge.textContent = unread;
+    badge.style.display = 'inline';
+    remind.style.display = 'flex';
+    $('kol-remind-text').textContent = `你有 ${unread} 条观点尚未标记已读`;
+  } else {
+    badge.style.display = 'none';
+    remind.style.display = 'none';
+  }
+}
+
+async function kolAdd(){
+  const kol     = $('kol-name').value.trim();
+  const content = $('kol-content').value.trim();
+  if(!content){ alert('请填写观点内容'); return; }
+  const tickers = $('kol-tickers').value.trim().split(/[\s,，]+/).filter(Boolean);
+  const body = {
+    kol, content, tickers,
+    platform:  $('kol-platform').value,
+    sentiment: _kolSentiment,
+    date:      new Date().toISOString().slice(0,10),
+  };
+  const r = await fetch('/api/kol', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const j = await r.json();
+  if(j.ok){
+    _kolNotes.unshift(j.note);
+    $('kol-content').value = '';
+    $('kol-tickers').value = '';
+    _updateKolSuggestions();
+    kolRender();
+    _kolUpdateBadge();
+  }
+}
+
+async function kolDelete(id){
+  if(!confirm('确认删除这条记录？')) return;
+  await fetch('/api/kol/'+id, {method:'DELETE'});
+  _kolNotes = _kolNotes.filter(n=>n.id!==id);
+  kolRender();
+  _kolUpdateBadge();
+}
+
+async function kolMarkRead(id){
+  await fetch('/api/kol/'+id+'/review', {method:'PATCH'});
+  const n = _kolNotes.find(n=>n.id===id);
+  if(n) n.reviewed = true;
+  kolRender();
+  _kolUpdateBadge();
+}
+
+async function kolReviewAll(){
+  await fetch('/api/kol/review-all', {method:'PATCH'});
+  _kolNotes.forEach(n=>n.reviewed=true);
+  kolRender();
+  _kolUpdateBadge();
+}
+
+function kolCopyToday(){
+  const today = new Date().toISOString().slice(0,10);
+  const todayNotes = _kolNotes.filter(n=>n.date===today);
+  if(!todayNotes.length){ alert('今天还没有记录'); return; }
+  const SENT = {bullish:'看多📈', bearish:'看空📉', neutral:'中性➡️'};
+  const text = todayNotes.map(n=>{
+    const tks = n.tickers.length ? `【${n.tickers.join(' ')}】` : '';
+    return `[${n.kol||'匿名'} · ${n.platform}] ${tks}${SENT[n.sentiment]||''}\n${n.content}`;
+  }).join('\n\n');
+  navigator.clipboard.writeText(text).then(()=>{
+    alert(`已复制 ${todayNotes.length} 条今日观点，可直接粘贴给 Claude 汇总`);
+  });
+}
+
+function kolRender(){
+  const filter   = ($('kol-filter')||{}).value?.toLowerCase()||'';
+  const sentFilt = ($('kol-sent-filter')||{}).value||'';
+  const SENT_LABEL = {bullish:'看多',bearish:'看空',neutral:'中性'};
+  const SENT_CLS   = {bullish:'bg',bearish:'br',neutral:'bk'};
+  const PLAT_ICON  = {'Discord':'💬','Twitter/X':'🐦','YouTube':'▶️','微信/公众号':'💚','其他':'📌'};
+
+  let notes = _kolNotes;
+  if(filter) notes = notes.filter(n=>
+    (n.kol||'').toLowerCase().includes(filter) ||
+    (n.content||'').toLowerCase().includes(filter) ||
+    (n.tickers||[]).some(t=>t.toLowerCase().includes(filter))
+  );
+  if(sentFilt) notes = notes.filter(n=>n.sentiment===sentFilt);
+
+  // 按日期分组
+  const groups = {};
+  notes.forEach(n=>{
+    const d = n.date||'未知';
+    if(!groups[d]) groups[d]=[];
+    groups[d].push(n);
+  });
+
+  const today = new Date().toISOString().slice(0,10);
+  const sortedDates = Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+
+  if(!sortedDates.length){
+    $('kol-list').innerHTML = `<div style="text-align:center;padding:48px;color:var(--text3)">暂无记录，在上方表单添加第一条</div>`;
+    return;
+  }
+
+  $('kol-list').innerHTML = sortedDates.map(date=>{
+    const isToday = date===today;
+    const label = isToday ? `今天 · ${date}` : date;
+    const cards = groups[date].map(n=>{
+      const unread = !n.reviewed;
+      const tickers = (n.tickers||[]).map(t=>`<span style="background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.2);border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600">${t}</span>`).join(' ');
+      return `
+      <div style="background:var(--s2);border:1px solid ${unread?'rgba(245,158,11,.3)':'var(--border)'};border-radius:10px;padding:14px 16px;position:relative">
+        ${unread?'<div style="position:absolute;top:12px;right:12px;width:7px;height:7px;background:var(--accent);border-radius:50%"></div>':''}
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+          <span style="font-weight:600;color:var(--text);font-size:13px">${n.kol||'匿名大V'}</span>
+          <span style="font-size:11px;color:var(--text3)">${PLAT_ICON[n.platform]||'📌'} ${n.platform||''}</span>
+          <span class="badge ${SENT_CLS[n.sentiment]||'bk'}">${SENT_LABEL[n.sentiment]||'中性'}</span>
+          ${tickers}
+          <span style="flex:1"></span>
+          <span style="font-size:11px;color:var(--text3)">${(n.created_at||'').slice(11,16)}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap">${n.content}</div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          ${unread?`<button onclick="kolMarkRead('${n.id}')" style="padding:3px 10px;font-size:11px;border:1px solid rgba(245,158,11,.25);border-radius:5px;color:var(--accent);background:rgba(245,158,11,.07);cursor:pointer">✓ 已读</button>`:'<span style="font-size:11px;color:var(--text3)">✓ 已读</span>'}
+          <button onclick="kolDelete('${n.id}')" style="padding:3px 10px;font-size:11px;border:1px solid rgba(248,113,113,.2);border-radius:5px;color:#f87171;background:rgba(248,113,113,.05);cursor:pointer">删除</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `
+    <div style="margin-bottom:24px">
+      <div style="font-size:11px;font-weight:600;color:${isToday?'var(--accent)':'var(--text3)'};text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        ${isToday?'🗓':'📅'} ${label}
+        <span style="font-size:10px;color:var(--text3);font-weight:400">${groups[date].length} 条</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">${cards}</div>
+    </div>`;
+  }).join('');
+}
 </script>
 </body>
 </html>
