@@ -775,10 +775,10 @@ def scan_all() -> dict:
     # 板块 → 参考ETF（从 optimize_stocks 导入，单一来源避免两份定义不同步）
     from optimize_stocks import GROUP_SECTOR_ETF
 
-    # 预下载所有唯一板块ETF（并行）
+    # 预下载所有唯一板块ETF（限速并行：max_workers=4，实际并发受 downloader semaphore 限制为2）
     unique_etfs = set(GROUP_SECTOR_ETF.values())
     sector_px: dict[str, pd.Series] = {}
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    with ThreadPoolExecutor(max_workers=4) as ex:
         fs = {ex.submit(get_prices, sym): sym for sym in unique_etfs}
         for f in as_completed(fs):
             sym = fs[f]
@@ -813,7 +813,7 @@ def scan_all() -> dict:
 
     group_results: dict[str, dict] = {g: {} for g in WATCHLIST}
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {
             executor.submit(
                 scan_ticker, ticker, smh_px, ref_px, qqq_px, extra_ctas, top3_map,
@@ -851,17 +851,15 @@ def scan_all() -> dict:
 
 def get_macro() -> dict:
     """VIX + 关键市场指数实时状态"""
-    import yfinance as yf
-
     result: dict = {"vix": None, "vix_status": "unknown", "vix_label": None, "markets": {}}
 
-    # VIX
+    # VIX — 走统一 downloader（带限速+缓存）
     for vix_sym in ["^VIX", "VIX"]:
         try:
-            vix_data = yf.download(vix_sym, period="5d", progress=False, auto_adjust=True)
-            if vix_data.empty:
+            vix_series = get_prices(vix_sym, start="2024-01-01")
+            if vix_series.empty:
                 continue
-            vix = float(vix_data["Close"].dropna().iloc[-1])
+            vix = float(vix_series.iloc[-1])
             result["vix"] = round(vix, 1)
             if vix < 20:
                 result["vix_status"] = "low"

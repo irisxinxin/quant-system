@@ -12,12 +12,32 @@ from pathlib import Path
 from typing import Optional, Union
 
 import random
+import threading
 import pandas as pd
 import yfinance as yf
 
 # 下载重试参数
 _MAX_RETRIES = 4
 _RETRY_BASE  = 2.0   # 指数退避底数（秒）
+
+# 全局限速：最多同时 2 个并发下载，防止多线程同时打 Yahoo 触发 rate limit
+_download_sem   = threading.Semaphore(2)
+_last_dl_time   = 0.0
+_dl_time_lock   = threading.Lock()
+_MIN_DL_INTERVAL = 0.6   # 两次真实请求的最小间隔（秒）
+
+
+def _yf_download(ticker_or_batch, start, end_str, **kwargs):
+    """所有 yf.download 调用都经过这里，全局限速"""
+    global _last_dl_time
+    with _download_sem:
+        # 保证两次请求间隔 >= _MIN_DL_INTERVAL
+        with _dl_time_lock:
+            gap = time.time() - _last_dl_time
+            if gap < _MIN_DL_INTERVAL:
+                time.sleep(_MIN_DL_INTERVAL - gap + random.uniform(0.0, 0.3))
+            _last_dl_time = time.time()
+        return yf.download(ticker_or_batch, start=start, end=end_str, **kwargs)
 
 # 引入全局配置
 import sys
@@ -90,8 +110,8 @@ def get_prices(
     last_exc = None
     for attempt in range(_MAX_RETRIES):
         try:
-            raw = yf.download(ticker, start=start, end=end_str,
-                              auto_adjust=True, progress=False)
+            raw = _yf_download(ticker, start, end_str,
+                               auto_adjust=True, progress=False)
             if raw.empty:
                 logger.warning(f"[empty] {ticker} returned no data")
                 return pd.Series(name=ticker, dtype=float)
@@ -148,8 +168,8 @@ def get_ohlcv(
     last_exc = None
     for attempt in range(_MAX_RETRIES):
         try:
-            raw = yf.download(ticker, start=start, end=end_str,
-                              auto_adjust=True, progress=False)
+            raw = _yf_download(ticker, start, end_str,
+                               auto_adjust=True, progress=False)
             if raw.empty:
                 return pd.DataFrame()
 
@@ -207,8 +227,8 @@ def get_multi(
         last_exc = None
         for attempt in range(_MAX_RETRIES):
             try:
-                raw = yf.download(batch, start=start, end=end_str,
-                                  auto_adjust=True, progress=False)
+                raw = _yf_download(batch, start, end_str,
+                                   auto_adjust=True, progress=False)
                 if raw.empty:
                     break
                 if isinstance(raw.columns, pd.MultiIndex):
