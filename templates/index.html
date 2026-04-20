@@ -216,10 +216,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
       <!-- 策略说明卡 -->
       <div id="bt-strat-info" style="margin-bottom:16px"></div>
 
-      <!-- K线图 -->
+      <!-- K线图：策略买卖点 -->
       <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">
         <div style="padding:12px 16px 0;display:flex;align-items:center;gap:10px">
-          <span style="font-size:12px;font-weight:600;color:var(--text2)">价格 + 买卖点（近6个月）</span>
+          <span style="font-size:12px;font-weight:600;color:var(--text2)">策略买卖点（近12个月）</span>
           <div style="margin-left:auto;display:flex;gap:12px;font-size:11px;color:var(--text3)">
             <span><span style="color:#58a6ff;font-size:14px">▲</span> 买入</span>
             <span><span style="color:#3fb950;font-size:14px">▼</span> 盈利卖出</span>
@@ -227,6 +227,19 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
           </div>
         </div>
         <div id="bt-chart" style="height:380px;width:100%"></div>
+      </div>
+
+      <!-- K线图：近1年纯行情 -->
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">
+        <div style="padding:12px 16px 0;display:flex;align-items:center;gap:10px">
+          <span style="font-size:12px;font-weight:600;color:var(--text2)">近1年K线总览</span>
+          <div style="margin-left:auto;display:flex;gap:14px;font-size:11px;color:var(--text3)">
+            <span><span style="display:inline-block;width:20px;height:2px;background:rgba(247,201,72,0.8);vertical-align:middle;margin-right:3px"></span>EMA20</span>
+            <span><span style="display:inline-block;width:20px;height:2px;background:rgba(255,149,0,0.8);vertical-align:middle;margin-right:3px"></span>EMA60</span>
+            <span><span style="display:inline-block;width:20px;height:2px;background:rgba(139,148,158,0.6);vertical-align:middle;margin-right:3px;border-top:1px dashed rgba(139,148,158,0.6)"></span>MA200</span>
+          </div>
+        </div>
+        <div id="bt-chart2" style="height:360px;width:100%"></div>
       </div>
 
       <!-- 交易记录 -->
@@ -264,6 +277,7 @@ const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false};
 let curTab = 'scan';
 let sectView = 'momentum';
 let btChart = null;
+let btChart2 = null;
 let btActiveTicker = null;
 let btData = null;       // full API response
 let btActiveStrat = 0;   // index into strategies[]
@@ -1036,7 +1050,9 @@ async function loadBtTicker(ticker){
   $('bt-stats').innerHTML = btStatsSkeleton();
   $('bt-trades-body').innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)"><span class="spin">⟳</span> 计算中...</td></tr>`;
   if(btChart){ btChart.remove(); btChart=null; }
+  if(btChart2){ btChart2.remove(); btChart2=null; }
   $('bt-chart').innerHTML = '';
+  $('bt-chart2').innerHTML = '';
 
   try{
     const j = await (await fetch(`/api/backtest/${ticker}`)).json();
@@ -1233,6 +1249,7 @@ function renderBtDetail(s){
 
   // ── K线图 ──
   renderBtChart(s.candles||[], s.markers||[], s.bah||[], s.ma_lines||null, s.channel||null);
+  renderPriceChart(s.candles||[], s.ma_lines||null, s.channel||null);
 
   // ── 交易记录 ──
   const trades = s.trades || [];
@@ -1436,6 +1453,107 @@ function renderBtChart(candles, markers, bah, maLines, channel){
   btChart.timeScale().fitContent();
   const ro=new ResizeObserver(()=>{ if(btChart) btChart.applyOptions({width:el.clientWidth}); });
   ro.observe(el);
+}
+
+// ══════════════════════════════════════════
+// 近1年K线总览（无买卖标记，纯行情）
+// ══════════════════════════════════════════
+function renderPriceChart(candles, maLines, channel){
+  if(btChart2){ btChart2.remove(); btChart2=null; }
+  const el = $('bt-chart2');
+  el.innerHTML='';
+  if(!candles.length){ el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">无K线数据</div>'; return; }
+
+  btChart2 = LightweightCharts.createChart(el,{
+    width: el.clientWidth||900, height: 360,
+    layout:{ background:{color:'#161b22'}, textColor:'#8b949e' },
+    grid:{ vertLines:{color:'rgba(255,255,255,0.04)'}, horzLines:{color:'rgba(255,255,255,0.04)'} },
+    crosshair:{ mode:LightweightCharts.CrosshairMode.Normal },
+    rightPriceScale:{ borderColor:'#21262d' },
+    timeScale:{ borderColor:'#21262d', timeVisible:true },
+    handleScroll:true, handleScale:true,
+  });
+
+  // K线
+  const cs = btChart2.addCandlestickSeries({
+    upColor:'#3fb950', downColor:'#f85149',
+    borderUpColor:'#3fb950', borderDownColor:'#f85149',
+    wickUpColor:'#3fb950', wickDownColor:'#f85149',
+  });
+  const valid = candles.filter(c=>c.open&&c.high&&c.low&&c.close);
+  cs.setData(valid);
+  const tset = new Set(valid.map(c=>c.time));
+
+  // MA 线
+  const maCfgs=[
+    {key:'ema20', color:'rgba(247,201,72,0.85)',  width:1},
+    {key:'ema60', color:'rgba(255,149,0,0.85)',   width:1},
+    {key:'ma200', color:'rgba(139,148,158,0.65)', width:1, style:2},
+  ];
+  if(maLines){
+    maCfgs.forEach(cfg=>{
+      const pts=(maLines[cfg.key]||[]).filter(d=>tset.has(d.time));
+      if(!pts.length) return;
+      const s=btChart2.addLineSeries({color:cfg.color, lineWidth:cfg.width,
+        lineStyle:cfg.style||0, lastValueVisible:false,
+        priceLineVisible:false, crosshairMarkerVisible:false});
+      s.setData(pts);
+    });
+  }
+
+  // 趋势通道 / 震荡区间
+  if(channel && channel.type !== 'none'){
+    if(channel.type === 'consolidation'){
+      const lo=channel.support?.[0]?.value, hi=channel.resistance?.[0]?.value;
+      if(lo!=null && hi!=null){
+        cs.createPriceLine({price:hi, color:'rgba(255,215,0,0.5)', lineWidth:1,
+          lineStyle:2, axisLabelVisible:true, title:'震荡上轨'});
+        cs.createPriceLine({price:lo, color:'rgba(255,215,0,0.5)', lineWidth:1,
+          lineStyle:2, axisLabelVisible:true, title:'震荡下轨'});
+        const fillS=btChart2.addAreaSeries({topColor:'rgba(255,215,0,0.07)',
+          bottomColor:'rgba(255,215,0,0.02)', lineColor:'transparent', lineWidth:0,
+          lastValueVisible:false, priceLineVisible:false, crosshairMarkerVisible:false});
+        const hiPts=(channel.resistance||[]).filter(d=>tset.has(d.time));
+        if(hiPts.length) fillS.setData(hiPts);
+        _addChartLabel(el, btChart2, cs, (lo+hi)/2, '⬌ 震荡区间',
+          'rgba(255,215,0,0.85)','rgba(255,215,0,0.15)');
+      }
+    } else {
+      const isAsc=channel.type==='ascending';
+      const sc=isAsc?'rgba(63,185,80,0.75)':'rgba(248,81,73,0.75)';
+      const rc=isAsc?'rgba(248,81,73,0.75)':'rgba(63,185,80,0.75)';
+      let supS2;
+      if(channel.support?.length){
+        supS2=btChart2.addLineSeries({color:sc, lineWidth:1.5, lastValueVisible:true,
+          priceLineVisible:false, crosshairMarkerVisible:false, title:isAsc?'支撑':'压力'});
+        supS2.setData(channel.support.filter(d=>tset.has(d.time)));
+      }
+      if(channel.resistance?.length){
+        const rs=btChart2.addLineSeries({color:rc, lineWidth:1.5, lastValueVisible:true,
+          priceLineVisible:false, crosshairMarkerVisible:false, title:isAsc?'压力':'支撑'});
+        rs.setData(channel.resistance.filter(d=>tset.has(d.time)));
+      }
+      if(supS2 && channel.support?.length && channel.resistance?.length){
+        const lSup=channel.support[channel.support.length-1].value;
+        const lRes=channel.resistance[channel.resistance.length-1].value;
+        _addChartLabel(el, btChart2, supS2, (lSup+lRes)/2,
+          isAsc?'↗ 上升通道':'↘ 下降通道',
+          isAsc?'rgba(63,185,80,0.9)':'rgba(248,81,73,0.9)',
+          isAsc?'rgba(63,185,80,0.12)':'rgba(248,81,73,0.12)');
+      }
+    }
+  }
+
+  // 成交量
+  const vs=btChart2.addHistogramSeries({priceFormat:{type:'volume'},
+    priceScaleId:'vol2', scaleMargins:{top:0.85,bottom:0}});
+  btChart2.priceScale('vol2').applyOptions({visible:false});
+  vs.setData(valid.map(c=>({time:c.time, value:c.volume,
+    color:c.close>=c.open?'rgba(63,185,80,0.18)':'rgba(248,81,73,0.18)'})));
+
+  btChart2.timeScale().fitContent();
+  const ro2=new ResizeObserver(()=>{ if(btChart2) btChart2.applyOptions({width:el.clientWidth}); });
+  ro2.observe(el);
 }
 
 // ══════════════════════════════════════════
