@@ -147,6 +147,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <button class="tab-btn"    id="tab-bt"      onclick="sw('bt')">📊 回测验证</button>
     <button class="tab-btn"    id="tab-sw"      onclick="sw('sw')">🐋 StockWhale</button>
     <button class="tab-btn"    id="tab-cm"      onclick="sw('cm')">📊 CM选股 <span id="cm-badge" style="display:none;background:#f87171;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
+    <button class="tab-btn"    id="tab-er"      onclick="sw('er')">📈 二级持仓 <span id="er-badge" style="display:none;background:#34d399;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
     <button class="tab-btn"    id="tab-cn"      onclick="sw('cn')">🇨🇳 大A <span id="cn-badge" style="display:none;background:#f87171;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">!</span></button>
     <button class="tab-btn"    id="tab-kol"     onclick="sw('kol')">📝 大V观点 <span id="kol-badge" style="display:none;background:#f59e0b;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
   </div>
@@ -352,6 +353,33 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     </div>
   </div>
 
+  <!-- TAB: 二级持仓 -->
+  <div id="pane-er" style="display:none">
+    <!-- 图例 -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:11px;color:var(--text2)">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:2px;margin-right:4px;vertical-align:middle"></span>核心仓 (15%+)</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#4ade80;border-radius:2px;margin-right:4px;vertical-align:middle"></span>主仓 (5-6%)</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#818cf8;border-radius:2px;margin-right:4px;vertical-align:middle"></span>中仓 (3-5%)</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#38bdf8;border-radius:2px;margin-right:4px;vertical-align:middle"></span>观察仓 (1-3%)</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#4b5563;border-radius:2px;margin-right:4px;vertical-align:middle"></span>已出场</span>
+    </div>
+    <!-- 持仓表格 -->
+    <div id="er-body"><div style="text-align:center;padding:48px;color:var(--text3)">加载中…</div></div>
+    <!-- K线详情 -->
+    <div id="er-detail" style="display:none;margin-top:20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <button onclick="$('er-detail').style.display='none'" style="padding:5px 12px;font-size:12px;border:1px solid var(--border);border-radius:6px;color:var(--text2);background:var(--s2);cursor:pointer">← 返回</button>
+        <span id="er-chart-title" style="font-size:14px;font-weight:700;color:var(--text)"></span>
+        <span id="er-chart-tier"  style="font-size:11px;padding:2px 8px;border-radius:4px"></span>
+        <span id="er-chart-gain"  style="font-size:13px;font-weight:600"></span>
+        <span id="er-chart-strat" style="font-size:11px;color:var(--text3)"></span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px" id="er-level-legend"></div>
+      <div id="er-chart" style="width:100%;height:460px;border-radius:10px;overflow:hidden;background:#0e1117"></div>
+      <div id="er-chart-note" style="font-size:12px;color:var(--text3);margin-top:8px;padding:0 4px"></div>
+    </div>
+  </div>
+
   <!-- TAB: 大A -->
   <div id="pane-cn" style="display:none">
     <div id="cn-body">
@@ -433,8 +461,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-const TABS = ['scan','entry','sectors','cta','bt','sw','cm','cn','kol'];
-const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, cn:false, kol:false};
+const TABS = ['scan','entry','sectors','cta','bt','sw','cm','er','cn','kol'];
+const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, er:false, cn:false, kol:false};
 let curTab = 'scan';
 let sectView = 'momentum';
 let btChart = null;
@@ -556,6 +584,7 @@ function sw(tab){
   if(tab==='bt'&&!loaded.bt)loadBt();
   if(tab==='sw'&&!loaded.sw)loadSW();
   if(tab==='cm'&&!loaded.cm)loadCM();
+  if(tab==='er'&&!loaded.er)loadER();
   if(tab==='cn'&&!loaded.cn)loadCN();
   if(tab==='kol'&&!loaded.kol)loadKol();
   // 返回回测tab时隐藏详情，显示选股器
@@ -2156,6 +2185,162 @@ async function loadCMChart(ticker){
 // ══════════════════════════════════════════
 // 大A 监控
 // ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// 二级持仓
+// ══════════════════════════════════════════
+let _erChart = null;
+
+const ER_TIER_COLOR = {
+  '核心': '#f59e0b',
+  '主仓': '#4ade80',
+  '中仓': '#818cf8',
+  '观察': '#38bdf8',
+  '出场': '#6b7280',
+};
+
+async function loadER(){
+  loaded.er = true;
+  const r = await fetch('/api/er');
+  const j = await r.json();
+  const stocks = j.stocks || [];
+  renderERGroups(stocks);
+  // badge = 有信号的持仓数
+  const sigCount = stocks.filter(s=>s.tier!=='出场'&&s.signals&&s.signals.length).length;
+  const badge = $('er-badge');
+  if(sigCount>0){ badge.textContent=sigCount; badge.style.display='inline'; }
+  else badge.style.display='none';
+}
+
+function renderERGroups(stocks){
+  const tiers = ['核心','主仓','中仓','观察','出场'];
+  const gainColor = v => v==null?'var(--text3)':v>=0?'#4ade80':'#f87171';
+  let html = '';
+  for(const tier of tiers){
+    const rows = stocks.filter(s=>s.tier===tier);
+    if(!rows.length) continue;
+    const tc = ER_TIER_COLOR[tier]||'#888';
+    const totalPct = rows.reduce((a,s)=>a+(s.size_pct||0),0).toFixed(1);
+    html += `
+    <div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:700;color:${tc};letter-spacing:.06em;text-transform:uppercase">${tier}</span>
+        ${tier!=='出场'?`<span style="font-size:11px;color:var(--text3)">合计仓位 ${totalPct}%</span>`:''}
+      </div>
+      <div style="overflow-x:auto">
+      <table class="tbl" style="width:100%">
+        <thead><tr>
+          <th class="tl">股票</th>
+          <th class="tl">板块</th>
+          ${tier!=='出场'?'<th>仓位</th>':''}
+          <th>现价</th>
+          <th>今日</th>
+          <th>入场价</th>
+          <th>浮盈</th>
+          <th>距EMA20</th>
+          <th class="tl">策略</th>
+          <th class="tl">信号</th>
+        </tr></thead>
+        <tbody>
+        ${rows.map(s=>{
+          const hasSig = s.signals&&s.signals.length;
+          const rowBg = hasSig&&tier!=='出场' ? `background:rgba(52,211,153,0.05);border-left:2px solid #34d399` : (tier==='出场'?'opacity:0.55':'');
+          const gainPct = s.gain_pct;
+          const strat = (s.strategy||'').replace(/\+/g,' + ');
+          return `<tr class="clickable" onclick="loadERChart('${s.ticker}')" title="点击查看K线" style="${rowBg}">
+            <td class="tl">
+              <span style="font-weight:700;color:${tc}">${s.ticker}</span>
+            </td>
+            <td class="tl"><span style="font-size:11px;color:var(--text3)">${s.sector||''}</span></td>
+            ${tier!=='出场'?`<td><span style="font-size:12px;font-weight:600;color:${tc}">${s.size_pct}%</span></td>`:''}
+            <td style="font-weight:600">${s.cur!=null?'$'+s.cur:'—'}</td>
+            <td style="color:${gainColor(s.chg_1d)}">${s.chg_1d!=null?(s.chg_1d>0?'+':'')+s.chg_1d+'%':'—'}</td>
+            <td style="color:var(--text3);font-size:12px">$${s.entry}</td>
+            <td style="color:${gainColor(gainPct)};font-weight:600">${gainPct!=null?(gainPct>0?'+':'')+gainPct+'%':'—'}</td>
+            <td style="color:${gainColor(s.vs_ema20)}">${s.vs_ema20!=null?(s.vs_ema20>0?'+':'')+s.vs_ema20+'%':'—'}</td>
+            <td class="tl"><span style="font-size:10px;color:var(--text3);font-family:monospace">${strat}</span></td>
+            <td class="tl">${hasSig?s.signals.map(sg=>`<span style="font-size:10px;background:rgba(52,211,153,.12);color:#6ee7b7;border:1px solid rgba(52,211,153,.25);border-radius:3px;padding:1px 5px;margin-right:3px;white-space:nowrap">${sg}</span>`).join(''):'<span style="color:var(--text3);font-size:11px">—</span>'}</td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+  }
+  $('er-body').innerHTML = html || '<div style="color:var(--text3);padding:24px">暂无数据</div>';
+}
+
+async function loadERChart(ticker){
+  $('er-detail').style.display = 'block';
+  $('er-chart').innerHTML = '<div style="padding:48px;text-align:center;color:var(--text3)">加载中…</div>';
+  $('er-level-legend').innerHTML = '';
+  $('er-detail').scrollIntoView({behavior:'smooth', block:'start'});
+
+  const r = await fetch('/api/er/chart/'+ticker);
+  const j = await r.json();
+  if(j.error){ $('er-chart').innerHTML='<div style="padding:24px;color:#f87171">'+j.error+'</div>'; return; }
+
+  const tc = ER_TIER_COLOR[j.tier]||'#888';
+  const gainColor = v => v==null?'var(--text3)':v>=0?'#4ade80':'#f87171';
+
+  $('er-chart-title').textContent = ticker + ' · ' + (j.sector||'');
+  $('er-chart-tier').textContent  = j.tier + (j.size_pct>0?' '+j.size_pct+'%':'');
+  $('er-chart-tier').style.cssText = `background:${tc}22;color:${tc};border:1px solid ${tc}55;font-size:11px;padding:2px 8px;border-radius:4px`;
+  $('er-chart-gain').textContent  = j.gain_pct!=null ? (j.gain_pct>0?'+':'')+j.gain_pct+'%' : '';
+  $('er-chart-gain').style.color  = gainColor(j.gain_pct);
+  $('er-chart-strat').textContent = j.strategy||'';
+  $('er-chart-note').textContent  = j.note||'';
+
+  $('er-chart').innerHTML = '';
+  if(_erChart){ try{_erChart.remove();}catch(e){} _erChart=null; }
+
+  _erChart = LightweightCharts.createChart($('er-chart'), {
+    layout:    {background:{color:'#0e1117'}, textColor:'#8b949e'},
+    grid:      {vertLines:{color:'rgba(255,255,255,0.04)'}, horzLines:{color:'rgba(255,255,255,0.04)'}},
+    crosshair: {mode: LightweightCharts.CrosshairMode.Normal},
+    rightPriceScale:{borderColor:'rgba(255,255,255,0.1)'},
+    timeScale: {borderColor:'rgba(255,255,255,0.1)', timeVisible:true},
+    width:  $('er-chart').offsetWidth,
+    height: 460,
+  });
+
+  const cs = _erChart.addCandlestickSeries({
+    upColor:'#4ade80', downColor:'#f87171',
+    borderUpColor:'#4ade80', borderDownColor:'#f87171',
+    wickUpColor:'#4ade80',   wickDownColor:'#f87171',
+  });
+  cs.setData(j.candles);
+
+  // EMA10 橙色
+  const e10 = _erChart.addLineSeries({color:'#f97316', lineWidth:1, title:'EMA10'});
+  e10.setData(j.ema10);
+  // EMA20 黄绿
+  const e20 = _erChart.addLineSeries({color:'#a3e635', lineWidth:1, title:'EMA20'});
+  e20.setData(j.ema20);
+  // MA200 蓝色
+  const m200 = _erChart.addLineSeries({color:'#60a5fa', lineWidth:1, lineStyle:2, title:'MA200'});
+  m200.setData(j.ma200);
+
+  // 入场价水平线（金色虚线）
+  if(j.levels && j.levels.entry){
+    const ep = _erChart.addLineSeries({color:tc, lineWidth:2, lineStyle:1, title:'入场价'});
+    const t0 = j.candles[0]?.time;
+    const t1 = j.candles[j.candles.length-1]?.time;
+    if(t0&&t1) ep.setData([{time:t0,value:j.levels.entry},{time:t1,value:j.levels.entry}]);
+  }
+
+  _erChart.timeScale().fitContent();
+
+  // 图例
+  const lv = j.levels||{};
+  const items = [
+    {label:'入场价', val:'$'+j.entry, color:tc},
+    {label:'EMA20',  val:lv.ema20?'$'+lv.ema20:null,  color:'#a3e635'},
+    {label:'MA200',  val:lv.ma200?'$'+lv.ma200:null,  color:'#60a5fa'},
+  ];
+  $('er-level-legend').innerHTML = items.filter(x=>x.val).map(x=>
+    `<span style="font-size:11px;color:${x.color};background:${x.color}18;border:1px solid ${x.color}44;border-radius:4px;padding:2px 8px">${x.label} ${x.val}</span>`
+  ).join('');
+}
+
 let _cnChart = null;
 
 async function loadCN(){

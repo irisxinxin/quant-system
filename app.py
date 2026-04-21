@@ -853,6 +853,147 @@ def api_cm_chart(ticker: str):
         return JSONResponse({"error": str(e)})
 
 
+# ─── 二级研究员持仓 ───
+
+_ER_PORTFOLIO = [
+    # tier: 核心 / 主仓 / 中仓 / 观察 / 出场
+    {"ticker":"LITE", "tier":"核心", "size_pct":19.1, "sector":"激光器/光模块","entry":894.07,"strategy":"vol_surge+smh+trail_12",   "note":"EML拿单≥70%，订单至2027+"},
+    {"ticker":"COHR", "tier":"核心", "size_pct":19.7, "sector":"激光器/光模块","entry":345.02,"strategy":"bb_lo+soft+rsi70",          "note":"CPO激光源+SiC双赛道"},
+    {"ticker":"DRAM", "tier":"主仓", "size_pct":6.0,  "sector":"存储",         "entry":35.59, "strategy":"待优化(数据不足)",           "note":"MU止盈后转入，长协重新定价催化"},
+    {"ticker":"ALAB", "tier":"主仓", "size_pct":5.0,  "sector":"CPU/互联芯片", "entry":174.05,"strategy":"rsi28+none+rsi70",          "note":"CPU供需失衡乘数效应最强，弹性>ARM>AMD"},
+    {"ticker":"MRVL", "tier":"中仓", "size_pct":4.5,  "sector":"光子/DSP",     "entry":139.69,"strategy":"bb_lo+combo+ma_x",          "note":"800G/1.6T DSP核心供应商"},
+    {"ticker":"AAOI", "tier":"中仓", "size_pct":4.5,  "sector":"光模块",       "entry":159.42,"strategy":"ema20_dip+obv+rsi_fade",    "note":"27年指引若兑现→250-300B市值弹性"},
+    {"ticker":"GFS",  "tier":"中仓", "size_pct":4.0,  "sector":"硅光代工",     "entry":54.75, "strategy":"mfi_os+smh+rsi80",          "note":"12英寸SiPh先发2年，24x PE低估值"},
+    {"ticker":"VRT",  "tier":"观察", "size_pct":2.9,  "sector":"AI电力",       "entry":307.34,"strategy":"ema20_dip+smh+rsi80",       "note":"订单+109% YoY，AI数据中心散热核心"},
+    {"ticker":"FORM", "tier":"观察", "size_pct":2.9,  "sector":"光学测试",     "entry":137.21,"strategy":"bb_lo+soxx+cmf_neg",        "note":"CPO探针台，1Y_DD仅-4.1%"},
+    {"ticker":"ARM",  "tier":"观察", "size_pct":2.0,  "sector":"半导体IP",     "entry":166.73,"strategy":"ema20_dip+none+rsi80",      "note":"CPU链预期差标的，先建仓后研究"},
+    {"ticker":"AEHR", "tier":"观察", "size_pct":2.0,  "sector":"半导体测试",   "entry":83.86, "strategy":"rsi28+combo+rsi70",         "note":"光芯片测试设备，注意历史DD-71.9%"},
+    {"ticker":"ASX",  "tier":"观察", "size_pct":2.0,  "sector":"半导体封测",   "entry":28.59, "strategy":"ema2060+soxx+trail_12",     "note":"日月光半导体，1Y策略+214%，Calmar 15"},
+    {"ticker":"POET", "tier":"观察", "size_pct":1.8,  "sector":"光电集成",     "entry":7.26,  "strategy":"bb_lo+none+cmf_neg",        "note":"CPO Layer5光电集成期权"},
+    # 止盈出场
+    {"ticker":"MU",   "tier":"出场", "size_pct":0.0,  "sector":"存储/DRAM",    "entry":455.07,"strategy":"bb_lo+none+rsi80",          "note":"⚡止盈转DRAM 04-20"},
+    {"ticker":"TSEM", "tier":"出场", "size_pct":0.0,  "sector":"硅光代工",     "entry":226.45,"strategy":"ma5200+soxx+trail_12",      "note":"⚡止盈 04-20，GFS专利起诉降权"},
+    {"ticker":"LMND", "tier":"出场", "size_pct":0.0,  "sector":"金融科技",     "entry":70.94, "strategy":"—",                        "note":"⚡止盈 04-20，保险/模型不符"},
+    {"ticker":"GOOG", "tier":"出场", "size_pct":0.0,  "sector":"科技/广告",    "entry":339.40,"strategy":"ma5200+none+ma_x",          "note":"⚡止盈 04-20，平台/模型不符"},
+    {"ticker":"TSLA", "tier":"出场", "size_pct":0.0,  "sector":"电动车",       "entry":400.62,"strategy":"rsi28+combo+rsi80",         "note":"⚡止盈 04-20，汽车/模型不符"},
+]
+
+
+def _compute_er_stats(s):
+    """计算持仓股票的实时价格 + 信号 + 盈亏"""
+    import math
+    from data.downloader import get_ohlcv
+    ticker = s["ticker"]
+    try:
+        df = get_ohlcv(ticker, start="2025-01-01")
+        if df.empty:
+            return {**s, "cur": None, "chg_1d": None, "gain_pct": None,
+                    "vs_ema20": None, "vs_ma200": None, "signals": []}
+        close = df["Close"]
+        cur   = float(close.iloc[-1])
+        chg   = float(close.pct_change().iloc[-1] * 100)
+        ema10 = float(close.ewm(span=10,  adjust=False).mean().iloc[-1])
+        ema20 = float(close.ewm(span=20,  adjust=False).mean().iloc[-1])
+        ma200_s = close.rolling(200).mean()
+        ma200 = float(ma200_s.iloc[-1]) if len(close) >= 200 and not math.isnan(ma200_s.iloc[-1]) else None
+        recent_high = float(close.iloc[-21:-1].max()) if len(close) > 21 else None
+        vs_ema20 = (cur - ema20) / ema20 * 100
+        vs_ma200 = (cur - ma200) / ma200 * 100 if ma200 else None
+        gain_pct = (cur - s["entry"]) / s["entry"] * 100
+        signals = []
+        if s["tier"] != "出场":
+            if recent_high and cur >= recent_high * 0.97:
+                signals.append("🚀 接近突破")
+            if abs(vs_ema20) <= 2.0 and cur >= ema20 * 0.98:
+                signals.append("↩️ 回踩EMA20")
+            if abs((cur - ema10) / ema10 * 100) <= 1.5:
+                signals.append("↩️ 回踩EMA10")
+            if ma200 and abs(vs_ma200) <= 3.0:
+                signals.append("⭐ 近MA200")
+        return {
+            **s,
+            "cur":      round(cur, 2),
+            "chg_1d":   round(chg, 1),
+            "gain_pct": round(gain_pct, 1),
+            "vs_ema20": round(vs_ema20, 1),
+            "vs_ma200": round(vs_ma200, 1) if vs_ma200 is not None else None,
+            "signals":  signals,
+        }
+    except Exception:
+        return {**s, "cur": None, "chg_1d": None, "gain_pct": None,
+                "vs_ema20": None, "vs_ma200": None, "signals": []}
+
+
+@app.get("/api/er")
+def api_er_list():
+    """二级研究员持仓：价格 + 盈亏 + 信号（并行拉取）"""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    results = [None] * len(_ER_PORTFOLIO)
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futs = {ex.submit(_compute_er_stats, s): i for i, s in enumerate(_ER_PORTFOLIO)}
+        for f in as_completed(futs):
+            results[futs[f]] = f.result()
+    return JSONResponse({"stocks": [r for r in results if r]})
+
+
+@app.get("/api/er/chart/{ticker}")
+def api_er_chart(ticker: str):
+    """二级研究员持仓 K 线 + EMA10/20/MA200 + 入场价水平线"""
+    import math
+    from data.downloader import get_ohlcv
+    ticker = ticker.upper()
+    info = next((s for s in _ER_PORTFOLIO if s["ticker"] == ticker), None)
+    if not info:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    try:
+        df = get_ohlcv(ticker, start="2025-07-01")
+        if df.empty:
+            return JSONResponse({"error": "no data"})
+        close = df["Close"]
+        ema10_s = close.ewm(span=10,  adjust=False).mean()
+        ema20_s = close.ewm(span=20,  adjust=False).mean()
+        ma200_s = close.rolling(200).mean()
+
+        def to_line(series):
+            out = []
+            for idx, v in series.items():
+                if math.isnan(v): continue
+                out.append({"time": int(idx.timestamp()), "value": round(float(v), 4)})
+            return out
+
+        candles = []
+        for idx, row in df.iterrows():
+            o,h,l,c = float(row["Open"]),float(row["High"]),float(row["Low"]),float(row["Close"])
+            if any(math.isnan(v) for v in [o,h,l,c]): continue
+            candles.append({"time": int(idx.timestamp()), "open":o,"high":h,"low":l,"close":c})
+
+        cur = float(close.iloc[-1])
+        ma200_cur = float(ma200_s.iloc[-1]) if not math.isnan(ma200_s.iloc[-1]) else None
+        gain_pct = round((cur - info["entry"]) / info["entry"] * 100, 1)
+
+        return JSONResponse({
+            "ticker":   ticker,
+            "tier":     info["tier"],
+            "size_pct": info["size_pct"],
+            "sector":   info["sector"],
+            "entry":    info["entry"],
+            "strategy": info["strategy"],
+            "note":     info["note"],
+            "gain_pct": gain_pct,
+            "candles":  candles,
+            "ema10":    to_line(ema10_s),
+            "ema20":    to_line(ema20_s),
+            "ma200":    to_line(ma200_s),
+            "levels": {
+                "entry":  info["entry"],
+                "ema20":  round(float(ema20_s.iloc[-1]), 2),
+                "ma200":  round(ma200_cur, 2) if ma200_cur else None,
+            }
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+
 @app.get("/health")
 async def health():
     date_key = _trade_date_key()
