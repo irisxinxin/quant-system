@@ -147,6 +147,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <button class="tab-btn"    id="tab-bt"      onclick="sw('bt')">📊 回测验证</button>
     <button class="tab-btn"    id="tab-sw"      onclick="sw('sw')">🐋 StockWhale</button>
     <button class="tab-btn"    id="tab-cm"      onclick="sw('cm')">📊 CM选股 <span id="cm-badge" style="display:none;background:#f87171;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
+    <button class="tab-btn"    id="tab-cn"      onclick="sw('cn')">🇨🇳 大A <span id="cn-badge" style="display:none;background:#f87171;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">!</span></button>
     <button class="tab-btn"    id="tab-kol"     onclick="sw('kol')">📝 大V观点 <span id="kol-badge" style="display:none;background:#f59e0b;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
   </div>
 </div>
@@ -351,6 +352,22 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     </div>
   </div>
 
+  <!-- TAB: 大A -->
+  <div id="pane-cn" style="display:none">
+    <div id="cn-body">
+      <div style="text-align:center;padding:48px;color:var(--text3)">加载中…</div>
+    </div>
+    <!-- K线详情 -->
+    <div id="cn-detail" style="display:none;margin-top:20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <button onclick="$('cn-detail').style.display='none'" style="padding:5px 12px;font-size:12px;border:1px solid var(--border);border-radius:6px;color:var(--text2);background:var(--s2);cursor:pointer">← 返回</button>
+        <span id="cn-chart-title" style="font-size:15px;font-weight:700;color:var(--text)"></span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px" id="cn-level-legend"></div>
+      <div id="cn-chart" style="width:100%;height:460px;border-radius:10px;overflow:hidden;background:#0e1117"></div>
+    </div>
+  </div>
+
   <!-- TAB: 大V观点 -->
   <div id="pane-kol" style="display:none">
 
@@ -416,8 +433,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-const TABS = ['scan','entry','sectors','cta','bt','sw','cm','kol'];
-const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, kol:false};
+const TABS = ['scan','entry','sectors','cta','bt','sw','cm','cn','kol'];
+const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, cn:false, kol:false};
 let curTab = 'scan';
 let sectView = 'momentum';
 let btChart = null;
@@ -539,6 +556,7 @@ function sw(tab){
   if(tab==='bt'&&!loaded.bt)loadBt();
   if(tab==='sw'&&!loaded.sw)loadSW();
   if(tab==='cm'&&!loaded.cm)loadCM();
+  if(tab==='cn'&&!loaded.cn)loadCN();
   if(tab==='kol'&&!loaded.kol)loadKol();
   // 返回回测tab时隐藏详情，显示选股器
   if(tab==='bt'){
@@ -2133,6 +2151,134 @@ async function loadCMChart(ticker){
   </span>`).join('');
 
   _cmChart.timeScale().fitContent();
+}
+
+// ══════════════════════════════════════════
+// 大A 监控
+// ══════════════════════════════════════════
+let _cnChart = null;
+
+async function loadCN(){
+  loaded.cn = true;
+  const r = await fetch('/api/cn');
+  const j = await r.json();
+  const stocks = j.stocks || [];
+
+  // badge：有财报提醒或技术信号
+  const hasSig = stocks.some(s => s.signals && s.signals.length);
+  const badge = $('cn-badge');
+  badge.style.display = hasSig ? 'inline' : 'none';
+
+  const gainColor = v => v == null ? 'var(--text3)' : v >= 0 ? '#4ade80' : '#f87171';
+
+  $('cn-body').innerHTML = stocks.map(s => {
+    const earningsBlock = s.earnings_date ? `
+      <div style="display:inline-flex;align-items:center;gap:6px;background:${s.earnings_days<=7?'rgba(248,113,113,.12)':'rgba(245,158,11,.08)'};border:1px solid ${s.earnings_days<=7?'rgba(248,113,113,.3)':'rgba(245,158,11,.25)'};border-radius:6px;padding:5px 10px">
+        <span style="font-size:18px">${s.earnings_days<=7?'📢':'📅'}</span>
+        <div>
+          <div style="font-size:11px;color:var(--text3)">下次财报</div>
+          <div style="font-size:13px;font-weight:600;color:${s.earnings_days<=7?'#f87171':'#fbbf24'}">${s.earnings_date} <span style="font-weight:400;font-size:11px">（还有 ${s.earnings_days} 天）</span></div>
+        </div>
+      </div>` : `<div style="font-size:11px;color:var(--text3)">财报日期未知</div>`;
+
+    const sigTags = (s.signals||[]).filter(sg=>!sg.includes('财报')).map(sg =>
+      `<span style="font-size:11px;background:rgba(52,211,153,.12);color:#6ee7b7;border:1px solid rgba(52,211,153,.25);border-radius:4px;padding:2px 7px">${sg}</span>`
+    ).join('');
+
+    return `
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+        <div>
+          <div style="display:flex;align-items:baseline;gap:10px">
+            <span style="font-size:20px;font-weight:700;color:var(--text)">${s.name}</span>
+            <span style="font-size:12px;color:var(--text3)">${s.ticker}</span>
+            <span style="font-size:11px;background:rgba(255,255,255,.06);border-radius:3px;padding:1px 6px;color:var(--text3)">${s.sector}</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-top:6px">
+            <span style="font-size:24px;font-weight:700;color:var(--text)">${s.cur!=null?'¥'+s.cur:'—'}</span>
+            <span style="font-size:14px;color:${gainColor(s.chg_1d)}">${s.chg_1d!=null?(s.chg_1d>0?'+':'')+s.chg_1d+'%':'—'}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div style="text-align:center">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">距EMA20</div>
+            <div style="font-size:14px;font-weight:600;color:${gainColor(s.vs_ema20)}">${s.vs_ema20!=null?(s.vs_ema20>0?'+':'')+s.vs_ema20+'%':'—'}</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">距MA200</div>
+            <div style="font-size:14px;font-weight:600;color:${gainColor(s.vs_ma200)}">${s.vs_ma200!=null?(s.vs_ma200>0?'+':'')+s.vs_ma200+'%':'—'}</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        ${earningsBlock}
+        ${sigTags}
+      </div>
+      <button onclick="loadCNChart('${s.ticker}')" style="padding:6px 16px;font-size:12px;background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.25);border-radius:6px;cursor:pointer">📈 查看K线</button>
+    </div>`;
+  }).join('');
+}
+
+async function loadCNChart(ticker){
+  $('cn-detail').style.display = 'block';
+  $('cn-chart').innerHTML = '<div style="padding:48px;text-align:center;color:var(--text3)">加载中…</div>';
+  $('cn-detail').scrollIntoView({behavior:'smooth', block:'start'});
+
+  const r = await fetch('/api/cn/chart/'+encodeURIComponent(ticker));
+  const j = await r.json();
+  if(j.error){ $('cn-chart').innerHTML='<div style="padding:24px;color:#f87171">'+j.error+'</div>'; return; }
+
+  $('cn-chart-title').textContent = (j.name||ticker) + '  ' + j.ticker;
+  $('cn-chart').innerHTML = '';
+  if(_cnChart){ try{_cnChart.remove();}catch(e){} _cnChart=null; }
+
+  _cnChart = LightweightCharts.createChart($('cn-chart'), {
+    layout:    {background:{color:'#0e1117'}, textColor:'#8b949e'},
+    grid:      {vertLines:{color:'rgba(255,255,255,0.04)'}, horzLines:{color:'rgba(255,255,255,0.04)'}},
+    crosshair: {mode: LightweightCharts.CrosshairMode.Normal},
+    rightPriceScale:{borderColor:'rgba(255,255,255,0.1)'},
+    timeScale: {borderColor:'rgba(255,255,255,0.1)', timeVisible:true},
+    width:  $('cn-chart').offsetWidth,
+    height: 460,
+  });
+
+  const cs = _cnChart.addCandlestickSeries({
+    upColor:'#f87171', downColor:'#4ade80',  // A股红涨绿跌
+    borderUpColor:'#f87171', borderDownColor:'#4ade80',
+    wickUpColor:'#f87171', wickDownColor:'#4ade80',
+  });
+  cs.setData(j.candles);
+
+  const e10  = _cnChart.addLineSeries({color:'#fb923c', lineWidth:1, title:'EMA10'});
+  e10.setData(j.ema10);
+  const e20  = _cnChart.addLineSeries({color:'#a3e635', lineWidth:1, title:'EMA20'});
+  e20.setData(j.ema20);
+  const m200 = _cnChart.addLineSeries({color:'#38bdf8', lineWidth:2, title:'MA200'});
+  m200.setData(j.ma200);
+
+  const lv = j.levels || {};
+  if(lv.recent_high){
+    cs.createPriceLine({price:lv.recent_high, color:'#fbbf24', lineWidth:1,
+      lineStyle:LightweightCharts.LineStyle.Dashed, axisLabelVisible:true,
+      title:'近期高点 ¥'+lv.recent_high});
+  }
+  if(lv.ma200){
+    cs.createPriceLine({price:lv.ma200, color:'#38bdf8', lineWidth:1,
+      lineStyle:LightweightCharts.LineStyle.Dotted, axisLabelVisible:false, title:''});
+  }
+
+  $('cn-level-legend').innerHTML = [
+    {color:'#fb923c', label:'EMA10'},
+    {color:'#a3e635', label:'EMA20'},
+    {color:'#38bdf8', label:'MA200'},
+    lv.recent_high ? {color:'#fbbf24', label:'近期高点 ¥'+lv.recent_high} : null,
+  ].filter(Boolean).map(l=>`
+    <span style="display:flex;align-items:center;gap:4px;font-size:11px">
+      <span style="width:18px;height:2px;background:${l.color};display:inline-block"></span>
+      <span style="color:${l.color}">${l.label}</span>
+    </span>`).join('');
+
+  _cnChart.timeScale().fitContent();
 }
 
 // ══════════════════════════════════════════
