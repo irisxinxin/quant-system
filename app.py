@@ -423,6 +423,119 @@ def api_stockwhale_chart(ticker: str):
         return JSONResponse({"error": str(e)})
 
 
+# ─── CM 选股 ───
+
+_CM_STOCKS = [
+    # 右侧强势股：买突破前高 or 回踩EMA10/20
+    {"ticker":"AMZN","side":"right","sector":"电商/云","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"AAPL","side":"right","sector":"消费科技","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"GOOG","side":"right","sector":"广告/AI","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"NVDA","side":"right","sector":"AI算力","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"AMD", "side":"right","sector":"半导体","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"MU",  "side":"right","sector":"存储","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"DELL","side":"right","sector":"AI服务器","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"INTC","side":"right","sector":"半导体","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"GEV", "side":"right","sector":"AI电力","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"KLAC","side":"right","sector":"半导体设备","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"MRVL","side":"right","sector":"光子/连接","note":"突破前高 or 回踩10/20日线"},
+    {"ticker":"AVGO","side":"right","sector":"AI芯片","note":"突破前高 or 回踩10/20日线"},
+    # 左侧补涨股：分批左侧建仓 or 等MA200确认右侧
+    {"ticker":"TSLA","side":"left","sector":"电动车","note":"左侧分批 or 站上MA200确认"},
+    {"ticker":"META","side":"left","sector":"社交媒体","note":"左侧分批 or 站上MA200确认"},
+    {"ticker":"MSFT","side":"left","sector":"科技/软件","note":"左侧分批 or 站上MA200确认"},
+    {"ticker":"NFLX","side":"left","sector":"流媒体","note":"左侧分批 or 站上MA200确认"},
+]
+
+
+@app.get("/api/cm")
+def api_cm_list():
+    """返回 CM 选股列表 + 实时价格 + 与关键均线距离"""
+    import numpy as np
+    from data.downloader import get_ohlcv
+    result = []
+    for s in _CM_STOCKS:
+        ticker = s["ticker"]
+        try:
+            df = get_ohlcv(ticker, start="2025-01-01")
+            if df.empty:
+                result.append({**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None})
+                continue
+            close = df["Close"]
+            cur   = float(close.iloc[-1])
+            chg   = float(close.pct_change().iloc[-1] * 100)
+            ema20 = float(close.ewm(span=20, adjust=False).mean().iloc[-1])
+            ma200 = float(close.rolling(200).mean().iloc[-1]) if len(close) >= 200 else None
+            recent_high = float(close.rolling(20).max().iloc[-2]) if len(close) > 20 else None  # 前一日20日高点（不含今日，避免自引用）
+            result.append({
+                **s,
+                "cur": round(cur, 2),
+                "chg_1d": round(chg, 1),
+                "vs_ema20": round((cur - ema20) / ema20 * 100, 1),
+                "vs_ma200": round((cur - ma200) / ma200 * 100, 1) if ma200 else None,
+                "recent_high": round(recent_high, 2) if recent_high else None,
+                "ema20": round(ema20, 2),
+                "ma200": round(ma200, 2) if ma200 else None,
+            })
+        except Exception as e:
+            result.append({**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None})
+    return JSONResponse({"stocks": result})
+
+
+@app.get("/api/cm/chart/{ticker}")
+def api_cm_chart(ticker: str):
+    """返回 CM 选股 K 线 + EMA10/20/MA200"""
+    import math
+    from data.downloader import get_ohlcv
+    ticker = ticker.upper()
+    info = next((s for s in _CM_STOCKS if s["ticker"] == ticker), None)
+    if not info:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    try:
+        df = get_ohlcv(ticker, start="2025-07-01")
+        if df.empty:
+            return JSONResponse({"error": "no data"})
+        close = df["Close"]
+        ema10_s  = close.ewm(span=10,  adjust=False).mean()
+        ema20_s  = close.ewm(span=20,  adjust=False).mean()
+        ma200_s  = close.rolling(200).mean()
+
+        def to_line(series):
+            out = []
+            for idx, v in series.items():
+                if math.isnan(v): continue
+                out.append({"time": int(idx.timestamp()), "value": round(float(v), 4)})
+            return out
+
+        candles = []
+        for idx, row in df.iterrows():
+            o,h,l,c = float(row["Open"]),float(row["High"]),float(row["Low"]),float(row["Close"])
+            if any(math.isnan(v) for v in [o,h,l,c]): continue
+            candles.append({"time": int(idx.timestamp()), "open":o,"high":h,"low":l,"close":c})
+
+        # 关键价格线
+        cur = float(close.iloc[-1])
+        ema20_cur = float(ema20_s.iloc[-1])
+        ma200_cur = float(ma200_s.iloc[-1]) if not math.isnan(ma200_s.iloc[-1]) else None
+        recent_high = float(close.iloc[-21:-1].max()) if len(close) > 21 else None  # 前20日高点
+
+        return JSONResponse({
+            "ticker": ticker,
+            "side":   info["side"],
+            "note":   info["note"],
+            "candles": candles,
+            "ema10":  to_line(ema10_s),
+            "ema20":  to_line(ema20_s),
+            "ma200":  to_line(ma200_s),
+            "levels": {
+                "ema20":       round(ema20_cur, 2),
+                "ma200":       round(ma200_cur, 2) if ma200_cur else None,
+                "recent_high": round(recent_high, 2) if recent_high else None,
+            }
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+
 @app.get("/health")
 async def health():
     date_key = _trade_date_key()
