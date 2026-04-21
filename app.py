@@ -426,7 +426,16 @@ def api_stockwhale_chart(ticker: str):
 # ─── 大A 监控 ───
 
 _CN_STOCKS = [
-    {"ticker":"002384.SZ", "name":"山东精密", "sector":"精密制造"},
+    {"ticker":"002384.SZ", "name":"东山精密",  "sector":"精密制造"},
+    {"ticker":"001309.SZ", "name":"德明利",    "sector":"存储芯片"},
+    {"ticker":"300548.SZ", "name":"长芯博创",  "sector":"光器件"},
+    {"ticker":"688195.SS", "name":"腾景科技",  "sector":"光器件"},
+    {"ticker":"603306.SS", "name":"华懋科技",  "sector":"PCB/特种材料"},
+    {"ticker":"301377.SZ", "name":"鼎泰高科",  "sector":"精密制造"},
+    {"ticker":"300394.SZ", "name":"天孚通信",  "sector":"光模块"},
+    {"ticker":"300476.SZ", "name":"胜宏科技",  "sector":"PCB"},
+    {"ticker":"300757.SZ", "name":"罗博特科",  "sector":"半导体设备"},
+    {"ticker":"300620.SZ", "name":"光库科技",  "sector":"光器件"},
 ]
 
 
