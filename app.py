@@ -361,6 +361,18 @@ _SW_TRADES = [
     {"ticker":"LEU",  "sector":"核能",      "date":"2026-04-15","type":2,"entry":195.00,"stop":80.93, "half":305.80,"target":563.93,"risk":1.0,"rr":"2:1","status":"in_trade","note":""},
     {"ticker":"BIRD", "sector":"运动零售",  "date":"2026-04-16","type":1,"entry":10.40, "stop":4.83,  "half":15.34, "target":30.23, "risk":1.0,"rr":"4:1","status":"in_trade","note":""},
     {"ticker":"ASTS", "sector":"卫星通信",  "date":"2026-04-20","type":2,"entry":45.29, "stop":16.47, "half":74.64, "target":162.70,"risk":1.0,"rr":"4:1","status":"waiting","note":"Waiting to be filled"},
+    # ── 二级研究员持仓 2026-04-20 ──────────────────────────────────────────────
+    {"ticker":"LITE", "sector":"激光器/光模块","date":"2026-04-20","type":2,"entry":894.07,"stop":700.00,"half":1150.00,"target":1500.00,"risk":5.0,"rr":"3:1","status":"in_trade","note":"核心仓19% | 策略vol_surge+smh+trail_12 | EML拿单≥70%,订单至2027+"},
+    {"ticker":"COHR", "sector":"激光器/光模块","date":"2026-04-20","type":2,"entry":345.02,"stop":270.00,"half":440.00, "target":540.00, "risk":5.0,"rr":"2.5:1","status":"in_trade","note":"核心仓19.7% | 策略bb_lo+soft+rsi70 | CPO激光源+SiC双赛道"},
+    {"ticker":"ALAB", "sector":"CPU/互联芯片", "date":"2026-04-20","type":2,"entry":174.05,"stop":132.00,"half":220.00, "target":300.00, "risk":2.0,"rr":"3:1","status":"in_trade","note":"主仓5% | 策略rsi28+none+rsi70 | CPU供需失衡乘数效应最强,弹性>ARM>AMD"},
+    {"ticker":"MRVL", "sector":"光子/DSP",     "date":"2026-04-20","type":2,"entry":139.69,"stop":108.00,"half":175.00, "target":220.00, "risk":2.0,"rr":"2.5:1","status":"in_trade","note":"4.5% | 策略bb_lo+combo+ma_x | 800G/1.6T光DSP核心,加仓至4.5%"},
+    {"ticker":"DRAM", "sector":"存储",          "date":"2026-04-20","type":2,"entry":35.59, "stop":25.00, "half":50.00,  "target":70.00,  "risk":3.0,"rr":"3:1","status":"in_trade","note":"6% | 存储板块ETF | MU止盈后转入,长协重新定价催化"},
+    {"ticker":"GFS",  "sector":"硅光代工",      "date":"2026-04-20","type":2,"entry":54.75, "stop":42.00, "half":70.00,  "target":90.00,  "risk":2.0,"rr":"2.5:1","status":"in_trade","note":"4% | 策略mfi_os+smh+rsi80 | 12英寸SiPh先发优势,24xPE低估值,起诉TSEM专利"},
+    {"ticker":"ARM",  "sector":"半导体IP",      "date":"2026-04-20","type":2,"entry":166.73,"stop":132.00,"half":210.00, "target":260.00, "risk":1.0,"rr":"2.5:1","status":"in_trade","note":"2% | 策略ema20_dip+none+rsi80 | CPU链观察仓,预期差较小先建仓"},
+    {"ticker":"AAOI", "sector":"光模块",        "date":"2026-04-20","type":1,"entry":159.42,"stop":118.00,"half":210.00, "target":300.00, "risk":2.0,"rr":"3:1","status":"in_trade","note":"4.5% | 策略ema20_dip+obv+soxx+rsi_fade | 27年营收指引若兑现250-300B市值弹性"},
+    {"ticker":"POET", "sector":"光电集成",      "date":"2026-04-20","type":1,"entry":7.26,  "stop":5.20,  "half":10.50, "target":16.00,  "risk":1.0,"rr":"4:1","status":"in_trade","note":"1.8% | 策略bb_lo+none+cmf_neg | CPO Layer5光电集成期权"},
+    {"ticker":"MU",   "sector":"存储/DRAM",     "date":"2026-04-20","type":2,"entry":455.07,"stop":380.00,"half":560.00, "target":650.00, "risk":2.0,"rr":"2:1","status":"in_trade","note":"⚡止盈出场2026-04-20 | 策略bb_lo+none+rsi80 | 转仓DRAM"},
+    {"ticker":"TSEM", "sector":"硅光代工",      "date":"2026-04-20","type":2,"entry":226.45,"stop":185.00,"half":290.00, "target":360.00, "risk":2.0,"rr":"2.5:1","status":"in_trade","note":"⚡止盈出场2026-04-20 | 策略ma5200+soxx+trail_12 | GFS专利起诉降权"},
 ]
 
 @app.get("/api/stockwhale")
