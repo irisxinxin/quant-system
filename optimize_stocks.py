@@ -24,7 +24,7 @@ from backtest.engine import backtest
 from config import CTA_LOOKBACKS, CTA_VOL_WIN
 
 SECTOR_GROUPS = {
-    "🔵 大盘/核心":        ["QQQ", "SPY", "GOOG", "META", "TSLA", "AMZN"],
+    "🔵 大盘/核心":        ["QQQ", "SPY", "GOOG", "META", "TSLA", "AMZN", "MSFT"],
     "⚡ 半导体/AI算力":    ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC", "SOXX", "NBIS", "GFS", "ASX", "SOXS"],
     "💾 存储":             ["MU", "WDC", "STX", "SNDK", "DRAM"],
     "🏗 AI电力/数据中心":  ["BE", "VRT", "ETN", "GEV", "PWR"],
