@@ -498,13 +498,141 @@ def api_cm_list():
     return JSONResponse({"stocks": result})
 
 
+# 市场回调后强势标的 watchlist
+_CM_WATCHLIST = [
+    # 中盘/大盘
+    {"ticker":"AAOI", "cap":"mid","sector":"光子/连接"},
+    {"ticker":"AEIS", "cap":"mid","sector":"半导体设备"},
+    {"ticker":"AGX",  "cap":"mid","sector":"核能/工程"},
+    {"ticker":"ARM",  "cap":"mid","sector":"半导体IP"},
+    {"ticker":"AA",   "cap":"mid","sector":"铝/原材料"},
+    {"ticker":"APLD", "cap":"mid","sector":"AI数据中心"},
+    {"ticker":"BE",   "cap":"mid","sector":"AI电力"},
+    {"ticker":"BWXT", "cap":"mid","sector":"核能"},
+    {"ticker":"NBIS", "cap":"mid","sector":"半导体"},
+    {"ticker":"CRDO", "cap":"mid","sector":"半导体/互连"},
+    {"ticker":"CIFR", "cap":"mid","sector":"比特币挖矿"},
+    {"ticker":"CIEN", "cap":"mid","sector":"光子/网络"},
+    {"ticker":"CLS",  "cap":"mid","sector":"光子/连接"},
+    {"ticker":"COHR", "cap":"mid","sector":"光子/激光"},
+    {"ticker":"CORZ", "cap":"mid","sector":"比特币挖矿"},
+    {"ticker":"DAVE", "cap":"mid","sector":"金融科技"},
+    {"ticker":"DOCN", "cap":"mid","sector":"云计算"},
+    {"ticker":"ECG",  "cap":"mid","sector":"工业"},
+    {"ticker":"FIS",  "cap":"mid","sector":"金融科技"},
+    {"ticker":"FLY",  "cap":"mid","sector":"飞机租赁"},
+    {"ticker":"FN",   "cap":"mid","sector":"光子/精密制造"},
+    {"ticker":"FORM", "cap":"mid","sector":"半导体设备"},
+    {"ticker":"FTAI", "cap":"mid","sector":"航空基础设施"},
+    {"ticker":"GLW",  "cap":"mid","sector":"光纤/材料"},
+    {"ticker":"HUT",  "cap":"mid","sector":"比特币挖矿"},
+    {"ticker":"LGN",  "cap":"mid","sector":"工业"},
+    {"ticker":"JBL",  "cap":"mid","sector":"电子制造"},
+    {"ticker":"LITE", "cap":"mid","sector":"光子/连接"},
+    {"ticker":"LUMN", "cap":"mid","sector":"电信/光纤"},
+    {"ticker":"LUNR", "cap":"mid","sector":"月球探索"},
+    {"ticker":"MKSI", "cap":"mid","sector":"半导体设备"},
+    {"ticker":"MOD",  "cap":"mid","sector":"热管理"},
+    {"ticker":"MTZ",  "cap":"mid","sector":"电力基建"},
+    {"ticker":"NOK",  "cap":"mid","sector":"电信设备"},
+    {"ticker":"ONTO", "cap":"mid","sector":"半导体设备"},
+    {"ticker":"PL",   "cap":"mid","sector":"卫星/遥感"},
+    {"ticker":"POWL", "cap":"mid","sector":"AI电力"},
+    {"ticker":"Q",    "cap":"mid","sector":"金融数据"},
+    {"ticker":"SATS", "cap":"mid","sector":"卫星通信"},
+    {"ticker":"SNDK", "cap":"mid","sector":"存储"},
+    {"ticker":"SNEX", "cap":"mid","sector":"金融经纪"},
+    {"ticker":"SQM",  "cap":"mid","sector":"锂矿"},
+    {"ticker":"STX",  "cap":"mid","sector":"存储"},
+    {"ticker":"TER",  "cap":"mid","sector":"半导体设备"},
+    {"ticker":"TTMI", "cap":"mid","sector":"PCB"},
+    {"ticker":"TWLO", "cap":"mid","sector":"通信软件"},
+    {"ticker":"TSEM", "cap":"mid","sector":"半导体代工"},
+    {"ticker":"UI",   "cap":"mid","sector":"网络设备"},
+    {"ticker":"VIAV", "cap":"mid","sector":"光子/测试"},
+    {"ticker":"VICR", "cap":"mid","sector":"电源转换"},
+    {"ticker":"VRT",  "cap":"mid","sector":"AI数据中心"},
+    {"ticker":"WDC",  "cap":"mid","sector":"存储"},
+    {"ticker":"WULF", "cap":"mid","sector":"比特币挖矿"},
+    {"ticker":"XPO",  "cap":"mid","sector":"物流"},
+    {"ticker":"YOU",  "cap":"mid","sector":"身份安全"},
+    # 小盘
+    {"ticker":"AEHR", "cap":"small","sector":"半导体测试"},
+    {"ticker":"ACLS", "cap":"small","sector":"半导体设备"},
+    {"ticker":"AXTI", "cap":"small","sector":"半导体材料"},
+    {"ticker":"FSLY", "cap":"small","sector":"CDN/边缘"},
+    {"ticker":"POET", "cap":"small","sector":"光子集成"},
+    {"ticker":"IRDM", "cap":"small","sector":"卫星通信"},
+    {"ticker":"LWLG", "cap":"small","sector":"电光调制"},
+    {"ticker":"UCTT", "cap":"small","sector":"半导体设备"},
+    {"ticker":"YSS",  "cap":"small","sector":"休闲/消费"},
+]
+
+def _compute_stock_stats(s):
+    """计算单只股票的价格 + 信号，供 watchlist 并行使用"""
+    import math
+    from data.downloader import get_ohlcv
+    ticker = s["ticker"]
+    try:
+        df = get_ohlcv(ticker, start="2025-01-01")
+        if df.empty:
+            return {**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None, "signals": []}
+        close = df["Close"]
+        cur   = float(close.iloc[-1])
+        chg   = float(close.pct_change().iloc[-1] * 100)
+        ema10 = float(close.ewm(span=10,  adjust=False).mean().iloc[-1])
+        ema20 = float(close.ewm(span=20,  adjust=False).mean().iloc[-1])
+        ma200_s = close.rolling(200).mean()
+        ma200 = float(ma200_s.iloc[-1]) if len(close) >= 200 and not math.isnan(ma200_s.iloc[-1]) else None
+        recent_high = float(close.iloc[-21:-1].max()) if len(close) > 21 else None
+        vs_ema20 = (cur - ema20) / ema20 * 100
+        vs_ma200 = (cur - ma200) / ma200 * 100 if ma200 else None
+        signals = []
+        if recent_high and cur >= recent_high * 0.97:
+            signals.append("🚀 接近突破")
+        if abs(vs_ema20) <= 2.0 and cur >= ema20 * 0.98:
+            signals.append("↩️ 回踩EMA20")
+        if abs((cur - ema10) / ema10 * 100) <= 1.5:
+            signals.append("↩️ 回踩EMA10")
+        if ma200 and abs(vs_ma200) <= 3.0:
+            signals.append("⭐ 近MA200")
+        return {
+            **s,
+            "cur": round(cur, 2),
+            "chg_1d": round(chg, 1),
+            "vs_ema20": round(vs_ema20, 1),
+            "vs_ma200": round(vs_ma200, 1) if vs_ma200 is not None else None,
+            "signals": signals,
+        }
+    except Exception:
+        return {**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None, "signals": []}
+
+
+@app.get("/api/cm/watchlist")
+def api_cm_watchlist():
+    """并行拉取 watchlist 所有股票的价格 + 信号"""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    results = [None] * len(_CM_WATCHLIST)
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futs = {ex.submit(_compute_stock_stats, s): i for i, s in enumerate(_CM_WATCHLIST)}
+        for f in as_completed(futs):
+            results[futs[f]] = f.result()
+    # 有信号的排前面
+    results.sort(key=lambda x: (-len(x.get("signals") or []), x.get("ticker","")))
+    return JSONResponse({"stocks": results})
+
+
 @app.get("/api/cm/chart/{ticker}")
 def api_cm_chart(ticker: str):
-    """返回 CM 选股 K 线 + EMA10/20/MA200"""
+    """返回 CM 选股 K 线 + EMA10/20/MA200（支持龙头股 + watchlist）"""
     import math
     from data.downloader import get_ohlcv
     ticker = ticker.upper()
-    info = next((s for s in _CM_STOCKS if s["ticker"] == ticker), None)
+    all_stocks = _CM_STOCKS + _CM_WATCHLIST
+    info = next((s for s in all_stocks if s["ticker"] == ticker), None)
+    if not info:
+        # 允许任意 ticker 查看图表
+        info = {"ticker": ticker, "side": "watch", "note": ""}
     if not info:
         return JSONResponse({"error": "not found"}, status_code=404)
     try:

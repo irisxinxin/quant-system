@@ -323,6 +323,21 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
       </div>
     </div>
 
+    <!-- 回调后强势 Watchlist -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:600;color:#34d399;letter-spacing:.05em">📋 回调后强势标的（1-4周重点观察）</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="cmWlFilter('all')"    id="cmwl-btn-all"    style="padding:3px 10px;font-size:11px;border-radius:5px;cursor:pointer;border:1px solid rgba(52,211,153,.4);color:#34d399;background:rgba(52,211,153,.1)">全部</button>
+          <button onclick="cmWlFilter('signal')" id="cmwl-btn-signal" style="padding:3px 10px;font-size:11px;border-radius:5px;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:transparent">有信号</button>
+          <button onclick="cmWlFilter('mid')"    id="cmwl-btn-mid"    style="padding:3px 10px;font-size:11px;border-radius:5px;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:transparent">中大盘</button>
+          <button onclick="cmWlFilter('small')"  id="cmwl-btn-small"  style="padding:3px 10px;font-size:11px;border-radius:5px;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:transparent">小盘</button>
+        </div>
+        <span id="cmwl-loading" style="font-size:11px;color:var(--text3)">加载中…</span>
+      </div>
+      <div id="cm-wl-body"></div>
+    </div>
+
     <!-- K线详情 -->
     <div id="cm-detail" style="display:none">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
@@ -1922,18 +1937,82 @@ async function loadSWChart(ticker){
 // ══════════════════════════════════════════
 let _cmChart = null;
 
+let _cmWlData = [];
+let _cmWlFilter = 'all';
+
 async function loadCM(){
   loaded.cm = true;
-  const r = await fetch('/api/cm');
-  const j = await r.json();
-  const stocks = j.stocks || [];
+  // 龙头股 + watchlist 并行加载
+  const [r1, r2] = await Promise.all([fetch('/api/cm'), fetch('/api/cm/watchlist')]);
+  const [j1, j2] = await Promise.all([r1.json(), r2.json()]);
+
+  const stocks = j1.stocks || [];
   renderCMTable(stocks.filter(s=>s.side==='right'), 'cm-right-body', '#f59e0b');
   renderCMTable(stocks.filter(s=>s.side==='left'),  'cm-left-body',  '#818cf8');
-  // badge
-  const total = stocks.reduce((n,s)=>(s.signals&&s.signals.length?n+1:n), 0);
+
+  _cmWlData = j2.stocks || [];
+  $('cmwl-loading').style.display = 'none';
+  renderCMWatchlist();
+
+  // badge = 龙头 + watchlist 有信号的总数
+  const sigCount = [...stocks, ..._cmWlData].filter(s=>s.signals&&s.signals.length).length;
   const badge = $('cm-badge');
-  if(total > 0){ badge.textContent=total; badge.style.display='inline'; }
+  if(sigCount > 0){ badge.textContent=sigCount; badge.style.display='inline'; }
   else badge.style.display='none';
+}
+
+function cmWlFilter(f){
+  _cmWlFilter = f;
+  ['all','signal','mid','small'].forEach(k=>{
+    const btn = $('cmwl-btn-'+k);
+    btn.style.background   = k===f ? 'rgba(52,211,153,.15)' : 'transparent';
+    btn.style.color        = k===f ? '#34d399' : 'var(--text2)';
+    btn.style.borderColor  = k===f ? 'rgba(52,211,153,.4)' : 'var(--border)';
+  });
+  renderCMWatchlist();
+}
+
+function renderCMWatchlist(){
+  const gainColor = v => v==null?'var(--text3)':v>=0?'#4ade80':'#f87171';
+  let data = _cmWlData;
+  if(_cmWlFilter==='signal') data = data.filter(s=>s.signals&&s.signals.length);
+  if(_cmWlFilter==='mid')    data = data.filter(s=>s.cap==='mid');
+  if(_cmWlFilter==='small')  data = data.filter(s=>s.cap==='small');
+
+  if(!data.length){
+    $('cm-wl-body').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:16px 0">暂无数据</div>';
+    return;
+  }
+  $('cm-wl-body').innerHTML = `
+  <div style="overflow-x:auto">
+  <table class="tbl" style="width:100%">
+    <thead><tr>
+      <th class="tl">股票</th>
+      <th class="tl">行业</th>
+      <th>规模</th>
+      <th>现价</th>
+      <th>今日</th>
+      <th>距EMA20</th>
+      <th>距MA200</th>
+      <th class="tl">信号</th>
+    </tr></thead>
+    <tbody>
+    ${data.map(s=>{
+      const hasSig = s.signals && s.signals.length;
+      const rowBg = hasSig ? 'background:rgba(52,211,153,0.05);border-left:2px solid #34d399' : '';
+      return `<tr class="clickable" onclick="loadCMChart('${s.ticker}')" title="点击查看K线" style="${rowBg}">
+        <td class="tl"><span style="font-weight:600;color:var(--text)">${s.ticker}</span></td>
+        <td class="tl"><span style="font-size:11px;color:var(--text3)">${s.sector||''}</span></td>
+        <td><span style="font-size:10px;color:var(--text3);background:rgba(255,255,255,.06);border-radius:3px;padding:1px 5px">${s.cap==='small'?'小盘':'中大盘'}</span></td>
+        <td style="font-weight:600">${s.cur!=null?'$'+s.cur:'—'}</td>
+        <td style="color:${gainColor(s.chg_1d)}">${s.chg_1d!=null?(s.chg_1d>0?'+':'')+s.chg_1d+'%':'—'}</td>
+        <td style="color:${gainColor(s.vs_ema20)}">${s.vs_ema20!=null?(s.vs_ema20>0?'+':'')+s.vs_ema20+'%':'—'}</td>
+        <td style="color:${gainColor(s.vs_ma200)}">${s.vs_ma200!=null?(s.vs_ma200>0?'+':'')+s.vs_ma200+'%':'—'}</td>
+        <td class="tl">${hasSig?s.signals.map(sg=>`<span style="font-size:10px;background:rgba(52,211,153,.12);color:#6ee7b7;border:1px solid rgba(52,211,153,.25);border-radius:3px;padding:1px 5px;margin-right:3px;white-space:nowrap">${sg}</span>`).join(''):'<span style="color:var(--text3);font-size:11px">—</span>'}</td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table></div>`;
 }
 
 function renderCMTable(stocks, bodyId, accentColor){
@@ -1981,8 +2060,9 @@ async function loadCMChart(ticker){
   if(j.error){ $('cm-chart').innerHTML='<div style="padding:24px;color:#f87171">'+j.error+'</div>'; return; }
 
   const isRight = j.side === 'right';
-  const sideColor = isRight ? '#f59e0b' : '#818cf8';
-  const sideLabel = isRight ? '右侧强势' : '左侧补涨';
+  const isWatch = j.side === 'watch';
+  const sideColor = isRight ? '#f59e0b' : isWatch ? '#34d399' : '#818cf8';
+  const sideLabel = isRight ? '右侧强势' : isWatch ? '观察标的' : '左侧补涨';
 
   $('cm-chart-title').textContent = ticker;
   $('cm-chart-badge').textContent = sideLabel;
