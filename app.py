@@ -665,8 +665,8 @@ def api_cm_chart(ticker: str):
 
         return JSONResponse({
             "ticker": ticker,
-            "side":   info["side"],
-            "note":   info["note"],
+            "side":   info.get("side", "watch"),
+            "note":   info.get("note", ""),
             "candles": candles,
             "ema10":  to_line(ema10_s),
             "ema20":  to_line(ema20_s),
