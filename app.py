@@ -503,6 +503,7 @@ _CM_WATCHLIST = [
     # 中盘/大盘
     {"ticker":"AAOI", "cap":"mid","sector":"光子/连接"},
     {"ticker":"AEIS", "cap":"mid","sector":"半导体设备"},
+    {"ticker":"INTC", "cap":"mid","sector":"半导体"},
     {"ticker":"AGX",  "cap":"mid","sector":"核能/工程"},
     {"ticker":"ARM",  "cap":"mid","sector":"半导体IP"},
     {"ticker":"AA",   "cap":"mid","sector":"铝/原材料"},
