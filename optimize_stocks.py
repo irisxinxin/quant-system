@@ -28,7 +28,7 @@ SECTOR_GROUPS = {
     "⚡ 半导体/AI算力":    ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC", "SOXX", "NBIS", "GFS", "ASX", "SOXS", "AXTI", "SOI"],
     "💾 存储":             ["MU", "WDC", "STX", "SNDK", "DRAM"],
     "🏗 AI电力/数据中心":  ["BE", "VRT", "ETN", "GEV", "PWR"],
-    "🌐 光子/高速连接":    ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM", "ALAB", "POET", "IQE", "SIVE", "ALMU"],
+    "🌐 光子/高速连接":    ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM", "ALAB", "POET", "IQE", "SIVE", "ALMU", "FORM", "ASX"],
     "💼 软件/AI数据":      ["PLTR", "ORCL", "ADBE", "CRM"],
     "🚚 物流/运输":        ["ODFL", "XPO", "JBHT", "PCAR", "CMI"],
     "🏭 工业/航天制造":    ["CAT", "DE", "HWM", "ITT", "EME", "AME"],

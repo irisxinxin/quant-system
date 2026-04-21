@@ -361,6 +361,14 @@ _SW_TRADES = [
     {"ticker":"LEU",  "sector":"核能",      "date":"2026-04-15","type":2,"entry":195.00,"stop":80.93, "half":305.80,"target":563.93,"risk":1.0,"rr":"2:1","status":"in_trade","note":""},
     {"ticker":"BIRD", "sector":"运动零售",  "date":"2026-04-16","type":1,"entry":10.40, "stop":4.83,  "half":15.34, "target":30.23, "risk":1.0,"rr":"4:1","status":"in_trade","note":""},
     {"ticker":"ASTS", "sector":"卫星通信",  "date":"2026-04-20","type":2,"entry":45.29, "stop":16.47, "half":74.64, "target":162.70,"risk":1.0,"rr":"4:1","status":"waiting","note":"Waiting to be filled"},
+    # ── 二级研究员持仓（六棵士） ────────────────────────────────────────────────
+    {"ticker":"VRT",  "sector":"AI电力/数据中心","date":"2026-04-20","type":2,"entry":307.34,"stop":238.00,"half":390.00, "target":480.00, "risk":1.5,"rr":"2.5:1","status":"in_trade","note":"2.92% | 策略ema20_dip+smh+rsi80 | AI数据中心电力散热，订单+109% YoY"},
+    {"ticker":"FORM", "sector":"光学测试",       "date":"2026-04-20","type":2,"entry":137.21,"stop":105.00,"half":175.00, "target":215.00, "risk":1.5,"rr":"2.5:1","status":"in_trade","note":"2.93% | 策略bb_lo+soxx+cmf_neg | CPO探针台+光学对准，1Y_DD仅-4.1%"},
+    {"ticker":"AEHR", "sector":"半导体测试",     "date":"2026-04-20","type":1,"entry":83.86, "stop":55.00, "half":130.00, "target":180.00, "risk":1.0,"rr":"3:1","status":"in_trade","note":"1.99% | 策略rsi28+combo+rsi70 | 光芯片测试设备，注意历史最大回撤-71.9%"},
+    {"ticker":"ASX",  "sector":"半导体封测",     "date":"2026-04-20","type":2,"entry":28.59, "stop":21.50, "half":40.00,  "target":55.00,  "risk":2.0,"rr":"3:1","status":"in_trade","note":"2% | 策略ema2060+soxx+trail_12 | 日月光半导体，1Y +214%，Calmar 15.4"},
+    {"ticker":"LMND", "sector":"金融科技/保险",  "date":"2026-04-20","type":2,"entry":70.94, "stop":50.00, "half":None,  "target":120.00, "risk":2.0,"rr":"2:1","status":"in_trade","note":"⚡止盈出场2026-04-20 | 模型不符，保险行业无供需错配"},
+    {"ticker":"GOOG", "sector":"科技/广告",      "date":"2026-04-20","type":2,"entry":339.40,"stop":270.00,"half":None,  "target":500.00, "risk":1.0,"rr":"2:1","status":"in_trade","note":"⚡止盈出场2026-04-20 | 模型不符，策略ma5200+none+ma_x"},
+    {"ticker":"TSLA", "sector":"电动车/AI",      "date":"2026-04-20","type":2,"entry":400.62,"stop":320.00,"half":None,  "target":600.00, "risk":1.0,"rr":"2:1","status":"in_trade","note":"⚡止盈出场2026-04-20 | 模型不符，策略rsi28+combo+rsi80"},
     # ── 二级研究员持仓 2026-04-20 ──────────────────────────────────────────────
     {"ticker":"LITE", "sector":"激光器/光模块","date":"2026-04-20","type":2,"entry":894.07,"stop":700.00,"half":1150.00,"target":1500.00,"risk":5.0,"rr":"3:1","status":"in_trade","note":"核心仓19% | 策略vol_surge+smh+trail_12 | EML拿单≥70%,订单至2027+"},
     {"ticker":"COHR", "sector":"激光器/光模块","date":"2026-04-20","type":2,"entry":345.02,"stop":270.00,"half":440.00, "target":540.00, "risk":5.0,"rr":"2.5:1","status":"in_trade","note":"核心仓19.7% | 策略bb_lo+soft+rsi70 | CPO激光源+SiC双赛道"},
