@@ -603,15 +603,25 @@ async function refreshAll(){
   btn.innerHTML='<span class="spin">⟳</span> 刷新中';
   btn.disabled=true;
   try{
-    await fetch('/api/refresh',{method:'POST'});
+    const r = await fetch('/api/refresh',{method:'POST'});
+    const j = await r.json();
     Object.keys(loaded).forEach(k=>loaded[k]=false);
-    _lastScanData = null;  // 清除旧扫描数据，避免 entry tab 渲染脏数据
+    _lastScanData = null;
     loadMacro();
-    if(curTab==='scan'||curTab==='entry')loadScan();
-    if(curTab==='sectors')loadSectors();
-    if(curTab==='cta')loadCta();
+    // 重载当前 tab（所有 tab 统一覆盖，不再遗漏）
+    const TAB_LOADERS = {
+      scan: loadScan, entry: loadScan,
+      sectors: loadSectors, cta: loadCta,
+      sw: loadSW, cm: loadCM, er: loadER,
+      cn: loadCN, kol: loadKol,
+    };
+    if(TAB_LOADERS[curTab]) TAB_LOADERS[curTab]();
+    // 短暂提示缓存已清除
+    btn.innerHTML = `✓ ${j.message||'缓存已清除'}`;
+  }catch(e){
+    btn.innerHTML = '✗ 刷新失败';
   }finally{
-    setTimeout(()=>{btn.innerHTML='⟳ 刷新数据';btn.disabled=false},2000);
+    setTimeout(()=>{btn.innerHTML='⟳ 刷新数据';btn.disabled=false},3000);
   }
 }
 
