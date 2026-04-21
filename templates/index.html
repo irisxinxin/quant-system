@@ -146,7 +146,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <button class="tab-btn"    id="tab-cta"     onclick="sw('cta')">🌐 CTA宏观</button>
     <button class="tab-btn"    id="tab-bt"      onclick="sw('bt')">📊 回测验证</button>
     <button class="tab-btn"    id="tab-sw"      onclick="sw('sw')">🐋 StockWhale</button>
-    <button class="tab-btn"    id="tab-cm"      onclick="sw('cm')">📊 CM选股</button>
+    <button class="tab-btn"    id="tab-cm"      onclick="sw('cm')">📊 CM选股 <span id="cm-badge" style="display:none;background:#f87171;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
     <button class="tab-btn"    id="tab-kol"     onclick="sw('kol')">📝 大V观点 <span id="kol-badge" style="display:none;background:#f59e0b;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
   </div>
 </div>
@@ -1929,11 +1929,16 @@ async function loadCM(){
   const stocks = j.stocks || [];
   renderCMTable(stocks.filter(s=>s.side==='right'), 'cm-right-body', '#f59e0b');
   renderCMTable(stocks.filter(s=>s.side==='left'),  'cm-left-body',  '#818cf8');
+  // badge
+  const total = stocks.reduce((n,s)=>(s.signals&&s.signals.length?n+1:n), 0);
+  const badge = $('cm-badge');
+  if(total > 0){ badge.textContent=total; badge.style.display='inline'; }
+  else badge.style.display='none';
 }
 
-function renderCMTable(stocks, bodyId, color){
+function renderCMTable(stocks, bodyId, accentColor){
   const gainColor = v => v == null ? 'var(--text3)' : v >= 0 ? '#4ade80' : '#f87171';
-  $( bodyId).innerHTML = `
+  $(bodyId).innerHTML = `
   <table class="tbl" style="width:100%">
     <thead><tr>
       <th class="tl">股票</th>
@@ -1943,17 +1948,24 @@ function renderCMTable(stocks, bodyId, color){
       <th>距MA200</th>
     </tr></thead>
     <tbody>
-    ${stocks.map(s=>`
-      <tr class="clickable" onclick="loadCMChart('${s.ticker}')" title="点击查看K线">
+    ${stocks.map(s=>{
+      const hasSig = s.signals && s.signals.length > 0;
+      const rowBg  = hasSig ? `background:rgba(248,113,113,0.06);border-left:2px solid #f87171` : '';
+      return `
+      <tr class="clickable" onclick="loadCMChart('${s.ticker}')" title="点击查看K线" style="${rowBg}">
         <td class="tl">
-          <span style="font-weight:600;color:var(--text)">${s.ticker}</span>
-          <span style="font-size:10px;color:var(--text3);margin-left:5px">${s.sector||''}</span>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-weight:600;color:var(--text)">${s.ticker}</span>
+            <span style="font-size:10px;color:var(--text3)">${s.sector||''}</span>
+            ${hasSig ? s.signals.map(sig=>`<span style="font-size:10px;background:rgba(248,113,113,.15);color:#fca5a5;border:1px solid rgba(248,113,113,.3);border-radius:4px;padding:1px 5px;white-space:nowrap">${sig}</span>`).join('') : ''}
+          </div>
         </td>
         <td style="font-weight:600">${s.cur!=null?'$'+s.cur:'—'}</td>
         <td style="color:${gainColor(s.chg_1d)}">${s.chg_1d!=null?(s.chg_1d>0?'+':'')+s.chg_1d+'%':'—'}</td>
         <td style="color:${gainColor(s.vs_ema20)}">${s.vs_ema20!=null?(s.vs_ema20>0?'+':'')+s.vs_ema20+'%':'—'}</td>
         <td style="color:${gainColor(s.vs_ma200)}">${s.vs_ma200!=null?(s.vs_ma200>0?'+':'')+s.vs_ma200+'%':'—'}</td>
-      </tr>`).join('')}
+      </tr>`;
+    }).join('')}
     </tbody>
   </table>`;
 }

@@ -466,15 +466,32 @@ def api_cm_list():
             ema20 = float(close.ewm(span=20, adjust=False).mean().iloc[-1])
             ma200 = float(close.rolling(200).mean().iloc[-1]) if len(close) >= 200 else None
             recent_high = float(close.rolling(20).max().iloc[-2]) if len(close) > 20 else None  # 前一日20日高点（不含今日，避免自引用）
+            # ── 信号检测 ──
+            signals = []
+            vs_ema20 = (cur - ema20) / ema20 * 100
+            vs_ma200 = (cur - ma200) / ma200 * 100 if ma200 else None
+            if s["side"] == "right":
+                if recent_high and cur >= recent_high * 0.97:
+                    signals.append("🚀 接近突破前高")
+                if abs(vs_ema20) <= 2.0 and cur > ema20 * 0.98:
+                    signals.append("↩️ 回踩EMA20")
+                ema10 = float(close.ewm(span=10, adjust=False).mean().iloc[-1])
+                if abs((cur - ema10) / ema10 * 100) <= 1.5:
+                    signals.append("↩️ 回踩EMA10")
+            else:  # left
+                if ma200 and abs(vs_ma200) <= 3.0:
+                    signals.append("⭐ 接近MA200确认位")
+
             result.append({
                 **s,
                 "cur": round(cur, 2),
                 "chg_1d": round(chg, 1),
-                "vs_ema20": round((cur - ema20) / ema20 * 100, 1),
-                "vs_ma200": round((cur - ma200) / ma200 * 100, 1) if ma200 else None,
+                "vs_ema20": round(vs_ema20, 1),
+                "vs_ma200": round(vs_ma200, 1) if vs_ma200 is not None else None,
                 "recent_high": round(recent_high, 2) if recent_high else None,
                 "ema20": round(ema20, 2),
                 "ma200": round(ma200, 2) if ma200 else None,
+                "signals": signals,
             })
         except Exception as e:
             result.append({**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None})
