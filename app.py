@@ -68,11 +68,29 @@ def _bg_generate_charts():
         logger.warning(f"[charts] 后台生成异常: {e}")
 
 
+def _bg_prewarm_caches():
+    """启动时后台预热：直接 HTTP 请求自身，触发缓存写入"""
+    import time, urllib.request, os
+    time.sleep(5)   # 等服务器完全启动
+    port = int(os.environ.get("PORT", 8000))
+    base = f"http://127.0.0.1:{port}"
+    paths = ["/api/stockwhale", "/api/er", "/api/cm", "/api/cm/watchlist", "/api/cn"]
+    logger.warning(f"[prewarm] 开始预热 {len(paths)} 个端点...")
+    for path in paths:
+        try:
+            t0 = time.time()
+            urllib.request.urlopen(base + path, timeout=180)
+            logger.warning(f"[prewarm] {path} ✓ ({time.time()-t0:.1f}s)")
+        except Exception as e:
+            logger.warning(f"[prewarm] {path} ✗ {e}")
+    logger.warning("[prewarm] 预热完成，后续请求将直接读缓存")
+
+
 @asynccontextmanager
 async def lifespan(app):
-    # 启动时在后台线程生成 K 线图（不阻塞请求）
-    t = threading.Thread(target=_bg_generate_charts, daemon=True)
-    t.start()
+    # 启动时后台：生成 K 线图 + 预热监控页缓存
+    threading.Thread(target=_bg_generate_charts, daemon=True).start()
+    threading.Thread(target=_bg_prewarm_caches,  daemon=True).start()
     yield
 
 
