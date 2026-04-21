@@ -1,5 +1,79 @@
 [
   {
+    "id": "6ec4f664-50cf-45dd-8b84-dc58724fbe67",
+    "kol": "耳机研究院",
+    "platform": "Discord",
+    "tickers": [
+      "COHR",
+      "LITE"
+    ],
+    "sentiment": "bullish",
+    "date": "2026-04-09",
+    "reviewed": false,
+    "created_at": "2026-04-09T06:50:00",
+    "content": "【大行研报升评 — 光板块】2026-04-09 JPM\n\nCOHR（高意）：\n- 27财年营收/EPS：$90亿/$8 → $95亿/$9，28财年 $113亿/$11\n- 目标价：$300\n- 逻辑：OCF大会后 CPO/OCS TAM扩容，磁化铌产能26年Q4翻倍→27年再翻倍，OCS业务27年每季环比增长，基于28年30倍PE\n\nLITE（老馒头/Lumentum）：\n- 27财年营收/EPS：$60亿/$20 → $70亿/$24，28财年 $100亿/$36\n- 目标价：$565 → $950（JPM最新目标逼近$1000）\n- 逻辑：CPO/OCS/ELS业务能见度提升，12个月内CPO机架间×3-4倍、机架内×10倍成数增长，OCS业务26下半年达$4亿→27财年$10亿"
+  },
+  {
+    "id": "c4daeef4-57c8-42c6-9867-b310949b4848",
+    "kol": "耳机研究院",
+    "platform": "Discord",
+    "tickers": [
+      "SNDK"
+    ],
+    "sentiment": "bullish",
+    "date": "2026-04-09",
+    "reviewed": false,
+    "created_at": "2026-04-09T06:55:00",
+    "content": "【大行研报升评 — 存储板块】2026-04-09 Bernstein\n\nSNDK（闪迪/Western Digital NAND）：\n- 27财年 non-GAAP EPS：基准 $144，乐观预期 $224\n- 目标价：$1250（乐观 $3000 = 13PE × $224）\n- 逻辑：杰文斯悖论（NAND供不应求格局不变）+ Q3/Q4 ASP环比+40%-55%（乐观情况可加速至+75%）\n- 点评：$144预期之中，$224有点夸张，但Bernstein基于asp超预期环比50%+的确是超预期的部分"
+  },
+  {
+    "id": "445744c7-ea37-43f1-ba99-bb2c4a659954",
+    "kol": "耳机研究院",
+    "platform": "Discord",
+    "tickers": [
+      "NVTS",
+      "VRT",
+      "MRVL",
+      "COHR",
+      "LITE"
+    ],
+    "sentiment": "bullish",
+    "date": "2026-04-09",
+    "reviewed": false,
+    "created_at": "2026-04-09T08:10:00",
+    "content": "【英伟达带资进组 — 已投名单 & 下一个预测】\n\n已投时间线：\n25/12 Synopsys（EDA）→ 26/1 CoreWeave → 26/3 Lumentum + Coherent + Nebius → 26/4 Marvell\n\n下一个预测（猜测用途）：\n\n🔋 变电/电力 → NVTS（Navitas Semiconductor）\n胜率最高。800V HVDC架构，GaN/SiC直接替代传统48V母线，已在GTC2026展示800V→6V方案。\n市值仅10-15亿，20亿入股控制力极强。竞争对手TI/ST体量太大不需要NVDA的钱。\n\n📦 先进封装 → BESI（BE Semiconductor，荷兰）\nTCB/混合键合设备龙头，决定HBM4良率的关键守门人。\n市值60-70亿，20亿占比25-30%，甜蜜点。EVG是备选但未上市。\n\n❄️ 液冷 → VRT（Vertiv）胜率最高\n谷歌明年液冷价值量是今年4倍，液冷+光+电源都将用上。\nVRT估值相对合理，随时可能被NVDA带资进组，择机再入场。"
+  },
+  {
+    "id": "f524b256-e388-4546-9a9b-4b8fbec31be9",
+    "kol": "耳机研究院",
+    "platform": "Discord",
+    "tickers": [
+      "COHR",
+      "LITE",
+      "SNDK",
+      "MU"
+    ],
+    "sentiment": "bullish",
+    "date": "2026-04-09",
+    "reviewed": false,
+    "created_at": "2026-04-09T08:35:00",
+    "content": "【美A联动框架 — 左存右光核心持仓逻辑】\n\n核心框架：AI产业革命是根目录 → 左存右光是最强子目录\n\n美股 × A股配对：\n- 美股 COHR（高意）+ LITE（老馒头）→ A股 华懋科技 + 东山精密\n  完美联动，两边都持有，双赢。\n  华懋科技目标市值：800亿；东山精密目标市值：4000亿（长江证券）\n\n- 美股 MU + SNDK → 港股 07709（三星）+ 07747（海力士）\n  战争因素导致回调 = 重仓良机，层层递进\n\n东山精密（002384.SZ）核心逻辑：\n- 今年利润乐观区间：70-80亿（长江预期90亿）\n- EML芯片产能规划吊打老馒头\n- 今年底至明年高阶PCB放量催化\n\n点评：COHR 27年EPS $9没超预期（甚至偏低估），LITE 27年EPS $24 = OCF大会后已从$20涨上来，SNDK $144合理但$224偏乐观"
+  },
+  {
+    "id": "74286e0a-df89-4b37-b7db-1ad68dc7259f",
+    "kol": "耳机研究院",
+    "platform": "Discord",
+    "tickers": [
+      "VRT",
+      "NVTS"
+    ],
+    "sentiment": "bullish",
+    "date": "2026-04-09",
+    "reviewed": false,
+    "created_at": "2026-04-09T10:47:00",
+    "content": "【A股操作记录 + 液冷催化】\n\nA股操作（2026-04-09）：\n- 减仓：东山精密 -2%，华懋科技 -2%\n- 买入：英维克 +4%（900亿市值有值博率，液冷催化剂在途，曾翻倍的幸运标的）\n- 注意：长飞光纤已到位，不建议没仓位的新朋友追涨重仓\n\n液冷催化剂：\n- 谷歌明年液冷总价值量 = 今年×4倍（TPU+光+电源全面液冷化）\n- A股首选英维克（业绩兑现度最高）\n- 美股首选VRT（随时可能被NVDA 20亿带资进组，估值合理）"
+  },
+  {
     "id": "8bc6930f",
     "kol": "顺哥",
     "platform": "Discord",
