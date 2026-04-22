@@ -1144,6 +1144,11 @@ _ER_PORTFOLIO = [
     {"ticker":"AEHR", "tier":"观察", "size_pct":2.0,  "sector":"半导体测试",   "entry":83.86, "strategy":"rsi28+combo+rsi70",         "note":"光芯片测试设备，注意历史DD-71.9%"},
     {"ticker":"ASX",  "tier":"观察", "size_pct":2.0,  "sector":"半导体封测",   "entry":28.59, "strategy":"ema2060+soxx+trail_12",     "note":"日月光半导体，1Y策略+214%，Calmar 15"},
     {"ticker":"POET", "tier":"观察", "size_pct":1.8,  "sector":"光电集成",     "entry":7.26,  "strategy":"bb_lo+none+cmf_neg",        "note":"CPO Layer5光电集成期权"},
+    # A股持仓（二级研究员）
+    {"ticker":"002384.SZ","tier":"核心", "size_pct":29.1, "sector":"A股·光模块+PCB", "entry":None,"strategy":"—","note":"东山精密｜索尔思光模块+EML芯片，Q1净利+119-152%"},
+    {"ticker":"300757.SZ","tier":"核心", "size_pct":23.5, "sector":"A股·CPO精密制造","entry":None,"strategy":"—","note":"罗博特科｜ficonTEC CPO端到端唯一方案"},
+    {"ticker":"603306.SS","tier":"中仓", "size_pct":24.3, "sector":"A股·光通信EMS",  "entry":None,"strategy":"—","note":"华懋科技｜光通信EMS+东南亚产能转移"},
+    {"ticker":"300476.SZ","tier":"中仓", "size_pct":22.0, "sector":"A股·AI服务器PCB","entry":None,"strategy":"—","note":"胜宏科技｜AI服务器高端PCB需求强劲"},
     # 止盈出场
     {"ticker":"MU",   "tier":"出场", "size_pct":0.0,  "sector":"存储/DRAM",    "entry":455.07,"strategy":"bb_lo+none+rsi80",          "note":"⚡止盈转DRAM 04-20"},
     {"ticker":"TSEM", "tier":"出场", "size_pct":0.0,  "sector":"硅光代工",     "entry":226.45,"strategy":"ma5200+soxx+trail_12",      "note":"⚡止盈 04-20，GFS专利起诉降权"},
@@ -1173,7 +1178,7 @@ def _compute_er_stats(s):
         recent_high = float(close.iloc[-21:-1].max()) if len(close) > 21 else None
         vs_ema20 = (cur - ema20) / ema20 * 100
         vs_ma200 = (cur - ma200) / ma200 * 100 if ma200 else None
-        gain_pct = (cur - s["entry"]) / s["entry"] * 100
+        gain_pct = (cur - s["entry"]) / s["entry"] * 100 if s.get("entry") else None
         signals = []
         if s["tier"] != "出场":
             if recent_high and cur >= recent_high * 0.97:
