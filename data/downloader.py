@@ -40,12 +40,13 @@ _CRYPTO_MAP = {
     "BNB-USD":  "bnbusd",
 }
 
-# Tiingo 全局限速（防 429）
-# 免费账户限制严格，全局串行 + 1.5s 间隔 ≈ 40 req/min，安全
-_tiingo_sem        = threading.Semaphore(1)   # 全局只允许 1 个并发请求
-_tiingo_last_time  = 0.0
-_tiingo_time_lock  = threading.Lock()
-_TIINGO_MIN_INTERVAL = 1.5   # 秒
+# Tiingo 全局限速 + 电路熔断
+_tiingo_sem          = threading.Semaphore(2)
+_tiingo_last_time    = 0.0
+_tiingo_time_lock    = threading.Lock()
+_TIINGO_MIN_INTERVAL = 0.5          # 秒，正常间隔
+_tiingo_broken_until = 0.0          # 熔断截止时间（epoch 秒）
+_TIINGO_BREAK_SECS   = 300          # 触发 429 后熔断 5 分钟
 
 # yfinance 全局限速（本地开发 fallback 用）
 _yf_sem           = threading.Semaphore(2)
@@ -94,33 +95,30 @@ def _tiingo_ohlcv(ticker: str, start: str, end_str: str) -> pd.DataFrame:
     if not _TIINGO_KEY or ticker in _TIINGO_SKIP:
         return pd.DataFrame()
 
+    # 熔断检查：最近触发过 429，直接跳过 Tiingo
+    if time.time() < _tiingo_broken_until:
+        return pd.DataFrame()
+
     headers = {"Authorization": f"Token {_TIINGO_KEY}", "Content-Type": "application/json"}
-    MAX_RETRIES = 4
-    RETRY_BASE  = 2.0
 
     def _do_request(url, params):
-        """带限速 + 429 退避的单次请求"""
-        global _tiingo_last_time
-        for attempt in range(MAX_RETRIES):
-            with _tiingo_sem:
-                with _tiingo_time_lock:
-                    gap = time.time() - _tiingo_last_time
-                    if gap < _TIINGO_MIN_INTERVAL:
-                        time.sleep(_TIINGO_MIN_INTERVAL - gap + random.uniform(0, 0.1))
-                    _tiingo_last_time = time.time()
-                resp = _requests.get(url, headers=headers, params=params, timeout=30)
+        """限速 + 单次请求，429 立即熔断不重试"""
+        global _tiingo_last_time, _tiingo_broken_until
+        with _tiingo_sem:
+            with _tiingo_time_lock:
+                gap = time.time() - _tiingo_last_time
+                if gap < _TIINGO_MIN_INTERVAL:
+                    time.sleep(_TIINGO_MIN_INTERVAL - gap)
+                _tiingo_last_time = time.time()
+            resp = _requests.get(url, headers=headers, params=params, timeout=30)
 
-            if resp.status_code == 200:
-                return resp
-            if resp.status_code == 429:
-                wait = RETRY_BASE ** attempt + random.uniform(1.0, 3.0)
-                logger.warning(f"[tiingo 429] {ticker} attempt {attempt+1}/{MAX_RETRIES}, retry in {wait:.1f}s")
-                time.sleep(wait)
-                continue
-            # 其他错误不重试
-            logger.warning(f"[tiingo] {ticker} HTTP {resp.status_code}")
+        if resp.status_code == 200:
+            return resp
+        if resp.status_code == 429:
+            _tiingo_broken_until = time.time() + _TIINGO_BREAK_SECS
+            logger.warning(f"[tiingo 429] {ticker} — 熔断 {_TIINGO_BREAK_SECS//60} 分钟，切换 yfinance")
             return None
-        logger.warning(f"[tiingo] {ticker} 超过最大重试次数，放弃")
+        logger.warning(f"[tiingo] {ticker} HTTP {resp.status_code}")
         return None
 
     try:
