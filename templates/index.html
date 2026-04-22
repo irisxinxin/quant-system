@@ -150,6 +150,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <button class="tab-btn"    id="tab-er"      onclick="sw('er')">📈 二级持仓 <span id="er-badge" style="display:none;background:#34d399;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
     <button class="tab-btn"    id="tab-cn"      onclick="sw('cn')">🇨🇳 大A <span id="cn-badge" style="display:none;background:#f87171;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">!</span></button>
     <button class="tab-btn"    id="tab-kol"     onclick="sw('kol')">📝 大V观点 <span id="kol-badge" style="display:none;background:#f59e0b;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
+    <button class="tab-btn"    id="tab-review"  onclick="sw('review')">📓 每日复盘</button>
   </div>
 </div>
 
@@ -446,14 +447,80 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 
   </div>
 
+  <!-- TAB: 每日复盘 -->
+  <div id="pane-review" style="display:none">
+
+    <!-- 录入表单 -->
+    <div class="card" style="padding:20px;margin-bottom:20px">
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">＋ 新建复盘</div>
+      <div style="display:grid;grid-template-columns:140px 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">日期</div>
+          <input id="rv-date" type="date" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">涉及股票（空格分隔）</div>
+          <input id="rv-tickers" placeholder="如：NVDA ALAB LITE" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">自评</div>
+          <div style="display:flex;gap:8px;padding-top:2px">
+            <button id="rv-mood-correct" onclick="rvSetMood('correct')" style="flex:1;padding:7px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.1);color:#4ade80">✅ 做对了</button>
+            <button id="rv-mood-mistake" onclick="rvSetMood('mistake')" style="flex:1;padding:7px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.08);color:#f87171">❌ 做错了</button>
+            <button id="rv-mood-neutral" onclick="rvSetMood('neutral')" style="flex:1;padding:7px 0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(139,148,158,.25);background:rgba(139,148,158,.15);color:var(--text2)">➖ 一般</button>
+          </div>
+        </div>
+      </div>
+      <!-- 标签 -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">分类标签（可多选）</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="rv-tags">
+          <label style="cursor:pointer"><input type="checkbox" value="操作反思" style="accent-color:var(--accent)"> <span style="font-size:12px;color:var(--text)">操作反思</span></label>
+          <label style="cursor:pointer"><input type="checkbox" value="市场判断" style="accent-color:var(--accent)"> <span style="font-size:12px;color:var(--text)">市场判断</span></label>
+          <label style="cursor:pointer"><input type="checkbox" value="仓位管理" style="accent-color:var(--accent)"> <span style="font-size:12px;color:var(--text)">仓位管理</span></label>
+          <label style="cursor:pointer"><input type="checkbox" value="情绪控制" style="accent-color:var(--accent)"> <span style="font-size:12px;color:var(--text)">情绪控制</span></label>
+          <label style="cursor:pointer"><input type="checkbox" value="盘面观察" style="accent-color:var(--accent)"> <span style="font-size:12px;color:var(--text)">盘面观察</span></label>
+          <label style="cursor:pointer"><input type="checkbox" value="选股逻辑" style="accent-color:var(--accent)"> <span style="font-size:12px;color:var(--text)">选股逻辑</span></label>
+        </div>
+      </div>
+      <!-- 内容 -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:5px">复盘内容</div>
+        <textarea id="rv-content" rows="5" placeholder="今天发生了什么？哪里判断对了/错了？下次如何改进？" style="width:100%;padding:10px 12px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none;resize:vertical;font-family:inherit;line-height:1.6"></textarea>
+      </div>
+      <div style="text-align:right">
+        <button onclick="rvAdd()" style="padding:8px 24px;background:rgba(245,158,11,.15);color:var(--accent);border:1px solid rgba(245,158,11,.3);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">保存复盘</button>
+      </div>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <input id="rv-filter" oninput="rvRender()" placeholder="🔍  搜索内容或股票..." style="padding:7px 12px;background:var(--s2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;width:220px">
+      <select id="rv-tag-filter" onchange="rvRender()" style="padding:7px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none">
+        <option value="">全部标签</option>
+        <option>操作反思</option><option>市场判断</option><option>仓位管理</option>
+        <option>情绪控制</option><option>盘面观察</option><option>选股逻辑</option>
+      </select>
+      <select id="rv-mood-filter" onchange="rvRender()" style="padding:7px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none">
+        <option value="">全部自评</option><option value="correct">✅ 做对了</option><option value="mistake">❌ 做错了</option><option value="neutral">➖ 一般</option>
+      </select>
+      <div style="flex:1"></div>
+      <span id="rv-count" style="font-size:12px;color:var(--text3)"></span>
+    </div>
+
+    <!-- 列表 -->
+    <div id="rv-list"></div>
+
+  </div>
+
 </main>
 
 <script>
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-const TABS = ['scan','entry','sectors','cta','bt','sw','cm','er','cn','kol'];
-const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, er:false, cn:false, kol:false};
+const TABS = ['scan','entry','sectors','cta','bt','sw','cm','er','cn','kol','review'];
+const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, er:false, cn:false, kol:false, review:false};
 let curTab = 'scan';
 let sectView = 'momentum';
 let btChart = null;
@@ -579,6 +646,7 @@ function sw(tab){
   if(tab==='er'&&!loaded.er)loadER();
   if(tab==='cn'&&!loaded.cn)loadCN();
   if(tab==='kol'&&!loaded.kol)loadKol();
+  if(tab==='review'&&!loaded.review)loadReview();
   // 返回回测tab时隐藏详情，显示选股器
   if(tab==='bt'){
     $('bt-detail').style.display='none';
@@ -605,7 +673,7 @@ async function refreshAll(){
       scan: loadScan, entry: loadScan,
       sectors: loadSectors, cta: loadCta,
       sw: loadSW, cm: loadCM, er: loadER,
-      cn: loadCN, kol: loadKol,
+      cn: loadCN, kol: loadKol, review: loadReview,
     };
     if(TAB_LOADERS[curTab]) TAB_LOADERS[curTab]();
     // 短暂提示缓存已清除
@@ -2630,6 +2698,146 @@ function kolRender(){
           ${unread?`<button onclick="kolMarkRead('${n.id}')" style="padding:3px 10px;font-size:11px;border:1px solid rgba(245,158,11,.25);border-radius:5px;color:var(--accent);background:rgba(245,158,11,.07);cursor:pointer">✓ 已读</button>`:'<span style="font-size:11px;color:var(--text3)">✓ 已读</span>'}
           <button onclick="kolDelete('${n.id}')" style="padding:3px 10px;font-size:11px;border:1px solid rgba(248,113,113,.2);border-radius:5px;color:#f87171;background:rgba(248,113,113,.05);cursor:pointer">删除</button>
         </div>
+      </div>`;
+    }).join('');
+
+    return `
+    <div style="margin-bottom:24px">
+      <div style="font-size:11px;font-weight:600;color:${isToday?'var(--accent)':'var(--text3)'};text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        ${isToday?'🗓':'📅'} ${label}
+        <span style="font-size:10px;color:var(--text3);font-weight:400">${groups[date].length} 条</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">${cards}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// 每日复盘
+// ══════════════════════════════════════════
+let _rvNotes = [];
+let _rvMood  = 'neutral';
+
+function rvSetMood(m){
+  _rvMood = m;
+  ['correct','mistake','neutral'].forEach(k=>{
+    const btn = $('rv-mood-'+k);
+    if(!btn) return;
+    const active = k===m;
+    const styles = {
+      correct: ['rgba(74,222,128,.25)','#4ade80','rgba(74,222,128,.5)'],
+      mistake: ['rgba(248,113,113,.2)','#f87171','rgba(248,113,113,.4)'],
+      neutral: ['rgba(139,148,158,.25)','var(--text2)','rgba(139,148,158,.4)'],
+    };
+    const [bg, color, border] = styles[k];
+    btn.style.background = active ? bg : (k==='correct'?'rgba(74,222,128,.1)':k==='mistake'?'rgba(248,113,113,.08)':'rgba(139,148,158,.1)');
+    btn.style.borderColor = active ? border : (k==='correct'?'rgba(74,222,128,.3)':k==='mistake'?'rgba(248,113,113,.3)':'rgba(139,148,158,.25)');
+    btn.style.transform   = active ? 'scale(1.04)' : '';
+  });
+}
+
+async function loadReview(){
+  loaded.review = true;
+  // 日期默认今天
+  const today = new Date().toISOString().slice(0,10);
+  const dateEl = $('rv-date');
+  if(dateEl) dateEl.value = today;
+  rvSetMood('neutral');
+  const r = await fetch('/api/review');
+  const j = await r.json();
+  _rvNotes = j.notes || [];
+  rvRender();
+}
+
+async function rvAdd(){
+  const content = ($('rv-content')||{}).value?.trim()||'';
+  if(!content){ alert('请填写复盘内容'); return; }
+  const tags    = [...document.querySelectorAll('#rv-tags input:checked')].map(el=>el.value);
+  const tickers = ($('rv-tickers')||{}).value?.trim().split(/\s+/).filter(Boolean)||[];
+  const date    = ($('rv-date')||{}).value || new Date().toISOString().slice(0,10);
+  const body = { content, tags, tickers, date, mood: _rvMood };
+  const r = await fetch('/api/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j = await r.json();
+  if(j.ok){
+    _rvNotes.unshift(j.note);
+    // 清空表单
+    $('rv-content').value='';
+    $('rv-tickers').value='';
+    document.querySelectorAll('#rv-tags input').forEach(el=>el.checked=false);
+    rvSetMood('neutral');
+    rvRender();
+  }
+}
+
+async function rvDelete(id){
+  if(!confirm('确认删除这条复盘？')) return;
+  await fetch('/api/review/'+id,{method:'DELETE'});
+  _rvNotes = _rvNotes.filter(n=>n.id!==id);
+  rvRender();
+}
+
+function rvRender(){
+  const filter    = ($('rv-filter')||{}).value?.toLowerCase()||'';
+  const tagFilt   = ($('rv-tag-filter')||{}).value||'';
+  const moodFilt  = ($('rv-mood-filter')||{}).value||'';
+
+  const MOOD_BADGE = {
+    correct: '<span style="background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3);border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600">✅ 做对了</span>',
+    mistake: '<span style="background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600">❌ 做错了</span>',
+    neutral: '<span style="background:rgba(139,148,158,.12);color:var(--text2);border:1px solid rgba(139,148,158,.25);border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600">➖ 一般</span>',
+  };
+  const TAG_COLOR = {
+    '操作反思':'rgba(245,158,11,.15);color:var(--accent)',
+    '市场判断':'rgba(88,166,255,.12);color:var(--blue)',
+    '仓位管理':'rgba(74,222,128,.12);color:#4ade80',
+    '情绪控制':'rgba(248,113,113,.12);color:#f87171',
+    '盘面观察':'rgba(129,140,248,.12);color:#818cf8',
+    '选股逻辑':'rgba(52,211,153,.12);color:#34d399',
+  };
+
+  let notes = _rvNotes;
+  if(filter)   notes = notes.filter(n=>
+    n.content.toLowerCase().includes(filter) ||
+    (n.tickers||[]).some(t=>t.toLowerCase().includes(filter))
+  );
+  if(tagFilt)  notes = notes.filter(n=>(n.tags||[]).includes(tagFilt));
+  if(moodFilt) notes = notes.filter(n=>n.mood===moodFilt);
+
+  const countEl = $('rv-count');
+  if(countEl) countEl.textContent = `共 ${notes.length} 条`;
+
+  if(!notes.length){
+    $('rv-list').innerHTML='<div style="text-align:center;padding:64px 0;color:var(--text3);font-size:13px">还没有复盘记录，写下今天的思考吧</div>';
+    return;
+  }
+
+  // 按日期分组
+  const groups = {};
+  notes.forEach(n=>{ const d=n.date||'未知'; (groups[d]=groups[d]||[]).push(n); });
+  const today = new Date().toISOString().slice(0,10);
+
+  $('rv-list').innerHTML = Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(date=>{
+    const isToday = date===today;
+    const label   = isToday ? '今天' : date;
+    const cards   = groups[date].map(n=>{
+      const tagPills = (n.tags||[]).map(t=>{
+        const style = TAG_COLOR[t]||'rgba(139,148,158,.12);color:var(--text2)';
+        return `<span style="background:${style};border-radius:10px;padding:2px 9px;font-size:11px">${t}</span>`;
+      }).join('');
+      const tickerPills = (n.tickers||[]).map(t=>
+        `<span style="background:rgba(88,166,255,.1);color:var(--blue);border-radius:6px;padding:1px 7px;font-size:11px;font-weight:600">${t}</span>`
+      ).join('');
+      const contentHtml = n.content.replace(/\n/g,'<br>');
+      return `
+      <div class="card" style="padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          ${MOOD_BADGE[n.mood]||MOOD_BADGE.neutral}
+          ${tagPills}
+          ${tickerPills}
+          <div style="flex:1"></div>
+          <button onclick="rvDelete('${n.id}')" style="padding:3px 10px;background:rgba(248,113,113,.08);color:#f87171;border:1px solid rgba(248,113,113,.2);border-radius:6px;font-size:11px;cursor:pointer">删除</button>
+        </div>
+        <div style="font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap">${contentHtml}</div>
       </div>`;
     }).join('');
 

@@ -99,7 +99,8 @@ app = FastAPI(title="量化交易仪表盘", lifespan=lifespan)
 _HTML_PATH     = Path(__file__).parent / "templates" / "index.html"
 _CACHE_DIR     = Path(__file__).parent / "cache"
 _CHARTS_DIR    = Path(__file__).parent / "output" / "charts"
-_KOL_NOTES_PATH = Path(__file__).parent / "output" / "kol_notes.json"
+_KOL_NOTES_PATH    = Path(__file__).parent / "output" / "kol_notes.json"
+_REVIEW_NOTES_PATH = Path(__file__).parent / "output" / "review_notes.json"
 _CACHE_DIR.mkdir(exist_ok=True)
 _CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -342,6 +343,53 @@ async def api_kol_review_all():
     for n in notes:
         n["reviewed"] = True
     _save_kol(notes)
+    return JSONResponse({"ok": True})
+
+
+# ─── 每日复盘 ───
+
+def _load_review() -> list:
+    if _REVIEW_NOTES_PATH.exists():
+        try:
+            return json.loads(_REVIEW_NOTES_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+def _save_review(notes: list) -> None:
+    _REVIEW_NOTES_PATH.write_text(
+        json.dumps(notes, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+@app.get("/api/review")
+async def api_review_list():
+    notes = _load_review()
+    notes.sort(key=lambda n: n.get("date", ""), reverse=True)
+    return JSONResponse({"notes": notes})
+
+@app.post("/api/review")
+async def api_review_add(request: Request):
+    body = await request.json()
+    import uuid
+    note = {
+        "id":      str(uuid.uuid4())[:8],
+        "date":    body.get("date", datetime.now().strftime("%Y-%m-%d")),
+        "content": body.get("content", "").strip(),
+        "tags":    body.get("tags", []),
+        "mood":    body.get("mood", "neutral"),   # correct / mistake / neutral
+        "tickers": [t.upper() for t in body.get("tickers", []) if t.strip()],
+    }
+    if not note["content"]:
+        return JSONResponse({"ok": False, "error": "内容不能为空"}, status_code=400)
+    notes = _load_review()
+    notes.insert(0, note)
+    _save_review(notes)
+    return JSONResponse({"ok": True, "note": note})
+
+@app.delete("/api/review/{note_id}")
+async def api_review_delete(note_id: str):
+    notes = [n for n in _load_review() if n.get("id") != note_id]
+    _save_review(notes)
     return JSONResponse({"ok": True})
 
 
