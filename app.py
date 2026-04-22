@@ -3,6 +3,7 @@ app.py — 量化交易仪表盘 Web 服务
 Railway 部署：uvicorn app:app --host 0.0.0.0 --port $PORT
 """
 import os
+import math
 import time
 import json
 import hashlib
@@ -206,11 +207,22 @@ def _get_cached(key: str, fn, ttl: int):
 
     # 3. 重新计算
     logger.info(f"[cache] computing {key} (date={date_key})")
-    data = fn()
+    data = _clean_nan(fn())   # 清洗 NaN/Inf，防止 JSONResponse 序列化崩溃
     ts   = now
     _mem_cache[key] = {"data": data, "ts": ts, "date_key": date_key}
     _save_disk(key, date_key, data, ts)
     return data, ts
+
+
+def _clean_nan(obj):
+    """递归把 NaN / Inf 替换成 None，防止 JSONResponse 序列化崩溃"""
+    if isinstance(obj, float):
+        return None if (math.isnan(obj) or math.isinf(obj)) else obj
+    if isinstance(obj, dict):
+        return {k: _clean_nan(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_clean_nan(v) for v in obj]
+    return obj
 
 
 def _fmt_age(ts: float | None) -> str:
