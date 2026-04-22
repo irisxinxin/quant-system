@@ -104,8 +104,10 @@ _CHARTS_DIR    = Path(__file__).parent / "output" / "charts"
 _KOL_NOTES_PATH    = Path(__file__).parent / "output" / "kol_notes.json"
 _REVIEW_NOTES_PATH = Path(__file__).parent / "output" / "review_notes.json"
 _SIG_NOTES_PATH    = Path(__file__).parent / "output" / "sig_notes.json"
+_SIG_KLINES_DIR    = Path(__file__).parent / "output" / "sig_klines"
 _CACHE_DIR.mkdir(exist_ok=True)
 _CHARTS_DIR.mkdir(parents=True, exist_ok=True)
+_SIG_KLINES_DIR.mkdir(exist_ok=True)
 
 # 挂载 K线图静态文件目录
 app.mount("/charts", StaticFiles(directory=str(_CHARTS_DIR)), name="charts")
@@ -411,6 +413,37 @@ def _save_sig(notes: list) -> None:
         json.dumps(notes, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
+def _load_klines_local(ticker: str):
+    """从 output/sig_klines/{TICKER}.json 读本地 OHLCV，返回 DataFrame 或空 DF"""
+    import pandas as pd
+    p = _SIG_KLINES_DIR / f"{ticker.upper()}.json"
+    if not p.exists():
+        return pd.DataFrame()
+    try:
+        records = json.loads(p.read_text(encoding="utf-8"))
+        if not records:
+            return pd.DataFrame()
+        import pandas as pd
+        df = pd.DataFrame(records)
+        df["date"] = pd.to_datetime(df["date"])
+        return df.set_index("date").sort_index()
+    except Exception as e:
+        logger.warning(f"[sig_klines] load {ticker}: {e}")
+        return pd.DataFrame()
+
+def _save_klines_local(ticker: str, df) -> None:
+    """将 OHLCV DataFrame 序列化到 output/sig_klines/{TICKER}.json"""
+    p = _SIG_KLINES_DIR / f"{ticker.upper()}.json"
+    out = df.reset_index()
+    # 统一日期列名（index 可能是 'Date' 或 'date' 或 'index'）
+    for c in ["Date", "index"]:
+        if c in out.columns:
+            out = out.rename(columns={c: "date"})
+            break
+    out["date"] = out["date"].astype(str).str[:10]   # 只保留 YYYY-MM-DD
+    cols = [c for c in ["date","Open","High","Low","Close","Volume"] if c in out.columns]
+    p.write_text(json.dumps(out[cols].to_dict(orient="records"), indent=2), encoding="utf-8")
+
 @app.get("/api/sig")
 async def api_sig_list():
     import math
@@ -477,18 +510,37 @@ async def api_sig_status(note_id: str, request: Request):
 
 @app.get("/api/sig/chart/{ticker}")
 def api_sig_chart(ticker: str, id: str = ""):
-    """量化信号 K 线 + EMA21/50/MA200 + 入场/止损/目标水平线"""
-    import math
-    from data.downloader import get_ohlcv
+    """量化信号 K 线 + EMA21/50/MA200 + 入场/止损/目标水平线
+    优先读 output/sig_klines/{TICKER}.json（已提交到 git），只增量拉新交易日。
+    """
+    import math, pandas as pd
+    from data.downloader import _yf_ohlcv, _last_trading_date
     ticker = ticker.upper()
-    # 找到对应信号（用 id 区分同一 ticker 多条信号）
     notes = _load_sig()
     info = next((n for n in notes if n.get("id") == id), None) or \
            next((n for n in notes if n["ticker"] == ticker), None)
     if not info:
         return JSONResponse({"error": "not found"}, status_code=404)
     try:
-        df = get_ohlcv(ticker, start="2025-07-01")
+        end_str = datetime.today().strftime("%Y-%m-%d")
+        df = _load_klines_local(ticker)
+
+        if df.empty:
+            # 本地无文件，全量下载并存盘
+            from data.downloader import get_ohlcv
+            df = get_ohlcv(ticker, start="2025-07-01")
+            if not df.empty:
+                _save_klines_local(ticker, df)
+        else:
+            last_date = df.index[-1].date()
+            if last_date < _last_trading_date():
+                fetch_from = (df.index[-1] + timedelta(days=1)).strftime("%Y-%m-%d")
+                new_df = _yf_ohlcv(ticker, fetch_from, end_str)
+                if not new_df.empty:
+                    df = pd.concat([df, new_df])
+                    df = df[~df.index.duplicated(keep="last")].sort_index()
+                    _save_klines_local(ticker, df)   # 更新本地文件
+
         if df.empty:
             return JSONResponse({"error": "no data"})
         close = df["Close"]

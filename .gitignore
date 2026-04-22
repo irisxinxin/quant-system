@@ -5,6 +5,10 @@ __pycache__/
 cache/
 output/
 !output/*.csv
+!output/sig_notes.json
+!output/review_notes.json
+!output/sig_klines/
+!output/sig_klines/*.json
 *.log
 .env
 *.pkl
