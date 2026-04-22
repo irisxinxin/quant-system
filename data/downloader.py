@@ -40,6 +40,13 @@ _CRYPTO_MAP = {
     "BNB-USD":  "bnbusd",
 }
 
+# Tiingo 全局限速（防 429）
+# 免费账户约 50 req/min，保守取 3 并发 + 0.25s 间隔
+_tiingo_sem        = threading.Semaphore(3)
+_tiingo_last_time  = 0.0
+_tiingo_time_lock  = threading.Lock()
+_TIINGO_MIN_INTERVAL = 0.25   # 秒
+
 # yfinance 全局限速（本地开发 fallback 用）
 _yf_sem           = threading.Semaphore(2)
 _yf_last_time     = 0.0
@@ -79,24 +86,51 @@ def _load(path: Path):
 def _tiingo_ohlcv(ticker: str, start: str, end_str: str) -> pd.DataFrame:
     """
     从 Tiingo 下载 OHLCV（复权价，等效于 yfinance auto_adjust=True）
+    带全局限速 semaphore + 429 指数退避重试
     返回 DataFrame[Open, High, Low, Close, Volume]，失败返回空 DataFrame
     """
+    global _tiingo_last_time
+
     if not _TIINGO_KEY or ticker in _TIINGO_SKIP:
         return pd.DataFrame()
 
     headers = {"Authorization": f"Token {_TIINGO_KEY}", "Content-Type": "application/json"}
+    MAX_RETRIES = 4
+    RETRY_BASE  = 2.0
+
+    def _do_request(url, params):
+        """带限速 + 429 退避的单次请求"""
+        for attempt in range(MAX_RETRIES):
+            with _tiingo_sem:
+                with _tiingo_time_lock:
+                    gap = time.time() - _tiingo_last_time
+                    if gap < _TIINGO_MIN_INTERVAL:
+                        time.sleep(_TIINGO_MIN_INTERVAL - gap + random.uniform(0, 0.1))
+                    _tiingo_last_time = time.time()
+                resp = _requests.get(url, headers=headers, params=params, timeout=30)
+
+            if resp.status_code == 200:
+                return resp
+            if resp.status_code == 429:
+                wait = RETRY_BASE ** attempt + random.uniform(1.0, 3.0)
+                logger.warning(f"[tiingo 429] {ticker} attempt {attempt+1}/{MAX_RETRIES}, retry in {wait:.1f}s")
+                time.sleep(wait)
+                continue
+            # 其他错误不重试
+            logger.warning(f"[tiingo] {ticker} HTTP {resp.status_code}")
+            return None
+        logger.warning(f"[tiingo] {ticker} 超过最大重试次数，放弃")
+        return None
 
     try:
         # ── 加密货币走独立接口 ──
         if ticker in _CRYPTO_MAP:
             sym = _CRYPTO_MAP[ticker]
-            resp = _requests.get(
+            resp = _do_request(
                 "https://api.tiingo.com/tiingo/crypto/prices",
-                headers=headers,
-                params={"tickers": sym, "startDate": start, "endDate": end_str, "resampleFreq": "1Day"},
-                timeout=30,
+                {"tickers": sym, "startDate": start, "endDate": end_str, "resampleFreq": "1Day"},
             )
-            if resp.status_code != 200 or not resp.json():
+            if resp is None or not resp.json():
                 return pd.DataFrame()
             raw = resp.json()[0].get("priceData", [])
             if not raw:
@@ -110,14 +144,11 @@ def _tiingo_ohlcv(ticker: str, start: str, end_str: str) -> pd.DataFrame:
             return df[cols].dropna(subset=["Close"])
 
         # ── 普通股票/ETF ──
-        resp = _requests.get(
+        resp = _do_request(
             f"https://api.tiingo.com/tiingo/daily/{ticker}/prices",
-            headers=headers,
-            params={"startDate": start, "endDate": end_str, "resampleFreq": "daily"},
-            timeout=30,
+            {"startDate": start, "endDate": end_str, "resampleFreq": "daily"},
         )
-        if resp.status_code != 200:
-            logger.warning(f"[tiingo] {ticker} HTTP {resp.status_code}")
+        if resp is None:
             return pd.DataFrame()
 
         data = resp.json()
