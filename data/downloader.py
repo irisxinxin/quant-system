@@ -41,11 +41,11 @@ _CRYPTO_MAP = {
 }
 
 # Tiingo 全局限速（防 429）
-# 免费账户约 50 req/min，保守取 3 并发 + 0.25s 间隔
-_tiingo_sem        = threading.Semaphore(3)
+# 免费账户限制严格，全局串行 + 1.5s 间隔 ≈ 40 req/min，安全
+_tiingo_sem        = threading.Semaphore(1)   # 全局只允许 1 个并发请求
 _tiingo_last_time  = 0.0
 _tiingo_time_lock  = threading.Lock()
-_TIINGO_MIN_INTERVAL = 0.25   # 秒
+_TIINGO_MIN_INTERVAL = 1.5   # 秒
 
 # yfinance 全局限速（本地开发 fallback 用）
 _yf_sem           = threading.Semaphore(2)

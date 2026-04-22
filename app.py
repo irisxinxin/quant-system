@@ -989,7 +989,7 @@ def _compute_stock_stats(s):
 def _compute_cm_wl():
     from concurrent.futures import ThreadPoolExecutor, as_completed
     results = [None] * len(_CM_WATCHLIST)
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    with ThreadPoolExecutor(max_workers=3) as ex:
         futs = {ex.submit(_compute_stock_stats, s): i for i, s in enumerate(_CM_WATCHLIST)}
         for f in as_completed(futs):
             results[futs[f]] = f.result()
@@ -1137,7 +1137,7 @@ def _compute_er_stats(s):
 def _compute_er():
     from concurrent.futures import ThreadPoolExecutor, as_completed
     results = [None] * len(_ER_PORTFOLIO)
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    with ThreadPoolExecutor(max_workers=3) as ex:
         futs = {ex.submit(_compute_er_stats, s): i for i, s in enumerate(_ER_PORTFOLIO)}
         for f in as_completed(futs):
             results[futs[f]] = f.result()
