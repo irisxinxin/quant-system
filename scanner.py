@@ -999,14 +999,93 @@ def get_flows() -> dict:
 # ──────────────────────────────────────────────
 
 def get_cta_dashboard() -> dict:
-    """多资产 CTA 趋势信号"""
+    """多资产 CTA 趋势信号 — 按板块分组"""
+    from config import CTA_LOOKBACKS, CTA_VOL_WIN
+
+    # 板块分组定义
+    SECTOR_GROUPS = [
+        ("🌐 宏观大盘", [
+            ("SPX",    "SPY"),
+            ("NDX",    "QQQ"),
+            ("Bonds",  "TLT"),
+            ("Gold",   "GLD"),
+            ("Oil",    "USO"),
+            ("USD",    "UUP"),
+        ]),
+        ("⚡ 半导体", [
+            ("SMH",    "SMH"),
+            ("SOXX",   "SOXX"),
+            ("KLAC",   "KLAC"),
+        ]),
+        ("🔭 光通信", [
+            ("LITE",   "LITE"),
+            ("COHR",   "COHR"),
+            ("AAOI",   "AAOI"),
+        ]),
+        ("💾 存储", [
+            ("MU",     "MU"),
+            ("STX",    "STX"),
+            ("WDC",    "WDC"),
+        ]),
+        ("💻 软件/AI", [
+            ("IGV",    "IGV"),
+            ("AIQ",    "AIQ"),
+            ("PLTR",   "PLTR"),
+        ]),
+        ("🏹 军工/航天", [
+            ("ITA",    "ITA"),
+            ("XAR",    "XAR"),
+            ("RKLB",   "RKLB"),
+        ]),
+        ("🪨 有色/贵金属", [
+            ("GDX",    "GDX"),
+            ("XME",    "XME"),
+            ("GLD",    "GLD"),
+        ]),
+    ]
+
+    def _cta_row(name: str, ticker: str):
+        try:
+            prices = get_prices(ticker)
+            if prices.empty or len(prices) < max(CTA_LOOKBACKS) + CTA_VOL_WIN + 10:
+                return None
+            ret = prices.pct_change().dropna()
+            sigs_series = []
+            for lk in CTA_LOOKBACKS:
+                mom = ret.rolling(lk).mean() * 252
+                vol = ret.rolling(CTA_VOL_WIN).std() * np.sqrt(252)
+                s = (mom / vol.replace(0, np.nan)).clip(-1, 1)
+                sigs_series.append(s)
+            combined = pd.concat(sigs_series, axis=1).mean(axis=1).dropna()
+            if len(combined) < 6:
+                return None
+            sig_now = float(combined.iloc[-1])
+            delta   = float(combined.iloc[-1] - combined.iloc[-5])
+            direction = ("强势多头" if sig_now > 0.6 else
+                         "多头"    if sig_now > 0.15 else
+                         "中性"    if sig_now > -0.15 else
+                         "空头"    if sig_now > -0.6 else "强势空头")
+            return {
+                "资产":     name,
+                "ETF":      ticker,
+                "信号":     round(sig_now, 3),
+                "5日变化":  round(delta, 3),
+                "方向":     direction,
+                "仓位变化": "增仓⬆" if delta > 0.08 else ("减仓⬇" if delta < -0.08 else "持平"),
+            }
+        except Exception:
+            return None
+
     try:
-        df   = run_cta_dashboard()
-        rows = df.to_dict(orient="records")
-        return {"rows": rows, "error": None}
+        groups = []
+        for group_name, items in SECTOR_GROUPS:
+            rows = [r for name, ticker in items if (r := _cta_row(name, ticker))]
+            if rows:
+                groups.append({"name": group_name, "rows": rows})
+        return {"groups": groups, "error": None}
     except Exception as e:
         logger.error(f"get_cta_dashboard: {e}")
-        return {"rows": [], "error": str(e)}
+        return {"groups": [], "error": str(e)}
 
 
 # ──────────────────────────────────────────────

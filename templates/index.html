@@ -1206,44 +1206,62 @@ async function loadCta(){
 
 function renderCta(data,ts){
   if(!data||data.error){$('ctaBody').innerHTML=errHtml(data?.error||'无数据');return}
-  const rows=data.rows||[];
-  let h=`<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+  const groups=data.groups||[];
+
+  function ctaRows(rows){
+    if(!rows.length) return '';
+    let t=`<table class="tbl"><thead><tr>
+      <th class="tl">资产</th><th class="tl">ETF</th>
+      <th>信号</th><th>5日变化</th>
+      <th class="tl" style="min-width:100px">强度</th>
+      <th class="tl">方向</th><th class="tl">仓位</th>
+    </tr></thead><tbody>`;
+    rows.forEach(r=>{
+      const sig=r['信号']||0, delta=r['5日变化']||0;
+      const sc=cCTA(sig);
+      const dc=delta>0?'#7ee787':delta<0?'#f0a742':'#8b949e';
+      const bw=Math.min(Math.abs(sig)*100,100);
+      const bc=sig>0?'#3fb950':'#f85149';
+      t+=`<tr>
+        <td class="tl" style="font-weight:500">${r['资产']}</td>
+        <td class="tl mono" style="color:var(--cyan);font-size:11px">${r['ETF']}</td>
+        <td class="mono" style="color:${sc};font-weight:700">${sig>0?'+':''}${sig}</td>
+        <td class="mono" style="color:${dc}">${delta>0?'+':''}${delta}</td>
+        <td class="tl">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="bar-track" style="width:70px"><div class="bar-fill" style="width:${bw}%;background:${bc}"></div></div>
+            <span style="font-size:11px;color:var(--text2)">${(Math.abs(sig)*100).toFixed(0)}%</span>
+          </div>
+        </td>
+        <td class="tl" style="color:${sc};font-size:12px">${r['方向']||'—'}</td>
+        <td class="tl" style="color:var(--text2);font-size:11px">${r['仓位变化']||'—'}</td>
+      </tr>`;
+    });
+    return t+`</tbody></table>`;
+  }
+
+  let h=`<div style="display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start">
     <div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <h3 style="font-size:13px;font-weight:600;color:var(--blue)">🌐 多资产 CTA 趋势信号</h3>
+        <h3 style="font-size:13px;font-weight:600;color:var(--blue)">🌐 多资产 CTA 趋势信号 — 板块分组</h3>
         <span style="font-size:11px;color:var(--text3)">${ts}</span>
       </div>
-      <div class="card" style="overflow-x:auto">
-        <table class="tbl"><thead><tr>
-          <th class="tl">资产</th><th class="tl">ETF</th>
-          <th>信号值</th><th>5日变化</th>
-          <th class="tl" style="min-width:120px">趋势强度</th>
-          <th class="tl">方向</th><th class="tl">仓位变化</th>
-        </tr></thead><tbody>`;
-  rows.forEach(r=>{
-    const sig=r['信号']||0;
-    const delta=r['5日变化']||0;
-    const sc=cCTA(sig);
-    const dc=delta>0?'#7ee787':delta<0?'#f0a742':'#8b949e';
-    const bw=Math.min(Math.abs(sig)*100,100);
-    const bc=sig>0?'#3fb950':'#f85149';
-    h+=`<tr>
-      <td class="tl" style="font-weight:500">${r['资产']||r['ETF']}</td>
-      <td class="tl mono" style="color:var(--cyan);font-size:11px">${r['ETF']}</td>
-      <td class="mono" style="color:${sc};font-weight:700">${sig>0?'+':''}${sig}</td>
-      <td class="mono" style="color:${dc}">${delta>0?'+':''}${delta}</td>
-      <td class="tl">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="bar-track" style="width:80px"><div class="bar-fill" style="width:${bw}%;background:${bc}"></div></div>
-          <span style="font-size:11px;color:var(--text2)">${(Math.abs(sig)*100).toFixed(0)}%</span>
-        </div>
-      </td>
-      <td class="tl" style="color:${sc};font-size:12px">${r['方向']||'—'}</td>
-      <td class="tl" style="color:var(--text2);font-size:11px">${r['仓位变化']||'—'}</td>
-    </tr>`;
+      <div style="display:flex;flex-direction:column;gap:14px">`;
+
+  groups.forEach(g=>{
+    const avg=g.rows.reduce((s,r)=>s+(r['信号']||0),0)/Math.max(g.rows.length,1);
+    const ac=cCTA(avg);
+    h+=`<div class="card" style="overflow-x:auto;padding:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 8px;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;font-weight:600;color:var(--text1)">${g.name}</span>
+        <span style="font-size:11px;font-weight:700;color:${ac}">均值 ${avg>0?'+':''}${avg.toFixed(3)}</span>
+      </div>
+      <div style="padding:0 2px">${ctaRows(g.rows)}</div>
+    </div>`;
   });
-  h+=`</tbody></table></div></div>
-    <div class="card" style="padding:18px">
+
+  h+=`</div></div>
+    <div class="card" style="padding:18px;position:sticky;top:16px">
       <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">📖 信号说明</div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
         <div style="padding:10px 12px;background:rgba(63,185,80,.07);border-radius:8px;border-left:3px solid #3fb950">
@@ -1251,7 +1269,7 @@ function renderCta(data,ts){
           <div style="color:var(--text2)">CTA 基金大量做多，趋势极强</div>
         </div>
         <div style="padding:10px 12px;background:rgba(126,231,135,.05);border-radius:8px;border-left:3px solid #7ee787">
-          <div style="color:#7ee787;font-weight:600;margin-bottom:2px">+0.3 ~ +1.0  多头</div>
+          <div style="color:#7ee787;font-weight:600;margin-bottom:2px">+0.15 ~ +1.0  多头</div>
           <div style="color:var(--text2)">趋势向上，允许入场做多</div>
         </div>
         <div style="padding:10px 12px;background:rgba(139,148,158,.05);border-radius:8px;border-left:3px solid #484f58">
@@ -1259,7 +1277,7 @@ function renderCta(data,ts){
           <div style="color:var(--text2)">无明确方向，半仓或观望</div>
         </div>
         <div style="padding:10px 12px;background:rgba(248,81,73,.05);border-radius:8px;border-left:3px solid #f85149">
-          <div style="color:#f85149;font-weight:600;margin-bottom:2px">< −0.3  空头</div>
+          <div style="color:#f85149;font-weight:600;margin-bottom:2px">< −0.15  空头</div>
           <div style="color:var(--text2)">趋势向下，禁止做多</div>
         </div>
       </div>
@@ -1268,7 +1286,7 @@ function renderCta(data,ts){
         <div style="font-size:11px;color:var(--text2);line-height:1.7">
           <div>• SMH + SPY CTA 均值 &gt; 0 → 允许做多</div>
           <div>• 任意 CTA &lt; 0 → 禁止入场</div>
-          <div>• CTA 0 ~ 0.3 → 减半仓操作</div>
+          <div>• CTA 0 ~ 0.15 → 减半仓操作</div>
           <div style="margin-top:8px;color:var(--text3)">计算：多周期动量(80/160/260日) ÷ 年化波动率，限幅[−1,+1]均值</div>
         </div>
       </div>
