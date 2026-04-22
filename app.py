@@ -101,6 +101,7 @@ _CACHE_DIR     = Path(__file__).parent / "cache"
 _CHARTS_DIR    = Path(__file__).parent / "output" / "charts"
 _KOL_NOTES_PATH    = Path(__file__).parent / "output" / "kol_notes.json"
 _REVIEW_NOTES_PATH = Path(__file__).parent / "output" / "review_notes.json"
+_SIG_NOTES_PATH    = Path(__file__).parent / "output" / "sig_notes.json"
 _CACHE_DIR.mkdir(exist_ok=True)
 _CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -391,6 +392,146 @@ async def api_review_delete(note_id: str):
     notes = [n for n in _load_review() if n.get("id") != note_id]
     _save_review(notes)
     return JSONResponse({"ok": True})
+
+
+# ─── 逸哥量化信号 ───
+
+def _load_sig() -> list:
+    if _SIG_NOTES_PATH.exists():
+        try:
+            return json.loads(_SIG_NOTES_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+    return []
+
+def _save_sig(notes: list) -> None:
+    _SIG_NOTES_PATH.write_text(
+        json.dumps(notes, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+@app.get("/api/sig")
+async def api_sig_list():
+    import math
+    from data.downloader import get_ohlcv
+    notes = _load_sig()
+    notes.sort(key=lambda n: n.get("date", ""), reverse=True)
+    result = []
+    for n in notes:
+        try:
+            df = get_ohlcv(n["ticker"], start="2025-01-01")
+            cur = float(df["Close"].iloc[-1]) if not df.empty else None
+            chg = float(df["Close"].pct_change().iloc[-1] * 100) if cur else None
+            entry = n.get("entry")
+            gain_pct = round((cur - entry) / entry * 100, 1) if cur and entry else None
+        except Exception:
+            cur = chg = gain_pct = None
+        result.append({**n, "cur": round(cur, 2) if cur else None,
+                        "chg_1d": round(chg, 1) if chg else None,
+                        "gain_pct": gain_pct})
+    return JSONResponse({"signals": result})
+
+@app.post("/api/sig")
+async def api_sig_add(request: Request):
+    body = await request.json()
+    import uuid
+    levels_raw = body.get("levels", [])
+    if isinstance(levels_raw, str):
+        import re
+        levels_raw = [float(x) for x in re.split(r'[\s,/]+', levels_raw.strip()) if x]
+    note = {
+        "id":      str(uuid.uuid4())[:8],
+        "ticker":  body.get("ticker", "").upper().strip(),
+        "date":    body.get("date", datetime.now().strftime("%Y-%m-%d")),
+        "entry":   float(body.get("entry", 0)),
+        "sl":      float(body.get("sl", 0)),
+        "levels":  [float(l) for l in levels_raw],
+        "size":    body.get("size", "").strip(),
+        "atr_pct": body.get("atr_pct", None),
+        "note":    body.get("note", "").strip(),
+        "status":  "open",  # open / hit / stopped
+    }
+    if not note["ticker"]:
+        return JSONResponse({"ok": False, "error": "ticker不能为空"}, status_code=400)
+    notes = _load_sig()
+    notes.insert(0, note)
+    _save_sig(notes)
+    return JSONResponse({"ok": True, "note": note})
+
+@app.delete("/api/sig/{note_id}")
+async def api_sig_delete(note_id: str):
+    notes = [n for n in _load_sig() if n.get("id") != note_id]
+    _save_sig(notes)
+    return JSONResponse({"ok": True})
+
+@app.patch("/api/sig/{note_id}/status")
+async def api_sig_status(note_id: str, request: Request):
+    body = await request.json()
+    notes = _load_sig()
+    for n in notes:
+        if n.get("id") == note_id:
+            n["status"] = body.get("status", n["status"])
+    _save_sig(notes)
+    return JSONResponse({"ok": True})
+
+@app.get("/api/sig/chart/{ticker}")
+def api_sig_chart(ticker: str, id: str = ""):
+    """量化信号 K 线 + EMA21/50/MA200 + 入场/止损/目标水平线"""
+    import math
+    from data.downloader import get_ohlcv
+    ticker = ticker.upper()
+    # 找到对应信号（用 id 区分同一 ticker 多条信号）
+    notes = _load_sig()
+    info = next((n for n in notes if n.get("id") == id), None) or \
+           next((n for n in notes if n["ticker"] == ticker), None)
+    if not info:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    try:
+        df = get_ohlcv(ticker, start="2025-07-01")
+        if df.empty:
+            return JSONResponse({"error": "no data"})
+        close = df["Close"]
+        ema21_s = close.ewm(span=21,  adjust=False).mean()
+        ema50_s = close.ewm(span=50,  adjust=False).mean()
+        ma200_s = close.rolling(200).mean()
+
+        def to_line(series):
+            out = []
+            for idx, v in series.items():
+                if math.isnan(v): continue
+                out.append({"time": int(idx.timestamp()), "value": round(float(v), 4)})
+            return out
+
+        candles = []
+        for idx, row in df.iterrows():
+            o,h,l,c = float(row["Open"]),float(row["High"]),float(row["Low"]),float(row["Close"])
+            if any(math.isnan(v) for v in [o,h,l,c]): continue
+            candles.append({"time": int(idx.timestamp()), "open":o,"high":h,"low":l,"close":c})
+
+        cur = float(close.iloc[-1])
+        gain_pct = round((cur - info["entry"]) / info["entry"] * 100, 1) if info.get("entry") else None
+        sl_pct   = round((info["sl"] - info["entry"]) / info["entry"] * 100, 1) if info.get("sl") and info.get("entry") else None
+
+        return JSONResponse({
+            "ticker":   ticker,
+            "id":       info["id"],
+            "date":     info.get("date"),
+            "entry":    info.get("entry"),
+            "sl":       info.get("sl"),
+            "levels":   info.get("levels", []),
+            "size":     info.get("size", ""),
+            "atr_pct":  info.get("atr_pct"),
+            "note":     info.get("note", ""),
+            "status":   info.get("status", "open"),
+            "cur":      round(cur, 2),
+            "gain_pct": gain_pct,
+            "sl_pct":   sl_pct,
+            "candles":  candles,
+            "ema21":    to_line(ema21_s),
+            "ema50":    to_line(ema50_s),
+            "ma200":    to_line(ma200_s),
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
 
 
 # ─── StockWhale 持仓跟踪 ───

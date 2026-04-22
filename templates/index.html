@@ -150,6 +150,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <button class="tab-btn"    id="tab-er"      onclick="sw('er')">📈 二级持仓 <span id="er-badge" style="display:none;background:#34d399;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
     <button class="tab-btn"    id="tab-cn"      onclick="sw('cn')">🇨🇳 大A <span id="cn-badge" style="display:none;background:#f87171;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">!</span></button>
     <button class="tab-btn"    id="tab-kol"     onclick="sw('kol')">📝 大V观点 <span id="kol-badge" style="display:none;background:#f59e0b;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
+    <button class="tab-btn"    id="tab-sig"     onclick="sw('sig')">📡 逸哥信号</button>
     <button class="tab-btn"    id="tab-review"  onclick="sw('review')">📓 每日复盘</button>
   </div>
 </div>
@@ -447,6 +448,87 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 
   </div>
 
+  <!-- TAB: 逸哥量化信号 -->
+  <div id="pane-sig" style="display:none">
+
+    <!-- 录入表单 -->
+    <div class="card" style="padding:20px;margin-bottom:20px">
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">＋ 录入信号</div>
+      <div style="display:grid;grid-template-columns:100px 110px 110px 1fr 100px 90px;gap:10px;margin-bottom:10px;align-items:end">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">股票代码</div>
+          <input id="sig-ticker" placeholder="DOCN" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;font-weight:700;outline:none;text-transform:uppercase">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">入场价 Entry</div>
+          <input id="sig-entry" type="number" step="0.01" placeholder="95.50" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:#4ade80;font-size:13px;font-weight:600;outline:none">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">止损 SL</div>
+          <input id="sig-sl" type="number" step="0.01" placeholder="87.60" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:#f87171;font-size:13px;font-weight:600;outline:none">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">目标位 Levels（空格或 / 分隔）</div>
+          <input id="sig-levels" placeholder="98 100 105 110 118" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--accent);font-size:13px;outline:none">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">仓位</div>
+          <input id="sig-size" placeholder="1/4" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">ATR %</div>
+          <input id="sig-atr" type="number" step="0.01" placeholder="9.24" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:140px 1fr auto;gap:10px;align-items:end">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">日期</div>
+          <input id="sig-date" type="date" style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">备注</div>
+          <input id="sig-note" placeholder="可选，如：突破整理区间，成交量配合..." style="width:100%;padding:8px 10px;background:var(--s2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;outline:none">
+        </div>
+        <button onclick="sigAdd()" style="padding:8px 22px;background:rgba(245,158,11,.15);color:var(--accent);border:1px solid rgba(245,158,11,.3);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">保存信号</button>
+      </div>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+      <select id="sig-status-filter" onchange="sigRender()" style="padding:7px 10px;background:var(--s2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none">
+        <option value="">全部状态</option><option value="open">进行中</option><option value="hit">已达目标</option><option value="stopped">已止损</option>
+      </select>
+      <div style="flex:1"></div>
+      <span id="sig-count" style="font-size:12px;color:var(--text3)"></span>
+    </div>
+
+    <!-- 信号卡片列表 -->
+    <div id="sig-list"></div>
+
+    <!-- K 线图区域 -->
+    <div id="sig-chart-wrap" style="display:none;margin-top:24px">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)">
+          <span id="sig-chart-title" style="font-size:15px;font-weight:700;color:var(--text)"></span>
+          <span id="sig-chart-meta" style="font-size:12px;color:var(--text2)"></span>
+          <div style="flex:1"></div>
+          <button onclick="$('sig-chart-wrap').style.display='none'" style="padding:3px 10px;background:rgba(139,148,158,.1);color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">✕ 关闭</button>
+        </div>
+        <!-- 图例 -->
+        <div style="padding:8px 18px;display:flex;gap:16px;border-bottom:1px solid rgba(139,148,158,.1);flex-wrap:wrap">
+          <span style="font-size:11px;color:#f0b90b">── EMA21</span>
+          <span style="font-size:11px;color:#4299e1">── EMA50</span>
+          <span style="font-size:11px;color:#e05252">── MA200</span>
+          <span style="font-size:11px;color:#4ade80">── Entry</span>
+          <span style="font-size:11px;color:#f87171">-- SL</span>
+          <span style="font-size:11px;color:#f59e0b">⋯ Targets</span>
+        </div>
+        <div id="sig-chart" style="height:480px;width:100%"></div>
+      </div>
+    </div>
+
+  </div>
+
   <!-- TAB: 每日复盘 -->
   <div id="pane-review" style="display:none">
 
@@ -519,8 +601,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-const TABS = ['scan','entry','sectors','cta','bt','sw','cm','er','cn','kol','review'];
-const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, er:false, cn:false, kol:false, review:false};
+const TABS = ['scan','entry','sectors','cta','bt','sw','cm','er','cn','kol','sig','review'];
+const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, er:false, cn:false, kol:false, sig:false, review:false};
 let curTab = 'scan';
 let sectView = 'momentum';
 let btChart = null;
@@ -646,6 +728,7 @@ function sw(tab){
   if(tab==='er'&&!loaded.er)loadER();
   if(tab==='cn'&&!loaded.cn)loadCN();
   if(tab==='kol'&&!loaded.kol)loadKol();
+  if(tab==='sig'&&!loaded.sig)loadSig();
   if(tab==='review'&&!loaded.review)loadReview();
   // 返回回测tab时隐藏详情，显示选股器
   if(tab==='bt'){
@@ -673,7 +756,7 @@ async function refreshAll(){
       scan: loadScan, entry: loadScan,
       sectors: loadSectors, cta: loadCta,
       sw: loadSW, cm: loadCM, er: loadER,
-      cn: loadCN, kol: loadKol, review: loadReview,
+      cn: loadCN, kol: loadKol, sig: loadSig, review: loadReview,
     };
     if(TAB_LOADERS[curTab]) TAB_LOADERS[curTab]();
     // 短暂提示缓存已清除
@@ -2710,6 +2793,224 @@ function kolRender(){
       <div style="display:flex;flex-direction:column;gap:10px">${cards}</div>
     </div>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════
+// 逸哥量化信号
+// ══════════════════════════════════════════
+let _sigNotes = [];
+let _sigChart = null;
+let _sigActiveId = null;
+
+async function loadSig(){
+  loaded.sig = true;
+  const today = new Date().toISOString().slice(0,10);
+  const dateEl = $('sig-date');
+  if(dateEl) dateEl.value = today;
+  const r = await fetch('/api/sig');
+  const j = await r.json();
+  _sigNotes = j.signals || [];
+  sigRender();
+}
+
+async function sigAdd(){
+  const ticker = ($('sig-ticker')||{}).value?.trim().toUpperCase()||'';
+  if(!ticker){ alert('请输入股票代码'); return; }
+  const entry  = parseFloat($('sig-entry').value||0);
+  const sl     = parseFloat($('sig-sl').value||0);
+  const levels = ($('sig-levels').value||'').trim();
+  const size   = ($('sig-size').value||'').trim();
+  const atr    = parseFloat($('sig-atr').value||0)||null;
+  const date   = ($('sig-date').value)||new Date().toISOString().slice(0,10);
+  const note   = ($('sig-note').value||'').trim();
+  const body   = {ticker, entry, sl, levels, size, atr_pct: atr, date, note};
+  const r = await fetch('/api/sig',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j = await r.json();
+  if(j.ok){
+    // clear form
+    ['sig-ticker','sig-entry','sig-sl','sig-levels','sig-size','sig-atr','sig-note'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+    // reload with prices
+    loadSig();
+  }
+}
+
+async function sigDelete(id){
+  if(!confirm('确认删除这条信号？')) return;
+  await fetch('/api/sig/'+id,{method:'DELETE'});
+  if(_sigActiveId===id) $('sig-chart-wrap').style.display='none';
+  _sigNotes = _sigNotes.filter(n=>n.id!==id);
+  sigRender();
+}
+
+async function sigSetStatus(id, status){
+  await fetch('/api/sig/'+id+'/status',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+  const n = _sigNotes.find(n=>n.id===id);
+  if(n) n.status = status;
+  sigRender();
+}
+
+function sigRender(){
+  const statusFilt = ($('sig-status-filter')||{}).value||'';
+  let notes = _sigNotes;
+  if(statusFilt) notes = notes.filter(n=>n.status===statusFilt);
+  const countEl = $('sig-count');
+  if(countEl) countEl.textContent=`共 ${notes.length} 条`;
+  if(!notes.length){
+    $('sig-list').innerHTML='<div style="text-align:center;padding:64px 0;color:var(--text3);font-size:13px">还没有信号记录</div>';
+    return;
+  }
+
+  const STATUS_BADGE = {
+    open:    '<span style="background:rgba(245,158,11,.15);color:var(--accent);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600">🟡 进行中</span>',
+    hit:     '<span style="background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3);border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600">✅ 已达目标</span>',
+    stopped: '<span style="background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3);border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600">🛑 已止损</span>',
+  };
+
+  $('sig-list').innerHTML = notes.map(n=>{
+    const cur = n.cur;
+    const isAboveEntry = cur && n.entry && cur >= n.entry;
+    const curColor = cur ? (isAboveEntry ? '#4ade80' : '#f87171') : 'var(--text3)';
+    const gainHtml = n.gain_pct!=null
+      ? `<span style="color:${n.gain_pct>=0?'#4ade80':'#f87171'};font-size:13px;font-weight:700">${n.gain_pct>=0?'+':''}${n.gain_pct}%</span>`
+      : '';
+    const levelsHtml = (n.levels||[]).map((l,i)=>{
+      const hit = cur && cur >= l;
+      return `<span style="background:${hit?'rgba(74,222,128,.15)':'rgba(245,158,11,.08)'};color:${hit?'#4ade80':'var(--accent)'};border:1px solid ${hit?'rgba(74,222,128,.3)':'rgba(245,158,11,.2)'};border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600">${hit?'✓ ':''}\$${l}</span>`;
+    }).join('');
+    const slPct = n.entry && n.sl ? ((n.sl-n.entry)/n.entry*100).toFixed(1) : '';
+    const rr = n.entry && n.sl && n.levels?.length
+      ? ((n.levels[n.levels.length-1]-n.entry)/(n.entry-n.sl)).toFixed(1)+'R'
+      : '';
+    const isActive = _sigActiveId === n.id;
+
+    return `
+    <div class="card" style="padding:18px 20px;margin-bottom:12px;cursor:pointer;border:1px solid ${isActive?'rgba(245,158,11,.4)':'var(--border)'};transition:border .15s"
+         onclick="loadSigChart('${n.id}')">
+      <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+        <!-- 左：代码 + 日期 -->
+        <div style="min-width:90px">
+          <div style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.02em">${n.ticker}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${n.date||''}</div>
+          <div style="margin-top:6px">${STATUS_BADGE[n.status]||STATUS_BADGE.open}</div>
+        </div>
+        <!-- 中：价格信息 -->
+        <div style="flex:1;min-width:260px">
+          <div style="display:flex;gap:20px;margin-bottom:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px">ENTRY</div>
+              <div style="font-size:16px;font-weight:700;color:#4ade80">\$${n.entry}</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px">SL ${slPct?'('+slPct+'%)':''}</div>
+              <div style="font-size:16px;font-weight:700;color:#f87171">\$${n.sl}</div>
+            </div>
+            ${cur!=null?`<div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px">现价 ${n.chg_1d!=null?(n.chg_1d>=0?'▲':'▼')+Math.abs(n.chg_1d)+'%':''}</div>
+              <div style="font-size:16px;font-weight:700;color:${curColor}">\$${cur}</div>
+            </div>`:''}
+            ${gainHtml?`<div style="display:flex;align-items:center">${gainHtml}</div>`:''}
+          </div>
+          <!-- 目标位 -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:11px;color:var(--text3);margin-right:2px">Targets:</span>
+            ${levelsHtml}
+            ${rr?`<span style="font-size:11px;color:var(--text2);margin-left:4px">RR: ${rr}</span>`:''}
+          </div>
+        </div>
+        <!-- 右：元信息 + 操作 -->
+        <div style="text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          ${n.size?`<span style="font-size:12px;color:var(--text2);background:rgba(139,148,158,.1);border-radius:6px;padding:3px 10px">仓位 ${n.size}</span>`:''}
+          ${n.atr_pct?`<span style="font-size:12px;color:var(--text2)">ATR ${n.atr_pct}%</span>`:''}
+          <div style="display:flex;gap:6px;margin-top:4px">
+            ${n.status==='open'?`
+            <button onclick="event.stopPropagation();sigSetStatus('${n.id}','hit')" style="padding:3px 9px;background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.25);border-radius:6px;font-size:11px;cursor:pointer">✅ 达目标</button>
+            <button onclick="event.stopPropagation();sigSetStatus('${n.id}','stopped')" style="padding:3px 9px;background:rgba(248,113,113,.08);color:#f87171;border:1px solid rgba(248,113,113,.2);border-radius:6px;font-size:11px;cursor:pointer">🛑 止损</button>`:''}
+            <button onclick="event.stopPropagation();sigDelete('${n.id}')" style="padding:3px 9px;background:rgba(139,148,158,.08);color:var(--text3);border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer">删除</button>
+          </div>
+        </div>
+      </div>
+      ${n.note?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(139,148,158,.12);font-size:12px;color:var(--text2)">${n.note}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function loadSigChart(id){
+  const n = _sigNotes.find(x=>x.id===id);
+  if(!n) return;
+  _sigActiveId = id;
+  sigRender(); // redraw to highlight active card
+
+  const wrap = $('sig-chart-wrap');
+  wrap.style.display = 'block';
+  wrap.scrollIntoView({behavior:'smooth', block:'nearest'});
+  $('sig-chart').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:13px"><span class="spin">⟳</span> 加载 K 线...</div>';
+
+  const r = await fetch(`/api/sig/chart/${n.ticker}?id=${id}`);
+  const d = await r.json();
+  if(d.error){ $('sig-chart').innerHTML=`<div style="color:#f87171;padding:20px">${d.error}</div>`; return; }
+
+  // title
+  const gainColor = (d.gain_pct||0)>=0?'#4ade80':'#f87171';
+  $('sig-chart-title').textContent = d.ticker;
+  $('sig-chart-meta').innerHTML = `
+    <span style="color:#4ade80">Entry \$${d.entry}</span>
+    <span style="color:#f87171;margin-left:10px">SL \$${d.sl}</span>
+    <span style="color:var(--text2);margin-left:10px">现价 \$${d.cur}</span>
+    <span style="color:${gainColor};margin-left:10px">${(d.gain_pct||0)>=0?'+':''}${d.gain_pct||0}%</span>
+    ${d.size?`<span style="color:var(--text2);margin-left:10px">仓位 ${d.size}</span>`:''}
+  `;
+
+  if(_sigChart){ try{_sigChart.remove();}catch(e){} _sigChart=null; }
+  const el = $('sig-chart');
+  el.innerHTML = '';
+  const LWC = window.LightweightCharts;
+  const chart = LWC.createChart(el, {
+    layout:     {background:{color:'#0d1117'}, textColor:'#8b949e'},
+    grid:       {vertLines:{color:'rgba(139,148,158,.08)'}, horzLines:{color:'rgba(139,148,158,.08)'}},
+    crosshair:  {mode: LWC.CrosshairMode.Normal},
+    rightPriceScale: {borderColor:'rgba(139,148,158,.2)'},
+    timeScale:  {borderColor:'rgba(139,148,158,.2)', timeVisible:true, secondsVisible:false},
+    width:  el.clientWidth,
+    height: 480,
+  });
+  _sigChart = chart;
+
+  // candles
+  const cs = chart.addCandlestickSeries({
+    upColor:'#26a69a', downColor:'#ef5350',
+    borderUpColor:'#26a69a', borderDownColor:'#ef5350',
+    wickUpColor:'#26a69a', wickDownColor:'#ef5350',
+  });
+  cs.setData(d.candles);
+
+  // EMAs
+  const ema21s = chart.addLineSeries({color:'#f0b90b', lineWidth:1, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false});
+  ema21s.setData(d.ema21);
+  const ema50s = chart.addLineSeries({color:'#4299e1', lineWidth:1, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false});
+  ema50s.setData(d.ema50);
+  const ma200s = chart.addLineSeries({color:'#e05252', lineWidth:1, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false});
+  ma200s.setData(d.ma200);
+
+  // ── 水平价格线 ──
+  // Entry — 绿色实线
+  cs.createPriceLine({price: d.entry, color:'#4ade80', lineWidth:2, lineStyle:LWC.LineStyle.Solid, axisLabelVisible:true, title:'Entry'});
+  // SL — 红色虚线
+  cs.createPriceLine({price: d.sl, color:'#f87171', lineWidth:1, lineStyle:LWC.LineStyle.Dashed, axisLabelVisible:true, title:'SL'});
+  // Targets — 橙色点线，越靠上越亮
+  const targetColors = ['#f59e0b','#fbbf24','#fcd34d','#fde68a','#fef3c7'];
+  (d.levels||[]).forEach((lv,i)=>{
+    cs.createPriceLine({
+      price: lv,
+      color: targetColors[Math.min(i, targetColors.length-1)],
+      lineWidth: 1,
+      lineStyle: LWC.LineStyle.LargeDashed,
+      axisLabelVisible: true,
+      title: `T${i+1}`,
+    });
+  });
+
+  chart.timeScale().fitContent();
+  window.addEventListener('resize', ()=>{ if(_sigChart) _sigChart.applyOptions({width: el.clientWidth}); });
 }
 
 // ══════════════════════════════════════════
