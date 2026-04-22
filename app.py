@@ -888,6 +888,11 @@ _CM_STOCKS = [
     {"ticker":"META","side":"left","sector":"社交媒体","note":"左侧分批 or 站上MA200确认"},
     {"ticker":"MSFT","side":"left","sector":"科技/软件","note":"左侧分批 or 站上MA200确认"},
     {"ticker":"NFLX","side":"left","sector":"流媒体","note":"左侧分批 or 站上MA200确认"},
+    # A股持仓（二级研究员）
+    {"ticker":"603306.SS","side":"right","sector":"A股·光通信EMS","note":"华懋科技 24.27%"},
+    {"ticker":"002384.SZ","side":"right","sector":"A股·光模块+PCB","note":"东山精密 29.07%"},
+    {"ticker":"300476.SZ","side":"right","sector":"A股·AI服务器PCB","note":"胜宏科技 21.95%"},
+    {"ticker":"300757.SZ","side":"right","sector":"A股·CPO精密制造","note":"罗博特科 23.49%"},
 ]
 
 

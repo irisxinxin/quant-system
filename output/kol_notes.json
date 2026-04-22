@@ -1,7 +1,29 @@
 [
   {
+    "id": "661a932a",
+    "kol": "二级研究员",
+    "platform": "Discord",
+    "tickers": [
+      "COHR",
+      "MRVL",
+      "LITE",
+      "AVGO",
+      "GFS",
+      "TSEM",
+      "603306",
+      "002384",
+      "300476",
+      "300757"
+    ],
+    "sentiment": "bullish",
+    "date": "2026-04-22",
+    "reviewed": false,
+    "created_at": "2026-04-22T17:00:00",
+    "content": "【光通信项目打分表 — 2026-04-22】\n\n评分标准：\n4.5-5.0：有 demo 且分析/估算功能明确可投，已进入商业化；4.0-4.5：基本已制成，核准了至少一步；\n3.0-3.9：有明确市场机会 + 有 demo 但不充分；2.0-3.0：方向有价值但没有商业化实现；1.0-2.0：方向有价值，无产品形态、无商业化\n\n项目打分（评分 / 结论）：\n• 200G 多速通 1.6T OSFP DR8 500m EML｜小批量验证/已落单｜对手: Broadcom+Coherent｜⭐4.0｜在特定应用场景全球领先\n• 1.6T OSFP DR8 500m EML｜小批量验证｜对手: Lumentum 2000G平台｜⭐4.0\n• 1.6T OSFP 2×4 10m EML+85｜样品制作中｜对手: Source 2024/2025 800G/1.6T LR｜⭐4.1｜基础优势对应关键，市场稳定\n• 1.6T DR8&2FR4 SiPh w/ Marvel/Xphor PIC｜方案验证+系统制作中｜对手: Broadcom SiPh/CPO、Coherent SiPh PIC｜⭐3.2\n• 1.6T DR8&2FR4 SiPh｜方案验证中｜对手: Marvell 3nm Ara + 1.6T SiPh engine、Coherent SiPh 1.6T｜⭐1.1\n• 1.6T DR8&2FR4 LRO｜方案验证中｜对手: Marvell LPO/TRO、Source InP、Broadcom LPO｜⭐3.4\n• 800G QDD DR8&2×FR4 Gen2 EML｜小批量验证｜对手: Broadcom 800G 7m、Marvel AM/LPO｜⭐3.5\n• 800G QDD 0Q8A4×FR4 Gen2 EML｜小批量验证｜对手: 主要800G DHA5L光｜⭐3.6\n• 800G OSFP 2×FR4 BRCM DSP 硅光互联｜开发中｜对手: Broadcom 200Gλ DSP、Coherent SiPh 800G/1.6T｜⭐3.0｜硅光路目前在全量\n• 400G Q112 SR4 Gen2｜完成｜成熟产品，英伟达｜⭐2.5\n• 400G QDD FR4 Gen3.5 Hermetic｜方案验证中｜对手: Coherent/Lumentum 高毛利光子｜⭐2.8\n• 2000G QSFP28 EML｜完成｜成熟产品｜⭐1.8\n• 50G SFP56 LR/BiDi｜样品验证+增量｜无结构性产品｜⭐1.8\n• 212Gbaud EML (4种格式, 3.27E/4T)｜设计优化+样件｜对手: Coherent 400G D-EML、Marvell 600Gbane、Lumentum 400G D-EML｜⭐4.2\n• 106G CWDM/WDM EML｜样品制作中｜对手: Lumentum 200G CWDM EML、Coherent 200G EML｜⭐3.7\n• 6.4T ELSFP OR PLC5｜开发中｜对手: Lumentum ELSFP-350、Coherent 400G+ELS、Broadcom PLC scale-up｜⭐3.6\n• 6.4T/2.8T XPO 2×DR4｜方案验证中｜对手: Coherent Gen/Gen0 CPO、Marvell Photonic Fabric、Broadcom｜⭐3.3\n• 6.4T/2.8T XPO 2×DR4（MSA版）｜方案验证中｜对手: Coherent XPO MSA、Broadcom/Marvell scale-up｜⭐3.3\n• 3.2T 400Gbaud EML stepping｜方案验证中｜对手: Broadcom Taurus 400G/lane、Lumentum 400G D-EML｜⭐3.2\n\n---\n\nA股相关持仓盘中动态：\n• 华懋科技 603306：105.75（-0.61%，-0.65）\n• 东山精密 002384：185.19（+9.32%，+15.79）⬆ 强势\n• 胜宏科技 300476：341.00（+3.05%，+10.10）\n• 罗博特科 300757：548.00（+1.23%，+6.64）"
+  },
+  {
     "id": "08c0d785-b029-46b6-9284-0ff425fe0dde",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "MU",
@@ -157,7 +179,7 @@
   },
   {
     "id": "b711bf7a-eef4-48b6-98c8-1ed30cb68e65",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "AXTI",
@@ -205,7 +227,7 @@
   },
   {
     "id": "1b491eca-1fdc-4123-a7c2-55c783909bf3",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "VRT",
@@ -220,7 +242,7 @@
   },
   {
     "id": "bf6e2a67-b1c1-48d4-9310-d01438d68659",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "TSM",
@@ -259,7 +281,7 @@
   },
   {
     "id": "1d40f716-95ba-4cad-968b-6a2753581b2c",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "NVDA",
@@ -274,7 +296,7 @@
   },
   {
     "id": "8ea59b00-13a4-438d-aaf0-df0983fb78fa",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "LITE",
@@ -292,7 +314,7 @@
   },
   {
     "id": "ad6b2a06-e5a4-4d6d-aadb-3792b98134f4",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "LITE",
@@ -306,7 +328,7 @@
   },
   {
     "id": "aa3d446e-eba6-4f7e-aa9f-810294ff8c2e",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "LITE",
@@ -321,7 +343,7 @@
   },
   {
     "id": "98d8fa2a-be1a-4e9f-976a-e8d8da85f032",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "LITE",
@@ -338,7 +360,7 @@
   },
   {
     "id": "74286e0a-df89-4b37-b7db-1ad68dc7259f",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "VRT",
@@ -352,7 +374,7 @@
   },
   {
     "id": "f524b256-e388-4546-9a9b-4b8fbec31be9",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "COHR",
@@ -368,7 +390,7 @@
   },
   {
     "id": "445744c7-ea37-43f1-ba99-bb2c4a659954",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "NVTS",
@@ -385,7 +407,7 @@
   },
   {
     "id": "c4daeef4-57c8-42c6-9867-b310949b4848",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "SNDK"
@@ -398,7 +420,7 @@
   },
   {
     "id": "6ec4f664-50cf-45dd-8b84-dc58724fbe67",
-    "kol": "耳机研究院",
+    "kol": "二级研究员",
     "platform": "Discord",
     "tickers": [
       "COHR",
