@@ -10,7 +10,7 @@ import hashlib
 import logging
 import random
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, Union
 
@@ -68,6 +68,17 @@ def _is_fresh(path: Path, hours: float = CACHE_EXPIRE_H) -> bool:
     if not path.exists():
         return False
     return (time.time() - path.stat().st_mtime) < hours * 3600
+
+
+def _last_trading_date() -> datetime.date:
+    """返回最近一个交易日的日期（用于判断缓存是否是最新的）"""
+    now = datetime.now(timezone.utc)
+    # 美股收盘 20:00 UTC，收盘前用昨天
+    d = now.date() if now.hour >= 20 else (now - timedelta(days=1)).date()
+    # 跳过周末
+    while d.weekday() >= 5:
+        d -= timedelta(days=1)
+    return d
 
 
 def _save(path: Path, obj) -> None:
@@ -246,37 +257,6 @@ def _download_ohlcv(ticker: str, start: str, end_str: str) -> pd.DataFrame:
 # 公开接口
 # ─────────────────────────────────────────────
 
-def get_prices(
-    ticker: str,
-    start: str = DATA_START,
-    end: Optional[str] = DATA_END,
-    field: str = "Close",
-    force_refresh: bool = False,
-) -> pd.Series:
-    """
-    下载单个 ticker 的日线价格，带本地缓存。
-    优先 Tiingo，fallback yfinance。
-    """
-    end_str = end or datetime.today().strftime("%Y-%m-%d")
-    cache_key = f"{ticker}_{start}_{end_str}_{field}"
-    cpath = _cache_path(cache_key)
-
-    if not force_refresh and _is_fresh(cpath):
-        logger.debug(f"[cache hit] {ticker} {field}")
-        return _load(cpath)
-
-    logger.info(f"[download] {ticker} {start} → {end_str}")
-    df = _download_ohlcv(ticker, start, end_str)
-
-    if df.empty or field not in df.columns:
-        logger.warning(f"[empty] {ticker} field={field}")
-        return pd.Series(name=ticker, dtype=float)
-
-    series = df[field].rename(ticker).dropna()
-    _save(cpath, series)
-    return series
-
-
 def get_ohlcv(
     ticker: str,
     start: str = DATA_START,
@@ -284,25 +264,63 @@ def get_ohlcv(
     force_refresh: bool = False,
 ) -> pd.DataFrame:
     """
-    下载完整 OHLCV 日线数据。
-    优先 Tiingo，fallback yfinance。
+    增量缓存：首次全量下载，之后只追加新交易日数据。
+    cache key 不含 end_str，同一 pkl 文件每天追加一行。
     """
     end_str = end or datetime.today().strftime("%Y-%m-%d")
-    cache_key = f"{ticker}_{start}_{end_str}_OHLCV"
-    cpath = _cache_path(cache_key)
+    cache_key = f"{ticker}_{start}_OHLCV"          # 不含 end_str
+    cpath     = _cache_path(cache_key)
 
-    if not force_refresh and _is_fresh(cpath):
-        cached = _load(cpath)
-        if isinstance(cached, pd.DataFrame) and isinstance(cached.columns, pd.MultiIndex):
-            cached.columns = cached.columns.get_level_values(0)
-        return cached
+    existing   = None
+    fetch_from = start                              # 默认全量
 
-    logger.info(f"[download OHLCV] {ticker}")
-    df = _download_ohlcv(ticker, start, end_str)
+    if not force_refresh and cpath.exists():
+        try:
+            existing = _load(cpath)
+            if isinstance(existing, pd.DataFrame) and isinstance(existing.columns, pd.MultiIndex):
+                existing.columns = existing.columns.get_level_values(0)
+            if isinstance(existing, pd.DataFrame) and not existing.empty:
+                last_date = existing.index[-1].date()
+                if last_date >= _last_trading_date():
+                    return existing                 # 已是最新，直接返回
+                # 只拉增量（上次缓存最后一天之后）
+                fetch_from = (existing.index[-1] + timedelta(days=1)).strftime("%Y-%m-%d")
+                logger.debug(f"[incremental] {ticker} {fetch_from} → {end_str}")
+            else:
+                existing = None
+        except Exception as e:
+            logger.warning(f"[cache load err] {ticker}: {e}")
+            existing = None
 
-    if not df.empty:
-        _save(cpath, df)
-    return df
+    logger.info(f"[download OHLCV] {ticker} from {fetch_from}")
+    new_df = _download_ohlcv(ticker, fetch_from, end_str)
+
+    if new_df.empty:
+        return existing if existing is not None else pd.DataFrame()
+
+    if existing is not None and not existing.empty:
+        combined = pd.concat([existing, new_df])
+        combined = combined[~combined.index.duplicated(keep="last")].sort_index()
+    else:
+        combined = new_df
+
+    _save(cpath, combined)
+    return combined
+
+
+def get_prices(
+    ticker: str,
+    start: str = DATA_START,
+    end: Optional[str] = DATA_END,
+    field: str = "Close",
+    force_refresh: bool = False,
+) -> pd.Series:
+    """从 get_ohlcv 提取单列，复用同一增量缓存。"""
+    df = get_ohlcv(ticker, start=start, end=end, force_refresh=force_refresh)
+    if df.empty or field not in df.columns:
+        logger.warning(f"[empty] {ticker} field={field}")
+        return pd.Series(name=ticker, dtype=float)
+    return df[field].rename(ticker).dropna()
 
 
 def get_multi(
