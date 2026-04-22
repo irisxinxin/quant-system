@@ -240,17 +240,19 @@ def _yf_ohlcv(ticker: str, start: str, end_str: str) -> pd.DataFrame:
 
 def _download_ohlcv(ticker: str, start: str, end_str: str) -> pd.DataFrame:
     """
-    优先 Tiingo（设置了 TIINGO_API_KEY 时），fallback yfinance
-    返回 DataFrame[Open, High, Low, Close, Volume]
+    主路径 yfinance（稳定、无配额限制）
+    Tiingo 仅作备用（有 key 且 yfinance 失败时才用）
     """
-    if _TIINGO_KEY and ticker not in _TIINGO_SKIP:
-        df = _tiingo_ohlcv(ticker, start, end_str)
-        if not df.empty:
-            logger.debug(f"[tiingo ok] {ticker}")
-            return df
-        logger.warning(f"[tiingo miss] {ticker}, falling back to yfinance")
+    df = _yf_ohlcv(ticker, start, end_str)
+    if not df.empty:
+        return df
 
-    return _yf_ohlcv(ticker, start, end_str)
+    # yfinance 失败时才尝试 Tiingo
+    if _TIINGO_KEY and ticker not in _TIINGO_SKIP:
+        logger.debug(f"[yf miss] {ticker}, trying tiingo")
+        df = _tiingo_ohlcv(ticker, start, end_str)
+
+    return df
 
 
 # ─────────────────────────────────────────────
