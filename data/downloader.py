@@ -100,6 +100,7 @@ def _tiingo_ohlcv(ticker: str, start: str, end_str: str) -> pd.DataFrame:
 
     def _do_request(url, params):
         """带限速 + 429 退避的单次请求"""
+        global _tiingo_last_time
         for attempt in range(MAX_RETRIES):
             with _tiingo_sem:
                 with _tiingo_time_lock:

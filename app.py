@@ -69,21 +69,23 @@ def _bg_generate_charts():
 
 
 def _bg_prewarm_caches():
-    """启动时后台预热：直接 HTTP 请求自身，触发缓存写入"""
-    import time, urllib.request, os
-    time.sleep(5)   # 等服务器完全启动
-    port = int(os.environ.get("PORT", 8000))
-    base = f"http://127.0.0.1:{port}"
-    paths = ["/api/stockwhale", "/api/er", "/api/cm", "/api/cm/watchlist", "/api/cn"]
-    logger.warning(f"[prewarm] 开始预热 {len(paths)} 个端点...")
-    for path in paths:
+    """启动时直接调计算函数填充缓存，无需 HTTP 自请求，无需等待"""
+    # 注意：各 _compute_* 函数在模块末尾定义，但线程在所有模块代码执行后才启动，引用安全
+    logger.warning("[prewarm] 开始预热缓存...")
+    items = [
+        ("sw",    lambda: _compute_sw(),    CACHE_TTL["sw"]),
+        ("er",    lambda: _compute_er(),    CACHE_TTL["er"]),
+        ("cm",    lambda: _compute_cm(),    CACHE_TTL["cm"]),
+        ("cm_wl", lambda: _compute_cm_wl(), CACHE_TTL["cm_wl"]),
+        ("cn",    lambda: _compute_cn(),    CACHE_TTL["cn"]),
+    ]
+    for key, fn, ttl in items:
         try:
             t0 = time.time()
-            urllib.request.urlopen(base + path, timeout=180)
-            logger.warning(f"[prewarm] {path} ✓ ({time.time()-t0:.1f}s)")
+            _get_cached(key, fn, ttl)
+            logger.warning(f"[prewarm] {key} ✓ ({time.time()-t0:.1f}s)")
         except Exception as e:
-            logger.warning(f"[prewarm] {path} ✗ {e}")
-    logger.warning("[prewarm] 预热完成，后续请求将直接读缓存")
+            logger.warning(f"[prewarm] {key} ✗ {e}")
 
 
 @asynccontextmanager
@@ -596,33 +598,34 @@ _SW_TRADES = [
     {"ticker":"TSEM", "sector":"硅光代工",      "date":"2026-04-20","type":2,"entry":226.45,"stop":185.00,"half":290.00, "target":360.00, "risk":2.0,"rr":"2.5:1","status":"in_trade","note":"⚡止盈出场2026-04-20 | 策略ma5200+soxx+trail_12 | GFS专利起诉降权"},
 ]
 
+def _compute_sw():
+    from data.downloader import get_prices
+    BUY_ZONE_THRESH = {1: 0.05, 2: 0.08, 3: 0.12}
+    result = []
+    for t in _SW_TRADES:
+        ticker = t["ticker"]
+        try:
+            px_s = get_prices(ticker, start="2026-01-01")
+            cur  = float(px_s.iloc[-1]) if not px_s.empty else None
+            chg  = float(px_s.pct_change().iloc[-1] * 100) if cur else None
+        except Exception:
+            cur, chg = None, None
+        gain = round((cur - t["entry"]) / t["entry"] * 100, 1) if cur else None
+        vs_target = round((t["target"] - cur) / cur * 100, 1) if cur else None
+        display_status = t["status"]
+        if display_status == "in_trade" and cur is not None:
+            thresh = BUY_ZONE_THRESH.get(t.get("type", 2), 0.08)
+            if cur <= t["entry"] * (1 + thresh):
+                display_status = "buy_zone"
+        result.append({**t, "cur": cur, "chg_1d": round(chg,1) if chg else None,
+                       "gain": gain, "vs_target": vs_target,
+                       "display_status": display_status})
+    return result
+
 @app.get("/api/stockwhale")
 def api_stockwhale_list():
     """返回 StockWhale 全部持仓 + 实时价格（日线缓存）"""
-    def _fn():
-        from data.downloader import get_prices
-        BUY_ZONE_THRESH = {1: 0.05, 2: 0.08, 3: 0.12}
-        result = []
-        for t in _SW_TRADES:
-            ticker = t["ticker"]
-            try:
-                px_s = get_prices(ticker, start="2026-01-01")
-                cur  = float(px_s.iloc[-1]) if not px_s.empty else None
-                chg  = float(px_s.pct_change().iloc[-1] * 100) if cur else None
-            except Exception:
-                cur, chg = None, None
-            gain = round((cur - t["entry"]) / t["entry"] * 100, 1) if cur else None
-            vs_target = round((t["target"] - cur) / cur * 100, 1) if cur else None
-            display_status = t["status"]
-            if display_status == "in_trade" and cur is not None:
-                thresh = BUY_ZONE_THRESH.get(t.get("type", 2), 0.08)
-                if cur <= t["entry"] * (1 + thresh):
-                    display_status = "buy_zone"
-            result.append({**t, "cur": cur, "chg_1d": round(chg,1) if chg else None,
-                           "gain": gain, "vs_target": vs_target,
-                           "display_status": display_status})
-        return result
-    data, ts = _get_cached("sw", _fn, CACHE_TTL["sw"])
+    data, ts = _get_cached("sw", _compute_sw, CACHE_TTL["sw"])
     return JSONResponse({"trades": data, "cached_at": _fmt_age(ts)})
 
 
@@ -671,84 +674,84 @@ _CN_STOCKS = [
 ]
 
 
+def _compute_cn():
+    import math, logging
+    from data.downloader import get_ohlcv
+    import yfinance as yf
+    result = []
+    for s in _CN_STOCKS:
+        ticker = s["ticker"]
+        entry = {**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None,
+                 "signals": [], "earnings_date": None, "earnings_days": None}
+        try:
+            df = get_ohlcv(ticker, start="2023-01-01")
+            if not df.empty:
+                close = df["Close"]
+                cur   = float(close.iloc[-1])
+                chg   = float(close.pct_change().iloc[-1] * 100)
+                ema20 = float(close.ewm(span=20, adjust=False).mean().iloc[-1])
+                ma200_s = close.rolling(200).mean()
+                ma200 = float(ma200_s.iloc[-1]) if len(close) >= 200 and not math.isnan(ma200_s.iloc[-1]) else None
+                recent_high = float(close.iloc[-21:-1].max()) if len(close) > 21 else None
+                vs_ema20 = (cur - ema20) / ema20 * 100
+                vs_ma200 = (cur - ma200) / ma200 * 100 if ma200 else None
+                signals = []
+                if recent_high and cur >= recent_high * 0.97:
+                    signals.append("🚀 接近突破")
+                if abs(vs_ema20) <= 2.0 and cur >= ema20 * 0.98:
+                    signals.append("↩️ 回踩EMA20")
+                ema10 = float(close.ewm(span=10, adjust=False).mean().iloc[-1])
+                if abs((cur - ema10) / ema10 * 100) <= 1.5:
+                    signals.append("↩️ 回踩EMA10")
+                entry.update({
+                    "cur": round(cur, 2), "chg_1d": round(chg, 1),
+                    "vs_ema20": round(vs_ema20, 1),
+                    "vs_ma200": round(vs_ma200, 1) if vs_ma200 is not None else None,
+                    "signals": signals,
+                    "ema20": round(ema20, 2),
+                    "ma200": round(ma200, 2) if ma200 else None,
+                })
+        except Exception as e:
+            logger.warning(f"[cn price] {ticker}: {e}")
+        try:
+            _yf_log = logging.getLogger("yfinance")
+            _prev = _yf_log.level
+            _yf_log.setLevel(logging.CRITICAL)
+            try:
+                t = yf.Ticker(ticker)
+                cal = t.calendar
+            finally:
+                _yf_log.setLevel(_prev)
+            if cal is not None:
+                if isinstance(cal, dict):
+                    ed = cal.get("Earnings Date") or cal.get("earningsDate")
+                    if isinstance(ed, (list, tuple)) and ed:
+                        ed = ed[0]
+                elif hasattr(cal, "columns") and "Earnings Date" in cal.columns:
+                    ed = cal.loc["Earnings Date"].iloc[0] if not cal.empty else None
+                else:
+                    ed = None
+                if ed is not None:
+                    import pandas as pd
+                    ed_dt = pd.Timestamp(ed).date()
+                    today = datetime.today().date()
+                    days_left = (ed_dt - today).days
+                    if days_left >= 0:
+                        entry["earnings_date"] = str(ed_dt)
+                        entry["earnings_days"] = days_left
+                        if days_left <= 7:
+                            entry["signals"].append(f"📢 财报还有{days_left}天")
+                        elif days_left <= 14:
+                            entry["signals"].append(f"📅 财报{days_left}天后")
+        except Exception as e:
+            logger.debug(f"[cn earnings] {ticker}: {e}")
+        result.append(entry)
+    return result
+
 @app.get("/api/cn")
 def api_cn_list():
     """大A股票监控：价格 + 技术信号 + 财报提醒（日线缓存）"""
-    def _fn():
-        import math, logging
-        from data.downloader import get_ohlcv
-        import yfinance as yf
-        result = []
-        for s in _CN_STOCKS:
-            ticker = s["ticker"]
-            entry = {**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None,
-                     "signals": [], "earnings_date": None, "earnings_days": None}
-            try:
-                df = get_ohlcv(ticker, start="2023-01-01")
-                if not df.empty:
-                    close = df["Close"]
-                    cur   = float(close.iloc[-1])
-                    chg   = float(close.pct_change().iloc[-1] * 100)
-                    ema20 = float(close.ewm(span=20, adjust=False).mean().iloc[-1])
-                    ma200_s = close.rolling(200).mean()
-                    ma200 = float(ma200_s.iloc[-1]) if len(close) >= 200 and not math.isnan(ma200_s.iloc[-1]) else None
-                    recent_high = float(close.iloc[-21:-1].max()) if len(close) > 21 else None
-                    vs_ema20 = (cur - ema20) / ema20 * 100
-                    vs_ma200 = (cur - ma200) / ma200 * 100 if ma200 else None
-                    signals = []
-                    if recent_high and cur >= recent_high * 0.97:
-                        signals.append("🚀 接近突破")
-                    if abs(vs_ema20) <= 2.0 and cur >= ema20 * 0.98:
-                        signals.append("↩️ 回踩EMA20")
-                    ema10 = float(close.ewm(span=10, adjust=False).mean().iloc[-1])
-                    if abs((cur - ema10) / ema10 * 100) <= 1.5:
-                        signals.append("↩️ 回踩EMA10")
-                    entry.update({
-                        "cur": round(cur, 2), "chg_1d": round(chg, 1),
-                        "vs_ema20": round(vs_ema20, 1),
-                        "vs_ma200": round(vs_ma200, 1) if vs_ma200 is not None else None,
-                        "signals": signals,
-                        "ema20": round(ema20, 2),
-                        "ma200": round(ma200, 2) if ma200 else None,
-                    })
-            except Exception as e:
-                logger.warning(f"[cn price] {ticker}: {e}")
-            # ── 财报日期 ──
-            try:
-                _yf_log = logging.getLogger("yfinance")
-                _prev = _yf_log.level
-                _yf_log.setLevel(logging.CRITICAL)
-                try:
-                    t = yf.Ticker(ticker)
-                    cal = t.calendar
-                finally:
-                    _yf_log.setLevel(_prev)
-                if cal is not None:
-                    if isinstance(cal, dict):
-                        ed = cal.get("Earnings Date") or cal.get("earningsDate")
-                        if isinstance(ed, (list, tuple)) and ed:
-                            ed = ed[0]
-                    elif hasattr(cal, "columns") and "Earnings Date" in cal.columns:
-                        ed = cal.loc["Earnings Date"].iloc[0] if not cal.empty else None
-                    else:
-                        ed = None
-                    if ed is not None:
-                        import pandas as pd
-                        ed_dt = pd.Timestamp(ed).date()
-                        today = datetime.today().date()
-                        days_left = (ed_dt - today).days
-                        if days_left >= 0:
-                            entry["earnings_date"] = str(ed_dt)
-                            entry["earnings_days"] = days_left
-                            if days_left <= 7:
-                                entry["signals"].append(f"📢 财报还有{days_left}天")
-                            elif days_left <= 14:
-                                entry["signals"].append(f"📅 财报{days_left}天后")
-            except Exception as e:
-                logger.debug(f"[cn earnings] {ticker}: {e}")
-            result.append(entry)
-        return result
-    data, ts = _get_cached("cn", _fn, CACHE_TTL["cn"])
+    data, ts = _get_cached("cn", _compute_cn, CACHE_TTL["cn"])
     return JSONResponse({"stocks": data, "cached_at": _fmt_age(ts)})
 
 
@@ -824,50 +827,51 @@ _CM_STOCKS = [
 ]
 
 
+def _compute_cm():
+    from data.downloader import get_ohlcv
+    result = []
+    for s in _CM_STOCKS:
+        ticker = s["ticker"]
+        try:
+            df = get_ohlcv(ticker, start="2025-01-01")
+            if df.empty:
+                result.append({**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None, "signals": []})
+                continue
+            close = df["Close"]
+            cur   = float(close.iloc[-1])
+            chg   = float(close.pct_change().iloc[-1] * 100)
+            ema20 = float(close.ewm(span=20, adjust=False).mean().iloc[-1])
+            ma200 = float(close.rolling(200).mean().iloc[-1]) if len(close) >= 200 else None
+            recent_high = float(close.rolling(20).max().iloc[-2]) if len(close) > 20 else None
+            signals = []
+            vs_ema20 = (cur - ema20) / ema20 * 100
+            vs_ma200 = (cur - ma200) / ma200 * 100 if ma200 else None
+            if s["side"] == "right":
+                if recent_high and cur >= recent_high * 0.97:
+                    signals.append("🚀 接近突破前高")
+                if abs(vs_ema20) <= 2.0 and cur > ema20 * 0.98:
+                    signals.append("↩️ 回踩EMA20")
+                ema10 = float(close.ewm(span=10, adjust=False).mean().iloc[-1])
+                if abs((cur - ema10) / ema10 * 100) <= 1.5:
+                    signals.append("↩️ 回踩EMA10")
+            else:
+                if ma200 and abs(vs_ma200) <= 3.0:
+                    signals.append("⭐ 接近MA200确认位")
+            result.append({**s, "cur": round(cur,2), "chg_1d": round(chg,1),
+                            "vs_ema20": round(vs_ema20,1),
+                            "vs_ma200": round(vs_ma200,1) if vs_ma200 is not None else None,
+                            "recent_high": round(recent_high,2) if recent_high else None,
+                            "ema20": round(ema20,2),
+                            "ma200": round(ma200,2) if ma200 else None,
+                            "signals": signals})
+        except Exception:
+            result.append({**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None, "signals": []})
+    return result
+
 @app.get("/api/cm")
 def api_cm_list():
     """返回 CM 选股列表 + 实时价格 + 与关键均线距离（日线缓存）"""
-    def _fn():
-        from data.downloader import get_ohlcv
-        result = []
-        for s in _CM_STOCKS:
-            ticker = s["ticker"]
-            try:
-                df = get_ohlcv(ticker, start="2025-01-01")
-                if df.empty:
-                    result.append({**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None, "signals": []})
-                    continue
-                close = df["Close"]
-                cur   = float(close.iloc[-1])
-                chg   = float(close.pct_change().iloc[-1] * 100)
-                ema20 = float(close.ewm(span=20, adjust=False).mean().iloc[-1])
-                ma200 = float(close.rolling(200).mean().iloc[-1]) if len(close) >= 200 else None
-                recent_high = float(close.rolling(20).max().iloc[-2]) if len(close) > 20 else None
-                signals = []
-                vs_ema20 = (cur - ema20) / ema20 * 100
-                vs_ma200 = (cur - ma200) / ma200 * 100 if ma200 else None
-                if s["side"] == "right":
-                    if recent_high and cur >= recent_high * 0.97:
-                        signals.append("🚀 接近突破前高")
-                    if abs(vs_ema20) <= 2.0 and cur > ema20 * 0.98:
-                        signals.append("↩️ 回踩EMA20")
-                    ema10 = float(close.ewm(span=10, adjust=False).mean().iloc[-1])
-                    if abs((cur - ema10) / ema10 * 100) <= 1.5:
-                        signals.append("↩️ 回踩EMA10")
-                else:
-                    if ma200 and abs(vs_ma200) <= 3.0:
-                        signals.append("⭐ 接近MA200确认位")
-                result.append({**s, "cur": round(cur,2), "chg_1d": round(chg,1),
-                                "vs_ema20": round(vs_ema20,1),
-                                "vs_ma200": round(vs_ma200,1) if vs_ma200 is not None else None,
-                                "recent_high": round(recent_high,2) if recent_high else None,
-                                "ema20": round(ema20,2),
-                                "ma200": round(ma200,2) if ma200 else None,
-                                "signals": signals})
-            except Exception:
-                result.append({**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None, "signals": []})
-        return result
-    data, ts = _get_cached("cm", _fn, CACHE_TTL["cm"])
+    data, ts = _get_cached("cm", _compute_cm, CACHE_TTL["cm"])
     return JSONResponse({"stocks": data, "cached_at": _fmt_age(ts)})
 
 
@@ -982,20 +986,21 @@ def _compute_stock_stats(s):
         return {**s, "cur": None, "chg_1d": None, "vs_ema20": None, "vs_ma200": None, "signals": []}
 
 
+def _compute_cm_wl():
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    results = [None] * len(_CM_WATCHLIST)
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futs = {ex.submit(_compute_stock_stats, s): i for i, s in enumerate(_CM_WATCHLIST)}
+        for f in as_completed(futs):
+            results[futs[f]] = f.result()
+    results = [r for r in results if r]
+    results.sort(key=lambda x: (-len(x.get("signals") or []), x.get("ticker","")))
+    return results
+
 @app.get("/api/cm/watchlist")
 def api_cm_watchlist():
     """并行拉取 watchlist 所有股票的价格 + 信号（日线缓存）"""
-    def _fn():
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        results = [None] * len(_CM_WATCHLIST)
-        with ThreadPoolExecutor(max_workers=8) as ex:
-            futs = {ex.submit(_compute_stock_stats, s): i for i, s in enumerate(_CM_WATCHLIST)}
-            for f in as_completed(futs):
-                results[futs[f]] = f.result()
-        results = [r for r in results if r]
-        results.sort(key=lambda x: (-len(x.get("signals") or []), x.get("ticker","")))
-        return results
-    data, ts = _get_cached("cm_wl", _fn, CACHE_TTL["cm_wl"])
+    data, ts = _get_cached("cm_wl", _compute_cm_wl, CACHE_TTL["cm_wl"])
     return JSONResponse({"stocks": data, "cached_at": _fmt_age(ts)})
 
 
@@ -1129,18 +1134,19 @@ def _compute_er_stats(s):
                 "vs_ema20": None, "vs_ma200": None, "signals": []}
 
 
+def _compute_er():
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    results = [None] * len(_ER_PORTFOLIO)
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futs = {ex.submit(_compute_er_stats, s): i for i, s in enumerate(_ER_PORTFOLIO)}
+        for f in as_completed(futs):
+            results[futs[f]] = f.result()
+    return [r for r in results if r]
+
 @app.get("/api/er")
 def api_er_list():
     """二级研究员持仓：价格 + 盈亏 + 信号（并行拉取，日线缓存）"""
-    def _fn():
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        results = [None] * len(_ER_PORTFOLIO)
-        with ThreadPoolExecutor(max_workers=8) as ex:
-            futs = {ex.submit(_compute_er_stats, s): i for i, s in enumerate(_ER_PORTFOLIO)}
-            for f in as_completed(futs):
-                results[futs[f]] = f.result()
-        return [r for r in results if r]
-    data, ts = _get_cached("er", _fn, CACHE_TTL["er"])
+    data, ts = _get_cached("er", _compute_er, CACHE_TTL["er"])
     return JSONResponse({"stocks": data, "cached_at": _fmt_age(ts)})
 
 
