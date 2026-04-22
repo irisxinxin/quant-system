@@ -9,6 +9,8 @@ output/
 !output/review_notes.json
 !output/sig_klines/
 !output/sig_klines/*.json
+!output/klines/
+!output/klines/*.json
 *.log
 .env
 *.pkl

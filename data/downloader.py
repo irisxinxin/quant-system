@@ -4,6 +4,7 @@ data/downloader.py — 统一数据下载 + 本地缓存
 所有模块调用 get_prices() / get_ohlcv() / get_multi()，不直接用 yfinance/requests
 """
 import os
+import json
 import time
 import pickle
 import hashlib
@@ -21,6 +22,9 @@ import yfinance as yf
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import CACHE_DIR, DATA_START, DATA_END, CACHE_EXPIRE_H
+
+# 本地预存基线目录（已 commit 到 git，冷启动时用）
+_KLINES_DIR = Path(__file__).parent.parent / "output" / "klines"
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +93,29 @@ def _save(path: Path, obj) -> None:
 def _load(path: Path):
     with open(path, "rb") as f:
         return pickle.load(f)
+
+
+def _load_baseline(ticker: str, start: str) -> pd.DataFrame:
+    """
+    从 output/klines/{TICKER}.json 加载预存基线数据。
+    冷启动时 pickle 缓存为空，先从 git-committed JSON 读取历史，再只拉增量。
+    """
+    p = _KLINES_DIR / f"{ticker.upper()}.json"
+    if not p.exists():
+        return pd.DataFrame()
+    try:
+        records = json.loads(p.read_text(encoding="utf-8"))
+        if not records:
+            return pd.DataFrame()
+        df = pd.DataFrame(records)
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.set_index("date").sort_index()
+        # 只保留 start 之后的数据（与 pickle 缓存的 cache_key 保持一致）
+        df = df[df.index >= pd.Timestamp(start)]
+        return df
+    except Exception as e:
+        logger.warning(f"[klines baseline] {ticker}: {e}")
+        return pd.DataFrame()
 
 
 # ─────────────────────────────────────────────
@@ -293,6 +320,20 @@ def get_ohlcv(
         except Exception as e:
             logger.warning(f"[cache load err] {ticker}: {e}")
             existing = None
+
+    # pickle miss → 尝试本地预存 JSON baseline（git-committed，冷启动免全量下载）
+    if existing is None:
+        baseline = _load_baseline(ticker, start)
+        if not baseline.empty:
+            last_date = baseline.index[-1].date()
+            if last_date >= _last_trading_date():
+                # baseline 已是最新，直接提升为 pickle 缓存并返回
+                _save(cpath, baseline)
+                logger.debug(f"[baseline] {ticker} already fresh, promoted to cache")
+                return baseline
+            fetch_from = (baseline.index[-1] + timedelta(days=1)).strftime("%Y-%m-%d")
+            existing = baseline
+            logger.debug(f"[baseline] {ticker} loaded from local JSON, delta from {fetch_from}")
 
     logger.info(f"[download OHLCV] {ticker} from {fetch_from}")
     new_df = _download_ohlcv(ticker, fetch_from, end_str)
