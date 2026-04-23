@@ -1158,8 +1158,34 @@ _ER_PORTFOLIO = [
 ]
 
 
+def _load_top3_for(ticker: str):
+    """从 top3_strategies.csv 读取某股票的 top3 策略"""
+    try:
+        import pandas as pd
+        path = Path(__file__).parent / "output" / "top3_strategies.csv"
+        if not path.exists():
+            return []
+        df = pd.read_csv(path)
+        rows = df[df["ticker"] == ticker].sort_values("rank").head(3)
+        out = []
+        for _, r in rows.iterrows():
+            out.append({
+                "entry":    r["entry"],
+                "cta":      r["cta"],
+                "exit":     r["exit"],
+                "score":    round(float(r["score"]), 2),
+                "win_rate": round(float(r["win_rate"]), 0),
+                "cagr_1y":  round(float(r["cagr_1y"]), 0),
+                "dd_1y":    round(float(r["dd_1y"]), 0),
+                "ret_3m":   round(float(r["ret_3m"]), 0),
+            })
+        return out
+    except Exception:
+        return []
+
+
 def _compute_er_stats(s):
-    """计算持仓股票的实时价格 + 信号 + 盈亏"""
+    """计算持仓股票的实时价格 + 信号 + 盈亏 + 左右侧买点 + Top3策略"""
     import math
     from data.downloader import get_ohlcv
     ticker = s["ticker"]
@@ -1167,18 +1193,33 @@ def _compute_er_stats(s):
         df = get_ohlcv(ticker, start="2025-01-01")
         if df.empty:
             return {**s, "cur": None, "chg_1d": None, "gain_pct": None,
-                    "vs_ema20": None, "vs_ma200": None, "signals": []}
+                    "vs_ema20": None, "vs_ma200": None, "signals": [],
+                    "top3": [], "atr_pct": None, "plan": None}
         close = df["Close"]
+        high, low = df["High"], df["Low"]
         cur   = float(close.iloc[-1])
         chg   = float(close.pct_change().iloc[-1] * 100)
         ema10 = float(close.ewm(span=10,  adjust=False).mean().iloc[-1])
         ema20 = float(close.ewm(span=20,  adjust=False).mean().iloc[-1])
+        ema60_s = close.ewm(span=60, adjust=False).mean()
+        ema60 = float(ema60_s.iloc[-1])
         ma200_s = close.rolling(200).mean()
         ma200 = float(ma200_s.iloc[-1]) if len(close) >= 200 and not math.isnan(ma200_s.iloc[-1]) else None
         recent_high = float(close.iloc[-21:-1].max()) if len(close) > 21 else None
+        recent_low  = float(close.iloc[-21:-1].min()) if len(close) > 21 else None
+
+        # ATR (14日) 用于止损 & 目标位
+        tr = (high - low).to_frame("tr1").assign(
+            tr2=(high - close.shift()).abs(),
+            tr3=(low - close.shift()).abs()
+        ).max(axis=1)
+        atr = float(tr.rolling(14).mean().iloc[-1]) if len(tr) >= 14 else None
+        atr_pct = (atr / cur * 100) if atr else None
+
         vs_ema20 = (cur - ema20) / ema20 * 100
         vs_ma200 = (cur - ma200) / ma200 * 100 if ma200 else None
         gain_pct = (cur - s["entry"]) / s["entry"] * 100 if s.get("entry") else None
+
         signals = []
         if s["tier"] != "出场":
             if recent_high and cur >= recent_high * 0.97:
@@ -1189,18 +1230,73 @@ def _compute_er_stats(s):
                 signals.append("↩️ 回踩EMA10")
             if ma200 and abs(vs_ma200) <= 3.0:
                 signals.append("⭐ 近MA200")
+
+        # ── 左/右侧买点 plan ─────────────────────────────
+        plan = None
+        if s["tier"] != "出场" and atr and atr_pct:
+            # 仓位建议：根据 ATR%
+            if atr_pct >= 8:    size_sugg = "1/4"
+            elif atr_pct >= 5:  size_sugg = "1/3"
+            else:               size_sugg = "1/2"
+
+            # 右侧买点（动量/突破）
+            if recent_high and cur >= recent_high * 0.95:
+                # 已接近/突破前高 → 右侧追高
+                right_entry = round(max(cur, recent_high) * 1.005, 2)
+                right_note  = "突破前高追入"
+            else:
+                # 回踩 EMA20 右侧
+                right_entry = round(ema20, 2)
+                right_note  = "回踩EMA20接回"
+            right_sl = round(right_entry - atr * 2.0, 2)  # -2 ATR 止损
+            right_sl_pct = round((right_sl - right_entry) / right_entry * 100, 1)
+
+            # 左侧买点（回调抄底）
+            if ma200 and cur > ma200 * 1.05:
+                # 在 MA200 上方明显位置 → 左侧等回踩 EMA60 或 -10% 回调
+                left_entry = round(max(ema60, cur * 0.90), 2)
+                left_note  = "回踩EMA60/-10%分批"
+            elif ma200:
+                # 接近或下方 MA200 → 左侧等 MA200 确认
+                left_entry = round(ma200 * 1.01, 2)
+                left_note  = "站上MA200确认"
+            else:
+                # 数据不足 → 回踩近期低点
+                left_entry = round(recent_low, 2) if recent_low else round(cur * 0.90, 2)
+                left_note  = "回踩近期支撑分批"
+            left_sl = round(left_entry - atr * 2.0, 2)
+            left_sl_pct = round((left_sl - left_entry) / left_entry * 100, 1)
+
+            # 目标位（基于当前 + ATR 倍数）
+            levels = [round(cur * (1 + k), 2) for k in (0.05, 0.10, 0.20, 0.30)]
+
+            plan = {
+                "size":  size_sugg,
+                "right": {"entry": right_entry, "sl": right_sl, "sl_pct": right_sl_pct,
+                          "dist_pct": round((right_entry - cur) / cur * 100, 1),
+                          "note": right_note},
+                "left":  {"entry": left_entry, "sl": left_sl, "sl_pct": left_sl_pct,
+                          "dist_pct": round((left_entry - cur) / cur * 100, 1),
+                          "note": left_note},
+                "levels": levels,
+            }
+
         return {
             **s,
             "cur":      round(cur, 2),
             "chg_1d":   round(chg, 1),
-            "gain_pct": round(gain_pct, 1),
+            "gain_pct": round(gain_pct, 1) if gain_pct is not None else None,
             "vs_ema20": round(vs_ema20, 1),
             "vs_ma200": round(vs_ma200, 1) if vs_ma200 is not None else None,
+            "atr_pct":  round(atr_pct, 1) if atr_pct else None,
             "signals":  signals,
+            "top3":     _load_top3_for(ticker),
+            "plan":     plan,
         }
     except Exception:
         return {**s, "cur": None, "chg_1d": None, "gain_pct": None,
-                "vs_ema20": None, "vs_ma200": None, "signals": []}
+                "vs_ema20": None, "vs_ma200": None, "signals": [],
+                "top3": [], "atr_pct": None, "plan": None}
 
 
 def _compute_er():

@@ -2303,7 +2303,6 @@ async function loadER(){
 
 function renderERGroups(stocks){
   const tiers = ['核心','主仓','中仓','观察','出场'];
-  const gainColor = v => v==null?'var(--text3)':v>=0?'#4ade80':'#f87171';
   let html = '';
   for(const tier of tiers){
     const rows = stocks.filter(s=>s.tier===tier);
@@ -2311,51 +2310,105 @@ function renderERGroups(stocks){
     const tc = ER_TIER_COLOR[tier]||'#888';
     const totalPct = rows.reduce((a,s)=>a+(s.size_pct||0),0).toFixed(1);
     html += `
-    <div style="margin-bottom:20px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <span style="font-size:11px;font-weight:700;color:${tc};letter-spacing:.06em;text-transform:uppercase">${tier}</span>
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:12px;font-weight:700;color:${tc};letter-spacing:.06em;text-transform:uppercase">${tier}</span>
         ${tier!=='出场'?`<span style="font-size:11px;color:var(--text3)">合计仓位 ${totalPct}%</span>`:''}
       </div>
-      <div style="overflow-x:auto">
-      <table class="tbl" style="width:100%">
-        <thead><tr>
-          <th class="tl">股票</th>
-          <th class="tl">板块</th>
-          ${tier!=='出场'?'<th>仓位</th>':''}
-          <th>现价</th>
-          <th>今日</th>
-          <th>入场价</th>
-          <th>浮盈</th>
-          <th>距EMA20</th>
-          <th class="tl">策略</th>
-          <th class="tl">信号</th>
-        </tr></thead>
-        <tbody>
-        ${rows.map(s=>{
-          const hasSig = s.signals&&s.signals.length;
-          const rowBg = hasSig&&tier!=='出场' ? `background:rgba(52,211,153,0.05);border-left:2px solid #34d399` : (tier==='出场'?'opacity:0.55':'');
-          const gainPct = s.gain_pct;
-          const strat = (s.strategy||'').replace(/\+/g,' + ');
-          return `<tr class="clickable" onclick="loadERChart('${s.ticker}')" title="点击查看K线" style="${rowBg}">
-            <td class="tl">
-              <span style="font-weight:700;color:${tc}">${s.ticker}</span>
-            </td>
-            <td class="tl"><span style="font-size:11px;color:var(--text3)">${s.sector||''}</span></td>
-            ${tier!=='出场'?`<td><span style="font-size:12px;font-weight:600;color:${tc}">${s.size_pct}%</span></td>`:''}
-            <td style="font-weight:600">${s.cur!=null?'$'+s.cur:'—'}</td>
-            <td style="color:${gainColor(s.chg_1d)}">${s.chg_1d!=null?(s.chg_1d>0?'+':'')+s.chg_1d+'%':'—'}</td>
-            <td style="color:var(--text3);font-size:12px">$${s.entry}</td>
-            <td style="color:${gainColor(gainPct)};font-weight:600">${gainPct!=null?(gainPct>0?'+':'')+gainPct+'%':'—'}</td>
-            <td style="color:${gainColor(s.vs_ema20)}">${s.vs_ema20!=null?(s.vs_ema20>0?'+':'')+s.vs_ema20+'%':'—'}</td>
-            <td class="tl"><span style="font-size:10px;color:var(--text3);font-family:monospace">${strat}</span></td>
-            <td class="tl">${hasSig?s.signals.map(sg=>`<span style="font-size:10px;background:rgba(52,211,153,.12);color:#6ee7b7;border:1px solid rgba(52,211,153,.25);border-radius:3px;padding:1px 5px;margin-right:3px;white-space:nowrap">${sg}</span>`).join(''):'<span style="color:var(--text3);font-size:11px">—</span>'}</td>
-          </tr>`;
-        }).join('')}
-        </tbody>
-      </table></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:10px">
+        ${rows.map(s=>renderERCard(s, tier, tc)).join('')}
+      </div>
     </div>`;
   }
   $('er-body').innerHTML = html || '<div style="color:var(--text3);padding:24px">暂无数据</div>';
+}
+
+function renderERCard(s, tier, tc){
+  const gainColor = v => v==null?'var(--text3)':v>=0?'#4ade80':'#f87171';
+  const hasSig = s.signals && s.signals.length;
+  const isExit = tier === '出场';
+  const gainPct = s.gain_pct;
+  const curColor = gainColor(s.chg_1d);
+  const cardBorder = hasSig && !isExit ? 'rgba(52,211,153,0.45)' : 'var(--border)';
+  const cardOpacity = isExit ? '0.55' : '1';
+
+  const top3Html = (s.top3||[]).map((t,i)=>{
+    const stratStr = `${t.entry}+${t.cta}+${t.exit}`;
+    const cagrColor = t.cagr_1y>=50?'#4ade80':(t.cagr_1y>=0?'#facc15':'#f87171');
+    return `<div style="display:flex;gap:6px;align-items:center;padding:3px 0;font-size:10px;font-family:monospace">
+      <span style="color:${tc};font-weight:700;min-width:14px">#${i+1}</span>
+      <span style="color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${stratStr}</span>
+      <span style="color:var(--text3)">win ${t.win_rate}%</span>
+      <span style="color:${cagrColor}">cagr ${t.cagr_1y>=0?'+':''}${t.cagr_1y}%</span>
+      <span style="color:#f87171">DD ${t.dd_1y}%</span>
+    </div>`;
+  }).join('');
+
+  let planHtml = '';
+  if(s.plan && !isExit){
+    const p = s.plan;
+    const rightHtml = `
+      <div style="padding:7px 10px;background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.22);border-radius:6px">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px;flex-wrap:wrap">
+          <span style="font-size:10px;color:#4ade80;font-weight:700">📈 右侧</span>
+          <span style="font-size:13px;font-weight:700;color:#4ade80">$${p.right.entry}</span>
+          <span style="font-size:10px;color:var(--text3)">${p.right.dist_pct>=0?'+':''}${p.right.dist_pct}%</span>
+          <span style="flex:1"></span>
+          <span style="font-size:10px;color:#f87171">SL $${p.right.sl} (${p.right.sl_pct}%)</span>
+        </div>
+        <div style="font-size:10px;color:var(--text3)">${p.right.note}</div>
+      </div>`;
+    const leftHtml = `
+      <div style="padding:7px 10px;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.22);border-radius:6px;margin-top:5px">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px;flex-wrap:wrap">
+          <span style="font-size:10px;color:#38bdf8;font-weight:700">📉 左侧</span>
+          <span style="font-size:13px;font-weight:700;color:#38bdf8">$${p.left.entry}</span>
+          <span style="font-size:10px;color:var(--text3)">${p.left.dist_pct>=0?'+':''}${p.left.dist_pct}%</span>
+          <span style="flex:1"></span>
+          <span style="font-size:10px;color:#f87171">SL $${p.left.sl} (${p.left.sl_pct}%)</span>
+        </div>
+        <div style="font-size:10px;color:var(--text3)">${p.left.note}</div>
+      </div>`;
+    const levelsStr = (p.levels||[]).map(l=>`$${l}`).join(' · ');
+    const metaHtml = `
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:10px;color:var(--text3);flex-wrap:wrap">
+        <span>💰 仓位 <b style="color:var(--text2)">${p.size}</b></span>
+        <span>ATR <b style="color:var(--text2)">${s.atr_pct}%</b></span>
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🎯 ${levelsStr}</span>
+      </div>`;
+    planHtml = rightHtml + leftHtml + metaHtml;
+  }
+
+  const sigHtml = hasSig ? `
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">
+      ${s.signals.map(sg=>`<span style="font-size:10px;background:rgba(52,211,153,.12);color:#6ee7b7;border:1px solid rgba(52,211,153,.25);border-radius:3px;padding:1px 6px">${sg}</span>`).join('')}
+    </div>`:'';
+
+  return `
+  <div class="card clickable" onclick="loadERChart('${s.ticker}')" style="padding:12px 14px;border:1px solid ${cardBorder};opacity:${cardOpacity};transition:border .15s" title="点击查看K线">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-size:17px;font-weight:800;color:${tc};letter-spacing:-.02em">${s.ticker}</span>
+      ${!isExit?`<span style="font-size:11px;font-weight:600;color:${tc};background:${tc}22;border:1px solid ${tc}55;border-radius:4px;padding:1px 6px">${s.size_pct}%</span>`:''}
+      <span style="font-size:10px;color:var(--text3)">${s.sector||''}</span>
+      <span style="flex:1"></span>
+      <span style="font-size:15px;font-weight:700;color:var(--text)">${s.cur!=null?'$'+s.cur:'—'}</span>
+      <span style="font-size:11px;color:${curColor}">${s.chg_1d!=null?(s.chg_1d>=0?'▲':'▼')+Math.abs(s.chg_1d)+'%':''}</span>
+    </div>
+    <div style="display:flex;gap:12px;font-size:11px;color:var(--text3);margin-bottom:8px;flex-wrap:wrap">
+      ${s.entry?`<span>入场 <b style="color:var(--text2)">$${s.entry}</b></span>`:''}
+      ${gainPct!=null?`<span>浮盈 <b style="color:${gainColor(gainPct)}">${gainPct>=0?'+':''}${gainPct}%</b></span>`:''}
+      <span>EMA20 ${s.vs_ema20!=null?`<b style="color:${gainColor(s.vs_ema20)}">${s.vs_ema20>=0?'+':''}${s.vs_ema20}%</b>`:'—'}</span>
+      ${s.vs_ma200!=null?`<span>MA200 <b style="color:${gainColor(s.vs_ma200)}">${s.vs_ma200>=0?'+':''}${s.vs_ma200}%</b></span>`:''}
+    </div>
+    ${planHtml}
+    ${sigHtml}
+    ${(s.top3||[]).length?`
+    <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(139,148,158,.12)">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:3px;letter-spacing:.04em">TOP 3 策略</div>
+      ${top3Html}
+    </div>`:''}
+    ${s.note?`<div style="margin-top:8px;font-size:11px;color:var(--text2);line-height:1.5">${s.note}</div>`:''}
+  </div>`;
 }
 
 async function loadERChart(ticker){
