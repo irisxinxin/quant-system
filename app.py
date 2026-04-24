@@ -1138,15 +1138,15 @@ _ER_PORTFOLIO = [
     {"ticker":"MRVL", "tier":"中仓", "size_pct":4.5,  "sector":"光子/DSP",     "entry":139.69,"strategy":"bb_lo+combo+ma_x",          "note":"800G/1.6T DSP核心供应商"},
     {"ticker":"AAOI", "tier":"中仓", "size_pct":4.5,  "sector":"光模块",       "entry":159.42,"strategy":"ema20_dip+obv+soxx+rsi_fade","note":"27年指引若兑现→250-300B市值弹性"},
     {"ticker":"GFS",  "tier":"中仓", "size_pct":4.0,  "sector":"硅光代工",     "entry":54.75, "strategy":"mfi_os+combo+rsi80",         "note":"12英寸SiPh先发2年，24x PE低估值"},
-    {"ticker":"VRT",  "tier":"观察", "size_pct":2.9,  "sector":"AI电力",       "entry":307.34,"strategy":"ema20_dip+soft+rsi80",       "note":"订单+109% YoY，AI数据中心散热核心"},
     {"ticker":"FORM", "tier":"观察", "size_pct":2.9,  "sector":"光学测试",     "entry":137.21,"strategy":"bb_lo+soxx+ma_x",            "note":"CPO探针台，1Y_DD仅-4.1%"},
     {"ticker":"ARM",  "tier":"观察", "size_pct":2.0,  "sector":"半导体IP",     "entry":166.73,"strategy":"ema20_dip+obv+none+rsi_fade","note":"CPU链预期差标的，先建仓后研究"},
     {"ticker":"AEHR", "tier":"观察", "size_pct":2.0,  "sector":"半导体测试",   "entry":83.86, "strategy":"rsi28+soxx+rsi80",           "note":"光芯片测试设备，注意历史DD-71.9%"},
     {"ticker":"ASX",  "tier":"观察", "size_pct":2.0,  "sector":"半导体封测",   "entry":28.59, "strategy":"ma5200+soxx+trail_8",        "note":"日月光半导体，1Y策略+212%，Calmar 15"},
-    {"ticker":"POET", "tier":"观察", "size_pct":1.8,  "sector":"光电集成",     "entry":7.26,  "strategy":"ema_cross+none+ma_x",        "note":"CPO Layer5光电集成期权"},
     # A股持仓（仅东山精密）
     {"ticker":"002384.SZ","tier":"观察", "size_pct":0,   "sector":"A股·光模块+PCB", "entry":None,"strategy":"—","note":"东山精密｜索尔思光模块+EML芯片，Q1净利+119-152%"},
     # 止盈出场
+    {"ticker":"VRT",  "tier":"出场", "size_pct":0.0,  "sector":"AI电力",       "entry":307.34,"strategy":"ema20_dip+soft+rsi80",       "note":"⚡止盈 04-23，与POET合计约5%"},
+    {"ticker":"POET", "tier":"出场", "size_pct":0.0,  "sector":"光电集成",     "entry":7.26,  "strategy":"ema_cross+none+ma_x",        "note":"⚡止盈 04-23，与VRT合计约5%"},
     {"ticker":"MU",   "tier":"出场", "size_pct":0.0,  "sector":"存储/DRAM",    "entry":455.07,"strategy":"bb_lo+none+rsi80",          "note":"⚡止盈转DRAM 04-20"},
     {"ticker":"TSEM", "tier":"出场", "size_pct":0.0,  "sector":"硅光代工",     "entry":226.45,"strategy":"ma5200+soxx+trail_12",      "note":"⚡止盈 04-20，GFS专利起诉降权"},
     {"ticker":"LMND", "tier":"出场", "size_pct":0.0,  "sector":"金融科技",     "entry":70.94, "strategy":"—",                        "note":"⚡止盈 04-20，保险/模型不符"},
