@@ -1133,7 +1133,7 @@ _ER_PORTFOLIO = [
     # tier: 核心 / 主仓 / 中仓 / 观察 / 出场
     {"ticker":"LITE", "tier":"核心", "size_pct":19.1, "sector":"激光器/光模块","entry":894.07,"strategy":"ema2060+soxx+obv_down",     "note":"EML拿单≥70%，订单至2027+"},
     {"ticker":"COHR", "tier":"核心", "size_pct":19.7, "sector":"激光器/光模块","entry":345.02,"strategy":"ema20_dip+none+rsi_fade",    "note":"CPO激光源+SiC双赛道"},
-    {"ticker":"DRAM", "tier":"主仓", "size_pct":6.0,  "sector":"存储",         "entry":35.59, "strategy":"待优化(数据不足)",           "note":"MU止盈后转入，长协重新定价催化"},
+    {"ticker":"DRAM", "tier":"主仓", "size_pct":10.0, "sector":"存储",         "entry":35.59, "strategy":"待优化(数据不足)",           "note":"MU止盈后转入，长协重新定价催化（加仓至10%）"},
     {"ticker":"ALAB", "tier":"主仓", "size_pct":5.0,  "sector":"CPU/互联芯片", "entry":174.05,"strategy":"vol_surge+combo+obv_down",  "note":"CPU供需失衡乘数效应最强，弹性>ARM>AMD"},
     {"ticker":"MRVL", "tier":"中仓", "size_pct":4.5,  "sector":"光子/DSP",     "entry":139.69,"strategy":"bb_lo+combo+ma_x",          "note":"800G/1.6T DSP核心供应商"},
     {"ticker":"AAOI", "tier":"中仓", "size_pct":4.5,  "sector":"光模块",       "entry":159.42,"strategy":"ema20_dip+obv+soxx+rsi_fade","note":"27年指引若兑现→250-300B市值弹性"},
