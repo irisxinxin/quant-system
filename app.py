@@ -1139,7 +1139,7 @@ _ER_PORTFOLIO = [
     {"ticker":"AAOI", "tier":"中仓", "size_pct":5.0,  "sector":"光模块",       "entry":159.42,"strategy":"ema20_dip+obv+soxx+rsi_fade","note":"27年指引若兑现→250-300B市值弹性（04-25加仓+0.5%）"},
     {"ticker":"GFS",  "tier":"中仓", "size_pct":4.0,  "sector":"硅光代工",     "entry":54.75, "strategy":"mfi_os+combo+rsi80",         "note":"12英寸SiPh先发2年，24x PE低估值"},
     {"ticker":"FORM", "tier":"观察", "size_pct":2.9,  "sector":"光学测试",     "entry":137.21,"strategy":"bb_lo+soxx+ma_x",            "note":"CPO探针台，1Y_DD仅-4.1%"},
-    {"ticker":"ARM",  "tier":"观察", "size_pct":2.0,  "sector":"半导体IP",     "entry":166.73,"strategy":"ema20_dip+obv+none+rsi_fade","note":"CPU链预期差标的，先建仓后研究"},
+    {"ticker":"ARM",  "tier":"中仓", "size_pct":5.0,  "sector":"半导体IP",     "entry":166.73,"strategy":"ema20_dip+obv+none+rsi_fade","note":"CPU链预期差标的（04-26 加仓 2%→5%，升中仓）"},
     {"ticker":"AMD",  "tier":"观察", "size_pct":1.0,  "sector":"CPU/GPU",      "entry":347.80,"strategy":"ema_cross+soft+cmf_neg",       "note":"04-25 建1%观察仓"},
     {"ticker":"AEHR", "tier":"观察", "size_pct":2.0,  "sector":"半导体测试",   "entry":83.86, "strategy":"rsi28+soxx+rsi80",           "note":"光芯片测试设备，注意历史DD-71.9%"},
     {"ticker":"ASX",  "tier":"观察", "size_pct":2.0,  "sector":"半导体封测",   "entry":28.59, "strategy":"ma5200+soxx+trail_8",        "note":"日月光半导体，1Y策略+212%，Calmar 15"},
