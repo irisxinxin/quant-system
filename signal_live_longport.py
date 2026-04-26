@@ -39,15 +39,31 @@ except ImportError:
 # 配置
 # ═══════════════════════════════════════════════════════════════════════
 
-# 监测股票 (LongPort 美股代码加 .US 后缀)
-TICKERS = {
-    "IREN.US":  {"entry_slip": 0.0015, "desc": "BTC挖矿小盘"},
-    "OKLO.US":  {"entry_slip": 0.0015, "desc": "核能小盘"},
-    "CIFR.US":  {"entry_slip": 0.0015, "desc": "BTC挖矿小盘"},
-    "EOSE.US":  {"entry_slip": 0.0025, "desc": "储能超小盘"},
-    "AMD.US":   {"entry_slip": 0.0003, "desc": "半导体大盘"},
-    "AMZN.US":  {"entry_slip": 0.0002, "desc": "超大盘"},
-}
+# 监测股票 — 从 signals.orb_strategy 同步配置
+# 默认监测核心 9 只 (高胜率 ≥ 64%); 改环境变量 ORB_TICKERS 可自定义
+sys.path.insert(0, str(Path(__file__).parent))
+try:
+    from signals.orb_strategy import CORE_PORTFOLIO, TICKER_CONFIG
+    _custom = os.environ.get("ORB_TICKERS", "").strip()
+    _watch = _custom.split(",") if _custom else CORE_PORTFOLIO
+    TICKERS = {
+        sym: {"entry_slip": TICKER_CONFIG[sym]["entry_slip"],
+              "desc": TICKER_CONFIG[sym]["category"]}
+        for sym in _watch if sym in TICKER_CONFIG
+    }
+except ImportError:
+    # fallback: 写死核心 9 只
+    TICKERS = {
+        "AMZN.US": {"entry_slip": 0.0002, "desc": "超大盘"},
+        "PLTR.US": {"entry_slip": 0.0003, "desc": "AI大盘"},
+        "RKLB.US": {"entry_slip": 0.0008, "desc": "太空小盘"},
+        "IREN.US": {"entry_slip": 0.0015, "desc": "BTC挖矿小盘"},
+        "INTC.US": {"entry_slip": 0.0003, "desc": "半导体大盘"},
+        "TSLL.US": {"entry_slip": 0.0005, "desc": "2x多 TSLA"},
+        "TSLZ.US": {"entry_slip": 0.0008, "desc": "2x空 TSLA"},
+        "SOXL.US": {"entry_slip": 0.0003, "desc": "3x多 半导体"},
+        "SOXS.US": {"entry_slip": 0.0005, "desc": "3x空 半导体"},
+    }
 
 # 策略参数
 OR_BARS = 3                         # 3 根 5m K 线 = 15 分钟 OR
@@ -173,8 +189,35 @@ def now_str() -> str:
     return f"{datetime.now(ET).strftime('%H:%M:%S ET')} / {datetime.now(SGT).strftime('%H:%M:%S SGT')}"
 
 
+def send_telegram(title: str, body: str, silent: bool = False):
+    """发送 Telegram 通知 (手机推送, 极稳)"""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        return  # 未配置 Telegram, 跳过
+
+    try:
+        import urllib.request
+        import urllib.parse
+        msg = f"<b>{title}</b>\n\n<pre>{body}</pre>"
+        data = urllib.parse.urlencode({
+            "chat_id": chat_id,
+            "text": msg,
+            "parse_mode": "HTML",
+            "disable_notification": "true" if silent else "false",
+        }).encode()
+        req = urllib.request.Request(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data=data,
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as e:
+        print(f"   ⚠️ Telegram 发送失败: {e}")
+
+
 def alert(title: str, body: str, strong: bool = True):
-    """终端打印 + 响铃 + macOS 通知"""
+    """终端打印 + 响铃 + macOS 通知 + Telegram 推送"""
     print(f"\n{'═' * 70}")
     print(title)
     print(body)
@@ -186,11 +229,14 @@ def alert(title: str, body: str, strong: bool = True):
             sound = "Glass"
             subprocess.run(
                 ["osascript", "-e",
-                 f'display notification "{body}" with title "{title}" sound name "{sound}"'],
+                 f'display notification "{body[:200]}" with title "{title}" sound name "{sound}"'],
                 capture_output=True, timeout=3,
             )
         except Exception:
             pass
+
+    # Telegram: 强信号默认有声推送, 弱信号静默 (避免半夜被吵)
+    send_telegram(title, body, silent=not strong)
 
 
 def log_event(payload: dict):
@@ -315,6 +361,16 @@ def main():
 
     log_event({"event": "session_start", "tickers": symbols})
 
+    # 开机 Telegram 通知 (确认 bot 在线)
+    send_telegram(
+        "🟢 ORB 信号机启动",
+        f"时间: {now_str()}\n"
+        f"监测 {len(symbols)} 只:\n  {' / '.join(s.replace('.US','') for s in symbols)}\n\n"
+        f"OR 形成: 9:30-9:45 ET (21:30-21:45 SGT)\n"
+        f"今日有信号会推送到这里",
+        silent=True,
+    )
+
     # 主循环：定期打印心跳 + 检查是否到收盘
     last_status_print = time.time()
     try:
@@ -366,6 +422,18 @@ def main():
             print(f"   {sym:<10} ❌ OR 未形成 (数据不足)")
 
     log_event({"event": "session_end"})
+
+    # 收盘 Telegram 汇总
+    triggered = [s for s, st in states.items() if st.breakout_alerted]
+    narrow = [s for s, st in states.items() if st.too_narrow]
+    no_break = [s for s, st in states.items() if st.or_formed and not st.too_narrow and not st.breakout_alerted]
+    summary = f"⏰ 当日结束: {now_str()}\n\n"
+    summary += f"🚀 触发: {len(triggered)} 只"
+    if triggered: summary += f"\n  {', '.join(s.replace('.US','') for s in triggered)}"
+    summary += f"\n➖ 未突破: {len(no_break)} 只"
+    summary += f"\n⚪ OR 过窄: {len(narrow)} 只"
+    summary += "\n\n请检查 paper 账户成交情况, 03:55 SGT 前手动平仓未触发的"
+    send_telegram("📊 ORB 当日汇总", summary, silent=True)
 
 
 if __name__ == "__main__":
