@@ -184,6 +184,57 @@ class TickerState:
 
 states = {symbol: TickerState(symbol) for symbol in TICKERS}
 
+# 历史回测指标 (启动时一次性计算, 信号触发时附加到消息中)
+HISTORICAL_STATS = {}
+
+
+def compute_historical_stats():
+    """启动时算一次每只票的 18 月历史回测指标"""
+    try:
+        from signals.orb_strategy import (
+            backtest_signals_history, summary_stats, TICKER_CONFIG as TC
+        )
+    except ImportError:
+        return
+
+    print("\n📊 计算 18 月历史回测指标...")
+    for sym in TICKERS:
+        try:
+            trades = backtest_signals_history(sym)
+            stats = summary_stats(trades) if not trades.empty else {}
+            cfg = TC.get(sym, {})
+            HISTORICAL_STATS[sym] = {
+                "stats": stats,
+                "score": cfg.get("score", 3),
+                "category": cfg.get("category", ""),
+                "suitable": cfg.get("suitable_intraday", True),
+            }
+            print(f"   {sym:<10} 胜率 {stats.get('positive_pct', 0):>4.1f}%  "
+                  f"累计 {stats.get('cumulative_return_pct', 0):>+7.1f}%  "
+                  f"PF {stats.get('profit_factor', 0):<5}  "
+                  f"交易 {stats.get('trades', 0):>3}笔")
+        except Exception as e:
+            print(f"   {sym:<10} ⚠️ 计算失败: {e}")
+            HISTORICAL_STATS[sym] = None
+
+
+def format_historical_section(symbol):
+    """生成信号附加的"历史表现"段落"""
+    h = HISTORICAL_STATS.get(symbol)
+    if not h or not h.get("stats"):
+        return ""
+    s = h["stats"]
+    score_label = {1: "🎯 核心 (高胜率)", 2: "✅ 次要", 3: "⚠️ 不推荐"}.get(h["score"], "")
+    return (
+        f"\n📈 历史表现 (18 月回测):\n"
+        f"   日内胜率: {s.get('positive_pct', 0):.1f}%\n"
+        f"   累计收益: {s.get('cumulative_return_pct', 0):+.1f}%\n"
+        f"   盈亏比 PF: {s.get('profit_factor', 0)}\n"
+        f"   交易笔数: {s.get('trades', 0)}\n"
+        f"   平均盈/亏: +{s.get('avg_win_pct', 0)}% / {s.get('avg_loss_pct', 0)}%\n"
+        f"   评级: {score_label}"
+    )
+
 
 def now_str() -> str:
     return f"{datetime.now(ET).strftime('%H:%M:%S ET')} / {datetime.now(SGT).strftime('%H:%M:%S SGT')}"
@@ -292,7 +343,8 @@ def on_candlestick(symbol: str, event: PushCandlestick):
             f"   止损:  {stop:.3f}  ({risk_pct:+.2f}%)\n"
             f"   止盈:  {tp:.3f}  ({reward_pct:+.2f}%)\n"
             f"   R:R:   {TARGET_R}\n"
-            f"\n⚠️ 03:55 SGT 前手动平仓"
+            + format_historical_section(symbol) +
+            f"\n\n⚠️ 03:55 SGT 前手动平仓"
         )
         alert(title, body, strong=is_strong)
         log_event({
@@ -350,6 +402,9 @@ def main():
             print(f"   {sym:<10} 加载 {count} 根历史 K 线")
         except Exception as e:
             print(f"   ⚠️ {sym} 历史加载失败: {e}")
+
+    # 计算历史回测指标 (用于信号附加显示)
+    compute_historical_stats()
 
     # 注册回调
     ctx.set_on_candlestick(on_candlestick)
