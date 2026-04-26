@@ -60,51 +60,51 @@ KLINES_5M_DIR = Path(__file__).parent.parent / "output" / "klines_5m"
 TICKER_CONFIG = {
     # symbol: (entry_slip, stop_slip, category, score, pair, suitable_intraday)
     #
-    # score (推荐等级):
-    #   1 = 核心仓 (强推, alpha + 风险都达标)
-    #   2 = 次要仓 (alpha 显著但 PF/DD 略弱, 小仓位试)
-    #   3 = 不推荐做 ORB (Buy & Hold 跑赢策略, 直接持有)
+    # 评分标准 (基于 LongPort 18 月 5m 历史回测, 用户偏好"高胜率"):
+    #   score=1 (核心): 胜率 ≥ 65% AND PF ≥ 2.3 (或配对核心)
+    #   score=2 (次要): 胜率 ≥ 55% AND PF ≥ 1.6 AND DD <= -25%
+    #   score=3 (不推荐): 胜率 < 55% OR DD > -30% OR PF < 1.5
     #
     # suitable_intraday:
-    #   True  = 适合日内 ORB
-    #   False = 不适合日内 (建议持有, dashboard 仅供查看)
+    #   True  = 适合日内交易 (核心 + 次要)
+    #   False = 不推荐日内 (DD/胜率太差, 风险高)
     #
-    # pair: 配对反向 ETF (双向监测时用)
+    # pair: 配对反向 ETF (双向"吃两波"用)
 
-    # ── 适合日内 (核心) ──
-    "OKLO.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "核能小盘",       "score": 1, "pair": None,      "suitable_intraday": True},
-    "IREN.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",     "score": 1, "pair": None,      "suitable_intraday": True},
-    "PLTR.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "AI大盘",          "score": 1, "pair": None,      "suitable_intraday": True},
-    "AMZN.US": {"entry_slip": 0.0002, "stop_slip": 0.0005, "category": "超大盘",          "score": 1, "pair": None,      "suitable_intraday": True},
-    "RKLB.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "太空小盘",        "score": 1, "pair": None,      "suitable_intraday": True},
-    "TSLL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 TSLA",       "score": 1, "pair": "TSLZ.US", "suitable_intraday": True},
-    "TSLZ.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 TSLA",       "score": 1, "pair": "TSLL.US", "suitable_intraday": True},
-    "SOXL.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "3x多 半导体",     "score": 1, "pair": "SOXS.US", "suitable_intraday": True},
-    "SOXS.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "3x空 半导体",     "score": 1, "pair": "SOXL.US", "suitable_intraday": True},
+    # ── 🎯 核心 9 只 (高胜率: 65%+) ──
+    "AMZN.US": {"entry_slip": 0.0002, "stop_slip": 0.0005, "category": "超大盘",          "score": 1, "pair": None,      "suitable_intraday": True},   # 70% 胜率, PF 3.66
+    "PLTR.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "AI大盘",          "score": 1, "pair": None,      "suitable_intraday": True},   # 68% 胜率, PF 3.08
+    "RKLB.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "太空小盘",         "score": 1, "pair": None,      "suitable_intraday": True},   # 67% 胜率, PF 2.81
+    "IREN.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",      "score": 1, "pair": None,      "suitable_intraday": True},   # 66% 胜率, PF 2.79
+    "INTC.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",       "score": 1, "pair": None,      "suitable_intraday": True},   # 65% 胜率, PF 2.58
+    "SOXL.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "3x多 半导体",      "score": 1, "pair": "SOXS.US","suitable_intraday": True},   # 65% 胜率
+    "TSLL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 TSLA",        "score": 1, "pair": "TSLZ.US","suitable_intraday": True},   # 64% 胜率
+    "TSLZ.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 TSLA",        "score": 1, "pair": "TSLL.US","suitable_intraday": True},   # 配对 TSLL
+    "SOXS.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "3x空 半导体",      "score": 1, "pair": "SOXL.US","suitable_intraday": True},   # 配对 SOXL
 
-    # ── 适合日内 (次要, 小仓位) ──
-    "HOOD.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "券商",            "score": 2, "pair": None,      "suitable_intraday": True},
-    "CIFR.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",     "score": 2, "pair": None,      "suitable_intraday": True},
-    "EOSE.US": {"entry_slip": 0.0025, "stop_slip": 0.0050, "category": "储能超小盘",      "score": 2, "pair": None,      "suitable_intraday": True},
-    "CRWV.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI算力新IPO",     "score": 2, "pair": None,      "suitable_intraday": True},
-    "CONL.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "2x多 COIN",       "score": 2, "pair": None,      "suitable_intraday": True},
-    "NVDL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 NVDA",       "score": 2, "pair": "NVDS.US", "suitable_intraday": True},
-    "NVDS.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 NVDA",       "score": 2, "pair": "NVDL.US", "suitable_intraday": True},
-    "MSFL.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "MSFT 杠杆ETF",    "score": 2, "pair": None,      "suitable_intraday": True},
-    "MSFU.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "MSFT 杠杆ETF",    "score": 2, "pair": None,      "suitable_intraday": True},
+    # ── ✅ 次要 11 只 (胜率 55-63%, 小仓位) ──
+    "HOOD.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "券商",            "score": 2, "pair": None,      "suitable_intraday": True},   # 63% 胜率
+    "OKLO.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "核能小盘",        "score": 2, "pair": None,      "suitable_intraday": True},   # 62% 胜率
+    "NBIS.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI基建中盘",      "score": 2, "pair": None,      "suitable_intraday": True},   # 61% 胜率 (升级!)
+    "AMD.US":  {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",      "score": 2, "pair": None,      "suitable_intraday": True},   # 60% 胜率 (升级!)
+    "EOSE.US": {"entry_slip": 0.0025, "stop_slip": 0.0050, "category": "储能超小盘",       "score": 2, "pair": None,      "suitable_intraday": True},   # 60% 胜率
+    "MSFU.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "MSFT 杠杆ETF",    "score": 2, "pair": None,      "suitable_intraday": True},   # 58% 胜率
+    "CRWV.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI算力新IPO",     "score": 2, "pair": None,      "suitable_intraday": True},   # 58% 胜率
+    "CIFR.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",     "score": 2, "pair": None,      "suitable_intraday": True},   # 57% 胜率
+    "MSFL.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "MSFT 杠杆ETF",    "score": 2, "pair": None,      "suitable_intraday": True},   # 57% 胜率
+    "NVDS.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 NVDA",       "score": 2, "pair": "NVDL.US", "suitable_intraday": True},   # 56% 胜率
+    "NVDL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 NVDA",       "score": 2, "pair": "NVDS.US", "suitable_intraday": True},   # 55% 胜率
 
-    # ── 不适合日内 (B&H 跑赢, 建议持有) ──
-    "NBIS.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI基建中盘",       "score": 3, "pair": None,      "suitable_intraday": False},
-    "AMD.US":  {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",       "score": 3, "pair": None,      "suitable_intraday": False},
-    "INTC.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",       "score": 3, "pair": None,      "suitable_intraday": False},
-    "BMNR.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",     "score": 3, "pair": None,      "suitable_intraday": False},
+    # ── ❌ 不推荐 2 只 (低胜率 + 高 DD) ──
+    "CONL.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "2x多 COIN",       "score": 3, "pair": None,      "suitable_intraday": False},  # 55% + DD -33% + PF 1.48
+    "BMNR.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",     "score": 3, "pair": None,      "suitable_intraday": False},  # 50% 胜率 (抛硬币) + DD -39%
 }
 
-# 推荐核心组合 (周一 paper trade 起步) — 9 只 (含双向配对)
+# 推荐核心组合 (周一 paper trade 起步) — 9 只
 CORE_PORTFOLIO = [
-    "AMZN.US", "PLTR.US", "IREN.US", "OKLO.US", "RKLB.US",  # 单向 5 只
-    "TSLL.US", "TSLZ.US",                                     # TSLA 双向
-    "SOXL.US", "SOXS.US",                                     # 半导体双向
+    "AMZN.US", "PLTR.US", "RKLB.US", "IREN.US", "INTC.US",  # 高胜率 5 只
+    "TSLL.US", "TSLZ.US",                                     # TSLA 双向 (配对核心)
+    "SOXL.US", "SOXS.US",                                     # 半导体双向 (配对核心)
 ]
 
 
