@@ -51,6 +51,8 @@ def register_orb_routes(app: FastAPI):
                     "category": cfg.get("category", ""),
                     "score": cfg.get("score", 3),
                     "is_core": sym in CORE_PORTFOLIO,
+                    "suitable_intraday": cfg.get("suitable_intraday", False),
+                    "pair": cfg.get("pair", None),
                     "bars": len(df),
                     "first_date": df.index[0].strftime("%Y-%m-%d") if len(df) else None,
                     "last_date": df.index[-1].strftime("%Y-%m-%d") if len(df) else None,

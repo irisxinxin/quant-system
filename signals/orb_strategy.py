@@ -58,33 +58,53 @@ KLINES_5M_DIR = Path(__file__).parent.parent / "output" / "klines_5m"
 # 标的配置
 # ═══════════════════════════════════════════════════════════════════════
 TICKER_CONFIG = {
-    # symbol: (entry_slip, stop_slip, category, recommend_score, pair)
-    # recommend_score: 1=核心, 2=次要, 3=不推荐
+    # symbol: (entry_slip, stop_slip, category, score, pair, suitable_intraday)
+    #
+    # score (推荐等级):
+    #   1 = 核心仓 (强推, alpha + 风险都达标)
+    #   2 = 次要仓 (alpha 显著但 PF/DD 略弱, 小仓位试)
+    #   3 = 不推荐做 ORB (Buy & Hold 跑赢策略, 直接持有)
+    #
+    # suitable_intraday:
+    #   True  = 适合日内 ORB
+    #   False = 不适合日内 (建议持有, dashboard 仅供查看)
+    #
     # pair: 配对反向 ETF (双向监测时用)
-    "OKLO.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "核能小盘",     "score": 1, "pair": None},
-    "IREN.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",   "score": 1, "pair": None},
-    "CIFR.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",   "score": 2, "pair": None},
-    "EOSE.US": {"entry_slip": 0.0025, "stop_slip": 0.0050, "category": "储能超小盘",     "score": 2, "pair": None},
-    "PLTR.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "AI大盘",        "score": 1, "pair": None},
-    "NBIS.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI基建中盘",     "score": 3, "pair": None},
-    "AMD.US":  {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",     "score": 3, "pair": None},
-    "AMZN.US": {"entry_slip": 0.0002, "stop_slip": 0.0005, "category": "超大盘",        "score": 1, "pair": None},
-    "INTC.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",     "score": 3, "pair": None},
-    "CRWV.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI 算力新IPO",   "score": 2, "pair": None},
-    # ── 杠杆ETF 多/空 配对 (双向监测) ──
-    "TSLL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 TSLA",     "score": 1, "pair": "TSLZ.US"},
-    "TSLZ.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 TSLA",     "score": 1, "pair": "TSLL.US"},
-    "NVDL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 NVDA",     "score": 2, "pair": "NVDS.US"},
-    "NVDS.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 NVDA",     "score": 2, "pair": "NVDL.US"},
-    "SOXL.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "3x多 半导体",    "score": 2, "pair": "SOXS.US"},
-    "SOXS.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "3x空 半导体",    "score": 1, "pair": "SOXL.US"},
+
+    # ── 适合日内 (核心) ──
+    "OKLO.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "核能小盘",       "score": 1, "pair": None,      "suitable_intraday": True},
+    "IREN.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",     "score": 1, "pair": None,      "suitable_intraday": True},
+    "PLTR.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "AI大盘",          "score": 1, "pair": None,      "suitable_intraday": True},
+    "AMZN.US": {"entry_slip": 0.0002, "stop_slip": 0.0005, "category": "超大盘",          "score": 1, "pair": None,      "suitable_intraday": True},
+    "RKLB.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "太空小盘",        "score": 1, "pair": None,      "suitable_intraday": True},
+    "TSLL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 TSLA",       "score": 1, "pair": "TSLZ.US", "suitable_intraday": True},
+    "TSLZ.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 TSLA",       "score": 1, "pair": "TSLL.US", "suitable_intraday": True},
+    "SOXL.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "3x多 半导体",     "score": 1, "pair": "SOXS.US", "suitable_intraday": True},
+    "SOXS.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "3x空 半导体",     "score": 1, "pair": "SOXL.US", "suitable_intraday": True},
+
+    # ── 适合日内 (次要, 小仓位) ──
+    "HOOD.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "券商",            "score": 2, "pair": None,      "suitable_intraday": True},
+    "CIFR.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",     "score": 2, "pair": None,      "suitable_intraday": True},
+    "EOSE.US": {"entry_slip": 0.0025, "stop_slip": 0.0050, "category": "储能超小盘",      "score": 2, "pair": None,      "suitable_intraday": True},
+    "CRWV.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI算力新IPO",     "score": 2, "pair": None,      "suitable_intraday": True},
+    "CONL.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "2x多 COIN",       "score": 2, "pair": None,      "suitable_intraday": True},
+    "NVDL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 NVDA",       "score": 2, "pair": "NVDS.US", "suitable_intraday": True},
+    "NVDS.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 NVDA",       "score": 2, "pair": "NVDL.US", "suitable_intraday": True},
+    "MSFL.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "MSFT 杠杆ETF",    "score": 2, "pair": None,      "suitable_intraday": True},
+    "MSFU.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "MSFT 杠杆ETF",    "score": 2, "pair": None,      "suitable_intraday": True},
+
+    # ── 不适合日内 (B&H 跑赢, 建议持有) ──
+    "NBIS.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI基建中盘",       "score": 3, "pair": None,      "suitable_intraday": False},
+    "AMD.US":  {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",       "score": 3, "pair": None,      "suitable_intraday": False},
+    "INTC.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",       "score": 3, "pair": None,      "suitable_intraday": False},
+    "BMNR.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",     "score": 3, "pair": None,      "suitable_intraday": False},
 }
 
-# 推荐核心组合 (周一 paper trade 起步) — 含双向配对
+# 推荐核心组合 (周一 paper trade 起步) — 9 只 (含双向配对)
 CORE_PORTFOLIO = [
-    "AMZN.US", "PLTR.US", "IREN.US", "OKLO.US",     # 单向 (无反向 ETF)
-    "TSLL.US", "TSLZ.US",                            # TSLA 双向
-    "SOXL.US", "SOXS.US",                            # 半导体双向
+    "AMZN.US", "PLTR.US", "IREN.US", "OKLO.US", "RKLB.US",  # 单向 5 只
+    "TSLL.US", "TSLZ.US",                                     # TSLA 双向
+    "SOXL.US", "SOXS.US",                                     # 半导体双向
 ]
 
 

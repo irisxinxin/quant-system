@@ -3256,18 +3256,38 @@ function renderOrbTickers(){
   const items = [...orbManifest.symbols].sort((a,b)=>
     (a.score||99)-(b.score||99) ||
     (b.cumulative_return_pct||0)-(a.cumulative_return_pct||0));
-  const html = items.map(it=>{
-    const cls = it.is_core ? 'core' : (it.score===3 ? 'skip' : '');
+
+  const core = items.filter(i=>i.score===1);
+  const secondary = items.filter(i=>i.score===2);
+  const skip = items.filter(i=>i.score===3);
+
+  const renderBtn = (it)=>{
     const cum = it.cumulative_return_pct || 0;
-    const bgColor = it.is_core ? 'rgba(245,158,11,.15)' : (it.score===3 ? 'rgba(255,255,255,.04)' : 'rgba(88,166,255,.10)');
-    const borderColor = it.is_core ? 'var(--accent)' : (it.score===3 ? 'var(--border)' : 'rgba(88,166,255,.4)');
+    const bgColor = it.score===1 ? 'rgba(245,158,11,.15)' : (it.score===3 ? 'rgba(255,255,255,.04)' : 'rgba(88,166,255,.10)');
+    const borderColor = it.score===1 ? 'var(--accent)' : (it.score===3 ? 'var(--border)' : 'rgba(88,166,255,.4)');
     const opacity = it.score===3 ? '0.55' : '1';
+    const prefix = it.score===1 ? '🎯 ' : (it.score===3 ? '🏠 ' : '');
+    const pairTag = it.pair ? ` ⇄ ${it.pair.replace('.US','')}` : '';
     return `<button data-symbol="${it.symbol}" onclick="loadOrbChart('${it.symbol}')"
       style="padding:6px 12px;background:${bgColor};border:1px solid ${borderColor};border-radius:6px;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;opacity:${opacity};transition:all .15s"
-      title="${it.category} | 累计 ${cum>0?'+':''}${cum.toFixed(0)}% | 正收益率 ${it.positive_pct}%">
-      ${it.is_core?'🎯 ':''}${it.symbol.replace('.US','')}
+      title="${it.category}${pairTag} | 累计 ${cum>0?'+':''}${cum.toFixed(0)}% | 正收益率 ${it.positive_pct}% | ${it.suitable_intraday?'适合日内':'⚠️ 不适合日内 (建议持有)'}">
+      ${prefix}${it.symbol.replace('.US','')}
     </button>`;
-  }).join('');
+  };
+
+  let html = '';
+  if(core.length){
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-right:6px;font-size:11px;color:var(--accent);font-weight:700">🎯 适合日内 · 核心</div>`;
+    html += core.map(renderBtn).join('');
+  }
+  if(secondary.length){
+    html += `<div style="display:flex;align-items:center;gap:8px;margin:0 6px 0 12px;font-size:11px;color:var(--blue);font-weight:700">✅ 适合日内 · 次要</div>`;
+    html += secondary.map(renderBtn).join('');
+  }
+  if(skip.length){
+    html += `<div style="display:flex;align-items:center;gap:8px;margin:0 6px 0 12px;font-size:11px;color:var(--text3);font-weight:700">🏠 不适合日内 (建议持有)</div>`;
+    html += skip.map(renderBtn).join('');
+  }
   $('orb-tickers').innerHTML = html;
 }
 

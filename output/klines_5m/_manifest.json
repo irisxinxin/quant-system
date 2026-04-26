@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-26T17:15:23.038274",
+  "generated_at": "2026-04-26T17:23:02.316089",
   "interval": "5m",
   "source": "LongPort OpenAPI",
   "tickers": [
@@ -18,11 +18,25 @@
       "file": "AMZN.US.json"
     },
     {
+      "symbol": "BMNR.US",
+      "bars": 17268,
+      "first": "2025-06-05 11:00:00",
+      "last": "2026-04-24 15:55:00",
+      "file": "BMNR.US.json"
+    },
+    {
       "symbol": "CIFR.US",
       "bars": 28355,
       "first": "2024-11-06 10:40:00",
       "last": "2026-04-24 15:55:00",
       "file": "CIFR.US.json"
+    },
+    {
+      "symbol": "CONL.US",
+      "bars": 29291,
+      "first": "2024-10-21 10:45:00",
+      "last": "2026-04-24 15:55:00",
+      "file": "CONL.US.json"
     },
     {
       "symbol": "CRWV.US",
@@ -39,6 +53,13 @@
       "file": "EOSE.US.json"
     },
     {
+      "symbol": "HOOD.US",
+      "bars": 29291,
+      "first": "2024-10-21 10:45:00",
+      "last": "2026-04-24 15:55:00",
+      "file": "HOOD.US.json"
+    },
+    {
       "symbol": "INTC.US",
       "bars": 28355,
       "first": "2024-11-05 10:40:00",
@@ -51,6 +72,20 @@
       "first": "2024-11-06 10:40:00",
       "last": "2026-04-24 15:55:00",
       "file": "IREN.US.json"
+    },
+    {
+      "symbol": "MSFL.US",
+      "bars": 29291,
+      "first": "2024-10-21 10:50:00",
+      "last": "2026-04-24 15:55:00",
+      "file": "MSFL.US.json"
+    },
+    {
+      "symbol": "MSFU.US",
+      "bars": 29291,
+      "first": "2024-10-18 10:45:00",
+      "last": "2026-04-24 15:55:00",
+      "file": "MSFU.US.json"
     },
     {
       "symbol": "NBIS.US",
@@ -86,6 +121,13 @@
       "first": "2024-11-06 10:45:00",
       "last": "2026-04-24 15:55:00",
       "file": "PLTR.US.json"
+    },
+    {
+      "symbol": "RKLB.US",
+      "bars": 29291,
+      "first": "2024-10-21 10:40:00",
+      "last": "2026-04-24 15:55:00",
+      "file": "RKLB.US.json"
     },
     {
       "symbol": "SOXL.US",
