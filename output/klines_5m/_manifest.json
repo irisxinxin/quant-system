@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-26T16:45:48.223341",
+  "generated_at": "2026-04-26T17:15:23.038274",
   "interval": "5m",
   "source": "LongPort OpenAPI",
   "tickers": [
@@ -23,6 +23,13 @@
       "first": "2024-11-06 10:40:00",
       "last": "2026-04-24 15:55:00",
       "file": "CIFR.US.json"
+    },
+    {
+      "symbol": "CRWV.US",
+      "bars": 20907,
+      "first": "2025-03-28 13:15:00",
+      "last": "2026-04-24 15:55:00",
+      "file": "CRWV.US.json"
     },
     {
       "symbol": "EOSE.US",

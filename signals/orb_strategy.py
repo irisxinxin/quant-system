@@ -70,6 +70,7 @@ TICKER_CONFIG = {
     "AMD.US":  {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",     "score": 3, "pair": None},
     "AMZN.US": {"entry_slip": 0.0002, "stop_slip": 0.0005, "category": "超大盘",        "score": 1, "pair": None},
     "INTC.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",     "score": 3, "pair": None},
+    "CRWV.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI 算力新IPO",   "score": 2, "pair": None},
     # ── 杠杆ETF 多/空 配对 (双向监测) ──
     "TSLL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 TSLA",     "score": 1, "pair": "TSLZ.US"},
     "TSLZ.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 TSLA",     "score": 1, "pair": "TSLL.US"},
