@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.xin.orbsignal.plist — launchd 配置, ORB 信号机 24/7 运行
+
+  安装:
+    cp com.xin.orbsignal.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.xin.orbsignal.plist
+
+  启动:
+    launchctl start com.xin.orbsignal
+
+  查看状态:
+    launchctl list | grep orbsignal
+
+  停止:
+    launchctl stop com.xin.orbsignal
+
+  卸载 (彻底关闭, 开机也不再启动):
+    launchctl unload ~/Library/LaunchAgents/com.xin.orbsignal.plist
+
+  日志:
+    tail -f /Users/xin/Documents/Claude/Projects/money/quant_system/orbsignal.log
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.xin.orbsignal</string>
+
+    <!-- 启动命令: 先 source 凭证 (用 bash -c 包装), 再跑 Python 脚本 -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/signal_live_longport.py</string>
+    </array>
+
+    <!-- 工作目录 -->
+    <key>WorkingDirectory</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system</string>
+
+    <!-- 开机自动启动 -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- 崩溃自动重启 (脚本崩溃后立刻重新跑) -->
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- 重启间隔: 至少 60 秒, 避免疯狂重启耗 CPU -->
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+
+    <!-- 标准输出 + 错误输出到日志 -->
+    <key>StandardOutPath</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system/orbsignal.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system/orbsignal.err.log</string>
+
+    <!-- Mac Mini 不睡眠 (防止系统睡眠中断脚本) -->
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <!-- Python 环境变量 -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin</string>
+        <key>LANG</key>
+        <string>en_US.UTF-8</string>
+    </dict>
+</dict>
+</plist>
