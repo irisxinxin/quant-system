@@ -11,6 +11,12 @@ output/
 !output/sig_klines/*.json
 !output/klines/
 !output/klines/*.json
+!output/klines_5m/
+!output/klines_5m/*.json
+!output/klines_5m/_manifest.json
+!output/orb_signals.jsonl
 *.log
 .env
 *.pkl
+.gitcredential
+.claude/

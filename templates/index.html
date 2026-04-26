@@ -152,6 +152,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <button class="tab-btn"    id="tab-kol"     onclick="sw('kol')">📝 大V观点 <span id="kol-badge" style="display:none;background:#f59e0b;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
     <button class="tab-btn"    id="tab-sig"     onclick="sw('sig')">📡 逸哥信号</button>
     <button class="tab-btn"    id="tab-review"  onclick="sw('review')">📓 每日复盘</button>
+    <button class="tab-btn"    id="tab-orb"     onclick="sw('orb')">🚀 短线 ORB</button>
   </div>
 </div>
 
@@ -514,14 +515,99 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 
   </div>
 
+  <!-- TAB: 短线 ORB -->
+  <div id="pane-orb" style="display:none">
+
+    <!-- 策略说明 -->
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px">
+      <h3 style="font-size:14px;font-weight:700;color:var(--blue);margin:0 0 10px 0">📖 ORB (Opening Range Breakout) 短线策略</h3>
+      <p style="font-size:12px;line-height:1.7;margin:0 0 12px 0;color:var(--text2)">
+        美股每天开盘前 15 分钟 (9:30-9:45 ET) 形成的高低点称为 <strong style="color:var(--text)">开盘区间 OR</strong>。
+        9:45 后价格突破 OR 上沿 + 量能配合, 趋势大概率沿此方向延续 3-6 小时。
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:8px 0 6px 0">📋 入场规则</h4>
+          <ol style="padding-left:18px;line-height:1.7;font-size:12px;color:var(--text2);margin:0">
+            <li>开盘前 15 分钟 (3 根 5m K 线) 形成 OR (High / Low)</li>
+            <li>OR 范围必须 ≥ 0.3% (太窄跳过)</li>
+            <li>突破 OR High 且收盘 > OR High</li>
+            <li>RVOL ≥ 1.5 (相对均量放大)</li>
+            <li>当日仅交易首次突破</li>
+            <li>9:45 - 15:55 ET 区间内</li>
+          </ol>
+        </div>
+        <div>
+          <h4 style="font-size:12px;font-weight:600;color:var(--text);margin:8px 0 6px 0">🎯 风险管理</h4>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;color:var(--text2)">
+            <tr><td style="padding:4px 6px;border-bottom:1px solid var(--border);width:40%">入场价</td><td style="padding:4px 6px;border-bottom:1px solid var(--border);color:var(--text);font-weight:600">OR_High × (1 + 滑点)</td></tr>
+            <tr><td style="padding:4px 6px;border-bottom:1px solid var(--border)">止损价</td><td style="padding:4px 6px;border-bottom:1px solid var(--border);color:var(--text);font-weight:600">OR_Low</td></tr>
+            <tr><td style="padding:4px 6px;border-bottom:1px solid var(--border)">止盈价</td><td style="padding:4px 6px;border-bottom:1px solid var(--border);color:var(--text);font-weight:600">OR_High + 2 × OR Range</td></tr>
+            <tr><td style="padding:4px 6px;border-bottom:1px solid var(--border)">盈亏比</td><td style="padding:4px 6px;border-bottom:1px solid var(--border);color:var(--text);font-weight:600">2:1</td></tr>
+            <tr><td style="padding:4px 6px;border-bottom:1px solid var(--border)">日末平仓</td><td style="padding:4px 6px;border-bottom:1px solid var(--border);color:var(--text);font-weight:600">15:55 ET 强平 (不跨日)</td></tr>
+            <tr><td style="padding:4px 6px">方向</td><td style="padding:4px 6px;color:var(--text);font-weight:600">仅做多</td></tr>
+          </table>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:9px 12px;background:rgba(245,158,11,.08);border-left:3px solid var(--accent);font-size:11px;line-height:1.6;color:var(--text2)">
+        <strong style="color:var(--accent)">⚠️ 重要</strong>: 回测基于 LongPort 18 月 5m 数据稳健,
+        但实盘永远会有 30-50% 衰减。<strong style="color:var(--text)">建议先 paper 30 天</strong>。
+      </div>
+    </div>
+
+    <!-- 今日实时状态 -->
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px">
+      <h3 style="font-size:14px;font-weight:700;color:var(--blue);margin:0 0 10px 0">🔴 今日实时状态 (核心 5 标的)</h3>
+      <p style="font-size:11px;color:var(--text3);margin:0 0 10px 0">
+        OR 形成: 9:30-9:45 ET (21:30-21:45 SGT 夏令时)
+      </p>
+      <div id="orb-today" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
+        <div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3)">加载中...</div>
+      </div>
+    </div>
+
+    <!-- K 线图 + 信号 (Lightweight Charts) -->
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px">
+      <h3 style="font-size:14px;font-weight:700;color:var(--blue);margin:0 0 10px 0">📊 K 线图 + 历史买卖点</h3>
+
+      <div id="orb-tickers" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+        <span style="font-size:12px;color:var(--text3);align-self:center">加载中...</span>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px">
+        <div>
+          <span id="orb-chart-title" style="font-size:15px;font-weight:700;color:var(--text)">-</span>
+          <span id="orb-chart-cat" style="font-size:11px;color:var(--text3);margin-left:8px">-</span>
+        </div>
+        <div id="orb-chart-stats" style="display:flex;gap:14px;font-size:11px;color:var(--text2)"></div>
+      </div>
+
+      <div id="orb-chart" style="width:100%;height:560px;position:relative;background:var(--bg);border:1px solid var(--border);border-radius:6px">
+        <div id="orb-chart-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;z-index:10">选择标的开始...</div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:12px;padding:8px 4px;font-size:11px;color:var(--text3)">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#10b981;display:inline-block"></span>入场</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #10b981;display:inline-block"></span>止盈</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;background:#ef4444;border-radius:50%;display:inline-block"></span>止损</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#9ca3af;display:inline-block"></span>日末平仓</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#d4a017;display:inline-block"></span>OR 高低 (9:30-9:45)</span>
+        <span style="margin-left:auto;color:var(--text3);font-size:11px">💡 滚轮缩放 · 拖动平移 · 十字光标看 OHLC</span>
+      </div>
+
+      <div id="orb-stats-bar" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:12px 14px;background:var(--s2);border-radius:6px;margin-top:8px"></div>
+    </div>
+
+  </div>
+
 </main>
 
 <script>
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-const TABS = ['scan','entry','sectors','cta','bt','sw','cm','er','cn','kol','sig','review'];
-const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, er:false, cn:false, kol:false, sig:false, review:false};
+const TABS = ['scan','entry','sectors','cta','bt','sw','cm','er','cn','kol','sig','review','orb'];
+const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, er:false, cn:false, kol:false, sig:false, review:false, orb:false};
 let curTab = 'scan';
 let sectView = 'momentum';
 let btChart = null;
@@ -649,6 +735,7 @@ function sw(tab){
   if(tab==='kol'&&!loaded.kol)loadKol();
   if(tab==='sig'&&!loaded.sig)loadSig();
   if(tab==='review'&&!loaded.review)loadReview();
+  if(tab==='orb'&&!loaded.orb)loadOrb();
   // 返回回测tab时隐藏详情，显示选股器
   if(tab==='bt'){
     $('bt-detail').style.display='none';
@@ -3141,6 +3228,223 @@ function rvRender(){
       <div style="display:flex;flex-direction:column;gap:10px">${cards}</div>
     </div>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════
+// 短线 ORB Tab
+// ══════════════════════════════════════════
+let orbChart = null;
+let orbActiveTicker = null;
+let orbManifest = null;
+
+async function loadOrb(){
+  loaded.orb = true;
+  await Promise.all([loadOrbManifest(), loadOrbToday()]);
+}
+
+async function loadOrbManifest(){
+  try{
+    const r = await fetch('/api/orb/manifest');
+    orbManifest = await r.json();
+    renderOrbTickers();
+    const firstCore = orbManifest.symbols.find(s=>s.is_core);
+    if(firstCore) loadOrbChart(firstCore.symbol);
+  }catch(e){ console.error('orb manifest', e); }
+}
+
+function renderOrbTickers(){
+  const items = [...orbManifest.symbols].sort((a,b)=>
+    (a.score||99)-(b.score||99) ||
+    (b.cumulative_return_pct||0)-(a.cumulative_return_pct||0));
+  const html = items.map(it=>{
+    const cls = it.is_core ? 'core' : (it.score===3 ? 'skip' : '');
+    const cum = it.cumulative_return_pct || 0;
+    const bgColor = it.is_core ? 'rgba(245,158,11,.15)' : (it.score===3 ? 'rgba(255,255,255,.04)' : 'rgba(88,166,255,.10)');
+    const borderColor = it.is_core ? 'var(--accent)' : (it.score===3 ? 'var(--border)' : 'rgba(88,166,255,.4)');
+    const opacity = it.score===3 ? '0.55' : '1';
+    return `<button data-symbol="${it.symbol}" onclick="loadOrbChart('${it.symbol}')"
+      style="padding:6px 12px;background:${bgColor};border:1px solid ${borderColor};border-radius:6px;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;opacity:${opacity};transition:all .15s"
+      title="${it.category} | 累计 ${cum>0?'+':''}${cum.toFixed(0)}% | 正收益率 ${it.positive_pct}%">
+      ${it.is_core?'🎯 ':''}${it.symbol.replace('.US','')}
+    </button>`;
+  }).join('');
+  $('orb-tickers').innerHTML = html;
+}
+
+async function loadOrbChart(symbol){
+  orbActiveTicker = symbol;
+  document.querySelectorAll('#orb-tickers button').forEach(b=>{
+    const isActive = b.dataset.symbol === symbol;
+    b.style.outline = isActive ? '2px solid var(--blue)' : 'none';
+    b.style.outlineOffset = isActive ? '2px' : '0';
+  });
+  $('orb-chart-loading').style.display = 'flex';
+  $('orb-chart-loading').textContent = `加载 ${symbol} ...`;
+  try{
+    const r = await fetch(`/api/orb/chart_data/${symbol}?days=60`);
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    renderOrbChart(data);
+    $('orb-chart-loading').style.display = 'none';
+  }catch(e){
+    $('orb-chart-loading').textContent = `加载失败: ${e.message}`;
+  }
+}
+
+function renderOrbChart(data){
+  const container = $('orb-chart');
+  if(orbChart){ orbChart.remove(); orbChart = null; }
+
+  $('orb-chart-title').textContent = data.symbol;
+  $('orb-chart-cat').textContent = `${data.is_core?'🎯 ':''}${data.category}`;
+
+  const stats = data.stats || {};
+  const cum = stats.cumulative_return_pct || 0;
+  $('orb-chart-stats').innerHTML = `
+    <span>窗口: <strong style="color:var(--text)">${data.trades_count}</strong> 笔</span>
+    <span>累计: <strong style="color:${cum>0?'var(--green)':'var(--red)'}">${cum>0?'+':''}${cum.toFixed(2)}%</strong></span>
+    <span>正收益率: <strong style="color:var(--text)">${stats.positive_pct||0}%</strong></span>
+    <span>PF: <strong style="color:var(--text)">${stats.profit_factor||0}</strong></span>
+  `;
+
+  orbChart = LightweightCharts.createChart(container, {
+    width: container.clientWidth,
+    height: 560,
+    layout: { background:{type:'solid', color:'#0e1117'}, textColor:'#c9d1d9' },
+    grid: { vertLines:{color:'rgba(255,255,255,.04)'}, horzLines:{color:'rgba(255,255,255,.04)'} },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    rightPriceScale: { borderColor:'rgba(255,255,255,.1)' },
+    timeScale: {
+      borderColor:'rgba(255,255,255,.1)', timeVisible:true, secondsVisible:false,
+      tickMarkFormatter:(t)=>{
+        const d = new Date(t*1000);
+        return d.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'});
+      },
+    },
+  });
+
+  const cs = orbChart.addCandlestickSeries({
+    upColor:'#26a69a', downColor:'#ef5350',
+    borderUpColor:'#26a69a', borderDownColor:'#ef5350',
+    wickUpColor:'#26a69a', wickDownColor:'#ef5350',
+    priceFormat:{type:'price',precision:2,minMove:0.01},
+  });
+  cs.setData(data.candles);
+
+  const vs = orbChart.addHistogramSeries({
+    priceFormat:{type:'volume'}, priceScaleId:'volume', color:'#26a69a',
+  });
+  vs.setData(data.volumes);
+  orbChart.priceScale('volume').applyOptions({scaleMargins:{top:0.85,bottom:0}});
+
+  cs.setMarkers(data.markers || []);
+
+  if(data.or_lines && data.or_lines.length){
+    const orHigh = [], orLow = [];
+    data.or_lines.forEach(or=>{
+      orHigh.push({time:or.day_start, value:or.or_high});
+      orHigh.push({time:or.or_end, value:or.or_high});
+      orLow.push({time:or.day_start, value:or.or_low});
+      orLow.push({time:or.or_end, value:or.or_low});
+    });
+    // sort + dedupe by time
+    orHigh.sort((a,b)=>a.time-b.time);
+    orLow.sort((a,b)=>a.time-b.time);
+    const sh = orbChart.addLineSeries({color:'#d4a017',lineWidth:2,
+      crosshairMarkerVisible:false,lastValueVisible:false,priceLineVisible:false});
+    const sl = orbChart.addLineSeries({color:'#d4a017',lineWidth:2,
+      crosshairMarkerVisible:false,lastValueVisible:false,priceLineVisible:false});
+    // each pair (start, end) creates one line segment, but Lightweight wants continuous
+    // simpler: just add the values with spacers
+    const pushSeg = (arr, segs)=>{
+      data.or_lines.forEach(or=>{
+        segs.push({time:or.day_start, value:arr==='high'?or.or_high:or.or_low});
+        segs.push({time:or.or_end, value:arr==='high'?or.or_high:or.or_low});
+      });
+    };
+    const segH = []; pushSeg('high', segH);
+    const segL = []; pushSeg('low', segL);
+    sh.setData(segH);
+    sl.setData(segL);
+  }
+
+  orbChart.timeScale().fitContent();
+
+  $('orb-stats-bar').innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:10px;color:var(--text3)">交易笔数</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text)">${stats.trades||0}</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:10px;color:var(--text3)">止盈/止损</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text)">${stats.wins_tp||0} / ${stats.losses_stop||0}</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:10px;color:var(--text3)">正收益率</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text)">${stats.positive_pct||0}%</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:10px;color:var(--text3)">平均盈/亏</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text)">+${stats.avg_win_pct||0}% / ${stats.avg_loss_pct||0}%</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:10px;color:var(--text3)">盈亏比</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text)">${stats.profit_factor||0}</div>
+    </div>
+  `;
+}
+
+window.addEventListener('resize', ()=>{
+  if(orbChart){
+    const c = $('orb-chart');
+    orbChart.applyOptions({width: c.clientWidth});
+  }
+});
+
+async function loadOrbToday(){
+  try{
+    const r = await fetch('/api/orb/today');
+    const data = await r.json();
+    renderOrbToday(data);
+  }catch(e){ console.error('orb today', e); }
+}
+
+function renderOrbToday(data){
+  const cards = (data.items||[]).map(item=>{
+    const os = item.or_state || {};
+    const status = os.status || 'UNKNOWN';
+    const labels = {
+      'NO_DATA':'⏸️ 等待开盘','OR_FORMING':'🟡 OR 形成中',
+      'MONITORING':'🔵 监测突破','TOO_NARROW':'⚪ OR 过窄','BREAKOUT':'🚀 已突破!',
+    };
+    const colors = {
+      'OR_FORMING':'rgba(236,72,153,.15)','MONITORING':'rgba(59,130,246,.15)',
+      'TOO_NARROW':'rgba(255,255,255,.05)','BREAKOUT':'rgba(245,158,11,.20)',
+    };
+    let body = '';
+    if(status==='BREAKOUT' && item.signal){
+      const s = item.signal;
+      body = `<div style="font-size:11px;line-height:1.6;color:var(--text2)">
+        <div>入场: <strong style="color:var(--text)">$${s.entry}</strong></div>
+        <div>止损: <strong style="color:var(--red)">$${s.stop}</strong> (${s.risk_pct}%)</div>
+        <div>止盈: <strong style="color:var(--green)">$${s.tp}</strong> (+${s.reward_pct}%)</div>
+        <div>RVOL: <strong style="color:var(--text)">${s.rvol}</strong></div></div>`;
+    } else if(os.or_high){
+      body = `<div style="font-size:11px;line-height:1.6;color:var(--text2)">
+        <div>OR High: <strong style="color:var(--text)">$${os.or_high.toFixed(2)}</strong></div>
+        <div>OR Low: <strong style="color:var(--text)">$${os.or_low.toFixed(2)}</strong></div>
+        <div>范围: <strong style="color:var(--text)">${(os.or_range_pct*100).toFixed(2)}%</strong></div></div>`;
+    } else {
+      body = `<div style="font-size:11px;color:var(--text3)">${os.bars_so_far?
+        `${os.bars_so_far}/3 根 K 线`:'今日尚无数据'}</div>`;
+    }
+    return `<div style="background:${colors[status]||'var(--s2)'};border:1px solid var(--border);border-radius:6px;padding:10px 12px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">${item.symbol}</div>
+      <div style="font-size:10px;font-weight:600;display:inline-block;margin-bottom:6px;padding:2px 8px;background:rgba(255,255,255,.07);border-radius:4px;color:var(--text2)">${labels[status]||status}</div>
+      ${body}
+    </div>`;
+  }).join('');
+  $('orb-today').innerHTML = cards || '<div style="grid-column:1/-1;text-align:center;color:var(--text3)">无数据</div>';
 }
 </script>
 </body>

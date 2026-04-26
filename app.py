@@ -22,6 +22,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
 from scanner import scan_all, get_macro, get_flows, get_cta_dashboard, get_sector_full, get_bt_signals, WATCHLIST
+from dashboard.orb_routes import register_orb_routes
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -98,6 +99,7 @@ async def lifespan(app):
 
 
 app = FastAPI(title="量化交易仪表盘", lifespan=lifespan)
+register_orb_routes(app)
 
 _HTML_PATH     = Path(__file__).parent / "templates" / "index.html"
 _CACHE_DIR     = Path(__file__).parent / "cache"
