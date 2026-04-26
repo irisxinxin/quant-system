@@ -58,24 +58,33 @@ KLINES_5M_DIR = Path(__file__).parent.parent / "output" / "klines_5m"
 # 标的配置
 # ═══════════════════════════════════════════════════════════════════════
 TICKER_CONFIG = {
-    # symbol: (entry_slip, stop_slip, category, recommend_score)
+    # symbol: (entry_slip, stop_slip, category, recommend_score, pair)
     # recommend_score: 1=核心, 2=次要, 3=不推荐
-    "OKLO.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "核能小盘",   "score": 1},
-    "IREN.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘", "score": 1},
-    "CIFR.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘", "score": 2},
-    "EOSE.US": {"entry_slip": 0.0025, "stop_slip": 0.0050, "category": "储能超小盘",   "score": 2},
-    "PLTR.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "AI大盘",     "score": 1},
-    "NBIS.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI基建中盘",   "score": 3},
-    "SOXL.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "3x半导体ETF", "score": 2},
-    "AMD.US":  {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",   "score": 3},
-    "AMZN.US": {"entry_slip": 0.0002, "stop_slip": 0.0005, "category": "超大盘",      "score": 1},
-    "TSLL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x特斯拉ETF", "score": 1},
-    "NVDL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x英伟达ETF", "score": 2},
-    "INTC.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",   "score": 3},
+    # pair: 配对反向 ETF (双向监测时用)
+    "OKLO.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "核能小盘",     "score": 1, "pair": None},
+    "IREN.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",   "score": 1, "pair": None},
+    "CIFR.US": {"entry_slip": 0.0015, "stop_slip": 0.0030, "category": "BTC挖矿小盘",   "score": 2, "pair": None},
+    "EOSE.US": {"entry_slip": 0.0025, "stop_slip": 0.0050, "category": "储能超小盘",     "score": 2, "pair": None},
+    "PLTR.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "AI大盘",        "score": 1, "pair": None},
+    "NBIS.US": {"entry_slip": 0.0010, "stop_slip": 0.0020, "category": "AI基建中盘",     "score": 3, "pair": None},
+    "AMD.US":  {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",     "score": 3, "pair": None},
+    "AMZN.US": {"entry_slip": 0.0002, "stop_slip": 0.0005, "category": "超大盘",        "score": 1, "pair": None},
+    "INTC.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "半导体大盘",     "score": 3, "pair": None},
+    # ── 杠杆ETF 多/空 配对 (双向监测) ──
+    "TSLL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 TSLA",     "score": 1, "pair": "TSLZ.US"},
+    "TSLZ.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 TSLA",     "score": 1, "pair": "TSLL.US"},
+    "NVDL.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "2x多 NVDA",     "score": 2, "pair": "NVDS.US"},
+    "NVDS.US": {"entry_slip": 0.0008, "stop_slip": 0.0015, "category": "2x空 NVDA",     "score": 2, "pair": "NVDL.US"},
+    "SOXL.US": {"entry_slip": 0.0003, "stop_slip": 0.0008, "category": "3x多 半导体",    "score": 2, "pair": "SOXS.US"},
+    "SOXS.US": {"entry_slip": 0.0005, "stop_slip": 0.0010, "category": "3x空 半导体",    "score": 1, "pair": "SOXL.US"},
 }
 
-# 推荐核心组合 (周一 paper trade 起步)
-CORE_PORTFOLIO = ["AMZN.US", "PLTR.US", "TSLL.US", "IREN.US", "OKLO.US"]
+# 推荐核心组合 (周一 paper trade 起步) — 含双向配对
+CORE_PORTFOLIO = [
+    "AMZN.US", "PLTR.US", "IREN.US", "OKLO.US",     # 单向 (无反向 ETF)
+    "TSLL.US", "TSLZ.US",                            # TSLA 双向
+    "SOXL.US", "SOXS.US",                            # 半导体双向
+]
 
 
 # 策略参数

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-26T14:38:37.507622",
+  "generated_at": "2026-04-26T16:45:48.223341",
   "interval": "5m",
   "source": "LongPort OpenAPI",
   "tickers": [
@@ -60,6 +60,13 @@
       "file": "NVDL.US.json"
     },
     {
+      "symbol": "NVDS.US",
+      "bars": 28355,
+      "first": "2024-11-06 10:40:00",
+      "last": "2026-04-24 15:55:00",
+      "file": "NVDS.US.json"
+    },
+    {
       "symbol": "OKLO.US",
       "bars": 28355,
       "first": "2024-11-06 10:40:00",
@@ -81,11 +88,25 @@
       "file": "SOXL.US.json"
     },
     {
+      "symbol": "SOXS.US",
+      "bars": 28355,
+      "first": "2024-11-06 10:40:00",
+      "last": "2026-04-24 15:55:00",
+      "file": "SOXS.US.json"
+    },
+    {
       "symbol": "TSLL.US",
       "bars": 28355,
       "first": "2024-11-05 10:40:00",
       "last": "2026-04-24 15:55:00",
       "file": "TSLL.US.json"
+    },
+    {
+      "symbol": "TSLZ.US",
+      "bars": 28354,
+      "first": "2024-11-06 10:40:00",
+      "last": "2026-04-24 15:55:00",
+      "file": "TSLZ.US.json"
     }
   ]
 }
