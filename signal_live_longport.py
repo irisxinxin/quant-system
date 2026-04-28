@@ -323,6 +323,27 @@ def on_candlestick(symbol: str, event: PushCandlestick):
     elif result["event"] == "breakout":
         rvol = result["rvol"]
         bar = result["bar"]
+
+        # ── 信号过滤器: 反向 ETF 配对趋势 + OR 范围异常 ──
+        try:
+            from signals.orb_strategy import filter_signal
+            passed, reason = filter_signal(symbol, state.or_range_pct)
+            if not passed:
+                msg = (f"⛔ 过滤器跳过 {symbol} 突破信号\n"
+                       f"   时间: {bar['ts'].strftime('%H:%M:%S ET')}\n"
+                       f"   原因: {reason}")
+                print(f"\n{msg}")
+                log_event({
+                    "event": "breakout_filtered", "symbol": symbol,
+                    "reason": reason, "or_range_pct": state.or_range_pct * 100,
+                    "rvol": rvol, "bar_time": str(bar["ts"]),
+                })
+                # 静默 Telegram (让你知道哪些被过滤了, 但不响铃)
+                send_telegram(f"⛔ {symbol} 信号被过滤", reason, silent=True)
+                return  # 不继续处理这个突破
+        except ImportError:
+            pass  # 过滤器加载失败时, 让信号通过 (向下兼容)
+
         slip = config["entry_slip"]
         entry = state.or_high * (1 + slip)
         stop = state.or_low

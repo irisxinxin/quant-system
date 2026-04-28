@@ -121,8 +121,105 @@ ORB_PARAMS = {
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# 信号过滤器 (避免逆势 / 超买 / 异常 OR 信号)
+# ═══════════════════════════════════════════════════════════════════════
+
+# 反向 ETF → 配对的多向 ETF (用于趋势判断)
+INVERSE_TO_LONG_PAIR = {
+    "TSLZ.US": "TSLL.US",   # TSLZ 反向 = 看 TSLL 趋势 (反向用)
+    "SOXS.US": "SOXL.US",
+    "NVDS.US": "NVDL.US",
+}
+
+# 单只股票现价远超 EMA50 多少视为超买 (跳过)
+OVERBOUGHT_THRESHOLD = 0.50   # 现价 > EMA50 × 1.50 视为超买
+
+# OR 范围异常上限 (太宽通常是开盘异动 / 财报后)
+OR_RANGE_MAX_PCT = 0.05       # 5%
+
+
+def get_daily_ema(symbol: str, periods: tuple = (50, 200)) -> dict:
+    """从 5m 数据聚合成日线, 算 EMA. 返回 dict {current, ema_N, ...}."""
+    df = load_5m_data_raw(symbol)
+    if df.empty:
+        return {}
+    daily = df["Close"].resample("1D").last().dropna()
+    if len(daily) < max(periods):
+        return {}
+    out = {"current": float(daily.iloc[-1])}
+    for p in periods:
+        out[f"ema{p}"] = float(daily.tail(p).mean())
+    return out
+
+
+def filter_signal(symbol: str, or_range_pct: float) -> tuple:
+    """
+    在突破信号触发前调用. 返回 (是否通过, 跳过原因).
+
+    设计原则:
+      1. 反向 ETF (TSLZ/SOXS/NVDS) 多头突破: 必须底层在跌 (双 EMA 都下行)
+      2. OR 范围异常上限 5% (开盘异动不可信)
+      3. 普通股不加趋势/超买过滤 (回测18月 EMA50<EMA200 的段也赚钱)
+    """
+    cfg = TICKER_CONFIG.get(symbol, {})
+
+    # 0. OR 范围异常上限 (太宽 = 开盘异动)
+    if or_range_pct > OR_RANGE_MAX_PCT:
+        return False, f"OR 范围 {or_range_pct*100:.1f}% > {OR_RANGE_MAX_PCT*100:.0f}% (异动跳过)"
+
+    # 1. 反向 ETF: 严格过滤 (底层必须长期+短期都跌才做多反向)
+    if symbol in INVERSE_TO_LONG_PAIR:
+        long_sym = INVERSE_TO_LONG_PAIR[symbol]
+        ema = get_daily_ema(long_sym, periods=(20, 50, 200))
+        if not ema:
+            # 数据不足时保守起见跳过反向 ETF
+            return False, f"反向 ETF, 配对 {long_sym} 数据不足"
+
+        # 双重确认底层下跌:
+        # (a) 长期: EMA50 < EMA200
+        # (b) 短期: 当前价 < EMA20 (近 1 月走弱)
+        if ema["ema50"] >= ema["ema200"]:
+            return False, f"配对 {long_sym} 长期上升 (EMA50 {ema['ema50']:.2f} ≥ EMA200 {ema['ema200']:.2f}), 反向多头不利"
+        if ema["current"] >= ema.get("ema20", ema["ema50"]):
+            return False, f"配对 {long_sym} 短期反弹 (现价 {ema['current']:.2f} ≥ EMA20 {ema.get('ema20', 0):.2f}), 反向多头不利"
+        return True, ""
+
+    # 2. 普通股 + 多向杠杆 ETF: 不加趋势过滤 (策略在调整段也赚钱)
+    return True, ""
+
+
+# 兼容旧调用 (默认 EMA50/200, 可选 EMA20)
+def get_daily_ema_v2(symbol: str, periods: tuple = (20, 50, 200)) -> dict:
+    """从 5m 数据聚合成日线, 算 EMA. 默认含 EMA20/50/200."""
+    df = load_5m_data_raw(symbol)
+    if df.empty:
+        return {}
+    daily = df["Close"].resample("1D").last().dropna()
+    if len(daily) < max(periods):
+        return {}
+    out = {"current": float(daily.iloc[-1])}
+    for p in periods:
+        out[f"ema{p}"] = float(daily.tail(p).mean())
+    return out
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # 数据加载
 # ═══════════════════════════════════════════════════════════════════════
+def load_5m_data_raw(symbol: str) -> pd.DataFrame:
+    """加载 5m 数据原始版本 (filter_signal 内部用, 避免循环引用)"""
+    f = KLINES_5M_DIR / f"{symbol}.json"
+    if not f.exists():
+        return pd.DataFrame()
+    with open(f) as fh:
+        payload = json.load(fh)
+    df = pd.DataFrame(payload["data"])
+    df["datetime"] = pd.to_datetime(df["datetime"])
+    df = df.set_index("datetime")
+    df.columns = [c.capitalize() for c in df.columns]
+    return df
+
+
 def load_5m_data(symbol: str) -> pd.DataFrame:
     """从 output/klines_5m/ 加载 5m K 线数据"""
     f = KLINES_5M_DIR / f"{symbol}.json"
