@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.xin.orbeodclose.plist — 每天 03:55 SGT 自动平仓 (= 15:55 ET)
+
+  安装:
+    cp com.xin.orbeodclose.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.xin.orbeodclose.plist
+
+  查看下次运行时间:
+    launchctl list | grep orbeodclose
+
+  手动测试 (立即跑一次):
+    launchctl start com.xin.orbeodclose
+
+  停止 + 卸载:
+    launchctl unload ~/Library/LaunchAgents/com.xin.orbeodclose.plist
+
+  日志:
+    tail -f /Users/xin/Documents/Claude/Projects/money/quant_system/eod_close.log
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.xin.orbeodclose</string>
+
+    <!-- 启动命令 -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/auto_eod_close.py</string>
+    </array>
+
+    <!-- 工作目录 -->
+    <key>WorkingDirectory</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system</string>
+
+    <!-- 定时触发: 每天 03:55 SGT (注意 launchd 时间用本机时区 = SGT) -->
+    <!-- 周一到周五跑, 周末美股关市跳过 -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Weekday</key><integer>1</integer>
+            <key>Hour</key><integer>3</integer>
+            <key>Minute</key><integer>55</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key><integer>2</integer>
+            <key>Hour</key><integer>3</integer>
+            <key>Minute</key><integer>55</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key><integer>3</integer>
+            <key>Hour</key><integer>3</integer>
+            <key>Minute</key><integer>55</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key><integer>4</integer>
+            <key>Hour</key><integer>3</integer>
+            <key>Minute</key><integer>55</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key><integer>5</integer>
+            <key>Hour</key><integer>3</integer>
+            <key>Minute</key><integer>55</integer>
+        </dict>
+        <!-- 周六 03:55 SGT 也跑 (= 周五 15:55 ET, 美股周五收盘) -->
+        <dict>
+            <key>Weekday</key><integer>6</integer>
+            <key>Hour</key><integer>3</integer>
+            <key>Minute</key><integer>55</integer>
+        </dict>
+    </array>
+
+    <!-- 输出日志 -->
+    <key>StandardOutPath</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system/eod_close.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system/eod_close.err.log</string>
+
+    <!-- 环境变量 -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin</string>
+        <key>LANG</key>
+        <string>en_US.UTF-8</string>
+    </dict>
+</dict>
+</plist>
