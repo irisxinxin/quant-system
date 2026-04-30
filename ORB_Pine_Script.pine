@@ -1,20 +1,36 @@
 //@version=6
 // ═══════════════════════════════════════════════════════════════════════
-//  ORB - Opening Range Breakout 开盘区间突破策略信号
+//  ORB15_VWAP — Opening Range Breakout (与 Python 回测严格对齐版)
 // ═══════════════════════════════════════════════════════════════════════
+//  策略对应: signals/strategies/intraday_pool.py :: strat_orb_15min_vwap
+//
 //  逻辑:
-//    1. 开盘前 15 分钟 (9:30-9:45 ET) 形成 Opening Range (OR)
-//    2. 9:45 后价格突破 OR 上沿 + RVOL ≥ 1.5 → 多头信号
-//    3. 止损 = OR 下沿, 止盈 = 入场 + 2 × OR 范围
-//    4. OR 过窄 (<0.3%) 自动跳过
+//    1. 9:30-9:45 ET 形成 Opening Range (3 根 5m bar)
+//    2. OR 范围必须在 0.3% ~ 5% 之间 (过窄/过宽都跳过)
+//    3. 9:45 后突破: bar.High > OR_high AND bar.Close > OR_high
+//                  AND bar.Close > VWAP   (VWAP 同侧)
+//                  AND RVOL >= 1.5         (日内当根之前 20 根均值)
+//    4. 警报触发后挂 LIT @ OR_high, 等下根 bar fill (BUG-AT 修复)
+//    5. 止损 = OR_low, 止盈 = OR_high + 2 × (OR_high - OR_low)
 //
 //  用法:
 //    1. 5m 图表 (必须)
 //    2. 添加此指标
-//    3. 在 "警报" 里为每只股票设置 警报 → 条件选 "🚀 多头突破"
-//    4. 推送到手机 TradingView App
+//    3. 警报条件选 "🚀 多头突破" + "Once Per Bar Close"
+//    4. 警报触发后立即手动挂 LIT/LMT @ OR_high (不要市价)
+//    5. 下根 5m bar 没 fill → 取消单子放弃当天
 //
-//  适合标的: OKLO, IREN, CIFR, CRWV, NBIS, HOOD, PLTR, TSLL
+//  V7 回测胜率最高的 4 个标的 (composite_score 排序):
+//    TSLZ.US  win=55.9%  近期74.9%  PF=1.88  累计+25.8%   score 1.67
+//    EOSE.US  win=45.5%  近期58.1%  PF=1.31  累计+10.8%   score 1.04
+//    OKLO.US  win=48.3%  近期52.3%  PF=1.39  累计+12.9%   score 0.53
+//    AMZN.US  win=45.8%  近期46.2%  PF=1.31  累计+1.5%    score 0.14
+//
+//  注: 其他标的 (TOP9 中) 最优策略不是 ORB15_VWAP, 不要在他们身上用此 Pine:
+//    - INTC/IREN/NBIS/MSFL/CRWV → ORB5_Z (市价单, 需另写 Pine)
+//    - CIFR/TSLL/MSFU → VWAP_PB
+//    - RKLB/NVDS/HOOD → DC20
+//    - PLTR/SOXL/AMD → ST_10_3
 // ═══════════════════════════════════════════════════════════════════════
 
 indicator("ORB 开盘区间突破", shorttitle="ORB", overlay=true,
@@ -120,11 +136,28 @@ if n >= 1
 
 rvol = na(avgVol) or avgVol == 0 ? 0.0 : volume / avgVol
 
-// ═══════════════════════ 突破检测 ═══════════════════════
-// 满足: OR 已成型 + 不过窄 + 未触发过 + 在交易窗口 + 价格破 OR High + RVOL 够
-longBreakoutRaw  = orFormed and not tooNarrow and not tooWide and not breakoutAlerted and inTradeWindow and high > orHigh and close > orHigh and rvol >= rvolThreshold
+// ═══════════════════════ VWAP 计算 (日内累积, 与 Python 回测严格对齐) ═══════════════════════
+// Python: typical=(H+L+C)/3; vwap=cumsum(typical*vol)/cumsum(vol)
+var float dayPVSum = 0.0
+var float dayVSum  = 0.0
+if isFirstBarOfDay
+    dayPVSum := 0.0
+    dayVSum  := 0.0
+typical = (high + low + close) / 3
+if inRegular
+    dayPVSum += typical * volume
+    dayVSum  += volume
+dayVwap = dayVSum > 0 ? dayPVSum / dayVSum : na
 
-shortBreakoutRaw = orFormed and not tooNarrow and not tooWide and not breakoutAlerted and inTradeWindow and not longOnly and low < orLow and close < orLow and rvol >= rvolThreshold
+// ═══════════════════════ 突破检测 ═══════════════════════
+// 与 Python ORB15_VWAP 完全对齐:
+//   1. OR 已形成 + 不过窄 (>=0.3%) + 不过宽 (<=5%)
+//   2. bar.High > OR_high  AND  bar.Close > OR_high   (突破确认)
+//   3. bar.Close > VWAP     (VWAP 同侧, 多头趋势)
+//   4. RVOL >= 1.5          (日内当根之前 20 根均值)
+longBreakoutRaw  = orFormed and not tooNarrow and not tooWide and not breakoutAlerted and inTradeWindow and high > orHigh and close > orHigh and close > dayVwap and rvol >= rvolThreshold
+
+shortBreakoutRaw = orFormed and not tooNarrow and not tooWide and not breakoutAlerted and inTradeWindow and not longOnly and low < orLow and close < orLow and close < dayVwap and rvol >= rvolThreshold
 
 longBreakout  = longBreakoutRaw and not breakoutAlerted[1]
 shortBreakout = shortBreakoutRaw and not breakoutAlerted[1]
@@ -169,6 +202,10 @@ if justLeftOR and not tooNarrow and showORLines
 if not na(orBox)
     box.set_right(orBox, bar_index)
 
+// VWAP 线 (日内累积, 与 Python 回测严格对齐)
+plot(inRegular and not na(dayVwap) ? dayVwap : na,
+     title="VWAP", color=color.new(color.purple, 0), linewidth=2)
+
 // 入场/止损/止盈线 (突破后显示)
 plot(showEntryLines and not na(entryPrice) ? entryPrice : na,
      title="Entry", color=color.blue, linewidth=2, style=plot.style_circles)
@@ -205,7 +242,7 @@ if shortBreakout and showLabels
          style=label.style_label_up, color=color.red, textcolor=color.white, size=size.normal)
 
 // ═══════════════════════ 状态表格 ═══════════════════════
-var table infoTable = table.new(position.top_right, 2, 8,
+var table infoTable = table.new(position.top_right, 2, 9,
      bgcolor=color.new(color.black, 75), border_width=1, frame_color=color.gray)
 
 if showTable and barstate.islast
@@ -235,16 +272,20 @@ if showTable and barstate.islast
     table.cell(infoTable, 1, 4, str.tostring(rvol, "#.##"),
         text_color=(rvol >= rvolThreshold ? color.green : color.gray))
 
-    table.cell(infoTable, 0, 5, "入场价", text_color=color.white)
-    table.cell(infoTable, 1, 5, na(entryPrice) ? "-" : str.tostring(entryPrice, format.mintick),
+    table.cell(infoTable, 0, 5, "VWAP / Close", text_color=color.white)
+    table.cell(infoTable, 1, 5, na(dayVwap) ? "-" : str.tostring(dayVwap, format.mintick) + " / " + str.tostring(close, format.mintick),
+        text_color=(close > dayVwap ? color.green : color.red))
+
+    table.cell(infoTable, 0, 6, "入场价", text_color=color.white)
+    table.cell(infoTable, 1, 6, na(entryPrice) ? "-" : str.tostring(entryPrice, format.mintick),
         text_color=color.new(color.blue, 0))
 
-    table.cell(infoTable, 0, 6, "止损价", text_color=color.white)
-    table.cell(infoTable, 1, 6, na(stopPrice) ? "-" : str.tostring(stopPrice, format.mintick),
+    table.cell(infoTable, 0, 7, "止损价", text_color=color.white)
+    table.cell(infoTable, 1, 7, na(stopPrice) ? "-" : str.tostring(stopPrice, format.mintick),
         text_color=color.new(color.red, 0))
 
-    table.cell(infoTable, 0, 7, "止盈价", text_color=color.white)
-    table.cell(infoTable, 1, 7, na(tpPrice) ? "-" : str.tostring(tpPrice, format.mintick),
+    table.cell(infoTable, 0, 8, "止盈价", text_color=color.white)
+    table.cell(infoTable, 1, 8, na(tpPrice) ? "-" : str.tostring(tpPrice, format.mintick),
         text_color=color.new(color.green, 0))
 
 // ═══════════════════════ 警报条件 ═══════════════════════
