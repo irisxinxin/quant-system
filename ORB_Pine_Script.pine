@@ -25,6 +25,8 @@ grp1 = "⚙️ OR 参数"
 orMinutes     = input.int(15,  "OR 分钟数", minval=5, maxval=60, step=5, group=grp1)
 minORRangePct = input.float(0.3, "OR 最小范围 %", minval=0.1, step=0.1, group=grp1,
                              tooltip="OR 范围 < 此值视为过窄，跳过当天")
+maxORRangePct = input.float(5.0, "OR 最大范围 %", minval=1.0, step=0.5, group=grp1,
+                             tooltip="OR > 此值视为过宽 (财报跳空)，跳过当天 — 与 Python 回测对齐")
 
 grp2 = "🎯 入场/出场"
 targetR       = input.float(2.0, "止盈 R 倍数", minval=1.0, step=0.5, group=grp2)
@@ -84,23 +86,45 @@ else if inORWindow
     orLow  := math.min(nz(orLow, low), low)
     orBarCount := orBarCount + 1
 
-// OR 窗口刚结束, 计算范围 + 判断是否过窄
+// OR 窗口刚结束, 计算范围 + 判断是否过窄/过宽
+var bool tooWide = false
 if justLeftOR
     orRangeAbs := orHigh - orLow
     orRangePct := orRangeAbs / ((orHigh + orLow) / 2) * 100
     tooNarrow := orRangePct < minORRangePct
+    tooWide   := orRangePct > maxORRangePct
     orFormed := true
 
-// ═══════════════════════ RVOL 计算 (lenient: 跨天滚动 SMA 20, 含当前) ═══════════════════════
-// 与限价 stop-buy 入场组合下回测最优 — 与 Python live 脚本算法一致
-avgVol = ta.sma(volume, rvolLookback)
-rvol   = volume / (avgVol == 0 ? 1 : avgVol)
+// ═══════════════════════ RVOL 计算 (日内, 与 Python 回测严格对齐) ═══════════════════════
+// Python: day_df.iloc[max(0, bar_pos-20):bar_pos]["Volume"].mean()
+// = 当根之前最多 20 根 *日内* bar 的均值 (不跨日, 不含当根)
+isFirstBarOfDay = inRegular and not inRegular[1]
+var int    dayBarCount = 0
+var float[] dayVols    = array.new<float>()
+if isFirstBarOfDay
+    dayBarCount := 1
+    array.clear(dayVols)
+    array.push(dayVols, volume)
+else if inRegular
+    dayBarCount := dayBarCount + 1
+    array.push(dayVols, volume)
+
+float avgVol = na
+sz = array.size(dayVols)
+n  = math.min(sz - 1, rvolLookback)   // 排除当根, 最多 20 根
+if n >= 1
+    float sumV = 0.0
+    for i = sz - n - 1 to sz - 2
+        sumV += array.get(dayVols, i)
+    avgVol := sumV / n
+
+rvol = na(avgVol) or avgVol == 0 ? 0.0 : volume / avgVol
 
 // ═══════════════════════ 突破检测 ═══════════════════════
 // 满足: OR 已成型 + 不过窄 + 未触发过 + 在交易窗口 + 价格破 OR High + RVOL 够
-longBreakoutRaw  = orFormed and not tooNarrow and not breakoutAlerted and inTradeWindow and high > orHigh and close > orHigh and rvol >= rvolThreshold
+longBreakoutRaw  = orFormed and not tooNarrow and not tooWide and not breakoutAlerted and inTradeWindow and high > orHigh and close > orHigh and rvol >= rvolThreshold
 
-shortBreakoutRaw = orFormed and not tooNarrow and not breakoutAlerted and inTradeWindow and not longOnly and low < orLow and close < orLow and rvol >= rvolThreshold
+shortBreakoutRaw = orFormed and not tooNarrow and not tooWide and not breakoutAlerted and inTradeWindow and not longOnly and low < orLow and close < orLow and rvol >= rvolThreshold
 
 longBreakout  = longBreakoutRaw and not breakoutAlerted[1]
 shortBreakout = shortBreakoutRaw and not breakoutAlerted[1]
@@ -156,6 +180,7 @@ plot(showEntryLines and not na(tpPrice) ? tpPrice : na,
 // OR 窗口背景
 bgcolor(inORWindow ? color.new(color.yellow, 90) : na, title="OR 形成中")
 bgcolor(orFormed and tooNarrow ? color.new(color.gray, 92) : na, title="OR 过窄 SKIP")
+bgcolor(orFormed and tooWide   ? color.new(color.orange, 92) : na, title="OR 过宽 SKIP")
 
 // 突破标签
 if longBreakout and showLabels
@@ -186,6 +211,7 @@ var table infoTable = table.new(position.top_right, 2, 8,
 if showTable and barstate.islast
     statusText = inORWindow ? "🟡 OR 形成中 (" + str.tostring(orBarCount) + "根)"
       : orFormed and tooNarrow ? "⚪ OR 过窄 SKIP"
+      : orFormed and tooWide   ? "🟠 OR 过宽 SKIP (>" + str.tostring(maxORRangePct) + "%)"
       : orFormed and breakoutAlerted ? "🟢 已突破 " + direction
       : orFormed ? "🔵 监测突破中"
       : "⏸️ 等待开盘"
