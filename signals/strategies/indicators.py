@@ -39,8 +39,13 @@ def atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> 
 
 
 def adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
-    plus_dm = (high.diff()).where((high.diff() > low.diff().abs()) & (high.diff() > 0), 0)
-    minus_dm = (-low.diff()).where((-low.diff() > high.diff()) & (-low.diff() > 0), 0)
+    # Wilder 标准: up_move = High_t - High_{t-1}; down_move = Low_{t-1} - Low_t
+    # +DM = up_move if up_move > down_move and up_move > 0 else 0
+    # -DM = down_move if down_move > up_move and down_move > 0 else 0
+    hd = high.diff()           # up_move
+    down_move = -low.diff()    # Low_{t-1} - Low_t (低点上升时为负)
+    plus_dm = hd.where((hd > down_move) & (hd > 0), 0)
+    minus_dm = down_move.where((down_move > hd) & (down_move > 0), 0)
     tr = pd.concat([
         high - low,
         (high - close.shift(1)).abs(),

@@ -105,10 +105,11 @@ def main():
         n_days = len(df["date"].unique())
         print(f"[{sym_idx:>2}/{len(TICKERS_FULL)}] {sym:<12} ({len(df):>5} bars, {n_days} 天)")
 
+        data_end = df.index.max().date()
         for strat_name, strat_fn in STRATEGIES.items():
             try:
                 recs = run_backtest(sym, strat_fn, strat_name)
-                m = compute_metrics(recs)
+                m = compute_metrics(recs, data_end_date=data_end)
             except Exception as e:
                 print(f"   {strat_name:<12} ERROR: {type(e).__name__}: {e}")
                 continue

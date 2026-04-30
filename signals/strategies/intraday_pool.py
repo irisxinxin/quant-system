@@ -102,9 +102,15 @@ def strat_orb_15min_vwap(day_df: pd.DataFrame, full_df: pd.DataFrame,
         rvol = bar["Volume"] / avg_v
         if rvol < rvol_thresh:
             continue
+        # BUG-AT 修复: 信号 bar.Close>or_high 在 bar 收盘后才确认,
+        # 实盘只能在 *下一根 bar* 才有 fill 机会. 当根 bar fill 是 look-ahead.
+        bar_pos = day_df.index.get_loc(ts)
+        if bar_pos + 1 >= len(day_df):
+            return []
+        next_ts = day_df.index[bar_pos + 1]
         return [TradePlan(
-            day=ts.date(),
-            entry_ts=ts,
+            day=next_ts.date(),
+            entry_ts=next_ts,
             side="long",
             order_type="LMT",
             limit_price=or_high,
@@ -145,44 +151,53 @@ def strat_vwap_pullback(day_df: pd.DataFrame, full_df: pd.DataFrame,
     if vwap.iloc[warmup_bars - 1] <= vwap.iloc[warmup_bars - trend_check_bars - 1]:
         return []
 
+    # BUG-R 修复: pullback 后 *紧邻下一根* 就检测反弹 (而非隔一根).
+    # 改用单循环, 在每根 bar 上判断: 当根是否反弹自上一个 pullback?
     post = day_df.iloc[warmup_bars:]
     pullback_bar = None
-    for i in range(len(post) - 1):
+    for i in range(len(post)):
         ts = post.index[i]
         bar = post.iloc[i]
-        nxt_ts = post.index[i + 1]
-        nxt = post.iloc[i + 1]
 
-        if pullback_bar is None:
-            # 找 pullback: bar.Low 触 VWAP 但 close 还在 VWAP 之上 (浅回踩)
-            if float(bar["Low"]) <= vwap.loc[ts] and float(bar["Close"]) >= vwap.loc[ts] * 0.999:
-                pullback_bar = (ts, bar)
+        # 1. 已有 pullback → 当根能否作为反弹入场 bar?
+        if pullback_bar is not None:
+            pb_ts, pb = pullback_bar
+            if ts == pb_ts:
+                continue   # 同根 (设置 pullback 那根) 不算反弹
+            if (float(bar["Close"]) > vwap.loc[ts] and
+                float(bar["Close"]) > float(pb["High"])):
+                limit = float(pb["High"])
+                stop = float(pb["Low"])
+                stop_dist = limit - stop
+                if stop_dist <= 0:
+                    pullback_bar = None
+                    continue
+                # BUG-AT 修复: 反弹信号 bar.Close>pb.High 在 bar 收盘后才确认,
+                # 实盘只能在 *下一根 bar* 才有 fill 机会.
+                bar_pos = day_df.index.get_loc(ts)
+                if bar_pos + 1 >= len(day_df):
+                    return []
+                next_ts = day_df.index[bar_pos + 1]
+                return [TradePlan(
+                    day=next_ts.date(),
+                    entry_ts=next_ts,
+                    side="long",
+                    order_type="LMT",
+                    limit_price=limit,
+                    stop_price=stop,
+                    tp_price=limit + tp_r * stop_dist,
+                    max_hold_bars=max_hold_bars,
+                    note=f"VWAP_PB pb@{pb_ts.strftime('%H:%M')}",
+                )]
+            # 当根 close 跌破 VWAP → 趋势失效, 整天弃单
+            if float(bar["Close"]) < vwap.loc[ts]:
+                return []
+            # 否则继续等下一根 (pullback 还有效)
             continue
 
-        # 下一根 close > VWAP 且 close > pullback.High → 入场
-        pb_ts, pb = pullback_bar
-        if (float(nxt["Close"]) > vwap.loc[nxt_ts] and
-            float(nxt["Close"]) > float(pb["High"])):
-            limit = float(pb["High"])
-            stop = float(pb["Low"])
-            stop_dist = limit - stop
-            if stop_dist <= 0:
-                pullback_bar = None
-                continue
-            return [TradePlan(
-                day=nxt_ts.date(),
-                entry_ts=nxt_ts,
-                side="long",
-                order_type="LMT",
-                limit_price=limit,
-                stop_price=stop,
-                tp_price=limit + tp_r * stop_dist,
-                max_hold_bars=max_hold_bars,
-                note=f"VWAP_PB pb@{pb_ts.strftime('%H:%M')}",
-            )]
-        # 如果 close 又跌破 VWAP, 趋势失效, 重置
-        if float(nxt["Close"]) < vwap.loc[nxt_ts]:
-            return []
+        # 2. 还没找到 pullback → 当根是否就是 pullback?
+        if float(bar["Low"]) <= vwap.loc[ts] and float(bar["Close"]) >= vwap.loc[ts] * 0.999:
+            pullback_bar = (ts, bar)
     return []
 
 
@@ -326,13 +341,18 @@ def strat_donchian_breakout(day_df: pd.DataFrame, full_df: pd.DataFrame,
     close > 前 channel_period 根最高 + close > EMA50 → LMT @ breakout
     止损 ATR×2; 止盈 2R
     """
-    if len(day_df) < channel_period + ema_filter_period + 5:
+    # BUG-AB 修复: warmup 取 max 而非 sum.
+    # 旧版 iloc[20+50:]=iloc[70:] 一天才 78 bars, post 只剩 8 根 → DC20 只看尾盘 40min!
+    # donchian.shift(1).rolling(20) 从 iloc[20] 起有效, ema(50) 从 iloc[50] 起收敛,
+    # 取 max(20,50)=50 作为 warmup 即可.
+    warmup = max(channel_period, ema_filter_period)
+    if len(day_df) < warmup + 5:
         return []
     upper, _, _ = donchian(day_df["High"], day_df["Low"], channel_period)
     e50 = ema(day_df["Close"], ema_filter_period)
     atr_v = atr(day_df["High"], day_df["Low"], day_df["Close"], atr_period)
 
-    post = day_df.iloc[channel_period + ema_filter_period:]
+    post = day_df.iloc[warmup:]
     for ts, bar in post.iterrows():
         u = upper.loc[ts]
         if pd.isna(u):
@@ -345,9 +365,15 @@ def strat_donchian_breakout(day_df: pd.DataFrame, full_df: pd.DataFrame,
             stop = limit - stop_atr_mult * av
             stop_dist = limit - stop
             tp = limit + tp_r * stop_dist
+            # BUG-AT 修复: 突破信号 bar.Close>upper 在 bar 收盘后才确认,
+            # 实盘只能在 *下一根 bar* 才有 fill 机会.
+            bar_pos = day_df.index.get_loc(ts)
+            if bar_pos + 1 >= len(day_df):
+                return []
+            next_ts = day_df.index[bar_pos + 1]
             return [TradePlan(
-                day=ts.date(),
-                entry_ts=ts,
+                day=next_ts.date(),
+                entry_ts=next_ts,
                 side="long",
                 order_type="LMT",
                 limit_price=limit,

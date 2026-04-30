@@ -88,6 +88,42 @@ def load_5m_data(symbol: str) -> pd.DataFrame:
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# 反向 ETF 过滤 (TSLZ/SOXS/NVDS 多头突破必须底层在跌)
+# ═══════════════════════════════════════════════════════════════════════
+INVERSE_TO_LONG_PAIR = {
+    "TSLZ.US": "TSLL.US",
+    "SOXS.US": "SOXL.US",
+    "NVDS.US": "NVDL.US",
+}
+
+
+def get_inverse_etf_day_allow(symbol: str) -> Optional[dict]:
+    """
+    反向 ETF 多头交易: 当且仅当配对的多向 ETF 昨日收盘 EMA50 < EMA200 (底层长期下跌)
+    才允许当日开仓.
+
+    返回 dict {date: bool} (True=允许). 非反向 ETF 返回 None (不过滤).
+    用 shift(1) 避免 look-ahead: 当天决策只能用昨日收盘的 EMA.
+    """
+    if symbol not in INVERSE_TO_LONG_PAIR:
+        return None
+    long_sym = INVERSE_TO_LONG_PAIR[symbol]
+    df = load_5m_data(long_sym)
+    if df.empty:
+        logger.warning(f"反向ETF过滤: 配对 {long_sym} 数据缺失, {symbol} 不过滤")
+        return None
+    daily_close = df["Close"].resample("1D").last().dropna()
+    if len(daily_close) < 200:
+        logger.warning(f"反向ETF过滤: {long_sym} 不足 200 天, {symbol} 不过滤")
+        return None
+    ema50 = daily_close.ewm(span=50, adjust=False).mean()
+    ema200 = daily_close.ewm(span=200, adjust=False).mean()
+    # 当日决策用昨日 EMA
+    allow = (ema50.shift(1) < ema200.shift(1))
+    return {d.date(): bool(v) for d, v in allow.items()}
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # Fill 模型
 # ═══════════════════════════════════════════════════════════════════════
 def simulate_entry_fill(plan: TradePlan, day_df: pd.DataFrame,
@@ -134,14 +170,41 @@ def simulate_exit(day_df: pd.DataFrame, fill_ts: pd.Timestamp,
                   fill_price: float, side: str,
                   stop_price: float, tp_price: float,
                   cutoff_et: dtime, max_hold_bars: Optional[int] = None,
-                  stop_slip: float = 0.0005, tp_slip: float = 0.0005) -> dict:
+                  stop_slip: float = 0.0005, tp_slip: float = 0.0005,
+                  fill_is_market: bool = False) -> dict:
     """
     模拟出场. 修正 gap-through:
       - 止损: bar.Open 已穿过 stop → 按 bar.Open 成交 (滑点更深)
       - 止盈: bar.Open 已穿过 tp → 按 bar.Open 成交 (滑点反向, 对你有利)
     优先级: STOP > TP > CUTOFF > MAX_HOLD > EOD (假设同一根 bar 内 stop 先到)
+
+    BUG-M 修复: 对 MKT 单 (fill_is_market=True), 入场 bar 当根 fill 之后剩余时间
+    仍可能触 stop/tp. 在循环开始前先用入场 bar 的 Low/High 检测一次.
+    LMT 单不做此检测 (fill 在 bar 内位置不明, 保守不算当根出场).
     """
-    bars_after = day_df.loc[fill_ts:].iloc[1:]   # 入场 bar 不参与出场
+    # ── 入场 bar 同根 stop/tp 检测 (仅 MKT 单) ──
+    if fill_is_market and fill_ts in day_df.index:
+        entry_bar = day_df.loc[fill_ts]
+        if side == "long":
+            if float(entry_bar["Low"]) <= stop_price:
+                exit_p = stop_price * (1 - stop_slip)
+                return {"exit_ts": fill_ts, "exit_p": exit_p, "reason": "STOP",
+                        "hold_bars": 0}
+            if float(entry_bar["High"]) >= tp_price:
+                exit_p = tp_price * (1 - tp_slip)
+                return {"exit_ts": fill_ts, "exit_p": exit_p, "reason": "TP",
+                        "hold_bars": 0}
+        else:
+            if float(entry_bar["High"]) >= stop_price:
+                exit_p = stop_price * (1 + stop_slip)
+                return {"exit_ts": fill_ts, "exit_p": exit_p, "reason": "STOP",
+                        "hold_bars": 0}
+            if float(entry_bar["Low"]) <= tp_price:
+                exit_p = tp_price * (1 + tp_slip)
+                return {"exit_ts": fill_ts, "exit_p": exit_p, "reason": "TP",
+                        "hold_bars": 0}
+
+    bars_after = day_df.loc[fill_ts:].iloc[1:]   # 入场 bar 不参与后续循环
 
     for i, (ts, bar) in enumerate(bars_after.iterrows()):
         bar_time = ts.time()
@@ -220,10 +283,23 @@ def run_backtest(symbol: str,
     days = sorted(df["date"].unique())
     records: list[TradeRecord] = []
 
+    # 反向 ETF 日级过滤 (TSLZ/SOXS/NVDS): 配对底层昨日 EMA50<EMA200 才允许交易
+    inv_allow = get_inverse_etf_day_allow(symbol)
+
     for day in days:
         day_df = df[df["date"] == day]
         if len(day_df) < 5:
             continue
+
+        # BUG-V 修复: 跳过开盘数据不完整的日子 (首根 != 09:30 ET 通常是数据采集起始日)
+        first_ts = day_df.index[0]
+        if first_ts.time() != dtime(9, 30):
+            continue
+
+        # 反向 ETF: 底层趋势不利则跳过当日 (无 plan, 无 record)
+        if inv_allow is not None:
+            if not inv_allow.get(day, False):
+                continue
 
         plans = strategy_fn(day_df, df, **strategy_params)
         if not plans:
@@ -252,7 +328,8 @@ def run_backtest(symbol: str,
             ex = simulate_exit(day_df, fill_ts, fill_p, plan.side,
                                 plan.stop_price, plan.tp_price,
                                 cutoff_et, plan.max_hold_bars,
-                                stop_slip, tp_slip)
+                                stop_slip, tp_slip,
+                                fill_is_market=(plan.order_type == "MKT"))
             rec.fill_ts = fill_ts
             rec.fill_price = fill_p
             rec.exit_ts = ex["exit_ts"]
@@ -272,7 +349,8 @@ def run_backtest(symbol: str,
 # ═══════════════════════════════════════════════════════════════════════
 def compute_metrics(records: list[TradeRecord],
                     half_life_days: int = 90,
-                    asof: Optional[date] = None) -> dict:
+                    asof: Optional[date] = None,
+                    data_end_date: Optional[date] = None) -> dict:
     """
     计算综合指标. 默认 half-life 90 天加权 (近期权重最高).
 
@@ -309,7 +387,9 @@ def compute_metrics(records: list[TradeRecord],
     loss_pnl = abs(df[df["pnl_pct"] < 0]["pnl_pct"].sum())
     pf = win_pnl / loss_pnl if loss_pnl > 0 else float("inf")
     cum = (1 + df["pnl_pct"] / 100).prod() - 1
-    eq = (1 + df["pnl_pct"] / 100).cumprod()
+    # BUG-U 修复: cumprod 序列前补 1.0, 否则第一笔大亏时 max_dd 被低估 1-2pp
+    eq = pd.concat([pd.Series([1.0]), (1 + df["pnl_pct"] / 100).cumprod()],
+                    ignore_index=True)
     dd = (eq / eq.cummax() - 1).min() * 100
     avg = df["pnl_pct"].mean()
 
@@ -326,8 +406,13 @@ def compute_metrics(records: list[TradeRecord],
     })
 
     # ── recency-weighted (half-life 衰减) ──
+    # BUG-J 修复: 优先用 data_end_date (数据末日) 而非 trade.max()
+    # 否则若策略最近半年没出信号, recency 仍按"最近一笔=今天"算 → 失真
     if asof is None:
-        asof = df["day"].max().date()
+        if data_end_date is not None:
+            asof = data_end_date
+        else:
+            asof = df["day"].max().date()
     asof_ts = pd.Timestamp(asof)
     df["days_ago"] = (asof_ts - df["day"]).dt.days
     df["weight"] = 0.5 ** (df["days_ago"] / half_life_days)
