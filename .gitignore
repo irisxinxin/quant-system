@@ -20,3 +20,9 @@ output/
 *.pkl
 .gitcredential
 .claude/
+
+# 实盘运行产物 (不入版本管理)
+orbsignal.log
+orbsignal.err.log
+orders_today.jsonl
+signals_live_longport.jsonl

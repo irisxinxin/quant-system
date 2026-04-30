@@ -43,9 +43,17 @@ except ImportError:
 # 默认监测核心 9 只 (高胜率 ≥ 64%); 改环境变量 ORB_TICKERS 可自定义
 sys.path.insert(0, str(Path(__file__).parent))
 try:
-    from signals.orb_strategy import CORE_PORTFOLIO, TICKER_CONFIG
+    from signals.orb_strategy import TICKER_CONFIG
+    # 监测列表: 真实回测 (限价入场, qty=10) 下 1y 美元 P&L 显著为正的 9 只
+    # 已剔: AMD, MSFL, NVDS, HOOD, MSFU, EOSE, SOXS, CIFR (1y 负贡献)
+    # 已剔: SOXL (-$59), NVDL (-$16)  — 1y 实际美元负贡献
+    # 已剔: TSLZ (+$26)  — 价格低, 10 股美元 P&L 太小, 资金占用产出比差
+    TOP9_PORTFOLIO = [
+        "CRWV.US", "RKLB.US", "OKLO.US", "INTC.US", "IREN.US",  # 🟢 1y 大正
+        "TSLL.US", "PLTR.US", "NBIS.US", "AMZN.US",              # 🟡 1y 正贡献
+    ]
     _custom = os.environ.get("ORB_TICKERS", "").strip()
-    _watch = _custom.split(",") if _custom else CORE_PORTFOLIO
+    _watch = _custom.split(",") if _custom else TOP9_PORTFOLIO
     TICKERS = {
         sym: {"entry_slip": TICKER_CONFIG[sym]["entry_slip"],
               "desc": TICKER_CONFIG[sym]["category"]}
@@ -84,6 +92,7 @@ SGT = ZoneInfo("Asia/Singapore")
 MARKET_OPEN  = dtime(9, 30)
 USER_CUTOFF  = dtime(13, 0)
 MARKET_CLOSE = dtime(15, 55)
+FORCE_CLOSE_AT = dtime(15, 50)   # 提前 5 分钟强平所有持仓
 
 # 日志
 LOG_FILE = Path(__file__).parent / "signals_live_longport.jsonl"
@@ -96,6 +105,8 @@ LOG_FILE = Path(__file__).parent / "signals_live_longport.jsonl"
 class TickerState:
     symbol: str
     bars_today: list = field(default_factory=list)
+    # 跨天滚动 V 缓冲, 最近 RVOL_LOOKBACK 根 (含当前) — lenient 算法 (= Pine ta.sma(volume, 20))
+    recent_volumes: list = field(default_factory=list)
     or_high: Optional[float] = None
     or_low: Optional[float] = None
     or_range: Optional[float] = None
@@ -103,9 +114,11 @@ class TickerState:
     or_formed: bool = False
     too_narrow: bool = False
     breakout_alerted: bool = False
+    or_entry_placed: bool = False    # 标记: OR 形成后已挂限价 LIT 单
     last_day: Optional[str] = None
 
     def reset_for_new_day(self, new_day: str):
+        # 注意: recent_volumes 跨天保留, 不清空 (lenient 算法跨天滚动)
         self.bars_today = []
         self.or_high = None
         self.or_low = None
@@ -132,24 +145,23 @@ class TickerState:
 
         # 重复 K 线? (LongPort 推送可能更新当前未完成的 K 线)
         # 用 timestamp 判断是否是新 K 线
+        new_bar = {
+            "ts": bar_dt_et,
+            "open": float(bar.open),
+            "high": float(bar.high),
+            "low": float(bar.low),
+            "close": float(bar.close),
+            "volume": int(bar.volume),
+        }
         if self.bars_today and self.bars_today[-1]["ts"] == bar_dt_et:
-            self.bars_today[-1] = {
-                "ts": bar_dt_et,
-                "open": float(bar.open),
-                "high": float(bar.high),
-                "low": float(bar.low),
-                "close": float(bar.close),
-                "volume": int(bar.volume),
-            }
+            self.bars_today[-1] = new_bar
+            if self.recent_volumes:
+                self.recent_volumes[-1] = new_bar["volume"]
         else:
-            self.bars_today.append({
-                "ts": bar_dt_et,
-                "open": float(bar.open),
-                "high": float(bar.high),
-                "low": float(bar.low),
-                "close": float(bar.close),
-                "volume": int(bar.volume),
-            })
+            self.bars_today.append(new_bar)
+            self.recent_volumes.append(new_bar["volume"])
+            if len(self.recent_volumes) > RVOL_LOOKBACK:
+                self.recent_volumes.pop(0)
 
         # OR 形成 (前 3 根)
         if not self.or_formed and len(self.bars_today) >= OR_BARS:
@@ -163,14 +175,13 @@ class TickerState:
             self.or_formed = True
             return {"event": "or_formed"}
 
-        # 检测突破 (只检查最新一根)
+        # 检测突破 (仅作显示/Telegram 通知用; 真正下单已在 OR 形成时挂 LIT 限价单)
+        # RVOL 用 lenient (跨天滚动 SMA 20) — 与限价入场组合下回测最优
         if self.or_formed and not self.too_narrow and not self.breakout_alerted:
             current = self.bars_today[-1]
             if current["high"] > self.or_high and current["close"] > self.or_high:
-                # RVOL
-                lookback_bars = self.bars_today[-RVOL_LOOKBACK-1:-1]
-                if len(lookback_bars) >= 5:  # 至少 5 根才有意义
-                    avg_vol = sum(b["volume"] for b in lookback_bars) / len(lookback_bars)
+                if len(self.recent_volumes) >= 5:
+                    avg_vol = sum(self.recent_volumes) / len(self.recent_volumes)
                     rvol = current["volume"] / max(avg_vol, 1)
                     if rvol >= RVOL_THRESHOLD:
                         self.breakout_alerted = True
@@ -186,6 +197,9 @@ states = {symbol: TickerState(symbol) for symbol in TICKERS}
 
 # 历史回测指标 (启动时一次性计算, 信号触发时附加到消息中)
 HISTORICAL_STATS = {}
+
+# 启动时回放历史 K 线: 标记为 True, 避免触发响铃/macOS 通知, 仅 Telegram 静默推送 [补发]
+IS_REPLAY = False
 
 
 def compute_historical_stats():
@@ -269,12 +283,15 @@ def send_telegram(title: str, body: str, silent: bool = False):
 
 def alert(title: str, body: str, strong: bool = True):
     """终端打印 + 响铃 + macOS 通知 + Telegram 推送"""
+    if IS_REPLAY:
+        title = "[补发] " + title
     print(f"\n{'═' * 70}")
     print(title)
     print(body)
     print('═' * 70)
 
-    if strong:
+    # 历史回放期间不响铃 / 不弹 macOS 通知 (避免启动时一片叮咚), 仅静默 Telegram
+    if strong and not IS_REPLAY:
         print("\a", end="", flush=True)
         try:
             sound = "Glass"
@@ -286,8 +303,8 @@ def alert(title: str, body: str, strong: bool = True):
         except Exception:
             pass
 
-    # Telegram: 强信号默认有声推送, 弱信号静默 (避免半夜被吵)
-    send_telegram(title, body, silent=not strong)
+    # Telegram: 强信号有声推送; 弱信号或回放统一静默
+    send_telegram(title, body, silent=(not strong) or IS_REPLAY)
 
 
 def log_event(payload: dict):
@@ -319,6 +336,21 @@ def on_candlestick(symbol: str, event: PushCandlestick):
             "or_range_pct": state.or_range_pct * 100,
             "too_narrow": state.too_narrow,
         })
+        # OR 形成且不过窄 → 立刻挂 LIT 限价入场单 (代替原"突破时市价单")
+        if not state.too_narrow and not state.or_entry_placed:
+            try:
+                import live_executor
+                slip = config["entry_slip"]
+                r = live_executor.place_or_entry(
+                    symbol, state.or_high, state.or_low, state.or_range_pct,
+                    entry_slip=slip, is_replay=IS_REPLAY)
+                if r.get("ok"):
+                    print(f"   📌 {symbol} LIT 入场单已挂 @ {r['target_px']}  id={r['entry_id']}")
+                    state.or_entry_placed = True
+                else:
+                    print(f"   💤 {symbol} 未挂入场单: {r.get('reason')}")
+            except Exception as e:
+                print(f"   ⚠️ {symbol} 挂入场单异常: {e}")
 
     elif result["event"] == "breakout":
         rvol = result["rvol"]
@@ -367,6 +399,8 @@ def on_candlestick(symbol: str, event: PushCandlestick):
             + format_historical_section(symbol) +
             f"\n\n⚠️ 03:55 SGT 前手动平仓"
         )
+        # 价格突破事件: 仅通知 (真正下单已在 OR 形成时挂 LIT 限价单, 价格触到自动成交)
+        body += "\n\n💡 LIT 限价入场单已在 OR 形成时挂出, 价格触到自动成交"
         alert(title, body, strong=is_strong)
         log_event({
             "event": "breakout", "symbol": symbol, "rvol": rvol,
@@ -411,29 +445,37 @@ def main():
     print("   ✅ 连接成功")
 
     # 拉历史 K 线作为上下文 (如果脚本启动时已经过开盘)
-    print("\n📥 加载今日历史 K 线...")
+    # 初始化模拟盘下单模块 (必须在历史回放前调用, 否则今天的 OR 形成时 _LIVE 还是 False)
+    try:
+        import live_executor
+        live_executor.init()
+    except Exception as e:
+        print(f"   ⚠️ live_executor 初始化失败: {e}")
+
+    # 关键: 区分"昨天/前天 K 线 (回放, IS_REPLAY=True 不下单)"和"今天 K 线 (live missed, IS_REPLAY=False 要下单)"
+    global IS_REPLAY
+    print("\n📥 加载历史 K 线 (昨天前回放静默, 今天 K 线视为 live)...")
     symbols = list(TICKERS.keys())
+    today_et = datetime.now(ET).date()
     for sym in symbols:
         try:
             historical = ctx.candlesticks(sym, Period.Min_5, 100, AdjustType.NoAdjust)
             count = 0
             for bar in historical:
-                states[sym].on_bar(bar)
+                bar_date = bar.timestamp.astimezone(ET).date()
+                IS_REPLAY = bar_date < today_et   # 昨天/前天 = 回放; 今天 = live
+                on_candlestick(sym, bar)
                 count += 1
             print(f"   {sym:<10} 加载 {count} 根历史 K 线")
         except Exception as e:
             print(f"   ⚠️ {sym} 历史加载失败: {e}")
+    IS_REPLAY = False
 
     # 计算历史回测指标 (用于信号附加显示)
     compute_historical_stats()
 
-    # 注册回调
-    ctx.set_on_candlestick(on_candlestick)
-
-    # 订阅实时推送
-    print(f"\n📡 订阅实时 5m K 线推送...")
-    ctx.subscribe_candlesticks(symbols, Period.Min_5)
-    print("   ✅ 订阅成功，等待推送...")
+    # 改用主动轮询 (替代 WebSocket subscribe), 每 30s 拉最新 5 根 5m K 线, on_bar 内部 dedup
+    print(f"\n🔄 改用主动轮询 (每 30s 拉最新 5 根 5m K 线, 不依赖 WebSocket 推送)")
 
     log_event({"event": "session_start", "tickers": symbols})
 
@@ -447,8 +489,11 @@ def main():
         silent=True,
     )
 
-    # 主循环：定期打印心跳 + 检查是否到收盘
+    # 主循环: 轮询拉 K 线 + 心跳 + OCO 调和 + 强平
     last_status_print = time.time()
+    last_poll = 0.0
+    POLL_INTERVAL = 30   # 每 30s 主动拉一次
+    force_close_done = False
     try:
         while True:
             n_et = datetime.now(ET)
@@ -458,14 +503,47 @@ def main():
                 print(f"\n{now_str()} — 周末，退出")
                 break
 
+            # 收盘前 5 分钟: 撤所有未成交子单 + 市价强平 (一次性)
+            if not force_close_done and n_et.time() >= FORCE_CLOSE_AT and n_et.time() < MARKET_CLOSE:
+                try:
+                    import live_executor
+                    live_executor.force_close_all()
+                except Exception as e:
+                    print(f"\n⚠️ 强平失败: {e}")
+                force_close_done = True
+
             # 收盘后退出
             if n_et.time() >= MARKET_CLOSE:
                 print(f"\n{now_str()} — 已收盘，退出")
                 break
 
-            # 每 5 分钟打印一次状态
+            # 主动轮询: 每 30 秒拉一次最新 5 根 5m K 线, 喂给 on_candlestick (内部 dedup)
+            if time.time() - last_poll >= POLL_INTERVAL:
+                last_poll = time.time()
+                for sym in symbols:
+                    try:
+                        latest = ctx.candlesticks(sym, Period.Min_5, 5, AdjustType.NoAdjust)
+                        for bar in latest:
+                            on_candlestick(sym, bar)
+                    except Exception as e:
+                        print(f"   ⚠️ {sym} 轮询失败: {e}")
+
+            # 每 30s 轮询时也检查 LIT 入场单是否成交 + arm 子单 (重要!)
+            if time.time() - last_poll < 5:  # 紧跟轮询调用
+                try:
+                    import live_executor
+                    live_executor.check_fills_and_arm_brackets(ctx)
+                except Exception as e:
+                    print(f"   ⚠️ check_fills 异常: {e}")
+
+            # 每 5 分钟打印一次状态 + OCO 调和
             if time.time() - last_status_print > 300:
                 last_status_print = time.time()
+                try:
+                    import live_executor
+                    live_executor.reconcile_oco()
+                except Exception:
+                    pass
                 print(f"\n[{now_str()}] 心跳: ", end="")
                 summary = []
                 for sym, st in states.items():
@@ -479,7 +557,7 @@ def main():
                         summary.append(f"{sym}={len(st.bars_today)}/3")
                 print(" | ".join(summary))
 
-            time.sleep(10)
+            time.sleep(2)
 
     except KeyboardInterrupt:
         print(f"\n\n⛔ 用户中断 ({now_str()})")

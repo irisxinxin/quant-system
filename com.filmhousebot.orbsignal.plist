@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.filmhousebot.orbsignal.plist — ORB 实时信号 launchd 配置
+
+  安装:
+    cp /Users/filmhousebot/Desktop/project/quant-system/com.filmhousebot.orbsignal.plist \
+       ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.filmhousebot.orbsignal.plist
+
+  手动启动 (测试用):
+    launchctl start com.filmhousebot.orbsignal
+
+  查看:
+    launchctl list | grep orbsignal
+
+  停止本次:
+    launchctl stop com.filmhousebot.orbsignal
+
+  彻底卸载:
+    launchctl unload ~/Library/LaunchAgents/com.filmhousebot.orbsignal.plist
+
+  日志:
+    tail -f /Users/filmhousebot/Desktop/project/quant-system/orbsignal.log
+    tail -f /Users/filmhousebot/Desktop/project/quant-system/orbsignal.err.log
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.filmhousebot.orbsignal</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>source /Users/filmhousebot/.longport_creds.env &amp;&amp; exec /opt/homebrew/bin/python3.13 /Users/filmhousebot/Desktop/project/quant-system/signal_live_longport.py</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/filmhousebot/Desktop/project/quant-system</string>
+
+    <!-- 不在 load 时立即启动；由 StartCalendarInterval 周一到周五触发 -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- 周一到周五 SGT 21:00 触发 (覆盖夏令时 09:30 EDT=21:30 SGT 与冬令时 09:30 EST=22:30 SGT) -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>21</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>2</integer><key>Hour</key><integer>21</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>3</integer><key>Hour</key><integer>21</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>21</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>21</integer><key>Minute</key><integer>0</integer></dict>
+    </array>
+
+    <!-- KeepAlive 字典: 仅在异常退出 (非 0) 时重启；脚本收盘后 clean exit 不会被反复拉起 -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <!-- 至少 60 秒间隔, 避免疯狂重启 -->
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/filmhousebot/Desktop/project/quant-system/orbsignal.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/filmhousebot/Desktop/project/quant-system/orbsignal.err.log</string>
+
+    <!-- 后台任务标记 -->
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <!-- 环境变量: brew 的 expat 修 macOS 26 上的 pyexpat 链接问题 -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>LANG</key>
+        <string>en_US.UTF-8</string>
+        <key>DYLD_LIBRARY_PATH</key>
+        <string>/opt/homebrew/opt/expat/lib</string>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+</dict>
+</plist>

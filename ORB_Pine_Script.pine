@@ -91,21 +91,16 @@ if justLeftOR
     tooNarrow := orRangePct < minORRangePct
     orFormed := true
 
-// ═══════════════════════ RVOL 计算 ═══════════════════════
-// 相对成交量: 当前 K 线量 / 过去 rvolLookback 根 K 线平均量
+// ═══════════════════════ RVOL 计算 (lenient: 跨天滚动 SMA 20, 含当前) ═══════════════════════
+// 与限价 stop-buy 入场组合下回测最优 — 与 Python live 脚本算法一致
 avgVol = ta.sma(volume, rvolLookback)
 rvol   = volume / (avgVol == 0 ? 1 : avgVol)
 
 // ═══════════════════════ 突破检测 ═══════════════════════
 // 满足: OR 已成型 + 不过窄 + 未触发过 + 在交易窗口 + 价格破 OR High + RVOL 够
-longBreakoutRaw  = orFormed and not tooNarrow and not breakoutAlerted and inTradeWindow
-                    and high > orHigh and close > orHigh
-                    and rvol >= rvolThreshold
+longBreakoutRaw  = orFormed and not tooNarrow and not breakoutAlerted and inTradeWindow and high > orHigh and close > orHigh and rvol >= rvolThreshold
 
-shortBreakoutRaw = orFormed and not tooNarrow and not breakoutAlerted and inTradeWindow
-                    and not longOnly
-                    and low < orLow and close < orLow
-                    and rvol >= rvolThreshold
+shortBreakoutRaw = orFormed and not tooNarrow and not breakoutAlerted and inTradeWindow and not longOnly and low < orLow and close < orLow and rvol >= rvolThreshold
 
 longBreakout  = longBreakoutRaw and not breakoutAlerted[1]
 shortBreakout = shortBreakoutRaw and not breakoutAlerted[1]
@@ -137,12 +132,18 @@ plot(showORLines and orFormed and not tooNarrow ? orHigh : na,
 plot(showORLines and orFormed and not tooNarrow ? orLow : na,
      title="OR Low",  color=color.new(color.red, 0),   linewidth=2, style=plot.style_linebr)
 
-// OR 范围填充
-orRangeBox = showORLines and orFormed and not tooNarrow ? box.new(
-     left=bar_index - orBarCount, top=orHigh,
-     right=bar_index, bottom=orLow,
-     bgcolor=color.new(color.gray, 92),
-     border_color=color.new(color.gray, 70)) : na
+// OR 范围填充 — 每天只创建一次, 然后右延伸 (避免每根 K 线叠新 box 出"竖线")
+var box orBox = na
+if justEnteredOR and not na(orBox)
+    box.delete(orBox)
+    orBox := na
+if justLeftOR and not tooNarrow and showORLines
+    orBox := box.new(left=bar_index - orBarCount, top=orHigh,
+         right=bar_index, bottom=orLow,
+         bgcolor=color.new(color.gray, 92),
+         border_color=color.new(color.gray, 70))
+if not na(orBox)
+    box.set_right(orBox, bar_index)
 
 // 入场/止损/止盈线 (突破后显示)
 plot(showEntryLines and not na(entryPrice) ? entryPrice : na,
