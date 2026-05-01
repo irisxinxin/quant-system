@@ -193,11 +193,32 @@ def check_fills_and_arm_brackets(quote_ctx=None):
             continue   # 还没成交
 
         fill_price = float(d.executed_price) if d.executed_price else float(rec["limit_price"])
+        # 只在第一次检测到 fill 时打印, 避免重试时刷屏
+        was_filled_before = rec.get("filled", False)
         rec["filled"] = True
         rec["buy_fill_price"] = fill_price
-        print(f"   ✅ {sym} {rec['order_type']} 单成交 @ ${fill_price:.2f}  策略={rec['strategy']}")
+        if not was_filled_before:
+            print(f"   ✅ {sym} {rec['order_type']} 单成交 @ ${fill_price:.2f}  策略={rec['strategy']}")
 
         qty = Decimal(rec.get("qty", "1"))
+
+        # ⚠️ 关键修复: LongPort papertrading 时序 bug — fill 后持仓需要时间 reflect
+        # 直接挂 SELL stop/tp 会被 LongPort 误判为做空 (603301).
+        # 等下次心跳时 query stock_positions 确认持仓 ≥ qty 后再挂.
+        try:
+            positions_now = _TRADE_CTX.stock_positions(symbols=[sym])
+            actual_qty = 0
+            for ch in positions_now.channels:
+                for p in ch.positions:
+                    if p.symbol == sym:
+                        actual_qty = max(actual_qty, int(p.quantity))
+            if actual_qty < int(qty):
+                if not was_filled_before:
+                    print(f"   ⏳ {sym} 持仓还未到账 ({actual_qty}/{int(qty)}), 等下次心跳再挂子单")
+                continue   # 不 mark armed, 下轮重试
+        except Exception as e:
+            print(f"   ⚠️ {sym} 查持仓失败, 跳过本轮: {e}")
+            continue
         stop_px = _round_tick(rec["stop_price"])
         tp_px = _round_tick(rec["tp_price"])
 

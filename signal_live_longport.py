@@ -129,10 +129,18 @@ def fetch_recent_bars(quote_ctx, symbol: str, count: int = 50) -> pd.DataFrame:
     return df
 
 def split_today_full(df: pd.DataFrame) -> tuple:
-    """切分 today_df + full_df. 策略需要的 today 是 OR 之后的盘内, full 是包含历史"""
+    """
+    切分 today_df + full_df, 关键: 只取**常规交易时段**(09:30-15:55 ET).
+    LongPort 5m K 线包含盘前 (04:00 ET 起) 数据, 盘前流动性差 + 价格跳跃,
+    若不过滤策略会用盘前 K 线当 OR, 在 ET 5 AM 误触发 (5/1 已踩坑).
+    """
     today_et = datetime.now(ET).date()
-    df_today = df[df.index.map(lambda x: x.date() == today_et)]
-    return df_today, df
+    rth_start = dtime(9, 30)
+    rth_end = dtime(15, 55)
+    # full_df 也只保留 RTH (避免策略指标算到盘前 V 突变)
+    full_rth = df[df.index.map(lambda x: rth_start <= x.time() < rth_end)]
+    df_today = full_rth[full_rth.index.map(lambda x: x.date() == today_et)]
+    return df_today, full_rth
 
 # ═══ 已派发记录 (防止重复 dispatch) ═══
 _DISPATCHED_TODAY: set = set()  # {symbol} - 当天已派发过策略
@@ -144,7 +152,11 @@ def reset_dispatch_state():
 # ═══ 策略派发 ═══
 def dispatch_strategies(quote_ctx):
     """每个轮询周期调用. 对每只票: 拉数据 → 跑策略 → 派发"""
-    today_et = datetime.now(ET).date()
+    # 安全保险: 只在开盘后派发 (盘前数据流动性差, 易误触发)
+    n_et = datetime.now(ET)
+    if n_et.time() < MARKET_OPEN:
+        return  # 盘前不派发
+    today_et = n_et.date()
     for symbol in TICKERS:
         if symbol in _DISPATCHED_TODAY:
             continue   # 今天已派发过 (idempotent in-memory)
