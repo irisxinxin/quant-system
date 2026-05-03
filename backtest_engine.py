@@ -474,7 +474,7 @@ def check_sanity(metrics: dict, symbol: str = "", strategy: str = "") -> list[st
 # ═══════════════════════════════════════════════════════════════════════
 # 标的列表
 # ═══════════════════════════════════════════════════════════════════════
-# TOP9 (用户当前实盘) + 之前剔除的 11 只 = 20 只全集
+# TOP9 (用户当前实盘) + 之前剔除的 11 只 + 2026-05 新加 3 只 = 23 只全集
 TICKERS_FULL = [
     # TOP9
     "CRWV.US", "RKLB.US", "OKLO.US", "INTC.US", "IREN.US",
@@ -482,6 +482,8 @@ TICKERS_FULL = [
     # 之前剔除的 11 只
     "SOXL.US", "NVDL.US", "TSLZ.US", "NVDS.US", "SOXS.US",
     "HOOD.US", "AMD.US", "EOSE.US", "MSFL.US", "MSFU.US", "CIFR.US",
+    # 2026-05 新加 (IPO / 拆分上市的高波动股)
+    "CRCL.US", "SNDK.US", "LITE.US",
 ]
 
 
