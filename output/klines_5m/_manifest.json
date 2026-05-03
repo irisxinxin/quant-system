@@ -1,160 +1,160 @@
 {
-  "generated_at": "2026-04-26T17:23:02.316089",
+  "generated_at": "2026-05-03T10:36:18.127096",
   "interval": "5m",
   "source": "LongPort OpenAPI",
   "tickers": [
     {
       "symbol": "AMD.US",
-      "bars": 28354,
+      "bars": 28744,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "AMD.US.json"
     },
     {
       "symbol": "AMZN.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "AMZN.US.json"
     },
     {
       "symbol": "BMNR.US",
-      "bars": 17268,
+      "bars": 17658,
       "first": "2025-06-05 11:00:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "BMNR.US.json"
     },
     {
       "symbol": "CIFR.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "CIFR.US.json"
     },
     {
       "symbol": "CONL.US",
-      "bars": 29291,
+      "bars": 29681,
       "first": "2024-10-21 10:45:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "CONL.US.json"
     },
     {
       "symbol": "CRWV.US",
-      "bars": 20907,
+      "bars": 21297,
       "first": "2025-03-28 13:15:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "CRWV.US.json"
     },
     {
       "symbol": "EOSE.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "EOSE.US.json"
     },
     {
       "symbol": "HOOD.US",
-      "bars": 29291,
+      "bars": 29681,
       "first": "2024-10-21 10:45:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "HOOD.US.json"
     },
     {
       "symbol": "INTC.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-05 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "INTC.US.json"
     },
     {
       "symbol": "IREN.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "IREN.US.json"
     },
     {
       "symbol": "MSFL.US",
-      "bars": 29291,
+      "bars": 29681,
       "first": "2024-10-21 10:50:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "MSFL.US.json"
     },
     {
       "symbol": "MSFU.US",
-      "bars": 29291,
+      "bars": 29681,
       "first": "2024-10-18 10:45:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "MSFU.US.json"
     },
     {
       "symbol": "NBIS.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "NBIS.US.json"
     },
     {
       "symbol": "NVDL.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "NVDL.US.json"
     },
     {
       "symbol": "NVDS.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "NVDS.US.json"
     },
     {
       "symbol": "OKLO.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "OKLO.US.json"
     },
     {
       "symbol": "PLTR.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:45:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "PLTR.US.json"
     },
     {
       "symbol": "RKLB.US",
-      "bars": 29291,
+      "bars": 29681,
       "first": "2024-10-21 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "RKLB.US.json"
     },
     {
       "symbol": "SOXL.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:45:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "SOXL.US.json"
     },
     {
       "symbol": "SOXS.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "SOXS.US.json"
     },
     {
       "symbol": "TSLL.US",
-      "bars": 28355,
+      "bars": 28745,
       "first": "2024-11-05 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "TSLL.US.json"
     },
     {
       "symbol": "TSLZ.US",
-      "bars": 28354,
+      "bars": 28744,
       "first": "2024-11-06 10:40:00",
-      "last": "2026-04-24 15:55:00",
+      "last": "2026-05-01 15:55:00",
       "file": "TSLZ.US.json"
     }
   ]
