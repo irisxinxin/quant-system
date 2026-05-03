@@ -1,0 +1,436 @@
+//@version=6
+// ═══════════════════════════════════════════════════════════════════════
+//  MultiStrategy — 自动按 ticker 匹配 V8 最优策略 + 严格对齐 Python 回测
+// ═══════════════════════════════════════════════════════════════════════
+//  对应 Python: backtest_engine.py + signals/strategies/intraday_pool.py
+//  V8 矩阵 (21/23 通过, 1 只长持 SKIP): output/best_strategy_per_ticker.csv
+//
+//  自动分发表 (基于 V8 composite_score 最高者):
+//    ORB15_VWAP : TSLZ, EOSE, OKLO, AMZN
+//    ORB5_Z     : INTC, IREN, NBIS, MSFL, CRWV, SNDK, LITE, CRCL
+//    VWAP_PB    : CIFR, TSLL, MSFU
+//    DC20       : RKLB, NVDS, HOOD, NVDL
+//    ST_10_3    : PLTR, SOXL
+//    OFF (跳过): AMD (用户长持, 不日内交易), SOXS (V8 失败)
+//    未实现 Pine: EMA_X (V8 csv 把 AMD 分到 EMA_X, 但因长持已跳过)
+//
+//  用法:
+//    1. 5m 图表 (必须)
+//    2. 添加此指标到任意支持的 ticker
+//    3. 模式 = AUTO (默认) → 自动按 ticker 选策略
+//      或者手动选模式覆盖
+//    4. 警报: "🚀 多头突破" + "Once Per Bar Close"
+//    5. 警报触发后:
+//      - LMT 类 (ORB15_VWAP/VWAP_PB/DC20): 立即挂 LIT @ entryPrice, 下根 bar 不 fill 就放弃
+//      - MKT 类 (ORB5_Z/ST_10_3): 立即下市价单, 下根 bar Open 成交
+// ═══════════════════════════════════════════════════════════════════════
+
+indicator("Multi-Strategy Auto", shorttitle="MS", overlay=true,
+          max_lines_count=200, max_labels_count=100, max_boxes_count=50)
+
+// ═══════════════════════ 模式选择 ═══════════════════════
+modeOpt = input.string("AUTO", title="策略模式",
+    options=["AUTO", "ORB15_VWAP", "ORB5_Z", "VWAP_PB", "DC20", "ST_10_3", "OFF"],
+    tooltip="AUTO = 根据 ticker 自动选 V7 最优策略")
+longOnly      = input.bool(true, "只做多", group="入场")
+showLabels    = input.bool(true, "显示信号标签")
+showLines     = input.bool(true, "显示入场/止损/止盈线")
+showTable     = input.bool(true, "显示状态表格")
+showVwap      = input.bool(true, "显示 VWAP 紫线")
+
+// 自动 ticker → mode 映射 (V8 best_strategy_per_ticker.csv, 2026-05)
+// 21 只覆盖, 1 只跳过 (AMD = 用户长持, 不日内交易)
+string tk = syminfo.ticker
+string autoMode = na
+if tk == "TSLZ" or tk == "EOSE" or tk == "OKLO" or tk == "AMZN"
+    autoMode := "ORB15_VWAP"
+else if tk == "INTC" or tk == "IREN" or tk == "NBIS" or tk == "MSFL" or tk == "CRWV" or tk == "SNDK" or tk == "LITE" or tk == "CRCL"
+    autoMode := "ORB5_Z"
+else if tk == "CIFR" or tk == "TSLL" or tk == "MSFU"
+    autoMode := "VWAP_PB"
+else if tk == "RKLB" or tk == "NVDS" or tk == "HOOD" or tk == "NVDL"
+    autoMode := "DC20"
+else if tk == "PLTR" or tk == "SOXL"
+    autoMode := "ST_10_3"
+else
+    // AMD (长持) 和未列入 V8 的 ticker 都走 OFF, 不发任何信号
+    autoMode := "OFF"
+
+mode = modeOpt == "AUTO" ? autoMode : modeOpt
+isORB15 = mode == "ORB15_VWAP"
+isORB5  = mode == "ORB5_Z"
+isVWPB  = mode == "VWAP_PB"
+isDC20  = mode == "DC20"
+isST    = mode == "ST_10_3"
+
+// ═══════════════════════ 时段检测 ═══════════════════════
+or15Session  = "0930-0945:23456"
+or5Session   = "0930-0935:23456"
+tradeSess    = "0945-1555:23456"
+tradeSessE   = "0935-1555:23456"  // ORB5_Z 提前 5 分钟可交易
+anySess      = "0930-1600:23456"
+inOR15       = not na(time(timeframe.period, or15Session, "America/New_York"))
+inOR5        = not na(time(timeframe.period, or5Session,  "America/New_York"))
+inTradeWin   = not na(time(timeframe.period, tradeSess,   "America/New_York"))
+inTradeWinE  = not na(time(timeframe.period, tradeSessE,  "America/New_York"))
+inRegular    = not na(time(timeframe.period, anySess,     "America/New_York"))
+isFirstBar   = inRegular and not inRegular[1]
+
+// ═══════════════════════ 共享: 日内 RVOL (与 Python 严格对齐) ═══════════════════════
+rvolLookback  = input.int(20, "RVOL 回看", minval=10, maxval=50, group="共享参数")
+rvolThreshold = input.float(1.5, "RVOL 门槛", minval=1.0, step=0.1, group="共享参数")
+var float[] dayVols = array.new<float>()
+if isFirstBar
+    array.clear(dayVols)
+    array.push(dayVols, volume)
+else if inRegular
+    array.push(dayVols, volume)
+
+float avgVol = na
+sz = array.size(dayVols)
+nLb = math.min(sz - 1, rvolLookback)
+if nLb >= 1
+    float sumV = 0.0
+    for i = sz - nLb - 1 to sz - 2
+        sumV += array.get(dayVols, i)
+    avgVol := sumV / nLb
+rvol = na(avgVol) or avgVol == 0 ? 0.0 : volume / avgVol
+
+// ═══════════════════════ 共享: 日内 VWAP ═══════════════════════
+var float pvSum = 0.0
+var float vSum  = 0.0
+if isFirstBar
+    pvSum := 0.0
+    vSum  := 0.0
+typical = (high + low + close) / 3
+if inRegular
+    pvSum += typical * volume
+    vSum  += volume
+dayVwap = vSum > 0 ? pvSum / vSum : na
+
+// ═══════════════════════ 共享: ATR(14) Wilder ═══════════════════════
+atrLen = 14
+atr14  = ta.rma(ta.tr(true), atrLen)
+
+// ═══════════════════════ 输出变量 ═══════════════════════
+var float entryPrice = na
+var float stopPrice  = na
+var float tpPrice    = na
+var string direction = na
+var string orderType = na   // "LMT" or "MKT"
+var bool   alertedToday = false
+var string sigNote   = na
+
+if isFirstBar
+    entryPrice   := na
+    stopPrice    := na
+    tpPrice      := na
+    direction    := na
+    orderType    := na
+    alertedToday := false
+    sigNote      := na
+
+// ═══════════════════════ 策略 1: ORB15_VWAP ═══════════════════════
+// OR=3 根 5m, min/max OR%=0.3/5.0, tp=2R, LMT @ or_high
+or15MinPct = input.float(0.3, "ORB15 最小 OR %", group="ORB15_VWAP")
+or15MaxPct = input.float(5.0, "ORB15 最大 OR %", group="ORB15_VWAP")
+or15TpR    = input.float(2.0, "ORB15 TP R 倍数", group="ORB15_VWAP")
+
+var float or15High = na
+var float or15Low  = na
+var float or15Pct  = na
+var bool  or15Formed = false
+var bool  or15Skip   = false
+just15Enter = inOR15 and not inOR15[1]
+just15Leave = not inOR15 and inOR15[1]
+if just15Enter
+    or15High := high
+    or15Low  := low
+    or15Formed := false
+    or15Skip := false
+else if inOR15
+    or15High := math.max(nz(or15High, high), high)
+    or15Low  := math.min(nz(or15Low, low), low)
+if just15Leave
+    or15Pct := (or15High - or15Low) / ((or15High + or15Low)/2) * 100
+    or15Skip := or15Pct < or15MinPct or or15Pct > or15MaxPct
+    or15Formed := true
+
+orb15Sig = isORB15 and or15Formed and not or15Skip and not alertedToday and inTradeWin and high > or15High and close > or15High and close > dayVwap and rvol >= rvolThreshold
+
+if orb15Sig
+    entryPrice := or15High
+    stopPrice  := or15Low
+    tpPrice    := or15High + or15TpR * (or15High - or15Low)
+    direction  := "LONG"
+    orderType  := "LMT"
+    alertedToday := true
+    sigNote    := "ORB15 rvol=" + str.tostring(rvol, "#.##") + " or=" + str.tostring(or15Pct, "#.##") + "%"
+
+// ═══════════════════════ 策略 2: ORB5_Z (Zarattini) ═══════════════════════
+// OR=第 1 根 5m, 阳线 → 第 2 根 MKT, stop=or_low, tp=10R
+or5TpR = input.float(10.0, "ORB5_Z TP R 倍数", group="ORB5_Z")
+
+var float or5High = na
+var float or5Low  = na
+var float or5Open = na
+var float or5Close = na
+var bool  or5Formed = false
+var bool  or5Bullish = false
+just5Enter = inOR5 and not inOR5[1]
+just5Leave = not inOR5 and inOR5[1]
+if just5Enter
+    or5High := high
+    or5Low  := low
+    or5Open := open
+    or5Close := close
+    or5Formed := false
+    or5Bullish := false
+else if inOR5
+    or5High := math.max(nz(or5High, high), high)
+    or5Low  := math.min(nz(or5Low, low), low)
+    or5Close := close
+if just5Leave
+    or5Bullish := or5Close > or5Open
+    or5Formed := true
+
+// 第 2 根 5m bar 开始时(09:35:00)触发: 用市价 entry @ Open of 第 2 根
+just5Trade = inTradeWinE and not inTradeWinE[1]   // 09:35 这根 bar 进入交易窗口
+orb5Sig = isORB5 and or5Formed and or5Bullish and not alertedToday and just5Trade and (or5High - or5Low) > 0
+
+if orb5Sig
+    refOpen = open    // 第 2 根 5m 的 Open
+    stopDist = refOpen - or5Low
+    entryPrice := refOpen
+    stopPrice  := or5Low
+    tpPrice    := refOpen + or5TpR * stopDist
+    direction  := "LONG"
+    orderType  := "MKT"
+    alertedToday := true
+    sigNote    := "ORB5_Z OR=" + str.tostring(or5High, format.mintick) + "/" + str.tostring(or5Low, format.mintick)
+
+// ═══════════════════════ 策略 3: VWAP_PB (Brian Shannon) ═══════════════════════
+// 1) warmup 6 根后 close>vwap 多数, vwap 上倾
+// 2) pullback bar.Low<=vwap & close>=vwap*0.999
+// 3) 反弹 bar.Close>vwap & close>pb.High → LMT @ pb.High
+vwpbWarmup    = input.int(6, "VWAP_PB warmup 根数", group="VWAP_PB")
+vwpbTrendBars = input.int(3, "VWAP 上倾确认 bars", group="VWAP_PB")
+vwpbTpR       = input.float(2.0, "VWAP_PB TP R 倍数", group="VWAP_PB")
+
+var int  daySessBarIdx = 0
+var int  aboveVwapCnt  = 0
+var float[] dayVwaps = array.new<float>()
+if isFirstBar
+    daySessBarIdx := 1
+    aboveVwapCnt  := close > nz(dayVwap, close) ? 1 : 0
+    array.clear(dayVwaps)
+    array.push(dayVwaps, nz(dayVwap, close))
+else if inRegular
+    daySessBarIdx := daySessBarIdx + 1
+    if close > dayVwap
+        aboveVwapCnt := aboveVwapCnt + 1
+    array.push(dayVwaps, dayVwap)
+
+// VWAP 上倾: 当前 vwap > 几根前 vwap (warmup 末)
+vwapSlopeOk = false
+if daySessBarIdx >= vwpbWarmup
+    idxNow  = array.size(dayVwaps) - 1
+    idxBack = idxNow - vwpbTrendBars
+    if idxBack >= 0
+        vwapSlopeOk := array.get(dayVwaps, idxNow) > array.get(dayVwaps, idxBack)
+
+vwarmDone = daySessBarIdx > vwpbWarmup
+vAbovePct = vwarmDone ? aboveVwapCnt / vwpbWarmup : 0
+trendOk   = vwarmDone and vAbovePct >= 0.6 and vwapSlopeOk
+
+// pullback 跟踪
+var float pbHigh = na
+var float pbLow  = na
+var int   pbBarIdx = -1
+
+// 当根能否做 pullback?
+isPullback = isVWPB and inTradeWin and trendOk and low <= dayVwap and close >= dayVwap * 0.999 and na(pbHigh)
+
+// 当根能否做反弹入场? (前根已设 pullback)
+canRebound = isVWPB and inTradeWin and not na(pbHigh) and daySessBarIdx > pbBarIdx
+isRebound  = canRebound and close > dayVwap and close > pbHigh and (pbHigh - pbLow) > 0
+
+// pullback 失效: close 跌破 vwap
+pbInvalid = canRebound and close < dayVwap
+
+if isPullback
+    pbHigh := high
+    pbLow  := low
+    pbBarIdx := daySessBarIdx
+
+if pbInvalid
+    pbHigh := na
+    pbLow  := na
+    pbBarIdx := -1
+
+vwpbSig = isRebound and not alertedToday
+
+if vwpbSig
+    entryPrice := pbHigh
+    stopPrice  := pbLow
+    tpPrice    := pbHigh + vwpbTpR * (pbHigh - pbLow)
+    direction  := "LONG"
+    orderType  := "LMT"
+    alertedToday := true
+    sigNote    := "VWAP_PB pb High=" + str.tostring(pbHigh, format.mintick)
+    pbHigh := na
+    pbLow  := na
+
+if isFirstBar
+    pbHigh := na
+    pbLow  := na
+    pbBarIdx := -1
+
+// ═══════════════════════ 策略 4: DC20 ═══════════════════════
+// close>前20根最高 + close>EMA50 → LMT @ upper. 止损 ATR×2, TP 2R.
+dc20Period = input.int(20, "DC20 channel period", group="DC20")
+dc20Ema    = input.int(50, "DC20 EMA filter", group="DC20")
+dc20AtrM   = input.float(2.0, "DC20 stop ATR 倍数", group="DC20")
+dc20TpR    = input.float(2.0, "DC20 TP R 倍数", group="DC20")
+dc20Warm   = input.int(50, "DC20 warmup bars (max(period,ema))", group="DC20")
+
+dcUpper = ta.highest(high[1], dc20Period)   // 排除当根, shift(1) 防 look-ahead
+ema50   = ta.ema(close, dc20Ema)
+
+dc20Sig = isDC20 and inTradeWin and not alertedToday and daySessBarIdx > dc20Warm and not na(dcUpper) and high > dcUpper and close > dcUpper and close > ema50
+
+if dc20Sig
+    refLim = dcUpper
+    stopDist = dc20AtrM * atr14
+    entryPrice := refLim
+    stopPrice  := refLim - stopDist
+    tpPrice    := refLim + dc20TpR * stopDist
+    direction  := "LONG"
+    orderType  := "LMT"
+    alertedToday := true
+    sigNote    := "DC20 brk@" + str.tostring(dcUpper, format.mintick)
+
+// ═══════════════════════ 策略 5: ST_10_3 ═══════════════════════
+// 5m Supertrend(10,3) 翻多 + close>日线 EMA200 → MKT 下根 Open
+stPeriod = input.int(10, "ST period", group="ST_10_3")
+stMult   = input.float(3.0, "ST mult", group="ST_10_3")
+stAtrM   = input.float(1.5, "ST stop ATR mult", group="ST_10_3")
+stTpR    = input.float(2.0, "ST TP R 倍数", group="ST_10_3")
+
+[stVal, stDir] = ta.supertrend(stMult, stPeriod)   // Pine 内置 Supertrend
+stFlipUp = stDir == 1 and stDir[1] == -1   // Pine 内置 ta.supertrend: +1=多头 -1=空头
+
+// 日线 EMA200 (request.security)
+dailyClose = request.security(syminfo.tickerid, "1D", close, lookahead=barmerge.lookahead_off)
+dailyEma200 = request.security(syminfo.tickerid, "1D",
+     ta.ema(close, 200)[1],   // shift(1) 防 look-ahead (用昨日收盘的 EMA)
+     lookahead=barmerge.lookahead_off)
+
+stSigRaw = isST and inTradeWin and not alertedToday and stFlipUp and not na(dailyEma200) and close > dailyEma200
+
+// MKT 下根 fill — Pine 在当根触发, 用户实盘 next bar 市价
+if stSigRaw
+    refOpen = close   // 近似: 收盘价 ~ 下根 Open. 实盘按 next bar Open 成交.
+    stopDist = stAtrM * atr14
+    entryPrice := refOpen
+    stopPrice  := refOpen - stopDist
+    tpPrice    := refOpen + stTpR * stopDist
+    direction  := "LONG"
+    orderType  := "MKT"
+    alertedToday := true
+    sigNote    := "ST flip+ dEMA200=" + str.tostring(dailyEma200, format.mintick)
+
+// ═══════════════════════ 统一信号 ═══════════════════════
+anySig = orb15Sig or orb5Sig or vwpbSig or dc20Sig or stSigRaw
+
+// ═══════════════════════ 绘图 ═══════════════════════
+plot(showVwap and inRegular and not na(dayVwap) ? dayVwap : na,
+     title="VWAP", color=color.new(color.purple, 0), linewidth=2)
+
+// ORB15 上下沿
+plot(showLines and isORB15 and or15Formed and not or15Skip ? or15High : na,
+     title="OR15 High", color=color.new(color.green, 0), linewidth=2, style=plot.style_linebr)
+plot(showLines and isORB15 and or15Formed and not or15Skip ? or15Low : na,
+     title="OR15 Low", color=color.new(color.red, 0), linewidth=2, style=plot.style_linebr)
+
+// ORB5 上下沿
+plot(showLines and isORB5 and or5Formed ? or5High : na,
+     title="OR5 High", color=color.new(color.lime, 0), linewidth=1, style=plot.style_linebr)
+plot(showLines and isORB5 and or5Formed ? or5Low : na,
+     title="OR5 Low", color=color.new(color.orange, 0), linewidth=1, style=plot.style_linebr)
+
+// DC20 上沿
+plot(showLines and isDC20 and not na(dcUpper) ? dcUpper : na,
+     title="DC20 Upper", color=color.new(color.aqua, 0), linewidth=1)
+plot(showLines and isDC20 ? ema50 : na,
+     title="EMA50", color=color.new(color.yellow, 30), linewidth=1)
+
+// ST
+plot(showLines and isST ? stVal : na,
+     title="Supertrend", color=stDir == 1 ? color.green : color.red, linewidth=2)
+plot(showLines and isST and not na(dailyEma200) ? dailyEma200 : na,
+     title="Daily EMA200", color=color.new(color.gray, 0), linewidth=1, style=plot.style_circles)
+
+// Entry/Stop/TP
+plot(showLines and not na(entryPrice) ? entryPrice : na,
+     title="Entry", color=color.blue, linewidth=2, style=plot.style_circles)
+plot(showLines and not na(stopPrice) ? stopPrice : na,
+     title="Stop", color=color.red, linewidth=2, style=plot.style_circles)
+plot(showLines and not na(tpPrice) ? tpPrice : na,
+     title="TP", color=color.green, linewidth=2, style=plot.style_circles)
+
+// 信号标签
+if anySig and showLabels
+    rrLong = (tpPrice - entryPrice) / (entryPrice - stopPrice)
+    label.new(bar_index, high,
+         text="🚀 " + mode + " " + orderType + "\n"
+            + "Entry: " + str.tostring(entryPrice, format.mintick) + "\n"
+            + "Stop:  " + str.tostring(stopPrice,  format.mintick)
+            + " (-" + str.tostring((entryPrice - stopPrice)/entryPrice * 100, "#.##") + "%)\n"
+            + "TP:    " + str.tostring(tpPrice,    format.mintick)
+            + " (+" + str.tostring((tpPrice - entryPrice)/entryPrice * 100, "#.##") + "%)\n"
+            + "R/R: " + str.tostring(rrLong, "#.##") + "\n"
+            + nz(sigNote, ""),
+         style=label.style_label_down, color=color.green, textcolor=color.white, size=size.normal)
+
+// ═══════════════════════ 状态表 ═══════════════════════
+var table tbl = table.new(position.top_right, 2, 8,
+     bgcolor=color.new(color.black, 75), border_width=1, frame_color=color.gray)
+if showTable and barstate.islast
+    statusTxt = mode == "OFF" ? "⛔ ticker 不在 V7 表" :
+       alertedToday ? "🟢 已触发 " + mode :
+       "🔵 监测中 " + mode
+    table.cell(tbl, 0, 0, "Ticker / Mode", bgcolor=color.new(color.blue, 30), text_color=color.white)
+    table.cell(tbl, 1, 0, tk + " / " + mode, text_color=color.white)
+    table.cell(tbl, 0, 1, "状态", text_color=color.white)
+    table.cell(tbl, 1, 1, statusTxt, text_color=color.white)
+    table.cell(tbl, 0, 2, "VWAP / Close", text_color=color.white)
+    table.cell(tbl, 1, 2, na(dayVwap) ? "-" : str.tostring(dayVwap, format.mintick) + " / " + str.tostring(close, format.mintick),
+        text_color=(not na(dayVwap) and close > dayVwap) ? color.green : (not na(dayVwap) and close < dayVwap ? color.red : color.gray))
+    table.cell(tbl, 0, 3, "RVOL", text_color=color.white)
+    table.cell(tbl, 1, 3, str.tostring(rvol, "#.##"),
+        text_color=rvol >= rvolThreshold ? color.green : color.gray)
+    table.cell(tbl, 0, 4, "ATR(14)", text_color=color.white)
+    table.cell(tbl, 1, 4, na(atr14) ? "-" : str.tostring(atr14, format.mintick), text_color=color.white)
+    table.cell(tbl, 0, 5, "Entry", text_color=color.white)
+    table.cell(tbl, 1, 5, na(entryPrice) ? "-" : str.tostring(entryPrice, format.mintick) + " (" + nz(orderType, "-") + ")",
+        text_color=color.new(color.blue, 0))
+    table.cell(tbl, 0, 6, "Stop", text_color=color.white)
+    table.cell(tbl, 1, 6, na(stopPrice) ? "-" : str.tostring(stopPrice, format.mintick),
+        text_color=color.new(color.red, 0))
+    table.cell(tbl, 0, 7, "TP", text_color=color.white)
+    table.cell(tbl, 1, 7, na(tpPrice) ? "-" : str.tostring(tpPrice, format.mintick),
+        text_color=color.new(color.green, 0))
+
+// ═══════════════════════ 警报 ═══════════════════════
+// indicator() 警报只能用 {{ticker}} {{time}} {{close}} {{interval}} 等占位符,
+// 不支持 {{strategy.*}} / {{plot_N}}. 入场/止损/止盈通过 str.tostring 在
+// 触发当根直接拼到 message 字符串里 (Pine 在 alertcondition 触发时会把
+// 当根的字符串值送出).
+alertcondition(anySig,
+     title="🚀 多头突破 (auto)",
+     message="🚀 {{ticker}} " + mode + " " + nz(orderType, "?") +
+             " | entry=" + str.tostring(entryPrice, format.mintick) +
+             " stop="    + str.tostring(stopPrice,  format.mintick) +
+             " tp="      + str.tostring(tpPrice,    format.mintick) +
+             " | t={{time}} close={{close}}")
