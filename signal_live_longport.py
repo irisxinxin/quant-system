@@ -66,17 +66,24 @@ def load_strategy_map() -> tuple:
     读 output/best_strategy_per_ticker.csv, 返回 (strategy_map, tier_map, ranking).
     - 排除 verdict != OK
     - 排除 avg_pnl ≤ 0 的票 (历史每笔亏钱)
+    - 排除 1y_dollar_at_5k < 100 的票 (按 $5k 仓位算年贡献 < $100, 几乎没意义)
     - 按 composite_score 排 3 档: A (top 1/3) / B (mid 1/3) / C (bottom 1/3)
-    - ranking: 按 composite_score 降序的 ticker list (dispatch 优先级)
     """
     csv_path = PROJECT_DIR / "output" / "best_strategy_per_ticker.csv"
     if not csv_path.exists():
         print(f"❌ 找不到 {csv_path}"); sys.exit(1)
     df = pd.read_csv(csv_path)
     df_ok = df[df["verdict"] == "OK"].copy()
-    # 过滤: avg_pnl > 0 (历史每笔正期望)
-    df_pos = df_ok[df_ok["avg_pnl"] > 0].sort_values("composite_score", ascending=False).reset_index(drop=True)
-    excluded = df_ok[df_ok["avg_pnl"] <= 0]["symbol"].tolist()
+    # 估算年贡献 (按 $5k 基准): 取 1y avg_pnl 和 recency_avg_pnl 的 max (近期强的票也能留)
+    df_ok["est_annual_at_5k_1y"] = df_ok["avg_pnl"] / 100 * df_ok["filled"] * 5000
+    df_ok["est_annual_at_5k_rec"] = df_ok["recency_avg_pnl"] / 100 * df_ok["filled"] * 5000
+    df_ok["est_annual_best"] = df_ok[["est_annual_at_5k_1y", "est_annual_at_5k_rec"]].max(axis=1)
+    # 过滤: avg_pnl > 0 AND max(1y, recency) 年贡献 ≥ $200
+    # ($200 是个 sweet spot: MSFU $422 (近期强) 留住, AMZN $182 (1y/recency 都弱) 踢)
+    df_pos = df_ok[(df_ok["avg_pnl"] > 0) & (df_ok["est_annual_best"] >= 200)].sort_values("composite_score", ascending=False).reset_index(drop=True)
+    excluded_neg = df_ok[df_ok["avg_pnl"] <= 0]["symbol"].tolist()
+    excluded_low = df_ok[(df_ok["avg_pnl"] > 0) & (df_ok["est_annual_best"] < 200)]["symbol"].tolist()
+    excluded = excluded_neg + excluded_low
     n = len(df_pos)
     a_cut = max(1, n // 3)
     c_cut = max(a_cut + 1, n - n // 3)
@@ -285,7 +292,7 @@ def main():
         usd = BASE_POSITION_USD * TIER_MULT[tier]
         print(f"   {i:<3} {sym.replace('.US',''):<8} {tier:<3} ${usd:<9,.0f} {STRATEGY_MAP[sym]}")
     if EXCLUDED:
-        print(f"   ⛔ 排除 (avg_pnl ≤ 0): {', '.join(s.replace('.US','') for s in EXCLUDED)}")
+        print(f"   ⛔ 排除 (avg_pnl≤0 或 1y@5k<\$100): {', '.join(s.replace('.US','') for s in EXCLUDED)}")
     print("=" * 70)
 
     print("\n🔌 连接 LongPort...")
