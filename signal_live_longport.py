@@ -273,6 +273,7 @@ def main():
     last_status_print = time.time()
     last_dispatch = 0.0
     force_close_done = False
+    orphan_cleaned_today = False   # 开盘后只清一次隔夜孤儿
     last_dispatch_day = None
 
     try:
@@ -284,10 +285,21 @@ def main():
                 print(f"\n{now_str()} — 周末, 退出")
                 break
 
-            # 跨日重置 dispatched
+            # 跨日重置 dispatched + orphan cleanup flag
             if last_dispatch_day != n_et.date():
                 reset_dispatch_state()
                 last_dispatch_day = n_et.date()
+                orphan_cleaned_today = False
+
+            # 9:30 ET 开盘后第一时间清隔夜孤儿持仓 (盘前不能 SELL, 必须开盘后立刻)
+            if not orphan_cleaned_today and n_et.time() >= MARKET_OPEN and n_et.time() < FORCE_CLOSE_AT:
+                try:
+                    n_orphan = live_executor.cleanup_orphan_positions()
+                    orphan_cleaned_today = True
+                    if n_orphan > 0:
+                        send_telegram(f"🧹 平隔夜孤儿 {n_orphan} 只", "上次 force_close 部分失败的持仓已开盘平仓", silent=True)
+                except Exception as e:
+                    print(f"\n⚠️ cleanup_orphan 异常: {e}")
 
             # 收盘前 5min 强平
             if not force_close_done and n_et.time() >= FORCE_CLOSE_AT and n_et.time() < MARKET_CLOSE:

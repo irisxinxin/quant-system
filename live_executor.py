@@ -310,6 +310,53 @@ def reconcile_oco():
             _persist(sym, "open_position", rec)
 
 
+def cleanup_orphan_positions():
+    """
+    9:30 ET 开盘后第一时间调用. 平掉**隔夜遗留**持仓 (_OPEN_POSITIONS 里没有 / 或都 closed 的, 但 LongPort 实际还有).
+    场景: 上一交易日 force_close 部分 Rejected → 周末挂单过夜.
+    LongPort papertrading 盘前禁止 SELL (603301), 必须等开盘后立刻 MO 平.
+    """
+    if not _LIVE or _TRADE_CTX is None:
+        return 0
+    try:
+        from longport.openapi import OrderType, OrderSide, TimeInForceType
+    except ImportError:
+        return 0
+
+    try:
+        positions = _TRADE_CTX.stock_positions()
+    except Exception as e:
+        print(f"   ⚠️ cleanup_orphan: 查持仓失败 {e}")
+        return 0
+
+    closed_count = 0
+    for ch in positions.channels:
+        for p in ch.positions:
+            qty = int(p.quantity)
+            if qty <= 0:
+                continue
+            sym = p.symbol
+            # 检查是不是 today active 的 (在 _OPEN_POSITIONS 且未 closed)
+            today = _today_str()
+            rec = _OPEN_POSITIONS.get(sym)
+            if rec and rec.get("date") == today and not rec.get("closed"):
+                continue   # 是今天活的, 跳过
+            # 是 orphan, 平掉
+            try:
+                from decimal import Decimal
+                resp = _TRADE_CTX.submit_order(
+                    symbol=sym, order_type=OrderType.MO, side=OrderSide.Sell,
+                    submitted_quantity=Decimal(str(qty)), time_in_force=TimeInForceType.Day,
+                    remark="OrphanFromPrevDay")
+                print(f"   🧹 平隔夜孤儿 {sym} {qty} 股, id={resp.order_id}")
+                closed_count += 1
+            except Exception as e:
+                print(f"   ❌ 平孤儿 {sym} {qty} 失败: {e}")
+    if closed_count > 0:
+        print(f"   ✅ cleanup_orphan: 平了 {closed_count} 只隔夜遗留持仓")
+    return closed_count
+
+
 def force_close_all():
     """收盘前 15:50 ET: 撤所有未成交单 + 市价平所有持仓"""
     if not _LIVE or _TRADE_CTX is None:
