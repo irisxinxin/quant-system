@@ -310,11 +310,14 @@ def reconcile_oco():
             _persist(sym, "open_position", rec)
 
 
+_orphan_pending_retry: dict = {}   # {symbol: {"qty": int, "attempts": int}}
+
 def cleanup_orphan_positions():
     """
     9:30 ET 开盘后第一时间调用. 平掉**隔夜遗留**持仓 (_OPEN_POSITIONS 里没有 / 或都 closed 的, 但 LongPort 实际还有).
     场景: 上一交易日 force_close 部分 Rejected → 周末挂单过夜.
     LongPort papertrading 盘前禁止 SELL (603301), 必须等开盘后立刻 MO 平.
+    Reject 的会在下次心跳重试 (max 5 次).
     """
     if not _LIVE or _TRADE_CTX is None:
         return 0
@@ -350,15 +353,50 @@ def cleanup_orphan_positions():
                     remark="OrphanFromPrevDay")
                 print(f"   🧹 平隔夜孤儿 {sym} {qty} 股, id={resp.order_id}")
                 closed_count += 1
+                _orphan_pending_retry.pop(sym, None)
             except Exception as e:
-                print(f"   ❌ 平孤儿 {sym} {qty} 失败: {e}")
+                # 加入重试队列
+                attempts = _orphan_pending_retry.get(sym, {}).get("attempts", 0) + 1
+                _orphan_pending_retry[sym] = {"qty": qty, "attempts": attempts}
+                print(f"   ❌ 平孤儿 {sym} {qty} 失败 (尝试 {attempts}/5): {e}")
     if closed_count > 0:
         print(f"   ✅ cleanup_orphan: 平了 {closed_count} 只隔夜遗留持仓")
     return closed_count
 
 
+def retry_orphan_cleanup():
+    """心跳调用: 重试 cleanup_orphan 失败的孤儿. max 5 次"""
+    if not _LIVE or _TRADE_CTX is None:
+        return
+    try:
+        from longport.openapi import OrderType, OrderSide, TimeInForceType
+        from decimal import Decimal
+    except ImportError:
+        return
+    for sym, info in list(_orphan_pending_retry.items()):
+        if info["attempts"] >= 5:
+            print(f"   ⚠️ 孤儿 {sym} 已尝试 {info['attempts']} 次仍失败, 放弃")
+            _orphan_pending_retry.pop(sym, None)
+            continue
+        try:
+            resp = _TRADE_CTX.submit_order(
+                symbol=sym, order_type=OrderType.MO, side=OrderSide.Sell,
+                submitted_quantity=Decimal(str(info["qty"])), time_in_force=TimeInForceType.Day,
+                remark="OrphanFromPrevDay-Retry")
+            print(f"   🧹 重试平孤儿 {sym} {info['qty']} 股 ✅ (第 {info['attempts']+1} 次)")
+            _orphan_pending_retry.pop(sym, None)
+        except Exception as e:
+            info["attempts"] += 1
+            print(f"   ❌ 重试 {sym} 仍失败 ({info['attempts']}/5): {str(e)[:80]}")
+
+
 def force_close_all():
-    """收盘前 15:50 ET: 撤所有未成交单 + 市价平所有持仓"""
+    """
+    收盘前 15:50 ET: 撤所有未成交单 + 市价平所有持仓.
+    关键修: 撤单后 sleep 3s 让 LongPort 处理, 再 submit MO sell, 避免 603301 时序冲突.
+    Reject 的入隔夜孤儿队列, 下次开盘 cleanup_orphan 兜底.
+    """
+    import time as _time
     if not _LIVE or _TRADE_CTX is None:
         return
     try:
@@ -391,7 +429,11 @@ def force_close_all():
                 except Exception:
                     pass
 
-    # 市价平所有真持仓
+    # ⚠️ 关键: 撤单后等 LongPort 处理 (5/1 教训: 同步撤+下 SELL 触发 603301)
+    print("   ⏳ 等 3s 让撤单 settle...")
+    _time.sleep(3)
+
+    # 市价平所有真持仓 (用持仓 query, 不依赖 _OPEN_POSITIONS, 防遗漏)
     try:
         positions = _TRADE_CTX.stock_positions()
     except Exception as e:
@@ -415,3 +457,6 @@ def force_close_all():
                 _persist(p.symbol, "open_position", rec)
             except Exception as e:
                 print(f"   ❌ 强平 {p.symbol} 失败: {e}")
+                # Reject 的入孤儿队列, 等下交易日 cleanup_orphan 兜底
+                _orphan_pending_retry[p.symbol] = {"qty": int(qty), "attempts": 0}
+                print(f"      → 已加入孤儿队列, 下交易日开盘自动平")

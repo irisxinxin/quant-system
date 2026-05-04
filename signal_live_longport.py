@@ -320,10 +320,12 @@ def main():
                 except Exception as e:
                     print(f"   ⚠️ 派发/fill 检查异常: {e}")
 
-            # 5min 一次心跳 + OCO
+            # 5min 一次心跳 + OCO + retry orphan
             if time.time() - last_status_print > 300:
                 last_status_print = time.time()
                 try: live_executor.reconcile_oco()
+                except Exception: pass
+                try: live_executor.retry_orphan_cleanup()  # 重试上次失败的孤儿
                 except Exception: pass
                 dispatched_n = len(_DISPATCHED_TODAY)
                 pending_n = len(live_executor._PENDING_ENTRIES)
