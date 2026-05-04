@@ -56,19 +56,41 @@ LOG_FILE = PROJECT_DIR / "signals_live_longport.jsonl"
 # 主循环
 POLL_INTERVAL = 30   # 秒
 
-# ═══ 加载策略分配 ═══
-def load_strategy_map() -> dict:
-    """读 output/best_strategy_per_ticker.csv, 排除 verdict != OK 的票"""
+# ═══ 加载策略分配 + Tier 分仓 ═══
+# Tier 仓位倍数 (按 composite_score 三档)
+TIER_MULT = {"A": 1.5, "B": 1.0, "C": 0.5}
+BASE_POSITION_USD = 10000   # 基准, 实际 = BASE × tier_mult × signal_strength
+
+def load_strategy_map() -> tuple:
+    """
+    读 output/best_strategy_per_ticker.csv, 返回 (strategy_map, tier_map, ranking).
+    - 排除 verdict != OK
+    - 排除 avg_pnl ≤ 0 的票 (历史每笔亏钱)
+    - 按 composite_score 排 3 档: A (top 1/3) / B (mid 1/3) / C (bottom 1/3)
+    - ranking: 按 composite_score 降序的 ticker list (dispatch 优先级)
+    """
     csv_path = PROJECT_DIR / "output" / "best_strategy_per_ticker.csv"
     if not csv_path.exists():
         print(f"❌ 找不到 {csv_path}"); sys.exit(1)
     df = pd.read_csv(csv_path)
-    df_ok = df[df["verdict"] == "OK"]
-    smap = dict(zip(df_ok["symbol"], df_ok["strategy"]))
-    return smap
+    df_ok = df[df["verdict"] == "OK"].copy()
+    # 过滤: avg_pnl > 0 (历史每笔正期望)
+    df_pos = df_ok[df_ok["avg_pnl"] > 0].sort_values("composite_score", ascending=False).reset_index(drop=True)
+    excluded = df_ok[df_ok["avg_pnl"] <= 0]["symbol"].tolist()
+    n = len(df_pos)
+    a_cut = max(1, n // 3)
+    c_cut = max(a_cut + 1, n - n // 3)
+    smap = {}; tier_map = {}; ranking = []
+    for i, row in df_pos.iterrows():
+        sym = row["symbol"]
+        smap[sym] = row["strategy"]
+        if i < a_cut: tier_map[sym] = "A"
+        elif i < c_cut: tier_map[sym] = "B"
+        else: tier_map[sym] = "C"
+        ranking.append(sym)
+    return smap, tier_map, ranking, excluded
 
-STRATEGY_MAP = load_strategy_map()
-TICKERS = list(STRATEGY_MAP.keys())
+STRATEGY_MAP, TIER_MAP, TICKERS, EXCLUDED = load_strategy_map()
 
 # ═══ 工具 ═══
 def now_str() -> str:
@@ -128,6 +150,32 @@ def fetch_recent_bars(quote_ctx, symbol: str, count: int = 50) -> pd.DataFrame:
     df = pd.DataFrame(rows).set_index("timestamp")
     return df
 
+def compute_signal_strength(strategy_name: str, plan, today_df: pd.DataFrame) -> float:
+    """
+    根据当下信号质量给 0.7-1.4x 倍数. 越强信号倍数越高.
+    - ORB5_Z: 看 OR 那根阳线力度 (close-open)/range
+    - ORB15_VWAP: 看 RVOL (从 plan.note 提取)
+    - 其他策略: 1.0 (中性)
+    """
+    try:
+        if strategy_name == "ORB5_Z" and len(today_df) >= 1:
+            ob = today_df.iloc[0]
+            o, h, l, c = float(ob["Open"]), float(ob["High"]), float(ob["Low"]), float(ob["Close"])
+            rng = max(h - l, 1e-6)
+            bullishness = (c - o) / rng   # 0 = doji, 1 = full marubozu
+            # map [0, 1] → [0.7, 1.3]
+            return max(0.7, min(1.3, 0.7 + 0.6 * bullishness))
+        elif strategy_name == "ORB15_VWAP":
+            # plan.note: "ORB15V rvol=2.01 or_pct=1.19"
+            note = plan.note or ""
+            if "rvol=" in note:
+                rvol = float(note.split("rvol=")[1].split()[0])
+                # map [1.5, 3.0] → [0.8, 1.4]; cap below 1.5 to 0.8
+                return max(0.8, min(1.4, 0.8 + 0.4 * (rvol - 1.5)))
+    except Exception:
+        pass
+    return 1.0   # 默认中性
+
 def split_today_full(df: pd.DataFrame) -> tuple:
     """
     切分 today_df + full_df, 关键: 只取**常规交易时段**(09:30-15:55 ET).
@@ -186,19 +234,24 @@ def dispatch_strategies(quote_ctx):
         if plan.side != "long":
             continue   # 我们只做多
 
-        result = live_executor.place_entry(symbol, plan, is_replay=False)
+        # 算 tier × 信号强度 → 实际仓位
+        tier = TIER_MAP.get(symbol, "B")
+        signal_strength = compute_signal_strength(strategy_name, plan, today_df)
+        position_usd = int(BASE_POSITION_USD * TIER_MULT[tier] * signal_strength)
+
+        result = live_executor.place_entry(symbol, plan, position_usd=position_usd, is_replay=False)
         if result.get("ok"):
             _DISPATCHED_TODAY.add(symbol)
             entry_px = result["limit_px"]; stop_px = result["stop_px"]; tp_px = result["tp_px"]
             risk_pct = (entry_px - stop_px) / entry_px * 100
             reward_pct = (tp_px - entry_px) / entry_px * 100
-            title = f"🚀 {symbol} {strategy_name} 信号 ({plan.order_type})"
+            title = f"🚀 {symbol} [{tier}] {strategy_name} 信号 ({plan.order_type})"
             body = (f"时间: {now_str()}\n"
-                    f"策略: {strategy_name}\n"
+                    f"策略: {strategy_name} · 档位: {tier} · 信号强度: {signal_strength:.2f}x\n"
+                    f"仓位: ${position_usd:,} = {result['qty']} 股\n"
                     f"入场: {entry_px}  ({plan.order_type})\n"
                     f"止损: {stop_px}  ({-risk_pct:+.2f}%)\n"
                     f"止盈: {tp_px}  ({reward_pct:+.2f}%)\n"
-                    f"股数: {result['qty']}\n"
                     f"备注: {plan.note}")
             alert(title, body, strong=True)
             log_event({"event": "entry_placed", "symbol": symbol, "strategy": strategy_name,
@@ -223,11 +276,16 @@ def main():
         print(f"❌ 缺环境变量: {missing}"); sys.exit(1)
 
     print("=" * 70)
-    print(f"🟢 ORB Multi-Strategy 实盘 (Plan-Driven)")
+    print(f"🟢 ORB Multi-Strategy 实盘 (Tier-sized Plan-Driven)")
     print(f"   {now_str()}")
-    print(f"   监测 {len(TICKERS)} 只 (按 best_strategy_per_ticker.csv):")
-    for sym in TICKERS:
-        print(f"     {sym:<10}  →  {STRATEGY_MAP[sym]}")
+    print(f"   监测 {len(TICKERS)} 只 (按 composite_score 排序, dispatch 优先级 = 顺序):")
+    print(f"   {'#':<3} {'票':<8} {'档':<3} {'仓位':<10} {'策略':<12}")
+    for i, sym in enumerate(TICKERS, 1):
+        tier = TIER_MAP[sym]
+        usd = BASE_POSITION_USD * TIER_MULT[tier]
+        print(f"   {i:<3} {sym.replace('.US',''):<8} {tier:<3} ${usd:<9,.0f} {STRATEGY_MAP[sym]}")
+    if EXCLUDED:
+        print(f"   ⛔ 排除 (avg_pnl ≤ 0): {', '.join(s.replace('.US','') for s in EXCLUDED)}")
     print("=" * 70)
 
     print("\n🔌 连接 LongPort...")
