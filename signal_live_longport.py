@@ -103,10 +103,11 @@ STRATEGY_MAP, TIER_MAP, TICKERS, EXCLUDED = load_strategy_map()
 def now_str() -> str:
     return f"{datetime.now(ET).strftime('%H:%M:%S ET')} / {datetime.now(SGT).strftime('%H:%M:%S SGT')}"
 
-def send_telegram(title: str, body: str, silent: bool = False):
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-    if not token or not chat_id: return
+# Telegram 失败重试队列 (max 50, 心跳时尝试发出)
+_telegram_retry_queue: list = []
+
+def _do_send_telegram(token: str, chat_id: str, title: str, body: str, silent: bool) -> bool:
+    """实际发送, 返回成功/失败"""
     try:
         import urllib.request, urllib.parse
         msg = f"<b>{title}</b>\n\n<pre>{body}</pre>"
@@ -117,8 +118,36 @@ def send_telegram(title: str, body: str, silent: bool = False):
         req = urllib.request.Request(
             f"https://api.telegram.org/bot{token}/sendMessage", data=data, method="POST")
         urllib.request.urlopen(req, timeout=5)
+        return True
     except Exception as e:
         print(f"   ⚠️ Telegram 失败: {e}")
+        return False
+
+def send_telegram(title: str, body: str, silent: bool = False):
+    """发送 telegram, 失败入队列等心跳重试 (避免网络瞬断丢消息)"""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id: return
+    if not _do_send_telegram(token, chat_id, title, body, silent):
+        # 加入重试队列, 下次心跳再发
+        if len(_telegram_retry_queue) < 50:
+            _telegram_retry_queue.append((title, body, silent))
+
+def retry_telegram_queue():
+    """心跳调用: 重试队列里失败的 telegram 推送"""
+    if not _telegram_retry_queue: return
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id: return
+    sent = 0
+    for title, body, silent in list(_telegram_retry_queue):
+        if _do_send_telegram(token, chat_id, title, body, silent):
+            _telegram_retry_queue.remove((title, body, silent))
+            sent += 1
+        else:
+            break   # 还连不上, 先停, 下次再试
+    if sent > 0:
+        print(f"   📨 Telegram 队列重发成功 {sent} 条 (剩 {len(_telegram_retry_queue)})")
 
 def alert(title: str, body: str, strong: bool = True):
     print(f"\n{'═' * 70}\n{title}\n{body}\n{'═' * 70}")
@@ -391,6 +420,8 @@ def main():
                 try: live_executor.reconcile_oco()
                 except Exception: pass
                 try: live_executor.retry_orphan_cleanup()  # 重试上次失败的孤儿
+                except Exception: pass
+                try: retry_telegram_queue()  # 重试上次失败的 telegram 推送
                 except Exception: pass
                 dispatched_n = len(_DISPATCHED_TODAY)
                 pending_n = len(live_executor._PENDING_ENTRIES)
