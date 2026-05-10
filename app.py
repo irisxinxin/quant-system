@@ -1132,22 +1132,32 @@ def api_cm_chart(ticker: str):
 # ─── 二级研究员持仓 ───
 
 _ER_PORTFOLIO = [
-    # tier: 核心 / 主仓 / 中仓 / 观察 / 出场
-    {"ticker":"LITE", "tier":"核心", "size_pct":19.1, "sector":"激光器/光模块","entry":894.07,"strategy":"ema2060+soxx+obv_down",     "note":"EML拿单≥70%，订单至2027+"},
-    {"ticker":"COHR", "tier":"核心", "size_pct":19.7, "sector":"激光器/光模块","entry":345.02,"strategy":"ema20_dip+none+rsi_fade",    "note":"CPO激光源+SiC双赛道"},
-    {"ticker":"DRAM", "tier":"核心", "size_pct":20.0, "sector":"存储",         "entry":35.59, "strategy":"待优化(数据不足)",           "note":"MU止盈后转入，长协重新定价催化（04-28 加仓至20%）"},
-    {"ticker":"ALAB", "tier":"主仓", "size_pct":5.0,  "sector":"CPU/互联芯片", "entry":174.05,"strategy":"vol_surge+combo+obv_down",  "note":"CPU供需失衡乘数效应最强，弹性>ARM>AMD"},
-    {"ticker":"MRVL", "tier":"中仓", "size_pct":4.5,  "sector":"光子/DSP",     "entry":139.69,"strategy":"bb_lo+combo+ma_x",          "note":"800G/1.6T DSP核心供应商"},
-    {"ticker":"AAOI", "tier":"中仓", "size_pct":5.0,  "sector":"光模块",       "entry":159.42,"strategy":"ema20_dip+obv+soxx+rsi_fade","note":"27年指引若兑现→250-300B市值弹性（04-25加仓+0.5%）"},
-    {"ticker":"GFS",  "tier":"中仓", "size_pct":4.0,  "sector":"硅光代工",     "entry":54.75, "strategy":"mfi_os+combo+rsi80",         "note":"12英寸SiPh先发2年，24x PE低估值"},
-    {"ticker":"FORM", "tier":"观察", "size_pct":2.9,  "sector":"光学测试",     "entry":137.21,"strategy":"bb_lo+soxx+ma_x",            "note":"CPO探针台，1Y_DD仅-4.1%"},
-    {"ticker":"ARM",  "tier":"中仓", "size_pct":5.0,  "sector":"半导体IP",     "entry":166.73,"strategy":"ema20_dip+obv+none+rsi_fade","note":"CPU链预期差标的（04-26 加仓 2%→5%，升中仓）"},
-    {"ticker":"AMD",  "tier":"观察", "size_pct":1.0,  "sector":"CPU/GPU",      "entry":347.80,"strategy":"ema_cross+soft+cmf_neg",       "note":"04-25 建1%观察仓"},
-    {"ticker":"AEHR", "tier":"观察", "size_pct":2.0,  "sector":"半导体测试",   "entry":83.86, "strategy":"rsi28+soxx+rsi80",           "note":"光芯片测试设备，注意历史DD-71.9%"},
-    {"ticker":"ASX",  "tier":"观察", "size_pct":2.0,  "sector":"半导体封测",   "entry":28.59, "strategy":"ma5200+soxx+trail_8",        "note":"日月光半导体，1Y策略+212%，Calmar 15"},
-    # A股持仓（仅东山精密）
-    {"ticker":"002384.SZ","tier":"观察", "size_pct":0,   "sector":"A股·光模块+PCB", "entry":None,"strategy":"—","note":"东山精密｜索尔思光模块+EML芯片，Q1净利+119-152%"},
-    # 止盈出场
+    # tier: 核心(≥10%) / 主仓(5-10%) / 中仓(3-5%) / 观察(<3%) / 出场
+    # ── 核心仓 ──
+    {"ticker":"DRAM", "tier":"核心", "size_pct":28.22, "sector":"存储ETF/全覆盖",   "entry":36.40, "strategy":"待优化(数据不足)",            "note":"长协重新定价催化｜近2周存储风暴加仓至28%（建仓2026-04-02）"},
+    {"ticker":"LITE", "tier":"核心", "size_pct":13.86, "sector":"EML/CW/OCS光模块", "entry":259.93,"strategy":"ema2060+soxx+obv_down",       "note":"EML拿单≥70%，订单至2027+｜浮盈+248%（建仓2025-06-11）"},
+    {"ticker":"SNDK", "tier":"核心", "size_pct":13.74, "sector":"NAND",             "entry":122.26,"strategy":"—",                          "note":"闪迪NAND｜浮盈+1003%🚀（建仓2025-10-02）"},
+    {"ticker":"COHR", "tier":"核心", "size_pct":13.18, "sector":"1.6T DSP/Photonic Fabric/Custom ASIC","entry":239.34,"strategy":"ema20_dip+none+rsi_fade","note":"CPO激光源+SiC双赛道｜浮盈+35%（建仓2026-02-09）"},
+    # ── 中仓 ──
+    {"ticker":"QCOM", "tier":"中仓", "size_pct":4.95,  "sector":"SoC/5G Modem/AI Edge","entry":171.72,"strategy":"dc20|ema+none+rsi_fade",  "note":"04-29建仓2%，05-01加仓至5%｜浮盈+22%"},
+    {"ticker":"ORCX", "tier":"中仓", "size_pct":4.76,  "sector":"2倍做多ORCL ETF",  "entry":42.28, "strategy":"bb_lo+combo+ema_x",          "note":"05-04建仓2%，后续加仓至4.76%"},
+    {"ticker":"GFS",  "tier":"中仓", "size_pct":4.65,  "sector":"Automotive/Edge AI/SiPh Foundry","entry":55.51,"strategy":"mfi_os+combo+rsi80","note":"12英寸SiPh先发2年｜浮盈+29%（建仓2026-04-17）"},
+    {"ticker":"AAOI", "tier":"中仓", "size_pct":4.23,  "sector":"光模块/Laser Chip/SiPh","entry":152.26,"strategy":"ema20_dip+obv+soxx+rsi_fade","note":"27年指引兑现→250-300B市值弹性｜浮盈+3%（建仓2026-04-19）"},
+    {"ticker":"MRVL", "tier":"中仓", "size_pct":3.59,  "sector":"1.6T DSP/Photonic Fabric/Custom ASIC","entry":140.29,"strategy":"bb_lo+combo+ma_x","note":"800G/1.6T DSP核心供应商｜浮盈+16%（建仓2026-04-13）"},
+    # ── 观察 ──
+    {"ticker":"NBIS", "tier":"观察", "size_pct":2.46,  "sector":"AI Infra/GPU Cloud","entry":158.13,"strategy":"—",                         "note":"05-04建仓｜浮盈+15%"},
+    {"ticker":"FORM", "tier":"观察", "size_pct":2.25,  "sector":"Probe Cards/1.6T Si测试","entry":125.11,"strategy":"bb_lo+soxx+ma_x",       "note":"CPO探针台，1Y_DD仅-4.1%｜浮盈+17%（建仓2026-04-13）"},
+    {"ticker":"NEBX", "tier":"观察", "size_pct":1.69,  "sector":"2倍做多NBIS ETF",  "entry":70.36, "strategy":"待优化(数据不足)",            "note":"05-04建仓｜浮盈+29%"},
+    {"ticker":"AEHR", "tier":"观察", "size_pct":1.56,  "sector":"FOX-P/Sonoma/WaferPak&DiePak","entry":84.49,"strategy":"rsi28+soxx+rsi80",  "note":"光芯片测试设备｜浮盈+8%（建仓2026-04-16）"},
+    {"ticker":"AMD",  "tier":"观察", "size_pct":1.40,  "sector":"GPU/CPU",          "entry":334.99,"strategy":"ema_cross+soft+cmf_neg",     "note":"柳大+二级双共识｜浮盈+23%（建仓2026-04-15）"},
+    # 港股仓位（不在系统跟踪范围 — 仅备注）
+    # 07747 (2倍三星电子) 11.90% +160% / 07709 (2倍海力士) 15.33% +856%
+    # A股持仓（仅东山精密 — 个人观察）
+    {"ticker":"002384.SZ","tier":"观察", "size_pct":0,   "sector":"A股·光模块+PCB", "entry":None,"strategy":"—","note":"东山精密｜索尔思光模块+EML芯片（个人观察，二级A股仓另算）"},
+    # ── 止盈出场 ──
+    {"ticker":"ARM",  "tier":"出场", "size_pct":0.0,  "sector":"半导体IP",     "entry":166.73,"strategy":"ema20_dip+obv+none+rsi_fade","note":"⚡5/7 止盈出场"},
+    {"ticker":"ALAB", "tier":"出场", "size_pct":0.0,  "sector":"CPU/互联芯片", "entry":174.05,"strategy":"vol_surge+combo+obv_down",   "note":"⚡5/7 止盈出场"},
+    {"ticker":"ASX",  "tier":"出场", "size_pct":0.0,  "sector":"半导体封测",   "entry":28.59, "strategy":"ma5200+soxx+trail_8",        "note":"⚡止盈出场"},
     {"ticker":"VRT",  "tier":"出场", "size_pct":0.0,  "sector":"AI电力",       "entry":307.34,"strategy":"ema20_dip+soft+rsi80",       "note":"⚡止盈 04-23，与POET合计约5%"},
     {"ticker":"POET", "tier":"出场", "size_pct":0.0,  "sector":"光电集成",     "entry":7.26,  "strategy":"ema_cross+none+ma_x",        "note":"⚡止盈 04-23，与VRT合计约5%"},
     {"ticker":"MU",   "tier":"出场", "size_pct":0.0,  "sector":"存储/DRAM",    "entry":455.07,"strategy":"bb_lo+none+rsi80",          "note":"⚡止盈转DRAM 04-20"},
