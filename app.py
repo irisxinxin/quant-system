@@ -1185,7 +1185,7 @@ def _load_top3_for(ticker: str):
 
 
 def _compute_er_stats(s):
-    """计算持仓股票的实时价格 + 信号 + 盈亏 + 左右侧买点 + Top3策略"""
+    """计算持仓股票的实时价格 + 入场/出场信号 + 盈亏 + 左右侧买点 + Top3策略"""
     import math
     from data.downloader import get_ohlcv
     ticker = s["ticker"]
@@ -1193,14 +1193,16 @@ def _compute_er_stats(s):
         df = get_ohlcv(ticker, start="2025-01-01")
         if df.empty:
             return {**s, "cur": None, "chg_1d": None, "gain_pct": None,
-                    "vs_ema20": None, "vs_ma200": None, "signals": [],
-                    "top3": [], "atr_pct": None, "plan": None}
+                    "vs_ema20": None, "vs_ma200": None, "signals": [], "exit_signals": [],
+                    "top3": [], "atr_pct": None, "plan": None, "rsi": None}
         close = df["Close"]
         high, low = df["High"], df["Low"]
         cur   = float(close.iloc[-1])
         chg   = float(close.pct_change().iloc[-1] * 100)
         ema10 = float(close.ewm(span=10,  adjust=False).mean().iloc[-1])
-        ema20 = float(close.ewm(span=20,  adjust=False).mean().iloc[-1])
+        ema20_s = close.ewm(span=20, adjust=False).mean()
+        ema20 = float(ema20_s.iloc[-1])
+        ema20_prev = float(ema20_s.iloc[-3]) if len(ema20_s) >= 3 else ema20
         ema60_s = close.ewm(span=60, adjust=False).mean()
         ema60 = float(ema60_s.iloc[-1])
         ma200_s = close.rolling(200).mean()
@@ -1208,7 +1210,7 @@ def _compute_er_stats(s):
         recent_high = float(close.iloc[-21:-1].max()) if len(close) > 21 else None
         recent_low  = float(close.iloc[-21:-1].min()) if len(close) > 21 else None
 
-        # ATR (14日) 用于止损 & 目标位
+        # ATR (14日)
         tr = (high - low).to_frame("tr1").assign(
             tr2=(high - close.shift()).abs(),
             tr3=(low - close.shift()).abs()
@@ -1216,12 +1218,25 @@ def _compute_er_stats(s):
         atr = float(tr.rolling(14).mean().iloc[-1]) if len(tr) >= 14 else None
         atr_pct = (atr / cur * 100) if atr else None
 
+        # RSI (14日) — 用于出场信号
+        d = close.diff()
+        gain = d.clip(lower=0).rolling(14).mean()
+        loss = (-d.clip(upper=0)).rolling(14).mean()
+        rs = gain / loss.replace(0, float('nan'))
+        rsi_s = 100 - 100 / (1 + rs)
+        rsi = float(rsi_s.iloc[-1]) if not rsi_s.empty and not math.isnan(rsi_s.iloc[-1]) else None
+        rsi_3d_ago = float(rsi_s.iloc[-4]) if len(rsi_s) >= 4 and not math.isnan(rsi_s.iloc[-4]) else None
+
         vs_ema20 = (cur - ema20) / ema20 * 100
         vs_ma200 = (cur - ma200) / ma200 * 100 if ma200 else None
         gain_pct = (cur - s["entry"]) / s["entry"] * 100 if s.get("entry") else None
 
         signals = []
+        exit_signals = []
+        is_holding = s["tier"] in ("核心", "主仓", "中仓", "观察") and s.get("size_pct", 0) > 0
+
         if s["tier"] != "出场":
+            # ── 入场信号 ──
             if recent_high and cur >= recent_high * 0.97:
                 signals.append("🚀 接近突破")
             if abs(vs_ema20) <= 2.0 and cur >= ema20 * 0.98:
@@ -1230,6 +1245,39 @@ def _compute_er_stats(s):
                 signals.append("↩️ 回踩EMA10")
             if ma200 and abs(vs_ma200) <= 3.0:
                 signals.append("⭐ 近MA200")
+
+        # ── 出场信号（仅持仓中的股票）──
+        if is_holding:
+            # RSI 超买
+            if rsi is not None:
+                if rsi >= 80:
+                    exit_signals.append(f"🔴 RSI极超买 {rsi:.0f}")
+                elif rsi >= 70:
+                    exit_signals.append(f"⚠️ RSI超买 {rsi:.0f}")
+                # RSI 顶背离（RSI 3天前更高，但价格还在涨 → fade）
+                if rsi_3d_ago and rsi_3d_ago >= 70 and rsi < rsi_3d_ago - 5 and cur >= float(close.iloc[-4]):
+                    exit_signals.append("📊 RSI顶背离")
+
+            # 跌破EMA20 + EMA20向下
+            if cur < ema20 * 0.99 and ema20 < ema20_prev:
+                exit_signals.append("📉 跌破EMA20")
+
+            # 距20日高点深度回撤
+            recent_high_full = float(close.iloc[-21:].max()) if len(close) >= 21 else None
+            if recent_high_full and (cur - recent_high_full) / recent_high_full <= -0.08:
+                pct = (cur - recent_high_full) / recent_high_full * 100
+                exit_signals.append(f"🔻 距前高{pct:.0f}%")
+
+            # 触及2ATR止损线（基于 entry）
+            if atr and s.get("entry") and cur < s["entry"] - 2 * atr:
+                exit_signals.append("🛑 触及2ATR止损")
+
+            # 浮盈大幅回撤（峰值 → 当前 > 30%）
+            if s.get("entry") and gain_pct is not None:
+                peak_close = float(close.iloc[-21:].max())
+                peak_gain = (peak_close - s["entry"]) / s["entry"] * 100
+                if peak_gain > 20 and gain_pct < peak_gain * 0.7:
+                    exit_signals.append("⚡ 浮盈回撤30%")
 
         # ── 左/右侧买点 plan ─────────────────────────────
         plan = None
@@ -1289,14 +1337,16 @@ def _compute_er_stats(s):
             "vs_ema20": round(vs_ema20, 1),
             "vs_ma200": round(vs_ma200, 1) if vs_ma200 is not None else None,
             "atr_pct":  round(atr_pct, 1) if atr_pct else None,
+            "rsi":      round(rsi, 1) if rsi is not None else None,
             "signals":  signals,
+            "exit_signals": exit_signals,
             "top3":     _load_top3_for(ticker),
             "plan":     plan,
         }
     except Exception:
         return {**s, "cur": None, "chg_1d": None, "gain_pct": None,
-                "vs_ema20": None, "vs_ma200": None, "signals": [],
-                "top3": [], "atr_pct": None, "plan": None}
+                "vs_ema20": None, "vs_ma200": None, "signals": [], "exit_signals": [],
+                "top3": [], "atr_pct": None, "plan": None, "rsi": None}
 
 
 def _compute_er():
