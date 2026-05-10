@@ -1129,6 +1129,14 @@ def api_cm_chart(ticker: str):
         return JSONResponse({"error": str(e)})
 
 
+# ─── 个人加仓清单（在 ER 页面打 💎 标记 + 优先提醒）───
+_PERSONAL_WATCH = {
+    "DRAM": "一定会找机会加，等回调 -10% 或 RSI<60",
+    "QCOM": "二级中仓5%参考，回踩EMA20建仓",
+    "AAOI": "下周建仓中仓 3-5%，左侧分批接",
+}
+
+
 # ─── 二级研究员持仓 ───
 
 _ER_PORTFOLIO = [
@@ -1352,6 +1360,7 @@ def _compute_er_stats(s):
             "exit_signals": exit_signals,
             "top3":     _load_top3_for(ticker),
             "plan":     plan,
+            "personal_watch": _PERSONAL_WATCH.get(ticker),
         }
     except Exception:
         return {**s, "cur": None, "chg_1d": None, "gain_pct": None,

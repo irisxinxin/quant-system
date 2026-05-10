@@ -2486,8 +2486,18 @@ function renderERCard(s, tier, tc){
       ${exitSigs.map(sg=>{const c=exitColor(sg);return `<span style="font-size:10px;background:${c.bg};color:${c.fg};border:1px solid ${c.bd};border-radius:3px;padding:1px 6px">${sg}</span>`;}).join('')}
     </div>`:'';
 
+  // 💎 个人加仓清单标记
+  const isPersonal = !!s.personal_watch;
+  const personalBorder = isPersonal ? 'rgba(236,72,153,0.55)' : null;
+  const finalBorder = personalBorder || cardBorder;
+
   return `
-  <div class="card clickable" onclick="loadERChart('${s.ticker}')" style="padding:12px 14px;border:1px solid ${cardBorder};opacity:${cardOpacity};transition:border .15s" title="点击查看K线">
+  <div class="card clickable" onclick="loadERChart('${s.ticker}')" style="padding:12px 14px;border:1px solid ${finalBorder};${isPersonal?'box-shadow:0 0 0 1px rgba(236,72,153,0.15);':''}opacity:${cardOpacity};transition:border .15s" title="点击查看K线">
+    ${isPersonal?`<div style="display:flex;align-items:center;gap:6px;margin:-2px 0 8px;padding:5px 9px;background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.22);border-radius:5px">
+      <span style="font-size:11px">💎</span>
+      <span style="font-size:10px;font-weight:700;color:#f9a8d4;letter-spacing:.04em">个人加仓清单</span>
+      <span style="font-size:10px;color:var(--text3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.personal_watch}</span>
+    </div>`:''}
     <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;flex-wrap:wrap">
       <span style="font-size:17px;font-weight:800;color:${tc};letter-spacing:-.02em">${s.ticker}</span>
       ${!isExit?`<span style="font-size:11px;font-weight:600;color:${tc};background:${tc}22;border:1px solid ${tc}55;border-radius:4px;padding:1px 6px">${s.size_pct}%</span>`:''}
