@@ -141,6 +141,7 @@ CACHE_TTL = {
     "cm":      24 * 3600,
     "cm_wl":   24 * 3600,
     "cn":      24 * 3600,
+    "stops":       10 * 60,  # 持仓止损面板：10分钟（盘中现价会变；刷新可加 ?force=1 强拉）
 }
 
 
@@ -245,6 +246,32 @@ def _fmt_age(ts: float | None) -> str:
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
     return HTMLResponse(_HTML_PATH.read_text(encoding="utf-8"))
+
+
+@app.get("/notes", response_class=HTMLResponse)
+async def kova_notes():
+    """Kova 交易学习笔记页(倒推研究专用)。"""
+    notes_path = Path(__file__).parent / "templates" / "kova_notes.html"
+    return HTMLResponse(notes_path.read_text(encoding="utf-8"))
+
+
+@app.get("/stops", response_class=HTMLResponse)
+async def stop_dashboard():
+    """持仓止损面板(动态页，刷新即拉最新日线 → /api/stops)。"""
+    p = Path(__file__).parent / "templates" / "stop_dashboard.html"
+    return HTMLResponse(p.read_text(encoding="utf-8"))
+
+
+@app.get("/api/stops")
+def api_stops(force: int = 0):
+    """实时计算全部持仓的 Kova 状态机止损位（长桥优先，缓存 10 分钟）。"""
+    from stops_core import compute_stops
+    if force:
+        _mem_cache.pop("stops", None)
+    data, ts = _get_cached("stops", compute_stops, CACHE_TTL["stops"])
+    out = dict(data)
+    out["cached_at"] = _fmt_age(ts)
+    return JSONResponse(out)
 
 
 @app.get("/api/macro")

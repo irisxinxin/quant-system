@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>持仓止损面板 · Kova 状态机</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0e14;--s1:#141923;--border:rgba(255,255,255,.08);--text:#e6edf3;--text2:#9ba6b4;--text3:#6b7585;--accent:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 600px at 12% -8%,rgba(245,158,11,.07),transparent 60%),var(--bg);color:var(--text);font-family:'Inter','Noto Sans SC',system-ui,sans-serif;font-size:14px;padding:26px;line-height:1.5}
+.mono{font-family:'JetBrains Mono',monospace}
+.wrap{max-width:1180px;margin:0 auto}
+.top{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+h1{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--text3);font-size:12.5px;margin-top:5px}
+.sub b{color:var(--accent)}
+.btns{display:flex;gap:8px}
+a.nav,button.ref{padding:8px 15px;border-radius:9px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:none;border:1px solid}
+button.ref{background:rgba(245,158,11,.12);color:var(--accent);border-color:rgba(245,158,11,.3)}
+button.ref:hover{background:rgba(245,158,11,.2)}
+a.nav{background:var(--s1);color:var(--text2);border-color:var(--border)}
+a.nav:hover{color:var(--text)}
+table{width:100%;border-collapse:collapse;background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+th{text-align:left;padding:11px 13px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.04);font-size:13.5px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.tk{font-weight:700;font-size:14.5px}
+.state{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid;white-space:nowrap}
+.lbl{color:var(--text3);font-size:11.5px;white-space:nowrap}
+.act{color:var(--text2);font-size:12.5px;max-width:300px}
+.legend{margin-top:18px;padding:16px 18px;background:var(--s1);border:1px solid var(--border);border-radius:12px;font-size:12.5px;color:var(--text2);line-height:1.95}
+.legend b{color:var(--text)} .k{color:#fcd9a0;font-weight:700} .d{color:#f8a5a5;font-weight:700}
+.msg{padding:40px;text-align:center;color:var(--text3)}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid rgba(245,158,11,.25);border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+</style></head><body><div class="wrap">
+<div class="top">
+  <div>
+    <h1>🪜 持仓止损面板 · Kova 状态机</h1>
+    <div class="sub" id="sub">加载中…</div>
+  </div>
+  <div class="btns">
+    <a class="nav" href="/notes">📄 学习笔记</a>
+    <button class="ref" id="refBtn" onclick="load(true)">⟳ 刷新</button>
+  </div>
+</div>
+<div id="content"><div class="msg"><span class="spin"></span>正在拉取最新日线、计算止损…</div></div>
+<div class="legend">
+<b>怎么用：</b><br>
+· <span class="k">主止损（收盘判断）</span>：只看 <b>3:59PM 收盘价</b>是否跌破，盘中刺破不算；<b>不要</b>把市价单挂在这价位（会被日内噪音震出）。<br>
+· <span class="d">灾难单</span>：仅 D/E 盈利仓需要，放近期 swing 低下方的<b>保护性挂单</b>（建议 RTH stop-market），只防隔夜跳空/闪崩。<br>
+· <b>状态机：</b>A 亏损区(守初始止损)→B 微利(忍)→C 确认(提保本)→D 趋势(10EMA 追踪)→E 抛物线(收紧+减仓)。<br>
+· <b>铁律：</b>止损只能向上、永不下移；EMA 每个收盘后重算（刷新本页即重算最新日线）。
+</div>
+</div>
+<script>
+async function load(force){
+  const sub=document.getElementById('sub'), content=document.getElementById('content'), btn=document.getElementById('refBtn');
+  btn.disabled=true; if(force) content.innerHTML='<div class="msg"><span class="spin"></span>重新拉取最新日线…</div>';
+  try{
+    const r=await fetch('/api/stops'+(force?'?force=1':''), {cache:'no-store'});
+    const j=await r.json();
+    const rows=j.rows||[];
+    sub.innerHTML=`数据源 <b>${j.source||'-'}</b>（截至 ${j.data_date} 收盘）· ${rows.length} 只 · 缓存 ${j.cached_at||'刚刚'} · <b>刷新即重算最新日线</b>`;
+    if(!rows.length){content.innerHTML='<div class="msg">无数据（检查行情权限/网络）</div>';btn.disabled=false;return;}
+    let h=`<table><thead><tr>
+      <th>代码</th><th>成本</th><th>现价</th><th>持仓盈亏</th><th>状态</th>
+      <th>主止损(收盘判断)</th><th>依据</th><th>灾难单</th><th>动作提示</th></tr></thead><tbody>`;
+    for(const x of rows){
+      const gc=x.gain>=0?'#4ade80':'#f87171';
+      const dis=(x.disaster==null)?'<span style="color:var(--text3)">—</span>':`<span class="mono" style="color:#f8a5a5">${x.disaster.toFixed(2)}</span>`;
+      h+=`<tr>
+        <td class="tk">${x.tk}</td>
+        <td class="mono">${x.cost.toFixed(2)}</td>
+        <td class="mono">${x.last.toFixed(2)}</td>
+        <td class="mono" style="color:${gc};font-weight:600">${x.gain>=0?'+':''}${x.gain.toFixed(1)}%</td>
+        <td><span class="state" style="color:${x.sc};border-color:${x.sc}55;background:${x.sc}18">${x.state}</span></td>
+        <td class="mono" style="color:#fcd9a0;font-weight:700">${x.follow.toFixed(2)}</td>
+        <td class="lbl">${x.follow_label}</td>
+        <td>${dis}</td>
+        <td class="act">${x.action}</td></tr>`;
+    }
+    h+='</tbody></table>';
+    content.innerHTML=h;
+  }catch(e){
+    content.innerHTML='<div class="msg">加载失败：'+e+'</div>';
+  }
+  btn.disabled=false;
+}
+load(false);
+</script>
+</body></html>

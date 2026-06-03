@@ -124,7 +124,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
       <span style="font-size:16px;font-weight:700;color:var(--accent);letter-spacing:-.01em">⚡ 量化仪表盘</span>
       <span id="lastUpd" style="font-size:11px;color:var(--text3)"></span>
     </div>
-    <button class="ref-btn" id="refBtn" onclick="refreshAll()">⟳ 刷新数据</button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <a href="/stops" class="ref-btn" style="text-decoration:none;background:rgba(74,222,128,.1);color:#4ade80;border-color:rgba(74,222,128,.3)">🪜 持仓止损面板</a>
+      <button class="ref-btn" id="refBtn" onclick="refreshAll()">⟳ 刷新数据</button>
+    </div>
   </div>
 </header>
 

@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kova 交易学习笔记</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0e14; --bg2:#0e1117; --s1:#141923; --s2:#1a202c;
+  --border:rgba(255,255,255,.07); --border2:rgba(255,255,255,.13);
+  --text:#e6edf3; --text2:#9ba6b4; --text3:#6b7585;
+  --accent:#f59e0b; --accent2:#fbbf24;
+  --cyan:#39c5cf; --green:#4ade80; --red:#f87171; --blue:#58a6ff; --purple:#c084fc;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(1200px 600px at 12% -8%, rgba(245,158,11,.07), transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, rgba(57,197,207,.05), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:'Inter','Noto Sans SC',system-ui,-apple-system,sans-serif;
+  font-size:15px; line-height:1.7; min-height:100vh; letter-spacing:.005em;
+}
+.mono{font-family:'JetBrains Mono',monospace}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2)}
+
+/* ── 顶部进度条 ── */
+#progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:200;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 12px rgba(245,158,11,.6);transition:width .1s}
+
+/* ── 顶栏 ── */
+header{position:sticky;top:0;z-index:100;backdrop-filter:blur(14px);
+  background:rgba(11,14,20,.78);border-bottom:1px solid var(--border)}
+.head-in{max-width:1240px;margin:0 auto;padding:14px 26px;display:flex;align-items:center;gap:16px}
+.logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:17px;letter-spacing:-.02em}
+.logo .k{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;
+  background:linear-gradient(135deg,var(--accent),#b45309);color:#1a1205;box-shadow:0 4px 14px rgba(245,158,11,.35)}
+.logo .sub{color:var(--text3);font-weight:500;font-size:12px;margin-left:2px}
+.head-stat{margin-left:auto;display:flex;gap:8px;align-items:center}
+.search{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--border);
+  border-radius:10px;padding:8px 13px;width:230px;transition:border-color .15s}
+.search:focus-within{border-color:rgba(245,158,11,.5)}
+.search input{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:13px;width:100%}
+.search svg{flex-shrink:0;opacity:.5}
+
+/* ── 布局 ── */
+.wrap{max-width:1240px;margin:0 auto;padding:0 26px;display:grid;grid-template-columns:230px 1fr;gap:38px;align-items:start}
+nav.toc{position:sticky;top:86px;max-height:calc(100vh - 110px);overflow-y:auto;padding:22px 0 40px}
+.toc-group{margin-bottom:20px}
+.toc-group-t{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);padding:0 12px 8px}
+.toc a{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;font-size:13.5px;color:var(--text2);
+  border-left:2px solid transparent;transition:all .14s;text-decoration:none}
+.toc a:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.toc a.on{color:var(--accent2);border-left-color:var(--accent);background:rgba(245,158,11,.07);font-weight:600}
+.toc a .dot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.toc a.on .dot{background:var(--accent)}
+
+main{padding:30px 0 120px;min-width:0}
+
+/* ── Hero ── */
+.hero{padding:30px 32px;border-radius:18px;margin-bottom:36px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,rgba(245,158,11,.10),rgba(57,197,207,.05));border:1px solid var(--border2)}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;border-radius:50%;
+  background:radial-gradient(circle,rgba(245,158,11,.18),transparent 70%);pointer-events:none}
+.hero h1{font-size:27px;font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
+.hero p{color:var(--text2);max-width:620px;font-size:14.5px}
+.hero .meta{display:flex;gap:18px;margin-top:18px;flex-wrap:wrap}
+.hero .meta div{font-size:12.5px;color:var(--text3)}
+.hero .meta b{color:var(--accent2);font-weight:700;font-size:16px;display:block;font-family:'JetBrains Mono',monospace}
+
+/* ── 章节 ── */
+section{margin-bottom:48px;scroll-margin-top:90px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.sec-head .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;
+  background:var(--s1);border:1px solid var(--border)}
+.sec-head h2{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.sec-head .cnt{margin-left:auto;font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+
+/* ── 卡片 ── */
+.card{background:linear-gradient(180deg,var(--s1),rgba(20,25,35,.6));border:1px solid var(--border);
+  border-radius:14px;padding:22px 24px;margin-bottom:16px;transition:border-color .16s,transform .16s}
+.card:hover{border-color:var(--border2)}
+.card-t{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;margin-bottom:6px}
+.card-t .num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);
+  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.22);border-radius:6px;padding:2px 7px;flex-shrink:0}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.02em}
+.t-trend{color:var(--accent);background:rgba(245,158,11,.1)}
+.t-vol{color:var(--cyan);background:rgba(57,197,207,.1)}
+.t-mom{color:var(--purple);background:rgba(192,132,252,.1)}
+.t-risk{color:var(--red);background:rgba(248,113,113,.1)}
+.t-base{color:var(--text2);background:rgba(255,255,255,.05)}
+.card-body{color:var(--text2);font-size:14.5px}
+.card-body p{margin:10px 0}
+.card-body ul{margin:10px 0;padding-left:20px}
+.card-body li{margin:5px 0}
+.card-body strong{color:var(--text);font-weight:600}
+.card-body code{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--cyan);
+  background:rgba(57,197,207,.08);padding:1.5px 6px;border-radius:5px}
+.card-body h4{color:var(--text);font-size:14px;font-weight:700;margin:16px 0 6px}
+
+/* ── Callout ── */
+.callout{border-radius:10px;padding:12px 16px;margin:14px 0;font-size:13.5px;border:1px solid;display:flex;gap:11px}
+.callout .ci{flex-shrink:0;font-size:15px;line-height:1.4}
+.co-key{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.25);color:#fcd9a0}
+.co-key strong{color:var(--accent2)}
+.co-formula{background:rgba(57,197,207,.06);border-color:rgba(57,197,207,.22);color:#a5e8ed;
+  font-family:'JetBrains Mono',monospace;font-size:13px}
+.co-warn{background:rgba(248,113,113,.06);border-color:rgba(248,113,113,.22);color:#fbb6b6}
+.co-info{background:rgba(88,166,255,.06);border-color:rgba(88,166,255,.2);color:#a9cdfb}
+
+.src{margin-top:14px;font-size:11.5px;color:var(--text3);display:flex;align-items:center;gap:6px;
+  border-top:1px dashed var(--border);padding-top:11px}
+.src .badge{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:5px;padding:1px 7px;font-family:'JetBrains Mono',monospace}
+
+.empty{text-align:center;padding:50px 20px;color:var(--text3);border:1px dashed var(--border2);border-radius:14px;background:rgba(255,255,255,.012)}
+.empty .e-ic{font-size:34px;margin-bottom:12px;opacity:.6}
+
+/* FAQ 专用 */
+.qa{font-size:16px;font-weight:700;color:#fcd9a0;display:flex;gap:9px;align-items:flex-start;margin-bottom:4px}
+.qa .qm{color:var(--accent);font-family:'JetBrains Mono',monospace}
+.stop-step{display:flex;align-items:center;gap:14px;padding:11px 15px;background:rgba(255,255,255,.025);
+  border:1px solid var(--border);border-left-width:3px;border-radius:9px;margin-bottom:9px}
+.stop-step .ph{font-size:13px;font-weight:700;min-width:104px;color:var(--text)}
+.stop-step .ds{font-size:13px;color:var(--text2);flex:1}
+.stop-step .lv{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;white-space:nowrap}
+.vcp-fig{background:#0a0d13;border:1px solid var(--border2);border-radius:12px;padding:10px 10px 4px;margin:18px 0}
+.vcp-fig svg{display:block;width:100%;height:auto}
+.vcp-cap{font-size:11.5px;color:var(--text3);text-align:center;padding:9px 6px 4px;line-height:1.6}
+.dfn{display:grid;grid-template-columns:auto 1fr;gap:11px 16px;margin:16px 0;align-items:start}
+.dfn dt{font-weight:700;color:var(--accent2);white-space:nowrap;font-size:14px}
+.dfn dd{color:var(--text2);margin:0;font-size:14px}
+
+footer{max-width:1240px;margin:0 auto;padding:24px 26px 50px;color:var(--text3);font-size:12px;border-top:1px solid var(--border)}
+
+@media(max-width:880px){
+  .wrap{grid-template-columns:1fr;padding:0 16px}
+  nav.toc{display:none}
+  .head-in{padding:12px 16px}
+  .search{width:150px}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<header>
+  <div class="head-in">
+    <div class="logo">
+      <span class="k">K</span>
+      <span>Kova 交易学习笔记<span class="sub">· 倒推研究专用</span></span>
+    </div>
+    <div class="head-stat">
+      <label class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="q" type="text" placeholder="搜索笔记…" autocomplete="off">
+      </label>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" id="toc"></nav>
+  <main id="main"></main>
+</div>
+
+<footer>
+  Kova 交易学习笔记 · 用于反向研究其量化指标 ·
+  <span style="color:var(--text2)">本页内容会随你发来的截图持续更新</span>
+</footer>
+
+<script>
+/* ===================================================================
+   笔记数据 —— 以后每发一张截图，往这里加一条卡片即可
+   chapter: 所属章节 | group: 侧栏分组 | 卡片字段见下
+   tag 可选: trend / vol / mom / risk / base
+=================================================================== */
+const CHAPTERS = [
+  {
+    id:"intro", group:"开始", icon:"📌", title:"导读 · 这份笔记是什么",
+    cards:[
+      {
+        title:"研究目标", tags:[["base","研究方法"]],
+        body:`<p>这份笔记记录 <strong>Kova Investment Research</strong> 的交易方法与指标用法，目的是<strong>反向推导(倒推)其量化公式</strong>，最终做成可在 TradingView 运行、并接入 Telegram 推送的指标。</p>
+        <div class="callout co-warn"><span class="ci">⚠️</span><div><strong>诚实性原则：</strong>Kova 公式闭源，无法 1:1 复刻。这里做的是<strong>行为逼近</strong> —— 提取可观测规律(分数怎么变、颜色何时切换、Hold/Reduce 何时触发)，再用经典量化构件拟合，并用真实历史数据回测校准。不编造、不画假信号。</div></div>`,
+      },
+      {
+        title:"怎么用这页", tags:[["base","使用说明"]],
+        body:`<ul>
+          <li>左侧目录按章节跳转，顶部可搜索关键词</li>
+          <li>每张你发来的教育截图 → 我翻译总结成中文卡片填进对应章节</li>
+          <li><span style="color:var(--accent2)">🔑 重点</span> / <span style="color:var(--cyan)">公式线索</span> 会用高亮框标出，方便后面建模时直接引用</li>
+        </ul>`,
+      },
+    ]
+  },
+  {
+    id:"observe", group:"开始", icon:"🔍", title:"先验观测 · 从行情图倒推",
+    intro:"基于你最早发的 5 张行情图(TSLA/BE/SIVE/MU/OKTA)，我已能读出的可观测规律。这是<strong>我的推断</strong>，非 Kova 官方说明，后续用教育文章校正。",
+    cards:[
+      {
+        title:"Kova Score(0–100 综合健康分)", tags:[["trend","趋势"],["mom","动量"],["vol","量能"]],
+        body:`<p>样本读数：TSLA <code>18↓</code>、BE <code>91↓</code>、SIVE <code>99↑⭐</code>、MU <code>99↑</code>、OKTA <code>96↑</code>。</p>
+        <ul><li><code>↑/↓</code> = 分数变化方向；<code>⭐</code> = 顶格(≈99)</li>
+        <li>大概率是 <strong>趋势 + 动量 + 量能 + 相对强度</strong> 的加权合成</li></ul>
+        <div class="callout co-formula"><span class="ci">∑</span><div>Score ≈ w₁·趋势(均线排列/斜率) + w₂·动量(RSI/ROC) + w₃·量能(量比/OBV) + w₄·相对强度(vs 大盘) → 归一化到 0–100</div></div>`,
+      },
+      {
+        title:"动作标签 Hold / Reduce 和分数不是一回事", tags:[["risk","风控"]],
+        body:`<p>关键反例：MU <code>99</code>、OKTA <code>96</code> 显示 <strong style="color:var(--red)">REDUCE</strong>，而 SIVE <code>99</code> 却是 <strong>Hold</strong>。</p>
+        <p>线索：MU/OKTA 价格<strong>抛物线式远离黄色快线</strong>(乖离过大/极度超买)，SIVE 最后一根已回踩均线。</p>
+        <div class="callout co-key"><span class="ci">🔑</span><div><strong>推断：</strong>Reduce ≈ 价格对短均线的<strong>乖离率 > 阈值</strong>(过度延伸)，而非"分数高就减"。分数管"健不健康"，动作管"贵不贵 / 该不该止盈"。</div></div>`,
+      },
+      {
+        title:"均线带(Stage Analysis 风格)", tags:[["trend","趋势"]],
+        body:`<p>叠了 4 条均线：<strong style="color:var(--accent)">黄(≈快线 10)</strong>、<strong style="color:var(--cyan)">青(≈20)</strong>、<strong style="color:var(--purple)">紫(≈50)</strong>、<strong style="color:var(--green)">绿(≈100/200)</strong>。多头排列时呈扩散向上的"带"。</p>`,
+      },
+      {
+        title:"成交量配色", tags:[["vol","量能"]],
+        body:`<ul>
+          <li><strong style="color:var(--green)">绿</strong> = 普通上涨日</li>
+          <li><strong style="color:var(--red)">红</strong> = 下跌日</li>
+          <li><strong style="color:var(--cyan)">青亮</strong> = 放量异动(量 &gt; 量均线 × 倍数，疑似 1.5–2×)</li>
+          <li><strong style="color:var(--purple)">紫</strong> = 缩量/吸筹区(OKTA 横盘段全是紫)</li>
+        </ul>
+        <p>量柱上方白线 = 成交量移动均线。</p>`,
+      },
+      {
+        title:"底部柱状震荡器", tags:[["mom","动量"]],
+        body:`<p>蓝/红柱、形态平滑、量程 <code>+200 / −100</code> 不对称 → 像自定义的<strong>资金流 / 动量</strong>指标(类 MACD 柱 或 CVD 累积量差)。需要单独放大的截图来确认。</p>`,
+      },
+    ]
+  },
+  {
+    id:"foundations", group:"理论根基", icon:"🏛️", title:"三大体系溯源 · 深度详解",
+    intro:"Kova 的方法 = 三套公开经典体系的合成。把每套的来龙去脉、核心逻辑、可量化模板讲透 —— 理解了根，看任何 Kova 信号都能秒懂。",
+    cards:[
+      {
+        title:"① William O'Neil · CANSLIM 体系", tags:[["base","奠基"],["trend","趋势"]],
+        body:`<p><strong>出处</strong>：《笑傲股市》(How to Make Money in Stocks)，作者 William J. O'Neil，《投资者商业日报》(IBD) 创始人。这是整个"成长动量"流派的<strong>开山祖师</strong>，后面 Minervini、Morales 全是这一脉的徒子徒孙。</p>
+        <p>O'Neil 研究了 1880s 至今上百只翻倍大牛股，归纳出它们启动前的<strong>共同特征</strong>，做成 7 字母清单 <strong>CAN SLIM</strong>：</p>
+        <ul>
+          <li><strong>C</strong> — Current Earnings 当季盈利：最近季度 <strong>EPS 同比 ≥ 25%</strong>，越高越好</li>
+          <li><strong>A</strong> — Annual Earnings 年度盈利：年度 EPS 增长 ≥ 25%，<strong>ROE ≥ 17%</strong></li>
+          <li><strong>N</strong> — New 新东西：新产品/新管理层/新高 —— 尤其<strong>股价创历史新高</strong>(突破时)</li>
+          <li><strong>S</strong> — Supply &amp; Demand 供需：流通盘适中，关键买点要<strong>放量</strong></li>
+          <li><strong>L</strong> — Leader 龙头：买行业里最强的(<strong>RS Rating ≥ 80</strong>)，别买落后补涨的</li>
+          <li><strong>I</strong> — Institutional 机构：<strong>持股基金数逐季增加</strong>，有大资金背书</li>
+          <li><strong>M</strong> — Market 大盘：<strong>约 75% 个股跟随大盘</strong>，熊市/回调期一律空仓</li>
+        </ul>
+        <div class="callout co-info"><span class="ci">📐</span><div><strong>O'Neil 的标志性工具</strong>：① RS Rating(相对强度评级 1–99，全市场横截面排名)；② 底部形态(base) —— 最经典的是<strong>杯柄形态(Cup with Handle)</strong>，还有平底(flat base)、双底(double bottom)；③ 买点(pivot/buy point) = 形态阻力位；④ <strong>7–8% 铁律止损</strong>；⑤ <strong>Follow-Through Day(跟随确认日)</strong> 判断大盘反转。</div></div>
+        <div class="callout co-key"><span class="ci">🔑</span><div>Kova 文章里的<strong>选股清单(EPS25/Sales20/ROE17/RS80/52周高点15%内)、7%止损、"M"市场环境</strong>全部来自这里。CANSLIM 提供了<strong>"买什么"</strong>的框架。</div></div>`,
+        source:"《How to Make Money in Stocks》· W. O'Neil"
+      },
+      {
+        title:"②a Mark Minervini · SEPA 与趋势模板", tags:[["base","奠基"],["trend","趋势"]],
+        body:`<p><strong>出处</strong>：《股票魔法师》(Trade Like a Stock Market Wizard)、《Think &amp; Trade Like a Champion》，作者 Mark Minervini —— 两届美国投资冠军(US Investing Championship)，O'Neil 体系的集大成者，把"买点择时"做到了极致。</p>
+        <p>他的总框架叫 <strong>SEPA</strong>(Specific Entry Point Analysis 精确买点分析)，五大要素：<strong>趋势 Trend / 基本面 Fundamentals / 催化剂 Catalyst / 买点 Entry / 卖点 Exit</strong>。</p>
+        <p>其中最可量化、最值钱的是<strong>趋势模板(Trend Template)</strong> —— 一只票必须<strong>全部满足 8 条</strong>才算进入"可买的强势阶段(Stage 2 上升期)"：</p>
+        <div class="callout co-formula"><span class="ci">✓</span><div>
+        1. 价 &gt; MA150 且 价 &gt; MA200<br>
+        2. MA150 &gt; MA200<br>
+        3. MA200 至少已经<strong>向上 1 个月</strong>(理想 4–5 月+)<br>
+        4. MA50 &gt; MA150 &gt; MA200(均线多头排列)<br>
+        5. 价 &gt; MA50<br>
+        6. 价比 <strong>52 周低点高 ≥ 30%</strong><br>
+        7. 价在 <strong>52 周高点的 25% 以内</strong>(越近越好)<br>
+        8. <strong>RS Rating ≥ 70</strong>(最好 80/90)
+        </div></div>
+        <div class="callout co-key"><span class="ci">🔑</span><div>对照截图里 Kova 那条<strong>黄/青/紫/绿四均线带</strong> —— 几乎就是趋势模板的可视化(MA50/150/200 多头排列 + 价在最上)。这 8 条<strong>Pine 100% 能算</strong>，很可能是 Kova Score "趋势分量"的主干。</div></div>`,
+        source:"《Trade Like a Stock Market Wizard》· M. Minervini"
+      },
+      {
+        title:"②b Mark Minervini · VCP 的本质", tags:[["vol","量能"],["trend","趋势"]],
+        body:`<p>VCP(波动收缩形态)是 Minervini 的招牌。它的本质不是某个"图形"，而是<strong>机构吸筹的脚印(footprint)</strong>：</p>
+        <p>强势股大涨后进入横盘，浮筹(想卖的人)被一波波洗出去。每洗一轮，剩下的卖盘越来越少，于是：<strong>回调一次比一次浅、成交量一次比一次干、日内波动一次比一次小</strong> —— 三者同时收缩。到末端供给被抽干(Minervini 叫 "FU days" 量低到诡异)，此时只要一点买盘就能突破。</p>
+        <p>记法 <strong>T1 &gt; T2 &gt; T3</strong>(收缩 Contraction)：</p>
+        <ul><li>T1 回调 25–35% → T2 回调 15–20% → T3 回调 5–10%</li><li>突破点 = 整理区高点(pivot)，放量 40%+ 确认</li></ul>
+        <div class="callout co-info"><span class="ci">🧲</span><div>为什么胜率高：VCP 末端<strong>风险极小</strong>(止损就在很近的 pivot 下方)，而一旦突破<strong>空间很大</strong>(供给清空→真空上涨)。这就是 O'Neil 说的"正确的票在正确的时间" —— 盈亏比被压到极致。</div></div>`,
+        source:"《Trade Like a Stock Market Wizard》· M. Minervini"
+      },
+      {
+        title:"③ Gil Morales & Chris Kacher · Pocket Pivot", tags:[["vol","量能"],["mom","动量"]],
+        body:`<p><strong>出处</strong>：《Trade Like an O'Neil Disciple》《In the Trading Cockpit with the O'Neil Disciples》，作者 Gil Morales 与 Chris Kacher(人称 "Dr. K")—— 两人曾是 <strong>O'Neil 公司的基金经理</strong>，是 CANSLIM 的嫡系传人。他们最大的贡献是发明了 <strong>Pocket Pivot</strong>(口袋支点)。</p>
+        <p><strong>解决的问题</strong>：传统 O'Neil 只在突破 pivot 时买，但突破点常常已经涨了一截、止损被迫放宽。Pocket Pivot 让你<strong>在形态内部、突破之前就提前上车</strong>，成本更低、止损更紧。</p>
+        <div class="callout co-formula"><span class="ci">→</span><div>pocket_pivot = 一根上涨日 AND 当日成交量 &gt; 过去 <strong>10 个交易日里最大那根下跌日</strong>的成交量</div></div>
+        <p><strong>逻辑</strong>：某天买方放量把价格推高，而这个量<strong>盖过了最近所有卖盘日的量</strong> = 买方力量首次压倒近期全部卖压 = 机构吸筹"漏了出来"。理想的 pocket pivot 还要求价格在 <strong>10 日/50 日均线附近</strong>(从下方贴近或刚站上)，而不是已经飞高。</p>
+        <div class="callout co-key"><span class="ci">🔑</span><div>他俩还提出 <strong>Buyable Gap-Up(可买跳空，BGU)</strong> 等补充买点。Kova 文章里的 pocket pivot 定义<strong>一字不差</strong>来自这里。这套提供了<strong>"VCP 还没走完时的提前进场"</strong>能力 —— 也解释了为什么 Kova 的量柱要专门用<strong>青亮色标放量异动</strong>(pocket pivot 的视觉化)。</div></div>`,
+        source:"《Trade Like an O'Neil Disciple》· Morales & Kacher"
+      },
+      {
+        title:"三者关系 · 一张图看懂传承", tags:[["base","总览"]],
+        body:`<div class="callout co-info"><span class="ci">🌳</span><div>
+        <strong>O'Neil(1960s–)</strong> 立"骨架"：买什么(CANSLIM 选股) + 风控(7%止损) + 大盘(M)。<br>
+        　　↓ 徒弟辈<br>
+        <strong>Minervini</strong> 精"择时"：趋势模板(8条) + VCP(把买点压到风险最小处)。<br>
+        <strong>Morales &amp; Kacher</strong> 补"提前量"：Pocket Pivot(突破前在 base 内上车) + BGU。
+        </div></div>
+        <p>三者不冲突，是<strong>同一套哲学的层层细化</strong>：选强势成长股 → 等它把浮筹洗干净(VCP) → 在风险最小处进场(pivot 突破 / pocket pivot) → 只对赢家金字塔加仓 → 趋势破位/抛物线顶离场。</p>
+        <div class="callout co-key"><span class="ci">🎯</span><div><strong>这就是 Kova 的全部"配方"。</strong>对我们倒推的意义：每个模块都有<strong>公开、被验证过几十年的量化规则</strong>，我们不是从零猜，而是站在巨人肩上 —— 用这些规则当先验，再用回测把参数校准到和 Kova 截图对齐即可。</div></div>`,
+        source:"综合 · 体系传承梳理"
+      },
+    ]
+  },
+  {
+    id:"faq", group:"答疑", icon:"❓", title:"常见误区 · FAQ",
+    intro:"那些「看起来矛盾、其实是理解偏差」的点，攒在这里。看懂了，用指标时就不会被自己的直觉带偏。",
+    cards:[
+      {
+        title:"7% 止损会不会把 OKTA 这种高波动票打出去？", tags:[["risk","风控"]],
+        body:`<div class="qa"><span class="qm">Q</span><div>止损 7%，OKTA 这种波动大的票，不是随便一甩就被打出去了吗？</div></div>
+        <p style="margin-top:14px"><strong>核心误解：把"从入场价算的初始止损"和"从最高点回撤"混为一谈了。</strong>用 OKTA 真实数字看：买入 <code>111</code>，现价 <code>135.32</code>，已 <strong>+21.9%</strong>。</p>
+        <ul>
+          <li>7% 初始止损挂在 <code>111 × 0.93 ≈ 103.2</code></li>
+          <li>现价 135 离止损线还有 <strong>~30% 的距离</strong> —— OKTA 早就是大赢家，根本不在初始止损射程内</li>
+        </ul>
+        <div class="callout co-key"><span class="ci">🔑</span><div><strong>7% 只在"刚突破买入、还没赚钱那几天"有意义。</strong>而那个买点是 VCP <strong>波动收缩到最紧</strong>的位置(pivot)，按定义日内振幅已经很小 —— 所以 7% 的逆行才代表"突破失败"，而不是"正常波动"。<strong>别在波动里追高，就不会被波动打。</strong></div></div>
+        <h4>止损是怎么一步步上移的</h4>
+        <div class="stop-step" style="border-left-color:var(--red)"><span class="ph">① 刚入场</span><span class="ds">7–8% 硬止损，否定错误的突破</span><span class="lv" style="color:var(--red)">111 → 103</span></div>
+        <div class="stop-step" style="border-left-color:var(--accent)"><span class="ph">② 小赚一点</span><span class="ds">止损提到保本(成本价)，这笔已立于不败</span><span class="lv" style="color:var(--accent2)">103 → 111</span></div>
+        <div class="stop-step" style="border-left-color:var(--green)"><span class="ph">③ 趋势走起来</span><span class="ds">改为 EMA 追踪：swing 用 <strong>10 EMA×0.99</strong>(快票)，抛物线段切趋势线/5EMA</span><span class="lv" style="color:var(--green)">跟随 10EMA</span></div>
+        <p>OKTA 现在 +22%，管它的是<strong>收盘跌破 10 EMA</strong>这条紧跟随止损(不是 50 日线 —— 那条只给 monster 长线)，7% 硬线早就退场了。详见 <a href="#edu-trailing" style="color:var(--accent2)">🪜 Trailing 状态机</a>。</p>
+        <div class="callout co-info"><span class="ci">📊</span><div><strong>你那张组合图 20/20 全盈利 = 幸存者偏差。</strong>被 7% 打出去的失败品早被剔除，你只看到活下来的。7% 的工作就是"快速清掉失败的突破"，留下的自然全是赢家。</div></div>
+        <div class="callout co-warn"><span class="ci">🎯</span><div><strong>被打出去 = 特性，不是 bug。</strong>这套是<strong>低胜率(40–50%)、高赔率</strong>：一堆 −7% 小亏 + 少数翻倍大牛。高波动票确实会经常被甩下车 —— 但出局≠永别，再形成新 VCP/pocket pivot 可<strong>重新进</strong>(妖股常要试 2–3 次)。</div></div>`,
+        source:"答疑 · 基于持仓组合截图(OKTA 等)"
+      },
+      {
+        title:"高波动票到底怎么控？用仓位，不是放宽止损", tags:[["risk","风控"]],
+        body:`<div class="qa"><span class="qm">Q</span><div>那波动大的票，是不是该把止损放宽一点扛一扛？</div></div>
+        <p style="margin-top:14px"><strong>恰恰相反。</strong>真正的风控不在"放宽止损扛波动"，而在<strong>仓位</strong>：</p>
+        <div class="callout co-formula"><span class="ci">∑</span><div>仓位 = 单笔可承受亏损额(账户的固定%) ÷ 止损距离<br>波动大 → 止损距离要更宽 → <strong>仓位自动变小</strong>，让每笔"美元亏损额"恒定</div></div>
+        <p>这也呼应了方法论里的两条硬规则：<strong>单票 ≤ 25% 总资金</strong>、<strong>大盘转弱时减小仓位</strong>。波动越大的票仓位越轻，止损被打到时账户的损失依然是那个固定小数目。</p>
+        <div class="callout co-key"><span class="ci">🔑</span><div>一句话：<strong>止损 7% 是用来"否定错误"的，不是用来"扛波动"的。</strong>扛波动靠的是把仓位调小。</div></div>`,
+        source:"答疑 · 仓位管理"
+      },
+      {
+        title:"pivot 和 pocket pivot 到底在图上哪里？", tags:[["trend","趋势"],["vol","量能"]],
+        body:`<div class="qa"><span class="qm">Q</span><div>VCP 图里 pivot 和 pocket pivot 我老分不清，它俩到底在哪？</div></div>
+        <p style="margin-top:14px">先记住一句话：<strong>pivot 是一条"横线"(在 base 顶部)，pocket pivot 是一个"点"(在 base 内部、突破之前)。</strong>看图：</p>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 740 420" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#fbbf24"/></marker></defs>
+          <!-- 量能基线 -->
+          <line x1="40" y1="400" x2="700" y2="400" stroke="#222b38" stroke-width="1"/>
+          <!-- 量柱 -->
+          <g>
+            <rect x="49" y="340" width="13" height="60" rx="1.5" fill="#39414f"/>
+            <rect x="84" y="328" width="13" height="72" rx="1.5" fill="#39414f"/>
+            <rect x="119" y="354" width="13" height="46" rx="1.5" fill="#39414f"/>
+            <rect x="154" y="366" width="13" height="34" rx="1.5" fill="#39414f"/>
+            <rect x="189" y="360" width="13" height="40" rx="1.5" fill="#39414f"/>
+            <rect x="224" y="374" width="13" height="26" rx="1.5" fill="#39414f"/>
+            <rect x="259" y="378" width="13" height="22" rx="1.5" fill="#39414f"/>
+            <rect x="294" y="370" width="13" height="30" rx="1.5" fill="#39414f"/>
+            <rect x="329" y="384" width="13" height="16" rx="1.5" fill="#39414f"/>
+            <rect x="364" y="382" width="13" height="18" rx="1.5" fill="#39414f"/>
+            <rect x="399" y="388" width="13" height="12" rx="1.5" fill="#39414f"/>
+            <rect x="434" y="389" width="13" height="11" rx="1.5" fill="#39414f"/>
+            <rect x="456" y="342" width="13" height="58" rx="1.5" fill="#39c5cf"/>
+            <rect x="484" y="385" width="13" height="15" rx="1.5" fill="#39414f"/>
+            <rect x="514" y="380" width="13" height="20" rx="1.5" fill="#39414f"/>
+            <rect x="539" y="322" width="13" height="78" rx="1.5" fill="#c9952f"/>
+            <rect x="574" y="308" width="13" height="92" rx="1.5" fill="#c9952f"/>
+            <rect x="609" y="316" width="13" height="84" rx="1.5" fill="#c9952f"/>
+            <rect x="644" y="304" width="13" height="96" rx="1.5" fill="#c9952f"/>
+            <rect x="679" y="312" width="13" height="88" rx="1.5" fill="#c9952f"/>
+          </g>
+          <text x="392" y="300" font-size="11" fill="#6b7585">量缩枯竭(FU days)</text>
+          <text x="612" y="298" font-size="11" fill="#d9a441" font-weight="600">放量突破</text>
+          <!-- 抬高的低点 支撑线(绿) -->
+          <line x1="165" y1="213" x2="478" y2="150" stroke="#4ade80" stroke-width="2"/>
+          <text x="196" y="248" font-size="11.5" fill="#4ade80" font-weight="600">Higher Lows 抬高的低点</text>
+          <!-- 止损/新风险位(红虚线) -->
+          <line x1="392" y1="178" x2="552" y2="178" stroke="#f87171" stroke-width="1.6" stroke-dasharray="6 4"/>
+          <text x="396" y="194" font-size="11.5" fill="#f87171" font-weight="600">New Risk Level 止损</text>
+          <!-- pivot 阻力线(琥珀虚线) -->
+          <line x1="110" y1="122" x2="548" y2="122" stroke="#f59e0b" stroke-width="2" stroke-dasharray="7 4"/>
+          <!-- 价格线 -->
+          <polyline points="40,255 120,120 180,210 250,124 305,182 370,126 420,160 462,138 510,123 520,121 545,118 595,72 650,45 690,36" fill="none" stroke="#e6edf3" stroke-width="2.6" stroke-linejoin="round"/>
+          <!-- 突破强调箭头 -->
+          <line x1="556" y1="100" x2="652" y2="50" stroke="#fbbf24" stroke-width="3" marker-end="url(#ah)"/>
+          <!-- 收缩深度标注(置于各自波谷下方) -->
+          <text x="180" y="228" text-anchor="middle" font-size="11.5" fill="#9ba6b4">T1 −18%</text>
+          <text x="305" y="201" text-anchor="middle" font-size="11.5" fill="#9ba6b4">T2 −12%</text>
+          <text x="438" y="175" text-anchor="middle" font-size="11.5" fill="#9ba6b4">T3 −6%</text>
+          <!-- Pivot 标注(右侧，与 Pocket Pivot 错开) -->
+          <circle cx="520" cy="121" r="6" fill="#fbbf24" stroke="#0a0d13" stroke-width="2"/>
+          <line x1="528" y1="124" x2="545" y2="150" stroke="#f59e0b" stroke-width="1"/>
+          <text x="548" y="158" font-size="12.5" fill="#fbbf24" font-weight="700">Entry 突破买点</text>
+          <line x1="498" y1="110" x2="498" y2="121" stroke="#f59e0b" stroke-width="1"/>
+          <text x="432" y="106" text-anchor="start" font-size="12.5" fill="#f59e0b" font-weight="700">Pivot 枢轴(阻力)</text>
+          <!-- Pocket Pivot 标注(左侧) -->
+          <circle cx="462" cy="138" r="6" fill="#39c5cf" stroke="#0a0d13" stroke-width="2"/>
+          <line x1="462" y1="138" x2="462" y2="108" stroke="#39c5cf" stroke-width="1"/>
+          <line x1="462" y1="108" x2="392" y2="108" stroke="#39c5cf" stroke-width="1"/>
+          <text x="388" y="104" text-anchor="end" font-size="12.5" fill="#39c5cf" font-weight="700">Pocket Pivot 提前买点</text>
+        </svg>
+        <div class="vcp-cap">price 一路收缩(T1&gt;T2&gt;T3)、量能枯竭；<span style="color:#39c5cf">青点=Pocket Pivot</span> 在 base 内提前放量、<span style="color:#f59e0b">琥珀虚线=Pivot</span> 突破 → <span style="color:#fbbf24">放量 Entry</span></div>
+        </div>
+        <dl class="dfn">
+          <dt>Pivot 枢轴</dt><dd><strong>一条横线</strong> —— 整理区(base)的<strong>最高点 / 阻力位</strong>。价格在收缩过程中反复顶到这条线下方。当价格<strong>放量突破这条线</strong>(实操 pivot+$0.10、量比 50 日均量高 40%+) = 标准买点。它是个<strong>价格水平</strong>。</dd>
+          <dt>Pocket Pivot</dt><dd><strong>一个点</strong> —— 在 base <strong>内部、突破之前</strong>就出现的提前买点。定义：某个上涨日，成交量 &gt; 过去 10 个交易日里"最大下跌日"的量。它通常发生在价格<strong>从下方贴近/刚站上 10 日或 50 日均线</strong>、在抬高的低点处反弹时。它的价位<strong>低于 pivot 线</strong>。</dd>
+        </dl>
+        <div class="callout co-key"><span class="ci">🔑</span><div><strong>一句话区分：</strong>Pivot 是"<strong>突破阻力</strong>才买"(晚一点、更确认)；Pocket Pivot 是"机构吸筹漏出来，<strong>在阻力下方就提前埋伏</strong>"(早一点、成本低、止损更紧)。两者都要<strong>放量</strong>，区别只在"买在阻力线上方 还是 下方"。</div></div>
+        <div class="callout co-info"><span class="ci">🎨</span><div>这也解释了 Kova 量柱为什么把<strong>放量异动专门标成青亮色</strong> —— 那就是在帮你<strong>肉眼找 pocket pivot</strong>(图里青色量柱)。而金色巨量则是<strong>突破日(pivot breakout)</strong>。</div></div>`,
+        source:"答疑 · VCP 买点图解(自绘标注)"
+      },
+    ]
+  },
+  {
+    id:"edu-method", group:"Kova 教育", icon:"📚", title:"交易方法论",
+    intro:"Kova 核心交易方法 = <strong>三大经典动量体系的合成</strong>：选股/止损/加仓来自 <strong>O'Neil(CANSLIM)</strong>，VCP 买入来自 <strong>Minervini</strong>，Pocket Pivot 来自 <strong>Morales &amp; Kacher</strong>。三套都有公开可量化规则 —— 倒推时直接拿来当先验，再回测校准。",
+    cards:[
+      {
+        title:"五条核心规则(全套方法的骨架)", tags:[["base","总纲"],["trend","趋势"],["risk","风控"]],
+        body:`<p>Kova 把整套方法浓缩成五条，后面所有技术细节都是为这五条服务的：</p>
+        <ul>
+          <li><strong>① 选强势股</strong> pick strong stocks</li>
+          <li><strong>② 买突破</strong> buy breakouts</li>
+          <li><strong>③ 7% 止损</strong> stop out at 7%</li>
+          <li><strong>④ 只对赢家加仓(金字塔加仓)</strong> pyramid up only on winners</li>
+          <li><strong>⑤ 趋势破位就卖</strong> sell when the trend breaks</li>
+        </ul>
+        <div class="callout co-info"><span class="ci">🧭</span><div>这五条 = <strong>William O'Neil CANSLIM</strong> 体系的精简版：强势成长股 + 突破买入 + 严格止损 + 顺势加仓 + 破位离场。倒推时可直接把成熟的 CANSLIM/O'Neil 量化规则当先验。</div></div>`,
+        source:"《The only trading tutorial you need》· Apr 17 2026 · 图1"
+      },
+      {
+        title:"选股清单 · 基本面(公司必须真的在成长)", tags:[["base","选股"]],
+        body:`<p>Kova 强调选股<strong>不是玄学，是过滤</strong> —— 真正的大牛股往往同时勾选多个条件。任意一只票，拉出来 60 秒走一遍清单。基本面三条硬指标：</p>
+        <ul>
+          <li><strong>EPS 同比增长 ≥ 25%</strong>(最近 1–2 个季度)，越高越好</li>
+          <li><strong>营收增长 ≥ 20%</strong> —— "没有营收增长的利润是挤出来的利润，不是真增长"</li>
+          <li><strong>ROE ≥ 17%</strong></li>
+        </ul>
+        <div class="callout co-formula"><span class="ci">✓</span><div>fundamental_pass = (EPS_yoy ≥ 25%) AND (Sales_yoy ≥ 20%) AND (ROE ≥ 17%)</div></div>
+        <div class="callout co-key"><span class="ci">🔑</span><div>这三条是 CANSLIM 的标准阈值。<strong>注意：这是选股池(scanner)层的基本面过滤，不是 K 线指标层</strong> —— 倒推时要分清"哪些是 TradingView 指标能算的(价/量/技术)，哪些得靠基本面数据源"。</div></div>`,
+        source:"《The only trading tutorial you need》· Apr 17 2026 · 图1"
+      },
+      {
+        title:"选股清单 · 技术面(股票本身得在强势区)", tags:[["trend","趋势"],["base","选股"]],
+        body:`<ul>
+          <li><strong>RS Rating(相对强度评级) ≥ 80</strong>(来源 IBD / MarketSurge / Finviz)</li>
+          <li>价格在 <strong>52 周高点的 15% 以内</strong> —— 越近越好</li>
+          <li>周线上价格<strong>同时站上 10 周 & 40 周均线</strong>，且两条均线<strong>都向上倾斜</strong></li>
+          <li>所属行业组排在 <strong>IBD 197 个行业的前 40</strong></li>
+          <li>最好是<strong>较新的高成长公司</strong>，不是百年蓝筹</li>
+        </ul>
+        <div class="callout co-formula"><span class="ci">✓</span><div>technical_pass = (RS ≥ 80) AND (price ≥ 0.85×High_52w) AND (close &gt; MA10w &gt; 0斜率) AND (close &gt; MA40w &gt; 0斜率) AND (行业组 top 40)</div></div>
+        <div class="callout co-key"><span class="ci">🔑</span><div>"52周高点 15% 以内" + "周线 10/40 MA 上扬" 这两条<strong>Pine 完全能算</strong>。RS Rating(相对大盘排名)需要全市场横截面，TradingView 单标的算不了精确排名，但可用 <code>RS = price/SPX</code> 比值的斜率/分位近似。</div></div>`,
+        source:"《The only trading tutorial you need》· 图2"
+      },
+      {
+        title:"选股清单 · 机构 + 市场环境(M)", tags:[["base","选股"],["risk","风控"]],
+        body:`<h4>机构(大资金在买)</h4>
+        <ul><li>持有该股的基金数量<strong>逐季增加</strong></li><li>有知名基金在股东名单里加分</li></ul>
+        <h4>市场环境(CANSLIM 里的 "M")</h4>
+        <ul>
+          <li>大盘处于<strong>确认的上升趋势</strong></li>
+          <li>近期<strong>没有成堆的派发日(distribution days)</strong></li>
+          <li><strong>熊市/回调期直接跳过</strong> —— 约 <strong>75% 的个股跟随大盘</strong>，逆势=对抗地心引力</li>
+        </ul>
+        <div class="callout co-key"><span class="ci">🔑</span><div><strong>这就是为什么截图里有"健康 HEALTHY"标签</strong> —— 极可能是<strong>市场环境过滤器(M)</strong>：大盘不健康时，再好的个股信号也降级/不发。这是个全局门控，必须单独建一个"大盘 regime"模块。</div></div>
+        <div class="callout co-info"><span class="ci">💡</span><div>核心箴言：<strong>赢家 = 基本面 ∩ 技术面的交集</strong>。只看基本面(好公司烂图)或只看图(好图烂公司)都是最常见的错误。池子更小，但里面的票"条条都能游"。</div></div>`,
+        source:"《The only trading tutorial you need》· 图2"
+      },
+      {
+        title:"VCP 波动收缩形态 · 是什么", tags:[["trend","趋势"],["vol","量能"]],
+        body:`<p><strong>VCP = Volatility Contraction Pattern</strong>(波动收缩形态)，Mark Minervini 的招牌打法，专业交易者用来<strong>精确择时进场</strong>。</p>
+        <p>画面：强势股先涨 <strong>30%+</strong>，然后开始"休息"，而这个休息有特定形状 —— 一连串<strong>逐次变浅</strong>的回调：</p>
+        <ul>
+          <li>第 1 次回调：深 <strong>25–35%</strong>，整理较久</li>
+          <li>第 2 次回调：<strong>15–20%</strong>，更浅更短</li>
+          <li>第 3 次回调(若有)：<strong>5–10%</strong>，很小</li>
+          <li>每次回调都<strong>更浅、更短、量更低</strong></li>
+        </ul>
+        <p>连起来就是一个<strong>收紧的楔形</strong> —— 一根正在被压缩的弹簧。</p>`,
+        source:"《The only trading tutorial you need》· 图2/3"
+      },
+      {
+        title:"VCP 三重收缩(必须同时发生 ⚠️ 最多人忽略)", tags:[["vol","量能"],["mom","动量"]],
+        body:`<p>真正的 VCP 不只是价格变窄，<strong>三件事要同时收缩</strong>：</p>
+        <ol style="padding-left:20px">
+          <li><strong>价格收缩</strong>：每次回调比上次浅(表层)</li>
+          <li><strong>量能枯竭</strong>：到形态末期，平均日成交量<strong>明显跌破 50 日均量</strong>；常见几个"FU days"(Minervini 原话 Fucking Ugly days)，量低得诡异 = 卖方耗尽，没人想卖了</li>
+          <li><strong>波动收缩</strong>：日内振幅收窄，出现"tight closes" —— <strong>连续几天 close-to-close 涨跌 &lt; 1%</strong>，K 线像叠在一起</li>
+        </ol>
+        <p>三者齐发 → 供给被抽干，买方一个火星就点燃行情。<strong>全场最高胜率的进场点。</strong></p>
+        <div class="callout co-formula"><span class="ci">∑</span><div>vcp_ready = (回调序列逐次变浅) AND (vol_avg &lt; MA50_vol) AND (近N日 |close/close[1]−1| &lt; 1% 的天数 ≥ k)</div></div>`,
+        source:"《The only trading tutorial you need》· 图3/4"
+      },
+      {
+        title:"Pivot 触发价 + 买入区(实际下单规则)", tags:[["trend","趋势"],["vol","量能"]],
+        body:`<p>收缩成熟后，<strong>整理区间的高点 = pivot(枢轴点)</strong>。实操中用 <strong>pivot + $0.10</strong> 作为真实触发价。</p>
+        <p><strong>两个硬条件必须同时成立：</strong></p>
+        <ul>
+          <li>价格<strong>突破 pivot</strong></li>
+          <li>突破当日成交量<strong>比 50 日均量高 40–50%+</strong></li>
+        </ul>
+        <p>缺一不可。只有价没有量 = 假突破，约<strong>一半概率直接打回</strong>。</p>
+        <div class="callout co-formula"><span class="ci">→</span><div>entry_trigger = (high &gt; pivot + 0.10) AND (vol &gt; 1.45 × MA50_vol)<br>buy_zone = [pivot, pivot × 1.05]　// 超过 pivot 5% = 追高，放弃，等下一个base或pocket pivot</div></div>
+        <div class="callout co-key"><span class="ci">🔑</span><div>买入区上限 <strong>pivot+5%</strong> —— 这极可能就是截图里 <strong>MU/OKTA 显示 REDUCE</strong> 的原因：价格离 pivot/均线乖离 &gt; 阈值 = 过度延伸，不再是买点。前面对"乖离率"的推断<strong>得到印证</strong>。</div></div>`,
+        source:"《The only trading tutorial you need》· 图4"
+      },
+      {
+        title:"Pocket Pivot(底部内提前进场)", tags:[["vol","量能"],["mom","动量"]],
+        body:`<p>如果票很强但还没走完整 VCP，有个更早的进场点叫 <strong>Pocket Pivot</strong>(Gil Morales & Chris Kacher 提出)：</p>
+        <div class="callout co-formula"><span class="ci">→</span><div>pocket_pivot = 单根上涨日 AND 当日成交量 &gt; 过去 10 个交易日里"最大下跌日"的成交量</div></div>
+        <p>白话：买方刚刚<strong>压过了近期所有卖方的浪</strong>。这是机构吸筹在公开突破前的"泄漏"信号 —— "口袋里的 pivot"。</p>`,
+        source:"《The only trading tutorial you need》· 图5"
+      },
+      {
+        title:"止损规则 · 没有商量余地", tags:[["risk","风控"]],
+        body:`<p>"<strong>不会割肉的人，在这个市场活不过三年。</strong>"</p>
+        <h4>硬规则：7–8%</h4>
+        <p>从入场价下跌 <strong>7–8% 必卖，没有例外</strong>(来自 O'Neil，经几十年压力测试)。理由：真突破不该让你浮亏超过 7%，超过了 = 突破已失败，死守只会加深伤害。</p>
+        <h4>能更紧就更紧(8% 是上限不是目标)</h4>
+        <p>实操取下面<strong>最紧的那个</strong>：</p>
+        <ul>
+          <li><strong>pivot 下方一点</strong>：如果逻辑是"它要突破了"，收盘跌回 pivot 下方 = 逻辑作废，出</li>
+          <li><strong>入场日低点下方 2–3%</strong>：非常紧，适合 swing 进场</li>
+        </ul>
+        <div class="callout co-formula"><span class="ci">⛔</span><div>stop = max( entry × 0.92,  min(pivot − ε, entry_day_low × 0.97) )　// 即"7-8%上限"与"更紧的结构止损"取更紧者</div></div>`,
+        source:"《The only trading tutorial you need》· 图5"
+      },
+      {
+        title:"加仓 · 金字塔结构(底大顶小)", tags:[["mom","动量"],["risk","风控"]],
+        body:`<p><strong>唯一原则：只在你已经正确的方向上加仓。</strong>反过来"给亏损单加仓摊低成本"是散户爆仓的头号杀手 —— "现在更便宜了"感觉很聪明，市场的回应是"对，明天还会更便宜"。</p>
+        <p>分批建仓(底大顶小)：</p>
+        <ul>
+          <li><strong>第 1 批：50%</strong> 目标仓位 —— 突破 pivot 时</li>
+          <li><strong>第 2 批：30%</strong> —— 股价涨到 pivot 上方 2–3% 后</li>
+          <li><strong>第 3 批：20%</strong> —— 再涨 2–5% 后，或下一个 pocket pivot</li>
+        </ul>
+        <p>越往上加越少，因为越接近短期顶，被甩下车的概率越高。<strong>每加一批，止损同步上移</strong>(图中 Long1→Long5，Stop Loss 阶梯抬升)。</p>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 740 360" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <defs>
+            <marker id="ga" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#4ade80"/></marker>
+            <marker id="ra" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f87171"/></marker>
+          </defs>
+          <!-- 仓位金字塔(底大顶小) -->
+          <g>
+            <rect x="60" y="100" width="118" height="15" rx="2" fill="#4ade80" opacity="0.85"/>
+            <text x="119" y="112" text-anchor="middle" font-size="10.5" fill="#06210f" font-weight="700">第1批 50%</text>
+            <rect x="80" y="81" width="78" height="15" rx="2" fill="#4ade80" opacity="0.6"/>
+            <text x="119" y="93" text-anchor="middle" font-size="10.5" fill="#06210f" font-weight="700">30%</text>
+            <rect x="93" y="62" width="52" height="15" rx="2" fill="#4ade80" opacity="0.4"/>
+            <text x="119" y="74" text-anchor="middle" font-size="10.5" fill="#0a2e16" font-weight="700">20%</text>
+            <text x="119" y="133" text-anchor="middle" font-size="11" fill="#9ba6b4">仓位金字塔 · 底大顶小</text>
+          </g>
+          <!-- 止损阶梯(红虚线，逐级上移) -->
+          <g stroke="#f87171" stroke-width="1.6" stroke-dasharray="6 4">
+            <line x1="95" y1="276" x2="215" y2="276"/>
+            <line x1="215" y1="276" x2="215" y2="238"/>
+            <line x1="215" y1="238" x2="320" y2="238"/>
+            <line x1="320" y1="238" x2="320" y2="200"/>
+            <line x1="320" y1="200" x2="440" y2="200"/>
+            <line x1="440" y1="200" x2="440" y2="152"/>
+            <line x1="440" y1="152" x2="660" y2="152"/>
+          </g>
+          <text x="98" y="271" font-size="10.5" fill="#f87171">Stop 1</text>
+          <text x="222" y="233" font-size="10.5" fill="#f87171">Stop 2 ↑</text>
+          <text x="326" y="195" font-size="10.5" fill="#f87171">Stop 3 ↑</text>
+          <text x="446" y="147" font-size="10.5" fill="#f87171" font-weight="600">跟随止损 ↑ (50日线 / 10周线)</text>
+          <!-- 价格线 -->
+          <polyline points="50,290 120,250 170,222 215,205 270,184 320,170 380,138 440,120 500,92 560,66 600,58 640,90 668,118" fill="none" stroke="#e6edf3" stroke-width="2.6" stroke-linejoin="round"/>
+          <!-- 加仓点 -->
+          <circle cx="120" cy="250" r="6" fill="#4ade80" stroke="#0a0d13" stroke-width="2"/>
+          <circle cx="215" cy="205" r="6" fill="#4ade80" stroke="#0a0d13" stroke-width="2"/>
+          <circle cx="320" cy="170" r="6" fill="#4ade80" stroke="#0a0d13" stroke-width="2"/>
+          <!-- 加仓标签 -->
+          <g>
+            <rect x="74" y="196" width="74" height="22" rx="5" fill="#16321f" stroke="#4ade80" stroke-width="1"/>
+            <text x="111" y="211" text-anchor="middle" font-size="11.5" fill="#7ee8a0" font-weight="700">Long 1 · 50%</text>
+            <line x1="115" y1="218" x2="120" y2="245" stroke="#4ade80" stroke-width="1.2" marker-end="url(#ga)"/>
+            <rect x="184" y="150" width="74" height="22" rx="5" fill="#16321f" stroke="#4ade80" stroke-width="1"/>
+            <text x="221" y="165" text-anchor="middle" font-size="11.5" fill="#7ee8a0" font-weight="700">Long 2 · 30%</text>
+            <line x1="221" y1="172" x2="216" y2="200" stroke="#4ade80" stroke-width="1.2" marker-end="url(#ga)"/>
+            <rect x="296" y="104" width="74" height="22" rx="5" fill="#16321f" stroke="#4ade80" stroke-width="1"/>
+            <text x="333" y="119" text-anchor="middle" font-size="11.5" fill="#7ee8a0" font-weight="700">Long 3 · 20%</text>
+            <line x1="328" y1="126" x2="321" y2="165" stroke="#4ade80" stroke-width="1.2" marker-end="url(#ga)"/>
+          </g>
+          <!-- Close 趋势破位 -->
+          <rect x="582" y="40" width="116" height="24" rx="6" fill="#3a1414" stroke="#f87171" stroke-width="1.2"/>
+          <text x="640" y="56" text-anchor="middle" font-size="12" fill="#fbb6b6" font-weight="700">✕ Close 破位卖出</text>
+          <line x1="640" y1="64" x2="652" y2="112" stroke="#f87171" stroke-width="1.4" marker-end="url(#ra)"/>
+        </svg>
+        <div class="vcp-cap">每加一批仓位变小(<span style="color:#4ade80">50 → 30 → 20</span>)，且只在更高价、确认方向后加；<span style="color:#f87171">止损同步阶梯上移</span> → 锁定利润；价格跌破跟随止损即 Close。</div>
+        </div>
+        <div class="callout co-formula"><span class="ci">▲</span><div>tranche = [0.50, 0.30, 0.20] @ [pivot突破, pivot+2~3%, pivot+再2~5% 或 pocket_pivot]　·　每批后 stop 上移</div></div>`,
+        source:"《The only trading tutorial you need》· 图6"
+      },
+      {
+        title:"加仓 · 仓位上限 + 三不加", tags:[["risk","风控"]],
+        body:`<p><strong>单票上限 = 总资金 25%</strong>，再爱也不超 —— 因为你<strong>一定会有看错的时候，而且往往在最自信时看错</strong>。</p>
+        <h4>三种情况绝不加仓</h4>
+        <ul>
+          <li><strong>不给亏损单加</strong> —— 错就是错，加仓只是加倍伤害</li>
+          <li><strong>不在 pivot 上方 5% 以外加</strong> —— 止损距离被压缩，盈亏比崩坏</li>
+          <li><strong>大盘转弱时不加</strong> —— 环境为王，烂行情里再好的票也要减小</li>
+        </ul>
+        <div class="callout co-formula"><span class="ci">⛔</span><div>no_add = (持仓浮亏) OR (price &gt; pivot×1.05) OR (market_regime 转弱)　·　position_cap = 25% NAV</div></div>`,
+        source:"《The only trading tutorial you need》· 图7"
+      },
+      {
+        title:"卖出 · 进攻性止盈(锁利) + 8周持有法则", tags:[["mom","动量"],["risk","风控"]],
+        body:`<p>"<strong>烂买只亏 7–8%，烂卖能把 100% 的盈利变成 20%，或把 20% 盈利变成亏损。</strong>"卖出是交易最难的部分。</p>
+        <h4>8 周持有法则(Power Launch)</h4>
+        <p>若股票在突破后 <strong>3 周内暴涨 20%+</strong> = "强力发射"信号 → <strong>至少持有 8 周</strong>再考虑卖。历史上大多数妖股都是这么起步的。若涨得慢(8 周才 +20%)，可以早点分批止盈。</p>
+        <div class="callout co-key"><span class="ci">🔑</span><div><strong>这解释了截图里 SIVE(99)是 Hold 而 MU/OKTA 是 REDUCE</strong>：SIVE 像处于 power-launch 持有窗口内；MU/OKTA 已过度延伸(climax/&gt;5%乖离)。Kova Score 的<strong>动作标签 = 持有窗口判断 + 延伸度判断的组合</strong>。</div></div>`,
+        source:"《The only trading tutorial you need》· 图8"
+      },
+      {
+        title:"卖出 · 抛物线顶(Climax) + 出货(Churning)", tags:[["risk","风控"],["vol","量能"]],
+        body:`<h4>Climax Run 抛物线顶(已大涨的票出现这些 → 不卖就是贪婪，减 50% 或清仓)</h4>
+        <ul>
+          <li>最近 <strong>2–3 周大涨 25–30%+</strong></li>
+          <li>连续多根<strong>大振幅阳线</strong>，日内振幅在<strong>扩张</strong></li>
+          <li><strong>巨量跳空高开</strong></li>
+          <li>价格向上<strong>突破其正常的上轨趋势通道</strong></li>
+        </ul>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 740 420" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <defs><marker id="cr" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9ba6b4"/></marker></defs>
+          <!-- 量能基线 -->
+          <line x1="40" y1="400" x2="700" y2="400" stroke="#222b38" stroke-width="1"/>
+          <!-- 量柱: stage2(绿) → climax(金) → 反转(红) -->
+          <g>
+            <rect x="54" y="372" width="13" height="28" rx="1.5" fill="#3f6b4f"/>
+            <rect x="89" y="368" width="13" height="32" rx="1.5" fill="#3f6b4f"/>
+            <rect x="124" y="374" width="13" height="26" rx="1.5" fill="#3f6b4f"/>
+            <rect x="159" y="362" width="13" height="38" rx="1.5" fill="#3f6b4f"/>
+            <rect x="194" y="370" width="13" height="30" rx="1.5" fill="#3f6b4f"/>
+            <rect x="229" y="358" width="13" height="42" rx="1.5" fill="#3f6b4f"/>
+            <rect x="264" y="366" width="13" height="34" rx="1.5" fill="#3f6b4f"/>
+            <rect x="299" y="354" width="13" height="46" rx="1.5" fill="#3f6b4f"/>
+            <rect x="334" y="360" width="13" height="40" rx="1.5" fill="#3f6b4f"/>
+            <rect x="369" y="348" width="13" height="52" rx="1.5" fill="#3f6b4f"/>
+            <rect x="404" y="340" width="13" height="60" rx="1.5" fill="#3f6b4f"/>
+            <rect x="434" y="328" width="13" height="72" rx="1.5" fill="#d9a441"/>
+            <rect x="464" y="316" width="13" height="84" rx="1.5" fill="#d9a441"/>
+            <rect x="494" y="305" width="13" height="95" rx="1.5" fill="#d9a441"/>
+            <rect x="519" y="310" width="13" height="90" rx="1.5" fill="#d9a441"/>
+            <rect x="539" y="330" width="13" height="70" rx="1.5" fill="#b5556a"/>
+            <rect x="569" y="320" width="13" height="80" rx="1.5" fill="#b5556a"/>
+            <rect x="604" y="336" width="13" height="64" rx="1.5" fill="#b5556a"/>
+            <rect x="639" y="350" width="13" height="50" rx="1.5" fill="#b5556a"/>
+          </g>
+          <text x="452" y="300" font-size="11" fill="#d9a441" font-weight="600">↑ 巨量 / 扩张</text>
+          <!-- 正常上升通道(灰虚线) + 突破后的虚线延伸 -->
+          <line x1="55" y1="295" x2="440" y2="175" stroke="#4a5568" stroke-width="1.4" stroke-dasharray="5 4"/>
+          <line x1="55" y1="250" x2="440" y2="130" stroke="#4a5568" stroke-width="1.4" stroke-dasharray="5 4"/>
+          <line x1="440" y1="130" x2="660" y2="62" stroke="#3a4452" stroke-width="1.2" stroke-dasharray="2 5"/>
+          <!-- 价格线 -->
+          <polyline points="55,288 95,262 125,278 165,242 205,255 245,222 285,235 325,200 360,212 395,182 415,135 435,100 460,72 485,50 508,34 525,26 540,48 560,90 585,140 615,195 645,235" fill="none" stroke="#e6edf3" stroke-width="2.6" stroke-linejoin="round"/>
+          <!-- Climax 顶 marker -->
+          <circle cx="525" cy="26" r="6" fill="#d9a441" stroke="#0a0d13" stroke-width="2"/>
+          <!-- 标注 -->
+          <text x="70" y="158" font-size="11.5" fill="#9ba6b4">Stage 2：沿通道稳步上升</text>
+          <text x="62" y="226" font-size="11" fill="#6b7585">正常上升通道</text>
+          <text x="238" y="112" font-size="11.5" fill="#c9d1d9" font-weight="600">抛物线加速·突破上轨</text>
+          <line x1="362" y1="108" x2="430" y2="92" stroke="#9ba6b4" stroke-width="1.2" marker-end="url(#cr)"/>
+          <text x="546" y="38" font-size="12.5" fill="#fbbf24" font-weight="700">Climax 顶 → 减50%/清仓</text>
+          <text x="600" y="128" font-size="12" fill="#f87171" font-weight="700">随后急跌 ↓</text>
+        </svg>
+        <div class="vcp-cap">Stage 2 稳步上升 →（末端）<span style="color:#fbbf24">抛物线加速、巨量跳空、突破正常上轨通道</span> → Climax 顶（减仓/清仓）→ <span style="color:#f87171">随后急跌</span>。对比：Churning 是巨量却<strong>滞涨</strong>，不是这种垂直拉升。</div>
+        </div>
+        <h4>Churning 出货(巨量但不涨)</h4>
+        <p>连续多日<strong>极高成交量、但股价几乎不动或收在低位</strong> = <strong>伪装的派发</strong>，机构在向散户需求里卖货。最清晰的顶部信号之一。</p>
+        <div class="callout co-formula"><span class="ci">⚠</span><div>climax = (3周涨幅≥25%) AND (振幅扩张) AND (价 &gt; 上轨通道)　|　churning = (vol≫MA50_vol) AND (close 接近当日低 / 涨幅≈0)</div></div>`,
+        source:"《The only trading tutorial you need》· 图9"
+      },
+      {
+        title:"卖出 · 防御性(趋势破位就走)", tags:[["trend","趋势"],["risk","风控"]],
+        body:`<p>趋势一破，立刻离场。几个最干净的卖出信号：</p>
+        <ul>
+          <li><strong>放量跌破 50 日均线</strong>(周线则是 10 周均线) —— CANSLIM 里最干净的卖出信号之一</li>
+          <li><strong>跌破上升趋势线</strong> —— 连接近期有意义的低点，价格切穿 = 趋势结构受损</li>
+          <li><strong>派发日堆积</strong> —— 个股或指数：<strong>4–5 周内出现 5+ 个派发日</strong>(成交量高于前一日、且收跌 0.2%+) = 大资金在撤</li>
+          <li><strong>财报跳空大跌</strong> —— 尤其跌破 50 日线的，别等别幻想，直接执行</li>
+        </ul>
+        <div class="callout co-formula"><span class="ci">→</span><div>defensive_sell = (close &lt; MA50 AND vol放大) OR (跌破上升趋势线) OR (4-5周内派发日≥5) OR (财报跳空 &amp; close &lt; MA50)</div></div>
+        <div class="callout co-key"><span class="ci">🔑</span><div>"放量跌破 50 日线"基本就是 <strong>Kova Score 由 HEALTHY 转弱 / 出 SELL</strong> 的核心触发。派发日计数(distribution day)也是"M"市场环境模块的关键输入。</div></div>`,
+        source:"《The only trading tutorial you need》· 图9/10"
+      },
+      {
+        title:"执行纪律 + 交易日志(作者说这是最有价值的一条)", tags:[["base","纪律"]],
+        body:`<p><strong>真正的难点是执行，不是识别信号。</strong>人人都会犹豫("万一它涨回来呢？""再等一天？")，然后看着盈利蒸发成亏损。作者的方法：<strong>卖出信号一触发就立刻下单，不再重新讨论</strong>。错了就认 L。长期看，严格执行者赢。</p>
+        <h4>每笔交易都记日志</h4>
+        <ul><li>为什么买(VCP？pocket pivot？什么 base？)</li><li>当时市场环境如何</li><li>止损放哪</li><li>加仓计划</li><li>怎么卖的、为什么，含盈亏</li><li>复盘：如果重来，哪对哪错？</li></ul>
+        <p>坚持 6 个月，你会震惊地发现<strong>大量亏损都是同一个错误在重复</strong>。这比任何书都有用，因为是<strong>你自己</strong>的数据。</p>
+        <div class="callout co-info"><span class="ci">💡</span><div>对我们工程的启发：Telegram 推送里应自动带上"为什么触发(VCP/pocket/突破)+ 止损位 + 市场环境"，等于自动生成交易日志。</div></div>`,
+        source:"《The only trading tutorial you need》· 图10/11"
+      },
+      {
+        title:"📋 全文总结 · 五步法(倒推总纲)", tags:[["base","总纲"]],
+        body:`<ol style="padding-left:20px">
+          <li><strong>选股 Selection</strong>：基本面 + 技术面 + 机构 + 市场，四项齐全</li>
+          <li><strong>进场 Entry</strong>：VCP 三重收缩 + 放量突破 pivot —— 或 pocket pivot</li>
+          <li><strong>止损 Stops</strong>：7% 硬规则 + 更紧的技术位 + 时间止损</li>
+          <li><strong>加仓 Adds</strong>：金字塔加仓，只对赢家</li>
+          <li><strong>卖出 Exits</strong>：持有 8 周 或 等 climax；趋势破位就快砍</li>
+        </ol>
+        <div class="callout co-key"><span class="ci">🧭</span><div>这五步 = 我们要复刻的<strong>完整状态机</strong>。Kova Score(0–100) 很可能就是把"选股+进场质量+趋势健康"打包成一个分数，动作标签(Hold/Reduce/Sell)则由"加仓/卖出"这套规则驱动。下一步：把每步翻成 Pine + Python，回测对齐截图。</div></div>`,
+        source:"《The only trading tutorial you need》· 图11 Wrapping Up"
+      },
+    ]
+  },
+  {
+    id:"edu-trailing", group:"Kova 教育", icon:"🪜", title:"Trailing 止损管理（状态机）",
+    intro:"专文《如何正确上抬止损》(5/27)。<strong>权威回答了「50 SMA 还是 10 EMA」</strong> —— 是按盈利阶段切换的状态机，swing 快票用 <strong>10 EMA</strong>，50 SMA 只给 monster 长线。还点名了 Oliver Kell(2020 美国投资冠军)、Nicolas Darvas、Chris Flanders。",
+    cards:[
+      {
+        title:"为什么 Trailing 比入场更决定 P&L", tags:[["risk","风控"]],
+        body:`<p>大多数人不是死在入场 —— 判断对、买点也对，<strong>死在入场之后"现在止损该在哪"的几十次小决策上</strong>。入场是一次性动作，trailing 不是：从买到卖每个交易日都在回答这个问题。</p>
+        <h4>同一笔交易，trail 决定 +25% 还是 +42%</h4>
+        <p>$100 买，股票到 $150 后回落到 $130：</p>
+        <ul>
+          <li><strong>不 trail</strong>：止损一直停 −5%($95)，最后 $130 手动出 → <strong>+25~30%</strong></li>
+          <li><strong>trail 得当</strong>：$140 时止损提到 $135，$150 顶附近提到 $142，最后 $142 走 → <strong>+42%</strong></li>
+        </ul>
+        <p>反向更狠：$100 → $108 → 回 $96。不 trail：原始 −5% 被打，<strong>亏 5%</strong>；trail 到保本 $100.5：<strong>打平</strong>。</p>
+        <div class="callout co-key"><span class="ci">🔑</span><div>Trail 的本质 = 把<strong>"判断对错"和"赚多少钱"解耦</strong>。买入是 0 或 1 的问题，trail 是 0 到 100 的问题。</div></div>`,
+        source:"《如何正确上抬止损》· May 27 2026"
+      },
+      {
+        title:"止损状态机 · 一笔交易只有 5 种状态", tags:[["risk","风控"]],
+        body:`<p>入场后任意时刻只处于一种状态，<strong>每种状态的 trail 动作是固定的 —— 靠纪律不靠判断</strong>：</p>
+        <div class="stop-step" style="border-left-color:var(--red)"><span class="ph">A 亏损区</span><span class="ds">−7% ~ 0%：什么都不做，初始止损就是全部防线，<strong>绝不下移</strong></span><span class="lv" style="color:var(--red)">不动</span></div>
+        <div class="stop-step" style="border-left-color:#9ba6b4"><span class="ph">B 微利区</span><span class="ds">0 ~ +3%：忍住。前 2-3 天还在消化获利盘，刺一下入场价是正常呼吸，<strong>此时提保本会被洗出</strong></span><span class="lv" style="color:var(--text2)">给 3 天</span></div>
+        <div class="stop-step" style="border-left-color:var(--accent)"><span class="ph">C 确认上涨</span><span class="ds">+3% ~ +10%：第一次上抬 → <strong>保本 +0.1%</strong>(扣费后仍为正)。触发=涨3%+ 且收盘在当日上半区</span><span class="lv" style="color:var(--accent2)">→ 保本+0.1%</span></div>
+        <div class="stop-step" style="border-left-color:var(--green)"><span class="ph">D 趋势确立</span><span class="ds">+10% 以上：进入 <strong>EMA 追踪模式</strong>(5/10/21/50 按持仓周期选，见下卡)</span><span class="lv" style="color:var(--green)">EMA×0.99</span></div>
+        <div class="stop-step" style="border-left-color:var(--cyan)"><span class="ph">E 抛物线</span><span class="ds">远离 21EMA 25%+：EMA 跟不上，<strong>切趋势线/5EMA + 主动减仓</strong></span><span class="lv" style="color:var(--cyan)">切方法</span></div>
+        <div class="callout co-key"><span class="ci">🎯</span><div>这套 A→E 就是 <strong>Kova Score 动作标签(Hold/Reduce/Sell)的真正引擎</strong>。状态 C/D = Hold，状态 E(抛物线/减仓) = Reduce —— 终于对上了 MU/OKTA 的 REDUCE。</div></div>`,
+        source:"《如何正确上抬止损》· May 27 2026"
+      },
+      {
+        title:"状态 D：EMA 追踪 —— 5/10/21/50 怎么选（直接回答你的问题）", tags:[["trend","趋势"],["risk","风控"]],
+        body:`<div class="callout co-key"><span class="ci">✅</span><div><strong>你问的"MA50 还是 10EMA"——答案是 10 EMA。</strong>选哪条<strong>完全取决于打算持多久</strong>，swing 快票默认 10 EMA；<strong>50 SMA 只给 monster 长线持有</strong>。你说"MA50 差太远"正是对的：它根本不是 swing 的 trail 线。</div></div>
+        <dl class="dfn">
+          <dt>5 EMA</dt><dd>日内 / 短线 scalp。极高灵敏，稍一回调就走。</dd>
+          <dt>10 EMA</dt><dd><strong>持仓 5–20 天，swing trade 的主力 trail 线。</strong>Oliver Kell 用的就是这条 —— <strong>10 EMA × 0.99 作触发线</strong>(留 1% 缓冲，避免被假动作震出)。</dd>
+          <dt>21 EMA</dt><dd>持仓 2–8 周，中线波段。强势股大多沿 21 EMA 走，跌破说明趋势可能变坏。</dd>
+          <dt>50 SMA</dt><dd>大趋势保护线，<strong>仅 monster stock 长线持有用</strong>。离价格最远。</dd>
+        </dl>
+        <div class="callout co-formula"><span class="ci">→</span><div>trail_stop = chosen_EMA × 0.99　·　<strong>只看收盘(3:59 PM 检查一次)</strong>，盘中破线不算　·　EMA 动态，<strong>每个交易日收盘后重算</strong></div></div>
+        <div class="callout co-warn"><span class="ci">⚠️</span><div><strong>两个铁律细节：</strong>① <strong>看收盘价不看盘中</strong> —— 盘中刺破 EMA 0.5% 手抖卖了、结果收盘拉回上方继续涨，是最常见的亏法；② EMA 每天都在动，不是"设一次就忘"。</div></div>`,
+        source:"《如何正确上抬止损》· May 27 2026"
+      },
+      {
+        title:"状态 E：抛物线 / 垂直延伸 —— EMA 跟不上时", tags:[["risk","风控"],["vol","量能"]],
+        body:`<p>当价格<strong>远离 21 EMA 达 25%+</strong>，EMA 不再适用。例：$100 涨到 $250 时 21 EMA 可能还在 $180，死守 21EMA trail 等触发时已从 $250 跌回 $180，<strong>吐回 70 个点</strong>。抛物线特征是<strong>越涨越快，EMA 永远跟不上</strong>。</p>
+        <h4>两种处理（任选其一）</h4>
+        <ul>
+          <li><strong>趋势线 trail</strong>：画最近 2–3 周上升趋势线(连 2+ 个低点)，止损设趋势线下方一点。斜率比 EMA 陡，更贴实际走势。</li>
+          <li><strong>切到 5 EMA</strong>：灵敏度从"中"拉到"极高"。代价是更易被震出，收益是利润回吐最小。</li>
+        </ul>
+        <div class="callout co-key"><span class="ci">🔑</span><div>抛物线阶段最关键的动作：<strong>主动减仓(20–50%) + 收紧 trail 并行</strong>(是 AND，不是 OR)。这样无论之后是 climax 顶还是继续涨，<strong>你都赢</strong>。</div></div>`,
+        source:"《如何正确上抬止损》· May 27 2026"
+      },
+      {
+        title:"Trailing 五个常见错误 + 不可违反的铁律", tags:[["risk","风控"],["base","纪律"]],
+        body:`<h4>五个常见错误</h4>
+        <ol style="padding-left:20px">
+          <li><strong>看盘中价不看收盘价</strong> —— 盘中刺破就慌。纪律：3:59PM 检查，中间任何价格不算</li>
+          <li><strong>climax 阶段还用慢 EMA</strong> —— 等于自动放弃 30%+ 利润，状态变了工具要换</li>
+          <li><strong>加仓后不重设止损</strong> —— 加仓改变平均成本，不按新均成本重算整仓止损，实际风险就失控</li>
+          <li><strong>把 trail 当被动等待</strong> —— trail 是底线不是唯一动作。高位放量/领头股跳水/板块出货时，主动减仓别等触发</li>
+          <li><strong>时间框架混用</strong> —— 10EMA trail(日线)却盯 5 分钟图 = 用日线策略给自己制造日内焦虑</li>
+        </ol>
+        <div class="callout co-warn"><span class="ci">⛔</span><div><strong>唯一不可违反的铁律：止损只能向上，永远不能向下。</strong>因为"只要破了一次，你就彻底破了"。第一次下移理由很充分("被洗一下，基本面没变")→ 继续跌；第二次更充分 → 再跌；第三次你已经不在交易，在祈祷。</div></div>
+        <div class="callout co-info"><span class="ci">📚</span><div>本文引用的人物：<strong>Oliver Kell</strong>(2020 美国投资冠军，10EMA×0.99)、<strong>Nicolas Darvas</strong>(「止损 = 保险，别为省保费下挪」)、<strong>Chris Flanders</strong>(「交易者死亡螺旋」：行动→亏损→再行动→再亏损)。Kova 的体系版图再加两位。</div></div>
+        <h4>作者的结语</h4>
+        <p>"不会止损的人，活不过三年；会止损但不会上抬的人，<strong>赚不到大钱</strong>；两件都会的人，<strong>才有资格谈复利</strong>。"</p>
+        <div class="callout co-key"><span class="ci">⏱️</span><div>"Trail 不是技术问题，是<strong>工序问题</strong>。买入考验判断力，trail 考验的是你愿不愿意<strong>每天收盘后花 10 分钟，把每只持仓的止损重新算一遍</strong>。这 10 分钟，就是 <strong>+30% 和 +130% 之间的差距</strong>。" —— Kova</div></div>
+        <div class="callout co-info"><span class="ci">🤖</span><div><strong>对我们做产品的启发：</strong>这"每天收盘 10 分钟重算止损"的工序，正是 Pine 指标 + Telegram 机器人要<strong>自动化</strong>的核心 —— 每日收盘自动重算每只持仓的 EMA×0.99 trail、状态机阶段、并推送"当前止损位"。把纪律变成自动执行。</div></div>`,
+        source:"《如何正确上抬止损》· May 27 2026"
+      },
+    ]
+  },
+  {
+    id:"edu-indicator", group:"Kova 教育", icon:"🎛️", title:"指标用法说明",
+    intro:"Kova 各指标(Kova Score / 健康度 / 量能配色 / 震荡器)的官方解释与参数设置。",
+    cards:[]
+  },
+  {
+    id:"edu-cases", group:"Kova 教育", icon:"📈", title:"实战案例 / 直播解读",
+    intro:"直播或文章里的个股案例，按票记录买卖点判断逻辑。",
+    cards:[]
+  },
+  {
+    id:"art-tutorial", group:"📄 原文全文", icon:"📄", title:"全文①《你需要的唯一交易教程》",
+    intro:"《The only trading tutorial you need》(Apr 17 2026) 忠实全文中译，保留英文术语；穿插<span style='color:#a9cdfb'>💭 我的思考</span> / <span style='color:#fcd9a0'>🔗 引用出处</span>。原文为英文，此处不简化。",
+    cards:[
+      {
+        title:"引子 + 第1节 选股：是清单，不是猜测", tags:[["base","选股"]],
+        body:`<p style="color:var(--text2);font-size:13px"><em>作者 KOVA INVESTMENT RESEARCH 动量交易 · Apr 17 2026 · PAID</em></p>
+        <p>在上一篇里我列了五条简单规则：选强势股、买突破、7% 止损、只对赢家加仓、趋势破位时卖出。几个朋友回信说逻辑想通了，但还是不知道具体该「做」什么。突破在图上长什么样？止损到底放在哪？怎么加仓？</p>
+        <p>所以这一篇讲得更深：更多技术细节、更多数字、更具体。语言保持朴素，我标出了适合配图的地方，方便你把概念对应到真实屏幕上看到的东西。</p>
+        <h4>1. 选股：是清单，不是猜测（A Checklist, Not a Guess）</h4>
+        <p>选股不神秘，它是过滤（filtering）。真正的赢家往往同时勾选多个条件。这是我用的清单 —— 任意一只票，60 秒走一遍。</p>
+        <p><strong>基本面（公司必须真的在成长）</strong></p>
+        <ul>
+          <li>EPS 同比增长 25%+（最近 1–2 个季度）。越高越好。</li>
+          <li>营收增长 20%+。没有营收增长的利润是挤出来的利润，不是真增长。</li>
+          <li>ROE 17%+。</li>
+          <li>最好是较新的高成长公司，不是百年蓝筹。</li>
+        </ul>
+        <p><strong>技术面（股票本身得在强势区）</strong></p>
+        <ul>
+          <li>相对强度（RS）评级 80 或更高。IBD、MarketSurge、Finviz 上可查。</li>
+          <li>在 52 周高点的 15% 以内 —— 越近越好。</li>
+          <li>周线图上价格同时在 10 周和 40 周均线之上，且两条均线都向上。</li>
+          <li>行业组在 IBD 197 个行业的前 40。</li>
+        </ul>
+        <p><strong>机构（大资金在买）</strong></p>
+        <ul>
+          <li>持有该股的基金数量逐季增加。</li>
+          <li>有知名基金在内加分。</li>
+        </ul>
+        <p><strong>市场环境（CAN SLIM 里的 M）</strong></p>
+        <ul>
+          <li>大盘处于确认的上升趋势。</li>
+          <li>近期没有成堆的派发日（distribution days）。</li>
+          <li>熊市或回调中，跳过。这是所有人都忽略的一条。约 75% 的个股跟随大盘，所以对抗大势就是对抗地心引力。</li>
+        </ul>
+        <p>每一项都勾选 → 候选。漏一项 → 下一只。股票有几千只，你不需要这一只。</p>
+        <div class="callout co-info"><span class="ci">❝</span><div>我见过最常见的错误：纯看基本面选（好公司、烂图）或纯看图选（好图、垃圾公司）。我们要的赢家是两者的<strong>交集</strong>。池子更小，但里面的每一条都真的能游。</div></div>
+        <div class="callout co-key"><span class="ci">🔗</span><div><strong>引用：</strong>EPS25/Sales20/ROE17/RS80/52周高点/行业排名/机构/市场方向 —— 这是 William O'Neil <strong>CANSLIM</strong> 的标准配置。详见 🏛️ 理论根基。</div></div>`,
+        source:"《The only trading tutorial you need》全文 · §1"
+      },
+      {
+        title:"第2节 买入：学会 VCP，胜率翻倍", tags:[["trend","趋势"],["vol","量能"]],
+        body:`<p>这是最密集的一节，跟住。</p>
+        <h4>VCP 到底是什么</h4>
+        <p>VCP 代表 Volatility Contraction Pattern（波动收缩形态），是 Mark Minervini 建立其职业生涯的核心 setup。它是专业交易者用来精确择时入场的核心工具。</p>
+        <p>画面是这样的：一只强势股上涨 30% 或更多，然后开始「休息」。这个休息有特定的形状。</p>
+        <ul>
+          <li>第一次回调：深 25–35%，整理一段时间。</li>
+          <li>第二次回调：15–20%，更浅更短。</li>
+          <li>第三次回调（如果有）：5–10%，很小。</li>
+          <li>每一次回调都比上一次更浅、更短、量更低。</li>
+        </ul>
+        <p>画出来你会得到一个收紧的楔形 —— 一根正在被压缩的弹簧。</p>
+        <h4>三个收缩必须同时发生</h4>
+        <p>这是大多数人忽略的部分。真正的 VCP 不只是价格变紧 —— 三件事必须同时收缩：</p>
+        <ol style="padding-left:20px">
+          <li><strong>价格收缩。</strong>每次回调比上次浅。表层。</li>
+          <li><strong>量能枯竭。</strong>到形态末期，平均日成交量明显跌破 50 日均量。你常会看到几个「FU days」—— Minervini 的说法，「Fucking Ugly days」，成交量低得诡异。那是卖方耗尽了，没人想卖了。</li>
+          <li><strong>波动收缩。</strong>日内振幅收窄。你会得到「tight closes」—— 连续几天 close-to-close 的波动低于 1%，K 线看起来像叠在一起。</li>
+        </ol>
+        <p>当三者同时发生，供给被抽干。买方的一个火星就能点燃行情。这是这个游戏里最高概率的入场点。</p>
+        <h4>枢轴点（Pivot Point）：真正的触发价</h4>
+        <p>一旦收缩成熟，整理区间的高点就是你的枢轴点（pivot point）。实操中你用 <strong>pivot + 10 美分</strong>作为真实触发。</p>
+        <p>两个硬条件同时点火：</p>
+        <ul><li>价格突破 pivot。</li><li>突破日成交量比 50 日均量高 40–50%+。</li></ul>
+        <p>两个都要。只有价格没有量是等着失败的假突破 —— 大约一半时间它会直接打回。</p>
+        <p><strong>买入区：</strong>pivot 到 pivot 上方约 5%。超过 5% 你就是在追。等下一个 base 或一个 pocket pivot。追高会压缩你的止损、毁掉你的盈亏比。</p>
+        <h4>Pocket Pivot：base 内部的提前入场</h4>
+        <p>如果一只股票很强但还没形成完整的 VCP，有一个更早的入场点叫 Pocket Pivot，来自 Gil Morales 和 Chris Kacher：</p>
+        <div class="callout co-info"><span class="ci">❝</span><div>一个单独的上涨日，其成交量超过<strong>前 10 个交易日中最大下跌日</strong>的成交量。</div></div>
+        <p>说白了：买方刚刚压过了近期每一波卖方。这是机构吸筹在公开突破之前的泄漏 —— 一个「口袋里的 pivot」。</p>
+        <div class="callout co-key"><span class="ci">🔗</span><div><strong>出处：</strong>VCP = Minervini；Pocket Pivot = Morales &amp; Kacher。图解见 ❓ 常见误区「pivot 和 pocket pivot 在哪」。</div></div>`,
+        source:"《The only trading tutorial you need》全文 · §2"
+      },
+      {
+        title:"第3节 止损：没有商量余地", tags:[["risk","风控"]],
+        body:`<p>再说一遍：<strong>不会割肉的人，在这个市场活不过三年。</strong></p>
+        <h4>硬规则：7–8%</h4>
+        <p>从入场价下跌 7–8%，你就卖。没有例外。这条规则来自 William O'Neil，已经过几十年的压力测试。</p>
+        <p>为什么是这个数？一个真正的突破不应该让你浮亏超过 7%。如果它做到了，说明突破失败了。继续待着只会加深伤害。</p>
+        <h4>能更紧就更紧</h4>
+        <p>8% 是上限，不是目标。实操中我用下面这几个里最紧的那个：</p>
+        <ul>
+          <li><strong>pivot 下方一点。</strong>如果逻辑是「它要突破了」，收盘跌回 pivot 下方就否定了这个逻辑。出。</li>
+          <li><strong>入场日低点下方 2–3%。</strong>非常紧，适合 swing 入场。</li>
+        </ul>`,
+        source:"《The only trading tutorial you need》全文 · §3"
+      },
+      {
+        title:"第4节 加仓：金字塔向上，绝不向下", tags:[["mom","动量"],["risk","风控"]],
+        body:`<h4>唯一的原则</h4>
+        <p>在你已经正确的方向上加仓。就这样。</p>
+        <p>反过来 —— 给亏损单加仓以摊低成本 —— 是摧毁散户账户的头号杀手。「现在更便宜了」感觉很聪明。市场的回应是：「对，明天还会更便宜。」</p>
+        <h4>金字塔结构（底大顶小）</h4>
+        <p>我实际怎么分批建仓：</p>
+        <ul>
+          <li><strong>第一批：50%</strong> 的目标仓位。在突破 pivot 时。</li>
+          <li><strong>第二批：30%。</strong>股价涨到 pivot 上方 2–3% 后。</li>
+          <li><strong>第三批：20%。</strong>再涨 2–5% 后，或在下一个 pocket pivot。</li>
+        </ul>
+        <p>注意这个结构：底大顶小。越往上加得越少 —— 因为越接近短期顶，被甩下车的概率越高。</p>
+        <p><em>（原文此处配图：Long 1–5 逐级加仓，Stop Loss 1–5 同步抬升，最后 Close。图解见 📚 交易方法论「金字塔结构」自绘图。）</em></p>
+        <h4>仓位上限</h4>
+        <p>单只股票无论你多爱它，都不应超过总资金的 <strong>25%</strong>。你留出余地，因为你一定会有看错的时候 —— 而且通常正是在你最自信的时候。</p>
+        <h4>三种不加仓</h4>
+        <ul>
+          <li>不给亏损单加。错就是错，加仓只是加倍伤害。</li>
+          <li>不在 pivot 上方 5% 以外加。止损距离被压缩，盈亏比崩坏。</li>
+          <li>大盘转弱时不加。环境很重要。再好的股票在糟糕的大势里也要做小。</li>
+        </ul>`,
+        source:"《The only trading tutorial you need》全文 · §4"
+      },
+      {
+        title:"第5节 卖出：两个离场理由", tags:[["risk","风控"],["vol","量能"]],
+        body:`<p>卖出是交易中最难的部分。一笔糟糕的买入花你 7–8%。一笔糟糕的卖出能把 100% 的盈利变成 20%，或把 20% 的盈利变成亏损。</p>
+        <h4>进攻性卖出（锁定利润）</h4>
+        <p>股票涨了。什么时候获利了结？</p>
+        <p><strong>8 周持有法则。</strong>如果一只股票在突破后 3 周内暴涨 20%+，那是一个「强力发射（power launch）」信号。在考虑卖出前至少持有 8 周 —— 历史上，大多数妖股都正是这样起步的。如果涨得慢（8 周才涨 20%），可以早点分批止盈。</p>
+        <p><strong>Climax Run（抛物线顶）。</strong>在一只已经大涨的股票上留意这些信号：</p>
+        <ul>
+          <li>最近 2–3 周上涨 25–30%+。</li>
+          <li>连续多根大振幅阳线，日内振幅在扩张。</li>
+          <li>巨量跳空高开。</li>
+          <li>价格向上突破其正常的上轨趋势通道。</li>
+        </ul>
+        <p>当你看到这些，不卖就是贪婪。减 50% 或全部清仓。</p>
+        <p><strong>Churning（巨量但不涨）。</strong>连续多日极高成交量，但股票几乎不动或收在低位。那是伪装的派发 —— 机构在向散户需求里卖货。你会看到的最清晰的顶部信号之一。</p>
+        <h4>防御性卖出（保护自己）</h4>
+        <p>当趋势破了，你就走：</p>
+        <ul>
+          <li>放量跌破 50 日均线（周线则是 10 周均线）。CAN SLIM 里最干净的卖出信号之一。</li>
+          <li>跌破上升趋势线。连接近期有意义的低点；如果价格切穿，趋势结构受损。</li>
+          <li>派发日堆积。个股或指数上：4–5 周内 5+ 个派发日（成交量高于前一日、收跌 0.2%+）告诉你大资金在撤离。</li>
+          <li>财报跳空大跌。尤其是那种把股票打到 50 日线下方的。别等、别幻想。执行。</li>
+        </ul>
+        <h4>真正的难题是执行</h4>
+        <p>识别信号是容易的部分。扣下扳机才难。每个人都犹豫 ——「万一它涨回来呢？」「再等一天？」—— 然后眼看着盈利蒸发成亏损。</p>
+        <p>我个人的窍门：卖出信号一触发，我就下单。不再重新讨论这个问题。如果我后来证明错了，我认这个 L。长期看，严格执行者赢，一直破例的人输。</p>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>我的思考：</strong>「放量跌破 50 日线」是这里写的<strong>防御性卖出</strong>，对应长线核心仓；而 5/27 那篇专文把日常 trailing 细化成了 10/21 EMA 的状态机。两者不矛盾 —— 慢线管核心仓最终离场，快线管 swing 日常上抬。详见 🪜 Trailing 章节。</div></div>`,
+        source:"《The only trading tutorial you need》全文 · §5"
+      },
+      {
+        title:"第6节 记交易日志 + 写在最后", tags:[["base","纪律"],["base","总纲"]],
+        body:`<h4>6. 还有一件事：每笔交易都记日志</h4>
+        <p>上面所有内容都不如这一条有价值，而它和技术毫无关系：<strong>记交易日志。</strong></p>
+        <p>每笔交易，写下：</p>
+        <ul>
+          <li>你为什么买。VCP？pocket pivot？什么 base？</li>
+          <li>当时市场环境什么样。</li>
+          <li>你的止损在哪。</li>
+          <li>你的加仓计划。</li>
+          <li>你怎么离场的、为什么，包括盈亏（P&amp;L）。</li>
+          <li>事后复盘：如果重来，哪里对、哪里错？</li>
+        </ul>
+        <p>坚持六个月，你会震惊地发现你有多少亏损是同一个错误在重复。这比你读的任何书都有用，因为这是<strong>你自己</strong>关于<strong>你自己</strong>行为的数据。</p>
+        <h4>写在最后（Wrapping Up）</h4>
+        <p>这篇写得很长，因为我想把它都放在一个地方。但拉远看，方法很简单：</p>
+        <ol style="padding-left:20px">
+          <li><strong>选股：</strong>基本面 + 技术面 + 机构 + 市场。四项全要。</li>
+          <li><strong>入场：</strong>带三重收缩的 VCP，放量突破 pivot —— 或一个 pocket pivot。</li>
+          <li><strong>止损：</strong>7% 硬规则，加一个更紧的技术位，加一个时间止损。</li>
+          <li><strong>加仓：</strong>金字塔向上，只对赢家。</li>
+          <li><strong>离场：</strong>持有 8 周或等一个 climax；趋势破位时快砍。</li>
+        </ol>
+        <p>你不会一夜之间成为伟大的交易者。这些规则一小时就能理解，却要三年才能真正用好。但这是一条真实的、有真人走过的路。</p>
+        <p>市场奖励那些既有方法、又去执行的人。大多数人亏钱不是因为不知道该做什么，而是因为他们知道，却还是不做。</p>
+        <p>盘里见。</p>`,
+        source:"《The only trading tutorial you need》全文 · §6 + 结语"
+      },
+    ]
+  },
+  {
+    id:"art-trailing", group:"📄 原文全文", icon:"📄", title:"全文②《如何正确上抬止损》",
+    intro:"《如何正确上抬止损：把「看对了」变成「赚到了」》(May 27 2026) 原文已是中文，此处忠实全录、不简化；穿插<span style='color:#a9cdfb'>💭 我的思考</span>。",
+    cards:[
+      {
+        title:"引子 + 一、为什么 trail 比入场更决定 P&L", tags:[["risk","风控"]],
+        body:`<p style="color:var(--text2);font-size:13px"><em>作者 KOVA INVESTMENT RESEARCH 动量交易 · May 27 2026 · PAID</em></p>
+        <p><strong>大多数人卡在这里，而不是入场。</strong></p>
+        <p>我做了这么多年，见过太多账户的 P&amp;L 曲线长这样：一笔好的突破，买在 pivot 上方 $0.50，涨到 +30% —— 然后慢慢吐回到 +5%、+0%、-3%，最后在原始 ATR 止损被打掉。</p>
+        <p>这不是判断错了。判断完全对。买点也对。<strong>死在了入场之后的几十次小决策上。</strong></p>
+        <p>入场是一次性动作，但 trailing 不是。从买入到卖出的每一个交易日，你都在被动或主动地回答一个问题：<strong>「现在止损应该在哪里？」</strong>大多数人没有答案框架，所以他们要么不动（原始止损一直挂着），要么乱动（怕回吐就提到 -2%，结果被任何一次正常呼吸震出来）。</p>
+        <p>这篇就是把这套框架拆给你看。</p>
+        <h4>一、为什么 trail 比入场更决定 P&amp;L</h4>
+        <p>来算一笔账。同样一笔交易，$100 买入，股票最终走到 $150 然后回调到 $130。</p>
+        <p><strong>不 trail：</strong>止损一直停在 -5% 即 $95。最后你在哪卖？要么 $130 主动出，要么等到某个均线触发 —— 账面上能拿到 +25% 到 +30%。</p>
+        <p><strong>Trail 得当：</strong>在 $140 附近止损已经提到 $135，$150 顶点附近提到 $142。最后你 $142 走人，<strong>+42%</strong>。</p>
+        <p>同一笔判断，trail 决定了你最终拿走 +25% 还是 +42%。</p>
+        <p>反过来更狠。$100 → $108 → 回到 $96。不 trail：原始 -5% 止损被打，亏 5%。Trail 到保本 $100.5：这笔交易打平。<strong>同一笔判断，差别是亏 5% 和不亏。</strong></p>
+        <p>Trail 的本质是把「判断对错」和「赚多少钱」解耦。买入是 0 或 1 的问题，trail 是从 0 到 100 的问题。</p>`,
+        source:"《如何正确上抬止损》全文 · 引子+§1"
+      },
+      {
+        title:"二、状态机 A/B/C（亏损区 / 微利区 / 确认上涨）", tags:[["risk","风控"]],
+        body:`<p><strong>一笔交易只有几种状态，每种状态对应不同动作。</strong>我的执行框架很简单：入场之后，这笔交易任何时刻都只能处在以下几个状态之一。每个状态对应的 trail 动作是固定的，不靠判断，靠纪律。</p>
+        <h4>状态 A：亏损区间（-7% 到 0%）</h4>
+        <p><strong>什么都不做。</strong>初始 ATR 或固定百分比止损就是你的整个防线。</p>
+        <p>唯一的纪律：<strong>不要降低止损。</strong>任何想「再给它一个机会」的念头，都是亏大钱的入口。Nicolas Darvas 把止损叫「保险」，保险触发就触发，触发你的损失是确定的、可控的。你为了「省一笔保费」把止损往下挪 2%，这笔交易就从保险变成了赌博。</p>
+        <h4>状态 B：微利区间（0 到 +3%）</h4>
+        <p><strong>还不该动。</strong>一笔好的突破买入，前两三天通常还在消化获利盘 —— 盘中刺一下入场价是正常呼吸。如果你这时候把止损提到入场价，你大概率被洗出去，然后看着它走到 +30%。</p>
+        <p>这阶段的纪律是：<strong>忍住，什么都不做。</strong>给突破至少 3 个交易日的发展空间。</p>
+        <h4>状态 C：确认上涨（+3% 到 +10%）</h4>
+        <p><strong>第一次上抬：止损 → 保本 + 0.1%。</strong></p>
+        <p>触发条件：股价从入场价上涨 3% 以上，且<strong>收盘价位于当日上半区</strong>（意味着是真涨，不是冲高回落）。</p>
+        <p>为什么是 +0.1% 而不是刚好入场价？因为扣掉手续费后还得是正的，<strong>心理上真正「不亏」</strong>。否则你触发了保本止损，P&amp;L 显示 -$12 手续费，大脑还是会记成「这笔我亏了」，纪律就开始动摇。</p>
+        <p>保本止损最大的价值是心理层面的 —— 一旦止损提到保本位，<strong>这笔交易对你来说已经是 free trade</strong>。Free trade 状态下，你才有可能让利润真正奔跑。否则每个回调你都会想锁利润，然后把 monster 卖在 +15%。</p>`,
+        source:"《如何正确上抬止损》全文 · §2 A/B/C"
+      },
+      {
+        title:"二、状态 D：趋势确立 —— EMA 追踪模式", tags:[["trend","趋势"],["risk","风控"]],
+        body:`<h4>状态 D：趋势确立（+10% 以上）</h4>
+        <p><strong>进入 EMA 追踪模式。</strong>这是 swing trade 的主战场，绝大多数交易停留在这个状态最久。</p>
+        <p>选哪条均线，完全取决于你打算持多久：</p>
+        <p><strong>5 EMA</strong> —— 日内或短线 scalp。极高灵敏度，稍微一回调就走。</p>
+        <p><strong>10 EMA</strong> —— 持仓 5 到 20 天，swing trade 的主力 trail 线。Oliver Kell 用的就是这条，他的做法是 <strong>10 EMA × 0.99 作为触发线</strong> —— 给 EMA 留 1% 的缓冲，避免被假动作震出来。</p>
+        <p><strong>21 EMA</strong> —— 持仓 2 到 8 周，中线波段。强势股大多沿着 21 EMA 走，跌破说明趋势可能变坏。</p>
+        <p><strong>50 SMA</strong> —— 大趋势保护线，monster stock 长线持有用这条。</p>
+        <p><strong>两个一定要记住的细节：</strong></p>
+        <p>第一，<strong>看收盘价，不看盘中价。</strong>很多人输在这里 —— 盘中股价刺破 10 EMA 0.5%，他手抖卖了，结果当天收盘拉回到 EMA 上方，股票继续涨。Oliver Kell 的纪律是 <strong>3:59 PM 检查一次</strong>，只有收盘价低于 10 EMA × 0.99 才触发离场。盘中所有的「破线」都不算数。</p>
+        <p>第二，<strong>EMA 是动态的，止损线每天都在动。</strong>这不是「设一次然后忘记」，这是每个交易日收盘后必须重新计算一次的工作。</p>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>我的思考：</strong>这一段就是你问「MA50 还是 10EMA」的权威答案 —— swing 用 10 EMA，50 SMA 只给长线 monster。<code>10 EMA × 0.99</code> + 收盘(3:59PM)检查 + 每日重算，这三条全是可直接写进 Pine 的规则。</div></div>`,
+        source:"《如何正确上抬止损》全文 · §2 状态D"
+      },
+      {
+        title:"二、状态 E：垂直延伸 / 抛物线", tags:[["risk","风控"],["vol","量能"]],
+        body:`<h4>状态 E：垂直延伸 / 抛物线（远离 21 EMA 25% 以上）</h4>
+        <p><strong>切换 trail 方法。EMA 不再适用。</strong></p>
+        <p>这是大多数人最容易吐回利润的阶段。一只股票从 $100 涨到 $250，21 EMA 可能还在 $180。如果你死守 21 EMA trail，等触发离场时你已经从 $250 跌回 $180，<strong>吐回了 70 个点的利润</strong>。</p>
+        <p>抛物线阶段的特征是<strong>越涨越快，EMA 永远跟不上</strong>。这时候有两种处理方式：</p>
+        <p><strong>趋势线 trail</strong> —— 画出最近 2 到 3 周的上升趋势线（连接两个或以上低点），止损设在趋势线下方一点。趋势线的斜率比 EMA 陡，更贴近实际走势。</p>
+        <p><strong>直接切换到 5 EMA</strong> —— 让追踪从「中等灵敏度」变成「极高灵敏度」。代价是更容易被震出来，但收益是利润回吐最小。</p>
+        <p>抛物线阶段的另一个动作是<strong>主动减仓 + 收紧 trail 并行</strong>。不是 either / or，是 and。垂直拉升时分批落袋一部分（20%-50%），剩下的用紧 trail 跑。这样无论之后是 climax top 还是继续涨，你都赢。</p>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>我的思考：</strong>「远离 21EMA 25%+」就是 MU/OKTA 在高分时显示 <strong>REDUCE</strong> 的量化触发 —— 与第一篇「买入区上限 pivot+5%」「climax 减 50%」完全自洽。这是 Kova Score 动作标签的核心逻辑。</div></div>`,
+        source:"《如何正确上抬止损》全文 · §2 状态E"
+      },
+      {
+        title:"三、五个错误 + 四、铁律 + 写在最后", tags:[["risk","风控"],["base","纪律"]],
+        body:`<h4>三、Trail 最常见的五个错误</h4>
+        <p><strong>错误一：看盘中价，不看收盘价。</strong>你设的是 10 EMA trail，但盘中股票刺破 EMA 0.3% 你就慌了。结果当天收盘拉回 EMA 上方继续涨。Trail 的纪律是 3:59 PM 检查，中间任何价格都不算数。</p>
+        <p><strong>错误二：在 climax 阶段还用慢 EMA。</strong>抛物线阶段如果继续用 21 EMA，等于自动放弃 30% 以上的利润。状态变了，工具也要换。</p>
+        <p><strong>错误三：加仓后不重设止损。</strong>加仓改变了平均成本，如果你不把整个仓位的止损按新平均成本重新算一遍，你的实际风险就失控了。每加一注，止损重算一次。</p>
+        <p><strong>错误四：把 trail 当被动等待，不当主动管理。</strong>Trail 是底线，不是唯一动作。高位放量、领头股反向跳水、板块整体出货 —— 这些信号出现时，你不应该等 trail 被触发，你应该主动减仓。</p>
+        <p><strong>错误五：时间框架混用。</strong>Swing trade 用 10 EMA trail，但你盯着 5 分钟图看 —— 这是混乱，不是纪律。你的 trail 用什么周期，你看盘就用什么周期。否则你只是在用日线策略给自己制造日内焦虑。</p>
+        <h4>四、一条永远不能违反的规则</h4>
+        <p><strong>止损只能向上，不能向下。永远不行。</strong></p>
+        <p>这条规则的存在不是因为它「理论上对」，而是因为<strong>只要破了一次，你就彻底破了</strong>。</p>
+        <p>第一次降止损，你的理由会非常充分：「它就是被洗一下，基本面没变，再给一周。」然后股票继续跌。第二次降止损时，理由更充分了：「现在卖就是卖在底，反弹就在眼前。」再跌。第三次的时候，你已经不在做交易了，你在做祈祷。</p>
+        <p>这就是 Chris Flanders 讲的「交易者死亡螺旋」—— 行动 → 亏损 → 再行动 → 再亏损，中间没有任何停顿和复盘。打断这个螺旋的唯一方法，是把「止损只能向上」这条规则当成物理定律，不是建议。</p>
+        <h4>写在最后</h4>
+        <p>我自己的总结很短。</p>
+        <p>不会止损的人，<strong>活不过三年</strong>。<br>会止损但不会上抬的人，<strong>赚不到大钱</strong>。<br>两件都会的人，<strong>才有资格谈复利</strong>。</p>
+        <p>Trail 不是技术问题，是工序问题。买入考验的是判断力，trail 考验的是你愿不愿意每天收盘后花 10 分钟，把每一只持仓的止损重新算一遍。</p>
+        <p><strong>这 10 分钟，就是 +30% 和 +130% 之间的差距。</strong></p>
+        <p style="color:var(--text2)">—— Kova</p>`,
+        source:"《如何正确上抬止损》全文 · §3+§4+结语"
+      },
+    ]
+  },
+];
+
+/* ── 渲染 ── */
+const main=document.getElementById('main'), toc=document.getElementById('toc');
+
+// Hero
+const totalCards=CHAPTERS.reduce((a,c)=>a+c.cards.length,0);
+main.insertAdjacentHTML('beforeend',`
+  <div class="hero">
+    <h1>🎯 Kova 量化指标 · 倒推研究</h1>
+    <p>把 Kova 的交易方法与指标说明翻译、总结、归档到这里，作为反向推导公式的素材库 —— 攒够了就建模 + 回测校准。</p>
+    <div class="meta">
+      <div><b>${totalCards}</b>已记录卡片</div>
+      <div><b>${CHAPTERS.length}</b>章节</div>
+      <div><b id="upd"></b>最后更新</div>
+    </div>
+  </div>`);
+document.getElementById('upd').textContent=new Date().toLocaleDateString('zh-CN');
+
+// 侧栏分组
+const groups={};
+CHAPTERS.forEach(c=>{(groups[c.group]=groups[c.group]||[]).push(c)});
+let tocHtml='';
+for(const g in groups){
+  tocHtml+=`<div class="toc-group"><div class="toc-group-t">${g}</div>`;
+  groups[g].forEach(c=>{ tocHtml+=`<a href="#${c.id}" data-id="${c.id}"><span class="dot"></span>${c.icon} ${c.title.split(' · ')[0]}</a>`; });
+  tocHtml+=`</div>`;
+}
+toc.innerHTML=tocHtml;
+
+// 章节
+CHAPTERS.forEach(c=>{
+  let html=`<section id="${c.id}">
+    <div class="sec-head"><div class="ic">${c.icon}</div><h2>${c.title}</h2>
+      <span class="cnt">${c.cards.length} 条</span></div>`;
+  if(c.intro) html+=`<p style="color:var(--text2);font-size:14px;margin-bottom:18px">${c.intro}</p>`;
+  if(c.cards.length===0){
+    html+=`<div class="empty"><div class="e-ic">📥</div>暂无内容 —— 发来截图后我会填充到这里</div>`;
+  }else{
+    c.cards.forEach((card,i)=>{
+      const tags=(card.tags||[]).map(t=>`<span class="tag t-${t[0]}">${t[1]}</span>`).join('');
+      html+=`<div class="card" data-text="${(card.title+' '+card.body).replace(/<[^>]+>/g,' ').replace(/"/g,'')}">
+        <div class="card-t"><span class="num">${String(i+1).padStart(2,'0')}</span>${card.title}</div>
+        ${tags?`<div class="tags">${tags}</div>`:''}
+        <div class="card-body">${card.body}</div>
+        ${card.source?`<div class="src">来源 <span class="badge">${card.source}</span></div>`:''}
+      </div>`;
+    });
+  }
+  html+=`</section>`;
+  main.insertAdjacentHTML('beforeend',html);
+});
+
+// 进度条 + 滚动高亮
+const links=[...document.querySelectorAll('.toc a')];
+const secs=CHAPTERS.map(c=>document.getElementById(c.id));
+function onScroll(){
+  const sc=window.scrollY, h=document.documentElement.scrollHeight-window.innerHeight;
+  document.getElementById('progress').style.width=(sc/h*100)+'%';
+  let cur=secs[0].id;
+  for(const s of secs){ if(s.getBoundingClientRect().top<140) cur=s.id; }
+  links.forEach(a=>a.classList.toggle('on',a.dataset.id===cur));
+}
+window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+
+// 搜索
+document.getElementById('q').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  document.querySelectorAll('section').forEach(sec=>{
+    const cards=sec.querySelectorAll('.card');
+    let any=false;
+    cards.forEach(card=>{
+      const hit=!q||(card.dataset.text||'').toLowerCase().includes(q);
+      card.style.display=hit?'':'none'; if(hit)any=true;
+    });
+    // 搜索时隐藏"有卡片但无命中"的章节；无卡片的空章节也在搜索时隐藏
+    sec.style.display=(q && (!any || cards.length===0)) ? 'none' : '';
+  });
+});
+</script>
+</body>
+</html>
