@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>持仓止损面板 · Kova 状态机</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 :root{--bg:#0b0e14;--s1:#141923;--border:rgba(255,255,255,.08);--text:#e6edf3;--text2:#9ba6b4;--text3:#6b7585;--accent:#f59e0b}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -50,8 +51,20 @@ tr:hover td{background:rgba(255,255,255,.02)}
 · <span class="k">主止损（收盘判断）</span>：只看 <b>3:59PM 收盘价</b>是否跌破，盘中刺破不算；<b>不要</b>把市价单挂在这价位（会被日内噪音震出）。<br>
 · <span class="d">灾难单</span>：仅 D/E 盈利仓需要，放近期 swing 低下方的<b>保护性挂单</b>（建议 RTH stop-market），只防隔夜跳空/闪崩。<br>
 · <b>状态机：</b>A 亏损区(守初始止损)→B 微利(忍)→C 确认(提保本)→D 趋势(10EMA 追踪)→E 抛物线(收紧+减仓)。<br>
-· <b>铁律：</b>止损只能向上、永不下移；EMA 每个收盘后重算（刷新本页即重算最新日线）。
+· <b>铁律：</b>止损只能向上、永不下移；EMA 每个收盘后重算（刷新本页即重算最新日线）。<br>
+· 💡 <b>点代码</b>可看该票交互日线（5/10/21EMA + 50SMA + 5EMA止损线 + 成本线 + 自动趋势线）。
 </div>
+</div>
+
+<div id="chartModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.62);backdrop-filter:blur(3px)">
+  <div style="max-width:1000px;margin:34px auto;background:#0e1117;border:1px solid var(--border);border-radius:14px;padding:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div id="chart-title" style="font-size:15.5px;font-weight:700">加载中…</div>
+      <button onclick="closeChart()" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:5px 12px;cursor:pointer;font-size:14px">✕</button>
+    </div>
+    <div id="lwchart" style="height:460px;width:100%"></div>
+    <div id="chart-legend" style="margin-top:11px;font-size:12px;display:flex;gap:15px;flex-wrap:wrap"></div>
+  </div>
 </div>
 <script>
 async function load(force){
@@ -70,7 +83,7 @@ async function load(force){
       const gc=x.gain>=0?'#4ade80':'#f87171';
       const dis=(x.disaster==null)?'<span style="color:var(--text3)">—</span>':`<span class="mono" style="color:#f8a5a5">${x.disaster.toFixed(2)}</span>`;
       h+=`<tr>
-        <td class="tk">${x.tk}</td>
+        <td class="tk" style="cursor:pointer;color:#58a6ff" onclick="openChart('${x.tk}')">${x.tk} 📈</td>
         <td class="mono">${x.cost.toFixed(2)}</td>
         <td class="mono">${x.last.toFixed(2)}</td>
         <td class="mono" style="color:${gc};font-weight:600">${x.gain>=0?'+':''}${x.gain.toFixed(1)}%</td>
@@ -87,6 +100,45 @@ async function load(force){
   }
   btn.disabled=false;
 }
+
+// ── 交互日线图 ──
+let _chart=null;
+async function openChart(tk){
+  const modal=document.getElementById('chartModal'); modal.style.display='block';
+  document.getElementById('chart-title').textContent=tk+' 日线加载中…';
+  const el=document.getElementById('lwchart'); el.innerHTML='';
+  document.getElementById('chart-legend').innerHTML='';
+  if(_chart){_chart.remove();_chart=null;}
+  try{
+    const j=await (await fetch('/api/stops/chart/'+tk,{cache:'no-store'})).json();
+    if(j.error){document.getElementById('chart-title').textContent=tk+' — '+j.error;return;}
+    const g=(j.gain>=0?'+':'')+j.gain+'%';
+    document.getElementById('chart-title').innerHTML=`${tk} 日线 · <span style="color:${j.sc||'#999'}">${j.state||''}</span> · 盈亏 <b style="color:${j.gain>=0?'#4ade80':'#f87171'}">${g}</b> · 成本 ${j.cost??'-'}`;
+    _chart=LightweightCharts.createChart(el,{
+      layout:{background:{color:'#0e1117'},textColor:'#9ba6b4'},
+      grid:{vertLines:{color:'rgba(255,255,255,.04)'},horzLines:{color:'rgba(255,255,255,.04)'}},
+      rightPriceScale:{borderColor:'rgba(255,255,255,.1)'},
+      timeScale:{borderColor:'rgba(255,255,255,.1)'},
+      crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
+      width:el.clientWidth, height:460,
+    });
+    const cs=_chart.addCandlestickSeries({upColor:'#26a69a',downColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350',borderVisible:false});
+    cs.setData(j.candles);
+    const addLine=(data,color,w=1,dashed=false)=>{if(!data||!data.length)return;const s=_chart.addLineSeries({color,lineWidth:w,priceLineVisible:false,lastValueVisible:false,lineStyle:dashed?2:0});s.setData(data);};
+    addLine(j.ema5,'#f5d020',1); addLine(j.ema10,'#f0902b',1);
+    addLine(j.ema21,'#39c5cf',1); addLine(j.sma50,'#b388ff',1);
+    addLine(j.trend,'#4ade80',2,true);
+    if(j.cost!=null) cs.createPriceLine({price:j.cost,color:'#888',lineWidth:1,lineStyle:2,axisLabelVisible:true,title:'成本'});
+    if(j.follow!=null) cs.createPriceLine({price:j.follow,color:'#f87171',lineWidth:1,lineStyle:2,axisLabelVisible:true,title:'止损'});
+    _chart.timeScale().fitContent();
+    document.getElementById('chart-legend').innerHTML=
+      `<span style="color:#f5d020">━ 5EMA</span><span style="color:#f0902b">━ 10EMA</span><span style="color:#39c5cf">━ 21EMA</span><span style="color:#b388ff">━ 50SMA</span><span style="color:#4ade80">┄ 趋势线(参考)</span><span style="color:#f87171">┄ 止损 ${j.follow??'-'} <span style="color:var(--text3)">${j.follow_label||''}</span></span><span style="color:#888">┄ 成本 ${j.cost??'-'}</span>`;
+  }catch(e){document.getElementById('chart-title').textContent=tk+' 加载失败: '+e;}
+}
+function closeChart(){const m=document.getElementById('chartModal');m.style.display='none';if(_chart){_chart.remove();_chart=null;}}
+document.getElementById('chartModal').addEventListener('click',e=>{if(e.target.id==='chartModal')closeChart();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeChart();});
+
 load(false);
 </script>
 </body></html>

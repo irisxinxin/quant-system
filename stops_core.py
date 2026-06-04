@@ -101,6 +101,32 @@ def _analyze(df, cost):
     )
 
 
+def trendline_points(df, win=12):
+    """近 win 根的上升趋势线：连最早 pivot 低点→其后最高 pivot 低点，外推到今日。
+    返回 lightweight-charts 用的两点 [{time,value},{time,value}]，无则 None。"""
+    sub = df.iloc[-win:]
+    lows = sub.Low.values
+    idx = sub.index
+    n = len(sub)
+    pts = [(i, float(lows[i])) for i in range(1, n - 1)
+           if lows[i] <= lows[i - 1] and lows[i] <= lows[i + 1]]
+    if len(pts) < 2:
+        return None
+    anchor = pts[0]
+    after = [p for p in pts if p[0] > anchor[0] and p[1] > anchor[1]]
+    if not after:
+        return None
+    b = max(after, key=lambda p: p[1])
+    slope = (b[1] - anchor[1]) / (b[0] - anchor[0])
+    if slope <= 0:
+        return None
+    tl_last = b[1] + slope * ((n - 1) - b[0])
+    return [
+        {"time": int(idx[anchor[0]].timestamp()), "value": round(anchor[1], 4)},
+        {"time": int(idx[-1].timestamp()), "value": round(tl_last, 4)},
+    ]
+
+
 def compute_stops(holdings: dict | None = None) -> dict:
     """返回 {rows:[...], data_date, source}。供缓存层调用（无参数也可）。"""
     holdings = holdings or HOLDINGS

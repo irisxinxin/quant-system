@@ -274,6 +274,54 @@ def api_stops(force: int = 0):
     return JSONResponse(out)
 
 
+@app.get("/api/stops/chart/{ticker}")
+def api_stops_chart(ticker: str):
+    """单只持仓交互日线：K线 + 5/10/21EMA + 50SMA + 5EMA止损 + 成本线 + 趋势线。"""
+    import math
+    from data.downloader import get_ohlcv
+    from stops_core import HOLDINGS, _analyze, trendline_points
+    ticker = ticker.upper()
+    cost = HOLDINGS.get(ticker)
+    try:
+        df = get_ohlcv(ticker, start="2025-09-01")
+        if df is None or df.empty:
+            return JSONResponse({"error": "no data"})
+        c = df["Close"]
+
+        def line(s):
+            out = []
+            for idx, v in s.items():
+                if v is None or (isinstance(v, float) and math.isnan(v)):
+                    continue
+                out.append({"time": int(idx.timestamp()), "value": round(float(v), 4)})
+            return out
+
+        candles = []
+        for idx, row in df.iterrows():
+            o, h, l, cl = float(row["Open"]), float(row["High"]), float(row["Low"]), float(row["Close"])
+            if any(math.isnan(v) for v in [o, h, l, cl]):
+                continue
+            candles.append({"time": int(idx.timestamp()), "open": o, "high": h, "low": l, "close": cl})
+
+        info = _analyze(df, cost) if cost is not None else None
+        return JSONResponse({
+            "ticker": ticker, "cost": cost,
+            "state": info["state"] if info else None,
+            "sc": info["sc"] if info else None,
+            "follow": info["follow"] if info else None,
+            "follow_label": info["follow_label"] if info else None,
+            "gain": info["gain"] if info else None,
+            "candles": candles,
+            "ema5": line(c.ewm(span=5, adjust=False).mean()),
+            "ema10": line(c.ewm(span=10, adjust=False).mean()),
+            "ema21": line(c.ewm(span=21, adjust=False).mean()),
+            "sma50": line(c.rolling(50).mean()),
+            "trend": trendline_points(df),
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+
 @app.get("/api/macro")
 def api_macro():
     data, ts = _get_cached("macro", get_macro, CACHE_TTL["macro"])
