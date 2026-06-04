@@ -16,7 +16,7 @@ HOLDINGS = {
     "NVTS": 32.255, "DRAM": 40.736, "COHR": 407.812, "DELL": 251.998,
     "SNDK": 1774.870, "NBIS": 210.885, "ARM": 260.377, "BE": 285.573,
     "ALAB": 310.780, "MRVL": 129.870,
-    "STRL": None, "ORCL": None, "PENG": None, "ST": None, "TSEM": None,
+    "STRL": None, "ORCL": None, "PENG": 69.33, "ST": 51.675, "TSEM": 252.283,
 }
 
 # ticker -> 分类标签
