@@ -316,7 +316,7 @@ WATCHLIST = {
     "⚡ 半导体/AI算力":   ["NVDA", "ASML", "TSM", "AMD", "ARM", "AVGO", "AEHR", "TXN", "MRVL", "KLAC", "SOXX", "NBIS", "AXTI", "SOI", "ALAB", "GFS", "ASX", "FORM", "QCOM", "NEBX"],
     "💾 存储":            ["MU", "WDC", "STX", "SNDK", "DRAM"],
     "🏗 AI电力/数据中心": ["BE", "VRT", "ETN", "GEV", "PWR", "DELL"],
-    "🌐 光子/高速连接":   ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM", "POET", "MRVL", "IQE", "SIVE", "ALMU"],
+    "🌐 光子/高速连接":   ["LITE", "COHR", "FN", "AAOI", "LWLG", "VIAV", "CLS", "CIEN", "GLW", "TSEM", "POET", "MRVL", "IQE", "SIVE", "ALMU", "NOK"],
     "💼 软件/AI数据":     ["PLTR", "ORCL", "ADBE", "CRM", "ORCX"],
     "🪙 加密/Fintech":   ["COIN", "MSTR", "IREN", "HOOD", "OKLO", "BTC-USD"],
     "🔋 电池/稀土":       ["MP", "ALB", "EOSE"],
