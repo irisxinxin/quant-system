@@ -154,7 +154,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <button class="tab-btn"    id="tab-er"      onclick="sw('er')">📈 二级持仓 <span id="er-badge" style="display:none;background:#34d399;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
     <button class="tab-btn"    id="tab-cn"      onclick="sw('cn')">🇨🇳 大A <span id="cn-badge" style="display:none;background:#f87171;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">!</span></button>
     <button class="tab-btn"    id="tab-kol"     onclick="sw('kol')">📝 大V观点 <span id="kol-badge" style="display:none;background:#f59e0b;color:#000;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></button>
-    <button class="tab-btn"    id="tab-sig"     onclick="sw('sig')">📡 逸哥信号</button>
     <button class="tab-btn"    id="tab-review"  onclick="sw('review')">📓 每日复盘</button>
     <button class="tab-btn"    id="tab-orb"     onclick="sw('orb')">🚀 短线 ORB</button>
   </div>
@@ -610,7 +609,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 // ══════════════════════════════════════════
 // State
 // ══════════════════════════════════════════
-const TABS = ['scan','entry','sectors','cta','bt','sw','cm','er','cn','kol','sig','review','orb'];
+const TABS = ['scan','entry','sectors','cta','bt','sw','cm','er','cn','kol','review','orb'];
 const loaded = {scan:false, entry:false, sectors:false, cta:false, bt:false, sw:false, cm:false, er:false, cn:false, kol:false, sig:false, review:false, orb:false};
 let curTab = 'scan';
 let sectView = 'momentum';
