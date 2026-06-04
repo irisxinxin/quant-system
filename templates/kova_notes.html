@@ -932,6 +932,105 @@ const CHAPTERS = [
         <div class="callout co-info"><span class="ci">💭</span><div><strong>我的思考：</strong>注意第三注后<strong>止损已上移到 $87 &gt; 均成本 $83.72</strong> —— 这就是「加仓 + trailing」的合体：每加一注、止损同步上移到锁定利润。完全自洽于 🪜 Trailing 状态机。</div></div>`,
         source:"《加仓方法》· §4"
       },
+      {
+        title:"期望值公式：年回报 = 期望值 × 周转率", tags:[["base","总纲"]],
+        body:`<p>方案 A 高周转（下注小、翻台快、利润靠次数堆）；方案 B 单笔吃得更深（下注大、但不频繁）。两者年回报都是 40%，背后就一句话：</p>
+        <div class="callout co-formula"><span class="ci">∑</span><div>年回报 = <strong>单笔期望值 × 周转率</strong><br>期望值 = 胜率 × 平均盈利 − 败率 × 平均亏损</div></div>
+        <p>只要期望值是正的，你做得越多、赚得越多（前提：每一笔都严格执行纪律）。<strong>你根本不需要满仓去赌一把</strong> —— 维持正期望值系统 + 合理频率，复利完成剩下的事。</p>`,
+        source:"《加仓方法》· §4"
+      },
+      {
+        title:"Hard Penny 时期的生存法则", tags:[["risk","风控"]],
+        body:`<div class="callout co-info"><span class="ci">💡</span><div><strong>什么是 Hard Penny Environment：</strong>指<strong>每一分利润都来之不易</strong>的难做市场 —— 震荡、缺乏持续趋势、breakout 失败率飙升。反面是 breakout 轻松成功的「easy money」环境。判断当下属于哪种，直接决定你该多激进还是多保守。</div></div>
+        <p>当前若是典型 Hard Penny 环境，四条铁律：</p>
+        <ul>
+          <li><strong>① 至少持有 50% 现金。</strong>不是建议，是生存线。</li>
+          <li><strong>② 初始仓位缩到 3–5%</strong>（正常市 8–10%，Hard Penny 砍半）。breakout 失败率高，要留子弹等真正的 follow-through day。</li>
+          <li><strong>③ 不要因一次失利损失未来牛市的子弹。</strong>最重要的不是这个月赚多少，而是牛市回来时你的账户、心态、子弹都还在。</li>
+          <li><strong>④ 只向上加仓，永不向下摊平。</strong>向下摊平 = 给亏损仓位投更多钱 = 奖励一个正在惩罚你的交易。</li>
+        </ul>`,
+        source:"《加仓方法》· §5"
+      },
+      {
+        title:"自然调整决策框架：持有还是离场？", tags:[["risk","风控"],["trend","趋势"]],
+        body:`<p>上涨过程中的回调是正常的，关键在区分<strong>良性调整</strong>和<strong>危险信号</strong>。按下面这棵决策树走：</p>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 740 410" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <defs><marker id="fa" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#6b7585"/></marker></defs>
+          <g stroke="#6b7585" stroke-width="1.4" fill="none" marker-end="url(#fa)">
+            <path d="M370,52 L370,78"/>
+            <path d="M455,96 L572,96"/>
+            <path d="M370,114 L370,148"/>
+            <path d="M285,165 L112,165 L112,222"/>
+            <path d="M370,182 L370,222"/>
+            <path d="M455,165 L628,165 L628,222"/>
+            <path d="M370,268 L370,312"/>
+            <path d="M288,336 L114,336"/>
+            <path d="M452,336 L626,336"/>
+          </g>
+          <!-- 节点 -->
+          <g font-size="11.5" text-anchor="middle">
+            <rect x="285" y="18" width="170" height="34" rx="7" fill="#3a4452"/><text x="370" y="40" fill="#e6edf3">股票从高点回调</text>
+            <rect x="285" y="78" width="170" height="36" rx="7" fill="#3f348a"/><text x="370" y="101" fill="#cbb6ff">单日跌幅 &gt; 10%？</text>
+            <rect x="572" y="76" width="132" height="40" rx="7" fill="#5a1e1e"/><text x="638" y="92" fill="#fbb6b6" font-weight="700">危险信号</text><text x="638" y="108" fill="#f8a5a5" font-size="10.5">立即减仓</text>
+            <rect x="285" y="148" width="170" height="36" rx="7" fill="#3f348a"/><text x="370" y="171" fill="#cbb6ff">回调幅度多少？</text>
+            <rect x="42" y="222" width="140" height="46" rx="7" fill="#1f4d28"/><text x="112" y="242" fill="#9ae6a8" font-weight="700">优秀调整</text><text x="112" y="259" fill="#7ee8a0" font-size="10.5">准备加仓</text>
+            <rect x="300" y="222" width="140" height="46" rx="7" fill="#14564a"/><text x="370" y="242" fill="#8fe3d4" font-weight="700">正常调整</text><text x="370" y="259" fill="#7ad6c6" font-size="10.5">持有等待</text>
+            <rect x="558" y="222" width="140" height="46" rx="7" fill="#5e451a"/><text x="628" y="242" fill="#e8c98a" font-weight="700">极限调整</text><text x="628" y="259" fill="#e0b462" font-size="10.5">需利润垫</text>
+            <rect x="288" y="312" width="164" height="46" rx="7" fill="#3f348a"/><text x="370" y="332" fill="#cbb6ff">反弹行为</text><text x="370" y="349" fill="#cbb6ff" font-size="10.5">网球 or 鸡蛋？</text>
+            <rect x="44" y="316" width="70" height="38" rx="7" fill="#1f4d28"/><text x="79" y="340" fill="#9ae6a8" font-weight="700">加</text>
+            <rect x="626" y="316" width="70" height="38" rx="7" fill="#5a1e1e"/><text x="661" y="340" fill="#fbb6b6" font-weight="700">卖</text>
+          </g>
+          <!-- 分支标签 -->
+          <g font-size="10.5" fill="#9ba6b4">
+            <text x="505" y="90">是</text><text x="380" y="135">否</text>
+            <text x="175" y="158">&lt;8%</text><text x="385" y="208">8-15%</text><text x="535" y="158">&gt;15%</text>
+            <text x="180" y="328">网球</text><text x="530" y="328">鸡蛋</text>
+          </g>
+        </svg>
+        <div class="vcp-cap">单日暴跌&gt;10%→危险减仓；回调&lt;8%优秀(加仓)/8-15%正常(持有)/&gt;15%极限(需利润垫)；再看反弹是网球(加)还是鸡蛋(卖)。</div>
+        </div>
+        <p><strong>正常调整</strong>(8–12%，缓慢有序)→持有等加仓；<strong>优秀调整</strong>(&lt;8%，抛压极轻)→准备加仓；<strong>极限调整</strong>(15–18%，仅限高波动股)→可容忍但必须有利润垫；<strong>危险信号</strong>(单日暴跌&gt;10%、巨量+裂口低开)→立即减/清仓。<strong>不确定时 → 等。不交易也是一种交易。</strong></p>`,
+        source:"《加仓方法》· §6"
+      },
+      {
+        title:"Cup & Handle（杯柄形态）是什么", tags:[["trend","趋势"],["base","选股"]],
+        body:`<p>案例里第一注买在「cup &amp; handle 突破」。这是 William O'Neil 的<strong>经典底部形态</strong>，也是动量突破最可靠的 base 之一：</p>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <!-- pivot 阻力线(杯沿) -->
+          <line x1="108" y1="62" x2="470" y2="62" stroke="#f59e0b" stroke-width="1.6" stroke-dasharray="6 4"/>
+          <!-- 价格: 升入左缘→U型杯→右缘→手柄→突破 -->
+          <polyline points="40,95 108,60 150,92 200,126 250,138 300,134 350,108 386,64 412,76 445,86 470,72 540,32 590,22" fill="none" stroke="#e6edf3" stroke-width="2.6" stroke-linejoin="round"/>
+          <!-- 突破买点 -->
+          <circle cx="478" cy="62" r="5.5" fill="#fbbf24" stroke="#0a0d13" stroke-width="2"/>
+          <!-- 标签 -->
+          <text x="104" y="50" text-anchor="end" font-size="11" fill="#9ba6b4">左缘</text>
+          <text x="250" y="162" text-anchor="middle" font-size="11" fill="#9ba6b4">杯底（U 型圆弧）</text>
+          <text x="392" y="52" font-size="11" fill="#9ba6b4">右缘</text>
+          <text x="430" y="110" text-anchor="middle" font-size="11" fill="#9ba6b4">手柄（小幅回调洗盘）</text>
+          <text x="495" y="48" font-size="11.5" fill="#fbbf24" font-weight="700">突破买点 = pivot</text>
+        </svg>
+        <div class="vcp-cap">U 形杯（深度修复）→ 右缘附近小幅回调形成「手柄」→ 突破手柄阻力(pivot)起涨。</div>
+        </div>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>我的讲解：</strong>杯柄的逻辑和 VCP 一脉相承 —— 都是「洗掉浮筹、供给收紧后再突破」。手柄那段浅回调(通常 5–15%、量缩)就是最后一次甩客；pivot = 手柄高点/杯沿。买点和止损跟 VCP 完全一样（pivot 上方买、跌回 pivot 下方止损）。</div></div>`,
+        source:"《加仓方法》· §7（cup&handle 名词补充）"
+      },
+      {
+        title:"📋 金字塔加仓系统 · 8 条核心法则（总结）", tags:[["base","总纲"],["risk","风控"]],
+        body:`<ol style="padding-left:20px">
+          <li><strong>后一注 ≤ 前一注</strong> —— 永不倒金字塔；成本上移 &gt; 8% 必砍注码</li>
+          <li><strong>首注 正常 8–10%、困难市 3–5%</strong> —— 止损窄可稍大，止损宽必压小，Hard Penny 砍半</li>
+          <li><strong>只在三种情况加仓</strong> —— tight action 突破 / 网球反弹破前高 / 盈利跳空消化后突破</li>
+          <li><strong>单股上限 33%</strong> —— 超过就逢高 trim，别让一只票绑架账户</li>
+          <li><strong>只向上加仓，永不向下摊平</strong> —— 向下摊平 = 奖励亏损；只向赢家追加</li>
+          <li><strong>年回报 = 期望值 × 周转率</strong> —— 不需满仓，10%敞口+高频 或 25%敞口+低频 都能 40%</li>
+          <li><strong>Hard Penny 时期 50%+ 现金</strong> —— 保留子弹比赚钱更重要</li>
+          <li><strong>追求纪律性复利，不追求满仓暴富</strong> —— 一年 3–4 笔 monster、每笔 16% 敞口 = 30–40% 年回报</li>
+        </ol>
+        <div class="callout co-key"><span class="ci">🧭</span><div>作者结语：交易者的进化方向 = <strong>更少的交易、更长的持有、更小的风险、更稳的复利</strong>。金字塔加仓不是让你更激进 —— 而是<strong>做对时有序放大、做错时自动限损</strong>。</div></div>`,
+        source:"《加仓方法》· §8 核心总结"
+      },
     ]
   },
   {
@@ -1257,8 +1356,54 @@ const CHAPTERS = [
         <p>很多人觉得不满仓就赚不到钱。这是最大的误解。我之前做过一个回测模型，结论让我自己都吃惊：</p>
         <p><strong>方案 A（极保守型）：</strong>总敞口仅 10%（90% 永远是现金），每次只拿总资金的 10% 进一只股票，平均赢 12%、平均亏 6%、胜率 40%，一年约 130 笔（月均 11 笔）→ 年回报 40%。</p>
         <p><strong>方案 B（稳健型）：</strong>现金 75%、单笔 25%，同样赢 12/亏 6/胜率 40%，年约 54 笔 → 年回报 40%。</p>
-        <p>两种敞口截然不同，年回报都是 40% —— 赚钱靠的是「胜率 × 盈亏比 × 执行次数」的复利，不是满仓。</p>`,
+        <p>两种敞口截然不同，年回报都是 40% —— 赚钱靠的是「胜率 × 盈亏比 × 执行次数」的复利，不是满仓。</p>
+        <h4>背后的公式</h4>
+        <p>方案 A 靠高周转（每次下注小，但翻台快，利润靠次数堆出来）；方案 B 靠单笔吃得更深（每次下注大一些，但不用那么频繁）。背后就一句话：<strong>年回报 = 单笔期望值 × 周转率。</strong></p>
+        <p>期望值 = 胜率 × 平均盈利 − 败率 × 平均亏损。只要这个数字是正的，你做得越多，赚得越多。前提是每一笔都严格执行纪律。</p>
+        <p>你根本不需要满仓去赌一把。只要维持正期望值的交易系统，然后保持合理的交易频率，复利会帮你完成剩下的事。</p>`,
         source:"《加仓方法》全文 · §4"
+      },
+      {
+        title:"五、Hard Penny 时期的生存法则", tags:[["risk","风控"]],
+        body:`<p>当前市场就是一个典型的 Hard Penny Environment。在这种环境下：</p>
+        <p><strong>铁律一：至少持有 50% 现金。</strong>不是建议，是生存线。</p>
+        <p><strong>铁律二：初始仓位缩小到 3–5%。</strong>正常市场你可能第一注 8–10%，Hard Penny 时期砍一半。breakout 失败率飙升，你需要保留子弹等待真正的 follow-through day。</p>
+        <p><strong>铁律三：不要因为一次失利就损失未来牛市的子弹。</strong>最重要的事情不是这个月赚多少，而是当牛市回来的时候，你的账户还在、你的心态还在、你的子弹还在。</p>
+        <p><strong>铁律四：只向上加仓，永不向下摊平。</strong>向下摊平意味着你在给亏损的仓位投入更多资金，你在奖励一个正在惩罚你的交易。只向赢家加注，这是铁律。</p>`,
+        source:"《加仓方法》全文 · §5"
+      },
+      {
+        title:"六、自然调整框架：持有还是离场？", tags:[["risk","风控"],["trend","趋势"]],
+        body:`<p>股票上涨过程中的回调是正常的。关键在于区分良性调整和危险信号。</p>
+        <p><strong>正常调整：</strong>幅度 8–12%，缓慢有序，每天跌 2–3% 偶尔涨一天。应对：持有，等待加仓机会。</p>
+        <p><strong>优秀调整：</strong>幅度 &lt;8%。抛压极轻，消化后容易创新高。应对：准备加仓。</p>
+        <p><strong>极限调整：</strong>幅度 15–18%。仅限波动性极大的股票。应对：可容忍，但必须有足够利润垫。</p>
+        <p><strong>危险信号：</strong>单日暴跌 &gt;10%，巨量 + 裂口低开。应对：立即减仓或清仓。</p>
+        <p><strong>操作指南：</strong>看到网球行为 + 突破前高 → 果断加仓；看到鸡蛋行为 → 立即减仓或清仓；不确定的时候 → 等。<strong>不交易也是一种交易。</strong></p>`,
+        source:"《加仓方法》全文 · §6"
+      },
+      {
+        title:"七、实战模板 + 八、核心总结", tags:[["base","总纲"]],
+        body:`<h4>七、一笔完整的金字塔交易</h4>
+        <p>假设你有 100 万资金，发现一只符合所有标准的领袖股，股价 $80，刚从 cup &amp; handle 突破。</p>
+        <p><strong>Step 1 初始建仓（第一注）：</strong>买入 8万（8%）@ $80.50（pivot 上方 $0.50），993 股，止损 $76.50（-5%），最大风险 4,000 元（0.4% 账户）。</p>
+        <p><strong>Step 2 三天后 Tight Action 突破（第二注）：</strong>当前 $84（涨 4.3%），买入 5万（5%），595 股，新均成本 $81.84（上移 +1.7%），止损上移至 $79。</p>
+        <p><strong>Step 3 两周后 50 日线反弹（第三注）：</strong>当前 $92（从 $80 涨 15%），买入 3万（3%），326 股，新均成本 $83.72（上移 +4.0%）。总仓位 16%、1914 股、价值 17.6万、利润 +15,800 元（+9.9%），新止损 $87（锁定利润）。</p>
+        <p><strong>结果：</strong>用 16% 的总敞口建了完整仓位，均成本 $83.72、止损 $87。即使回调 10% 到 $83 也只是打平。若最终涨到 $130（+62%），这笔赚 88,000 元，占总账户 8.8%。一年抓 3–4 笔这样的交易 = 30–40% 年回报。不需要满仓，不需要赌博。</p>
+        <h4>八、核心总结 · 8 条法则</h4>
+        <ol style="padding-left:20px">
+          <li>后一注 ≤ 前一注（永不倒金字塔，成本上移 &gt;8% 必砍注码）</li>
+          <li>首注：正常 8–10%，困难市 3–5%（止损窄可稍大，止损宽必压小，Hard Penny 砍半）</li>
+          <li>只在三种情况下加仓（tight action 突破 / 网球反弹破前高 / 盈利跳空消化后突破）</li>
+          <li>单股上限 33%（超过就逢高 trim）</li>
+          <li>只向上加仓，永不向下摊平（向下摊平 = 奖励亏损，只向赢家加资金）</li>
+          <li>年回报 = 期望值 × 周转率（不需满仓，10%敞口+高频 或 25%敞口+低频 都能 40%）</li>
+          <li>Hard Penny 时期 50%+ 现金（保留子弹比赚钱更重要）</li>
+          <li>追求纪律性复利，不追求满仓暴富（一年 3–4 笔 monster、每笔 16% 敞口 = 30–40% 年回报）</li>
+        </ol>
+        <p>交易者的进化方向是：更少的交易、更长的持有、更小的风险、更稳的复利。金字塔加仓法不是让你更激进 —— 恰恰相反，它是让你在做对的时候有序地放大收益，在做错的时候自动地限制损失。你不需要每天交易。你只需要一套系统、一份纪律、和对复利的信仰。</p>
+        <p style="color:var(--text2)">—— Kova</p>`,
+        source:"《加仓方法》全文 · §7+§8"
       },
     ]
   },
