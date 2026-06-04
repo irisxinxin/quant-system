@@ -268,6 +268,8 @@ def api_stops(force: int = 0):
     from stops_core import compute_stops
     if force:
         _mem_cache.pop("stops", None)
+        for p in _CACHE_DIR.glob("stops_*.json"):   # 同时清磁盘缓存
+            p.unlink(missing_ok=True)
     data, ts = _get_cached("stops", compute_stops, CACHE_TTL["stops"])
     out = dict(data)
     out["cached_at"] = _fmt_age(ts)
