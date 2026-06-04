@@ -52,6 +52,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 · <span class="d">灾难单</span>：仅 D/E 盈利仓需要，放近期 swing 低下方的<b>保护性挂单</b>（建议 RTH stop-market），只防隔夜跳空/闪崩。<br>
 · <b>状态机：</b>A 亏损区(守初始止损)→B 微利(忍)→C 确认(提保本)→D 趋势(10EMA 追踪)→E 抛物线(收紧+减仓)。<br>
 · <b>铁律：</b>止损只能向上、永不下移；EMA 每个收盘后重算（刷新本页即重算最新日线）。<br>
+· <span style="color:#f8a5a5">read-across 线 = 21EMA</span>：板块事件(如 AVGO 财报)时用 —— <b>收盘跌破 21EMA + 放量 = 该砍</b>；离得远(<span style="color:#4ade80">绿·noise</span>)说明只是情绪跟跌，<span style="color:#f87171">贴近(红·危险)</span>才是真破位。<br>
 · 💡 <b>点代码</b>可看该票交互日线（5/10/21EMA + 50SMA + 5EMA止损线 + 成本线 + 自动趋势线）。
 </div>
 </div>
@@ -78,12 +79,16 @@ async function load(force){
     if(!rows.length){content.innerHTML='<div class="msg">无数据（检查行情权限/网络）</div>';btn.disabled=false;return;}
     let h=`<table><thead><tr>
       <th>代码</th><th>分类</th><th>成本</th><th>现价</th><th>持仓盈亏</th><th>状态</th>
-      <th>主止损(收盘判断)</th><th>依据</th><th>灾难单</th><th>动作提示</th></tr></thead><tbody>`;
+      <th>主止损(收盘判断)</th><th>依据</th><th>灾难单</th><th>read-across线<br><span style="font-weight:400;color:var(--text3)">21EMA · 距离</span></th><th>动作提示</th></tr></thead><tbody>`;
     for(const x of rows){
       const dash='<span style="color:var(--text3)">—</span>';
       const cost=(x.cost==null)?dash:`<span class="mono">${x.cost.toFixed(2)}</span>`;
       const gain=(x.gain==null)?dash:`<span class="mono" style="color:${x.gain>=0?'#4ade80':'#f87171'};font-weight:600">${x.gain>=0?'+':''}${x.gain.toFixed(1)}%</span>`;
       const dis=(x.disaster==null)?dash:`<span class="mono" style="color:#f8a5a5">${x.disaster.toFixed(2)}</span>`;
+      // read-across: 距 21EMA 越近越危险(跌破+放量=砍)，越远=盘块事件多为 noise
+      const raC = (x.dist21==null)?'var(--text3)' : (x.dist21<=5?'#f87171' : x.dist21<=12?'#f59e0b' : '#4ade80');
+      const raT = (x.dist21==null)?'' : (x.dist21<=5?'近·危险' : x.dist21<=12?'偏近' : '远·noise');
+      const ra = (x.ema21==null)?dash:`<span class="mono" style="font-size:12px">${x.ema21.toFixed(2)}</span> <span style="color:${raC};font-size:11px;font-weight:600">${x.dist21>=0?'+':''}${x.dist21}%</span><br><span style="color:${raC};font-size:10px">${raT}</span>`;
       h+=`<tr>
         <td class="tk" style="cursor:pointer;color:#58a6ff" onclick="openChart('${x.tk}')">${x.tk} 📈</td>
         <td><span style="font-size:11.5px;color:var(--text2);background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:2px 8px;white-space:nowrap">${x.sector||'—'}</span></td>
@@ -94,6 +99,7 @@ async function load(force){
         <td class="mono" style="color:#fcd9a0;font-weight:700">${x.follow.toFixed(2)}</td>
         <td class="lbl">${x.follow_label}</td>
         <td>${dis}</td>
+        <td>${ra}</td>
         <td class="act">${x.action}</td></tr>`;
     }
     h+='</tbody></table>';
