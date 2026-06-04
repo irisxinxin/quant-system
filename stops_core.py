@@ -9,15 +9,29 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # 真实持仓: ticker -> 成本（取自长桥 App 持仓截图，可在此维护）
+# None = 待补成本（EMA 止损照常算，但盈亏%/A·B·C 状态需补成本后才准）
 HOLDINGS = {
     "MXL": 98.273, "GFS": 81.663, "OKTA": 110.795, "GOOG": 359.850,
     "HUT": 115.678, "NOK": 14.788, "POWI": 84.776, "ASTS": 100.200,
     "NVTS": 32.255, "DRAM": 40.736, "COHR": 407.812, "DELL": 251.998,
     "SNDK": 1774.870, "NBIS": 210.885, "ARM": 260.377, "BE": 285.573,
     "ALAB": 310.780, "MRVL": 129.870,
+    "STRL": None, "ORCL": None, "PENG": None, "ST": None, "TSEM": None,
 }
 
-_STATE_ORDER = {"E 抛物线": 0, "D 趋势": 1, "C 确认上涨": 2, "B 微利区": 3, "A 亏损区": 4}
+# ticker -> 分类标签
+SECTORS = {
+    "MXL": "半导体/模拟", "GFS": "半导体/代工", "OKTA": "软件/安全", "GOOG": "大盘/核心",
+    "HUT": "加密/矿工", "NOK": "光子/通信", "POWI": "半导体/电源", "ASTS": "太空/卫星",
+    "NVTS": "半导体/功率", "DRAM": "存储ETF", "COHR": "光子/高速连接", "DELL": "AI硬件/数据中心",
+    "SNDK": "存储", "NBIS": "AI算力/基建", "ARM": "半导体/IP", "BE": "AI电力/燃料电池",
+    "ALAB": "半导体/AI连接", "MRVL": "半导体/连接",
+    "STRL": "工业/基建", "ORCL": "软件/AI数据", "PENG": "AI/HPC",
+    "ST": "传感器/汽车", "TSEM": "半导体/代工",
+}
+
+_STATE_ORDER = {"E 抛物线": 0, "D 趋势": 1, "C 确认上涨": 2, "B 微利区": 3,
+                "A 亏损区": 4, "— 待成本": 5}
 
 
 def _atr(df, n=14):
@@ -66,10 +80,24 @@ def _analyze(df, cost):
     sma50 = float(c.rolling(50).mean().iloc[-1])
     atr = float(_atr(df).iloc[-1])
     dist21 = (last / ema21 - 1) * 100
-    gain = (last / cost - 1) * 100
+    gain = (last / cost - 1) * 100 if cost is not None else None
     swing = float(df.Low.iloc[-10:].min())
 
-    if gain < 0:
+    if gain is None:
+        # 无成本：按价格结构给 trail，A/B/C 待补成本后才能定
+        if dist21 > 25:
+            state, sc, win = "E 抛物线", "#39c5cf", True
+            follow, flabel = ema5 * 0.99, "5EMA×0.99（待补成本）"
+            action = "⚠ 待补成本；抛物线：📐手动画趋势线 + 减仓 20–50%"
+        elif last > ema21:
+            state, sc, win = "D 趋势", "#4ade80", True
+            follow, flabel = ema10 * 0.99, "10EMA×0.99（待补成本）"
+            action = "⚠ 待补成本；EMA 追踪，收盘跌破才离场"
+        else:
+            state, sc, win = "— 待成本", "#9ba6b4", False
+            follow, flabel = ema10 * 0.99, "10EMA×0.99（参考）"
+            action = "⚠ 补成本后才能定 A/B/C 与盈亏"
+    elif gain < 0:
         state, sc, win = "A 亏损区", "#f87171", False
         follow, flabel = cost * 0.92, "初始硬止损 成本×0.92（可挂单）"
         action = "守初始止损，绝不下移；逼近即按纪律砍"
@@ -92,7 +120,8 @@ def _analyze(df, cost):
 
     disaster = round(swing * 0.98, 2) if win else None
     return dict(
-        tk="", cost=round(cost, 2), last=round(last, 2), gain=round(gain, 1),
+        tk="", cost=round(cost, 2) if cost is not None else None,
+        last=round(last, 2), gain=round(gain, 1) if gain is not None else None,
         state=state, sc=sc, ema5=round(ema5, 2), ema10=round(ema10, 2), ema21=round(ema21, 2),
         sma50=round(sma50, 2), atr=round(atr, 2), dist21=round(dist21, 1),
         follow=round(follow, 2), follow_label=flabel, disaster=disaster,
@@ -151,8 +180,10 @@ def compute_stops(holdings: dict | None = None) -> dict:
             continue
         r = _analyze(df, cost)
         r["tk"] = tk
+        r["sector"] = SECTORS.get(tk, "")
         rows.append(r)
 
-    rows.sort(key=lambda r: (_STATE_ORDER.get(r["state"], 9), -r["gain"]))
+    rows.sort(key=lambda r: (_STATE_ORDER.get(r["state"], 9),
+                             -(r["gain"] if r["gain"] is not None else -1e9)))
     data_date = rows[0]["date"] if rows else "-"
     return {"rows": rows, "data_date": data_date, "source": source}

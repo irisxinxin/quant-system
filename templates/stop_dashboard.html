@@ -77,16 +77,19 @@ async function load(force){
     sub.innerHTML=`数据源 <b>${j.source||'-'}</b>（截至 ${j.data_date} 收盘）· ${rows.length} 只 · 缓存 ${j.cached_at||'刚刚'} · <b>刷新即重算最新日线</b>`;
     if(!rows.length){content.innerHTML='<div class="msg">无数据（检查行情权限/网络）</div>';btn.disabled=false;return;}
     let h=`<table><thead><tr>
-      <th>代码</th><th>成本</th><th>现价</th><th>持仓盈亏</th><th>状态</th>
+      <th>代码</th><th>分类</th><th>成本</th><th>现价</th><th>持仓盈亏</th><th>状态</th>
       <th>主止损(收盘判断)</th><th>依据</th><th>灾难单</th><th>动作提示</th></tr></thead><tbody>`;
     for(const x of rows){
-      const gc=x.gain>=0?'#4ade80':'#f87171';
-      const dis=(x.disaster==null)?'<span style="color:var(--text3)">—</span>':`<span class="mono" style="color:#f8a5a5">${x.disaster.toFixed(2)}</span>`;
+      const dash='<span style="color:var(--text3)">—</span>';
+      const cost=(x.cost==null)?dash:`<span class="mono">${x.cost.toFixed(2)}</span>`;
+      const gain=(x.gain==null)?dash:`<span class="mono" style="color:${x.gain>=0?'#4ade80':'#f87171'};font-weight:600">${x.gain>=0?'+':''}${x.gain.toFixed(1)}%</span>`;
+      const dis=(x.disaster==null)?dash:`<span class="mono" style="color:#f8a5a5">${x.disaster.toFixed(2)}</span>`;
       h+=`<tr>
         <td class="tk" style="cursor:pointer;color:#58a6ff" onclick="openChart('${x.tk}')">${x.tk} 📈</td>
-        <td class="mono">${x.cost.toFixed(2)}</td>
+        <td><span style="font-size:11.5px;color:var(--text2);background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:2px 8px;white-space:nowrap">${x.sector||'—'}</span></td>
+        <td>${cost}</td>
         <td class="mono">${x.last.toFixed(2)}</td>
-        <td class="mono" style="color:${gc};font-weight:600">${x.gain>=0?'+':''}${x.gain.toFixed(1)}%</td>
+        <td>${gain}</td>
         <td><span class="state" style="color:${x.sc};border-color:${x.sc}55;background:${x.sc}18">${x.state}</span></td>
         <td class="mono" style="color:#fcd9a0;font-weight:700">${x.follow.toFixed(2)}</td>
         <td class="lbl">${x.follow_label}</td>
