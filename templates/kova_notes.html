@@ -1696,6 +1696,92 @@ const CHAPTERS = [
       },
     ]
   },
+  {
+    id:"rpt-avgo-0604", group:"📊 盘后解读 (Trading Reports)", icon:"📊", title:"AVGO 盘后 −12%：跌的是预期，不是基本面",
+    intro:"《AVGO 今晚跌的不是基本面，是预期》(Jun 04 2026)。「Broadcom didn't miss — the bar did.」<strong>直接关系到你的持仓 MRVL</strong>(被点名为 read-across 承压最大)。<span style='color:var(--text3)'>(记录到第 4 节开头，后续待补。)</span>",
+    cards:[
+      {
+        title:"核心论点 + 💭 与你持仓的关系", tags:[["risk","风控"],["base","盘后"]],
+        body:`<p>盘后四点一过，AVGO 交出一份看起来<strong>不该跌</strong>的财报：营收 +48%、AI 半导体收入 +143%、non-GAAP EPS beat、自由现金流 $10.26B。然后股价盘后一度<strong>跌超 13%</strong>。</p>
+        <div class="callout co-key"><span class="ci">🎯</span><div><strong>这不是暴雷</strong>，是更危险也更常见的「<strong>预期重置（expectations reset）</strong>」—— 股价提前买完了所有好消息，再好的财报也只是「兑现」不是「惊喜」。教科书级的 <strong>buy the rumor, sell the news</strong>。</div></div>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>对你的实操意义：</strong>这篇点名 <strong>MRVL（你持仓 +135%、E 抛物线）</strong>是 read-across 承压最大的票（custom ASIC 老二、纯 AI 暴露、无软件对冲）。结合止损面板：MRVL 已在 <strong>E 状态、5EMA 止损 ~$254</strong>。盘后这种 <strong>sentiment 跟跌</strong>正是 trailing 该保护的场景 —— 按纪律看收盘是否跌破 5EMA，并记得 E 状态本就该<strong>主动减仓 20-50%</strong>。同理影响你的 ARM/ALAB/NBIS 等 AI 链持仓。</div></div>`,
+        source:"《AVGO 盘后》· 引子"
+      },
+      {
+        title:"一、财报本身强到什么程度", tags:[["base","盘后"]],
+        body:`<ul>
+          <li>营收 <strong>$22.187B</strong>，同比 +48%，创历史新高</li>
+          <li>AI 半导体收入 <strong>$10.8B</strong>，同比 +143%，高于公司自己的指引</li>
+          <li>non-GAAP EPS <strong>$2.44</strong>，beat 一致预期 $2.40；GAAP 净利润 $9.31B，+88%</li>
+          <li>Adjusted EBITDA $15.2B，占营收 <strong>69%</strong>（硬件公司做出软件公司的利润率）</li>
+          <li>自由现金流 $10.26B，占营收 46%</li>
+        </ul>
+        <p>更关键的是<strong>增速在加速</strong>：总营收增速从 Q1 +29% 跳到 Q2 +48%。CEO Hock Tan 电话会原话：Q3 AI 半导体收入预计同比 <strong>+200%、达 $16.0B</strong>。而且 AVGO 已连续 <strong>7 个季度 beat</strong>。</p>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 600 292" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <defs><linearGradient id="avgog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#c2700a"/></linearGradient></defs>
+          <text x="22" y="26" font-size="14.5" fill="#fbbf24" font-weight="800">AI 半导体收入：在加速，股票却在跌</text>
+          <text x="22" y="46" font-size="10.5" fill="#9ba6b4">Broadcom AI 收入连续放量，Q3 指引 +200% —— 市场卖的是预期，不是基本面</text>
+          <line x1="60" y1="248" x2="560" y2="248" stroke="#2a3340" stroke-width="1"/>
+          <rect x="100" y="151" width="110" height="97" rx="2" fill="url(#avgog)"/>
+          <text x="155" y="142" text-anchor="middle" font-size="15" fill="#fbbf24" font-weight="800">$8.4B</text>
+          <text x="155" y="266" text-anchor="middle" font-size="11.5" fill="#e6edf3" font-weight="600">Q1 FY26</text>
+          <text x="155" y="283" text-anchor="middle" font-size="10.5" fill="#f59e0b">YoY +106%</text>
+          <rect x="255" y="123" width="110" height="125" rx="2" fill="url(#avgog)"/>
+          <text x="310" y="114" text-anchor="middle" font-size="15" fill="#fbbf24" font-weight="800">$10.8B</text>
+          <text x="310" y="266" text-anchor="middle" font-size="11.5" fill="#e6edf3" font-weight="600">Q2 FY26</text>
+          <text x="310" y="283" text-anchor="middle" font-size="10.5" fill="#f59e0b">YoY +143%</text>
+          <rect x="410" y="63" width="110" height="185" rx="2" fill="rgba(245,158,11,.18)" stroke="#f59e0b" stroke-width="1.6" stroke-dasharray="5 3"/>
+          <text x="465" y="54" text-anchor="middle" font-size="15" fill="#fbbf24" font-weight="800">$16.0B</text>
+          <text x="465" y="86" text-anchor="middle" font-size="10" fill="#e0b462">指引 Guide</text>
+          <text x="465" y="266" text-anchor="middle" font-size="11.5" fill="#e6edf3" font-weight="600">Q3 FY26</text>
+          <text x="465" y="283" text-anchor="middle" font-size="10.5" fill="#f59e0b">YoY +200%</text>
+        </svg>
+        <div class="vcp-cap">AI 收入 $8.4B → $10.8B → $16.0B(指引)，增速 +106%→+143%→+200%，基本面在加速。</div>
+        </div>`,
+        source:"《AVGO 盘后》· §1"
+      },
+      {
+        title:"二、三层预期 + 财报记分牌（headline beat，定价的那个数 miss）", tags:[["base","盘后"]],
+        body:`<p>市场对一家公司的预期从来不是一个数字，而是<strong>三层</strong>：</p>
+        <ul>
+          <li><strong>公司指引</strong>(company guide) —— 管理层自己给的数（AVGO：Q3 AI $16.0B/+200%、Q3 总营收 $29.4B/+84%）</li>
+          <li><strong>卖方一致预期</strong>(sell-side consensus) —— 分析师公开模型平均值</li>
+          <li><strong>买方私下预期</strong>(buy-side whisper) —— 基金/交易桌没写进报告、但已 price 进股价的更高的数</li>
+        </ul>
+        <p>AVGO 的故事不是「公司没打过预期」。Q3 总营收指引 $29.4B 高于卖方共识 $28.54B、EPS 也 beat。<strong>但市场真正用来定价的不是总营收，是 AI 这一个数</strong> —— Q3 AI 指引 $16.0B <strong>低于</strong> Visible Alpha 卖方共识 $16.36B（Bernstein 的 Stacy Rasgon 也指出低于部分买方模型）。AI 这个数<strong>连公开共识都没打到</strong>，更别提更高的 buy-side whisper。</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin:10px 0">
+          <tr style="color:var(--text2);font-size:10.5px"><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">指标</th><th style="text-align:right;padding:5px 7px;border-bottom:1px solid var(--border)">共识/预期</th><th style="text-align:right;padding:5px 7px;border-bottom:1px solid var(--border)">实际/指引</th><th style="text-align:center;padding:5px 7px;border-bottom:1px solid var(--border)">结果</th></tr>
+          <tr><td style="padding:5px 7px">Q2 营收</td><td class="mono" style="text-align:right">$22.27B</td><td class="mono" style="text-align:right">$22.19B</td><td style="text-align:center;color:#f87171;font-weight:700">MISS</td></tr>
+          <tr><td style="padding:5px 7px">Q2 non-GAAP EPS</td><td class="mono" style="text-align:right">$2.40</td><td class="mono" style="text-align:right">$2.44</td><td style="text-align:center;color:#4ade80;font-weight:700">BEAT</td></tr>
+          <tr><td style="padding:5px 7px">Q2 基础软件收入</td><td class="mono" style="text-align:right">~$7.32B</td><td class="mono" style="text-align:right">$7.18B</td><td style="text-align:center;color:#f87171;font-weight:700">MISS</td></tr>
+          <tr style="background:rgba(245,158,11,.07)"><td style="padding:5px 7px;color:#fcd9a0;font-weight:700">Q3 AI 芯片指引 ← 扳机</td><td class="mono" style="text-align:right">$16.36B</td><td class="mono" style="text-align:right">$16.0B</td><td style="text-align:center;color:#f87171;font-weight:700">MISS</td></tr>
+          <tr><td style="padding:5px 7px">Q3 总营收指引</td><td class="mono" style="text-align:right">$28.54B</td><td class="mono" style="text-align:right">$29.4B</td><td style="text-align:center;color:#4ade80;font-weight:700">BEAT</td></tr>
+          <tr><td style="padding:5px 7px">全年 AI 销售目标</td><td class="mono" style="text-align:right">期待上调</td><td class="mono" style="text-align:right">$100B 维持</td><td style="text-align:center;color:#f59e0b;font-weight:700">NO RAISE</td></tr>
+        </table>
+        <p>最关键的 tell：Hock Tan 把全年长期 AI 销售目标<strong>维持 $100B、没有上调</strong>。财报前市场还在等一个 raise，结果框架原封不动。在已经 <strong>priced perfection</strong> 的位置，「不上调」本身就被读成「上限到了」。叠加财报前 setup 太满：YTD +40%（远超纳指 +16%）、前一日收历史新高 $481.57、上周还涨近 8%、期权隐含波动 ±7%~±9%。</p>
+        <div class="callout co-info"><span class="ci">💡</span><div><strong>纠正一个易混点：</strong>白天盘中半导体是<strong>领涨</strong>的（INTC/QCOM/AMD 集体走强，AI agent「CPU 从配角变调度中枢」叙事）。盘后急跌是 AVGO 财报砸出来的<strong>独立事件</strong>，再传导到板块。别把盘中强势和盘后下跌混为一谈 —— 中间隔着一份财报。</div></div>`,
+        source:"《AVGO 盘后》· §2"
+      },
+      {
+        title:"三、对整个半导体板块意味着什么（read-across）", tags:[["trend","趋势"],["risk","风控"]],
+        body:`<p>AVGO 是本季度<strong>最后一个</strong>出财报的芯片巨头，盘后反应定整个板块接下来的基调。传导机制是 <strong>read-across</strong>：AVGO 是 custom ASIC 老大，老大 AI 指引连公开共识都没打到，市场把同样的折扣按暴露比例套到产业链：</p>
+        <ul>
+          <li><strong>纯 AI 暴露的二供承压最大 → MRVL。</strong>custom ASIC 老二、多头叫它「下一个 Broadcom」，几乎纯 AI 数据中心暴露、没有 AVGO 那 70 多亿基础软件对冲，<strong>同一折扣弹性更大</strong>。今晚是「下一个 Broadcom」叙事第一次被真正的 Broadcom 测试 —— 母叙事打折，子叙事都要重新定价。</li>
+          <li><strong>第二层导数（AI 网络/IP/电源）= 情绪跟跌多于逻辑传导</strong>，离指引更远，盘后跟跌更多是 sentiment，不是基本面被直接下修。</li>
+        </ul>
+        <div class="callout co-key"><span class="ci">🟢</span><div><strong>但板块需求底座今晚没有任何变化：</strong>AVGO 定制芯片客户是 Meta 和 Google；大型科技今年 AI 基建支出预计 &gt; $7000 亿；Google TPU 供货协议签到 2031；Alphabet 刚宣布融 $80B 投 AI 基建；Anthropic 刚秘密递表 IPO、AVGO 还在为其融资兜底。<strong>前向需求信号依然是绿的。</strong></div></div>
+        <div class="callout co-warn"><span class="ci">❓</span><div><strong>板块真正要回答的分叉问题：这是 AVGO 一只票的预期重置，还是整个 AI capex 叙事的第一道裂缝？</strong>答案决定未来几周整个 complex（NVDA / MRVL / AI 网络与电源链）是<strong>横盘消化</strong>还是<strong>系统性回调</strong>。</div></div>`,
+        source:"《AVGO 盘后》· §3"
+      },
+      {
+        title:"四、历史会押韵：「强财报、弱股价」不是第一次（待续）", tags:[["base","盘后"]],
+        body:`<p>这不是 AI 时代第一次「好财报、坏股价」。最完美的样本是 <strong>Nvidia</strong>：据 The Motley Fool，截至今年 5 月，NVDA 已连续多个季度在 <strong>beat-and-raise 之后股价收跌</strong>。原因和今晚的 AVGO 同构 —— 股价提前把完美预期 price 进去，再好的财报也只是兑现。</p>
+        <div class="callout co-warn"><span class="ci">📥</span><div><strong>本文记录到第 4 节开头。</strong>后面「两个有据可查的样本」+ 持仓处理建议 + 明早 9:30 EST 会员直播相关，等你补发截图我接着填。</div></div>`,
+        source:"《AVGO 盘后》· §4（待续）"
+      },
+    ]
+  },
 ];
 
 /* ── 渲染 ── */
