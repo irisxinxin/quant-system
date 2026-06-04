@@ -1034,6 +1034,104 @@ const CHAPTERS = [
     ]
   },
   {
+    id:"edu-stops7", group:"Kova 教育", icon:"🛑", title:"七种止损方法（目录）",
+    intro:"专文《止损的艺术》(Apr 06 2026)。把所有止损方法系统梳理成 7 种 —— <strong>「没有最好的止损，只有最适合你当前交易风格的止损」</strong>。⭐ = 作者推荐。<span style='color:var(--text3)'>(本文较长，当前记录 1–4 种 + 引子；5–7 待补。)</span>",
+    cards:[
+      {
+        title:"引子 + 一、为什么止损是第一原则", tags:[["risk","风控"],["base","纪律"]],
+        body:`<p style="color:var(--text2);font-size:13px"><em>作者 KOVA · Apr 06 2026 · PAID。副标题：七种止损方法详解 · 动态止损系统 · 真实案例拆解</em></p>
+        <p>止损是交易中<strong>最违反人性</strong>的动作 —— 要你在亏钱时主动承认错误。但顶级交易者的共识是：止损不是「如果」的问题，而是「<strong>怎么设</strong>」的问题。</p>
+        <div class="callout co-key"><span class="ci">📌</span><div><strong>先说结论：</strong>止损是你对自己的承诺。每一笔交易，<strong>在你点买入之前，就应该知道止损在哪里</strong>。你可以选错股、买贵了，只要止损纪律到位账户就能活；反之十次对八次，一次没止损就能把八次利润全吐回去。</div></div>
+        <ul>
+          <li><strong>Jim Roppel：</strong>「想象一下，如果你永远把每笔亏损控制在 5% 以内…… 那些爆仓的人，就是没做到这一点。」</li>
+          <li><strong>Nicolas Darvas（箱体理论）：</strong>止损 = 你为这笔交易买的「保险」。不触发=一切顺利；触发了=损失有限。没保险裸奔 = 赌博。</li>
+          <li><strong>Chris Flanders（死亡螺旋）：</strong>正常流程是 行动→结果→复盘→计划→行动；很多人亏损后变成 行动→亏损→行动→亏损（无复盘），一天 20 笔、回撤 25%。止损纪律是打断螺旋的关键。</li>
+        </ul>
+        <div class="callout co-info"><span class="ci">💭</span><div>这三位(Roppel / Darvas / Flanders)和 🪜 Trailing 章节是同源理念，此处不再展开 —— 本章重点在下面<strong>「7 种止损类型」的横向对比</strong>。</div></div>`,
+        source:"《止损的艺术》· 引子+§1"
+      },
+      {
+        title:"① 固定百分比止损", tags:[["risk","风控"]],
+        body:`<p>最基础：买入后设固定亏损百分比（如 -5% / -7%），到了就走。<strong>William O'Neil（CANSLIM）</strong>推荐 —— 任何一笔最多亏 7–8%，没有例外。</p>
+        <div class="callout co-formula"><span class="ci">→</span><div>例：$100 买入 → 止损 $93（-7%）→ 跌到 $93 立刻卖 → 最大亏 $7/股，可控且确定。</div></div>
+        <p><strong>优点</strong>：简单，人人能执行。<strong>缺点</strong>：不考虑个股波动性 —— 日波动 3% 的票和 0.5% 的票用同样 7% 止损，效果天差地别。波动大的票可能还没真正走坏就把你洗出去。→ 这正是 ② ATR 止损要解决的。</p>`,
+        source:"《止损的艺术》· §2①"
+      },
+      {
+        title:"② ATR 止损（基于波动率）⭐ + 仓位计算", tags:[["risk","风控"],["vol","量能"]],
+        body:`<p><strong>ATR</strong>（Average True Range，真实波动幅度均值）= 一只股票过去 N 天平均每天的波动幅度。用它设止损 = <strong>让止损适应个股自身的「呼吸节奏」</strong>。常见做法：止损设在入场价下方 <strong>1–1.5 倍 ATR</strong>。波动大的票止损宽、波动小的票止损紧，量身定制。</p>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 680 210" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <line x1="40" y1="44" x2="640" y2="44" stroke="#9ba6b4" stroke-width="1.4" stroke-dasharray="6 4"/>
+          <text x="40" y="34" font-size="11.5" fill="#9ba6b4">入场价 $100（两只都是）</text>
+          <!-- 股票A 低波动 -->
+          <rect x="120" y="44" width="120" height="48" fill="rgba(74,222,128,.14)"/>
+          <line x1="120" y1="92" x2="300" y2="92" stroke="#f87171" stroke-width="1.6" stroke-dasharray="5 3"/>
+          <text x="124" y="108" font-size="11.5" fill="#f8a5a5" font-weight="700">止损 $95.50（-4.5%）</text>
+          <line x1="180" y1="48" x2="180" y2="88" stroke="#4ade80" stroke-width="1.4"/>
+          <text x="188" y="72" font-size="10.5" fill="#7ee8a0">1.5×ATR=$4.50</text>
+          <text x="180" y="135" text-anchor="middle" font-size="12" fill="#e6edf3" font-weight="700">股票A · ATR $3</text>
+          <text x="180" y="153" text-anchor="middle" font-size="11" fill="#9ba6b4">日波动 3% → 窄止损</text>
+          <!-- 股票B 高波动 -->
+          <rect x="440" y="44" width="120" height="112" fill="rgba(248,113,113,.12)"/>
+          <line x1="440" y1="156" x2="620" y2="156" stroke="#f87171" stroke-width="1.6" stroke-dasharray="5 3"/>
+          <text x="444" y="172" font-size="11.5" fill="#f8a5a5" font-weight="700">止损 $88（-12%）</text>
+          <line x1="500" y1="48" x2="500" y2="152" stroke="#f87171" stroke-width="1.4"/>
+          <text x="508" y="104" font-size="10.5" fill="#f8a5a5">1.5×ATR=$12</text>
+          <text x="500" y="192" text-anchor="middle" font-size="12" fill="#e6edf3" font-weight="700">股票B · ATR $8</text>
+        </svg>
+        <div class="vcp-cap">同样的方法、同样入场价 $100，B 波动更大 → 需要更多空间「呼吸」→ 止损更宽。</div>
+        </div>
+        <h4>ATR 的另一个核心用途：仓位计算（让止损决定仓位）</h4>
+        <div class="callout co-formula"><span class="ci">∑</span><div>仓位大小 = (账户总值 × 每笔风险%) ÷ (入场价 − 止损价)<br>例：账户 $100,000、每笔风险 1%($1,000) → 止损距离 $4.50 可买 <strong>222 股</strong>；止损距离 $12 只能买 <strong>83 股</strong>。<strong>风险恒定</strong>。</div></div>
+        <div class="callout co-key"><span class="ci">🔑</span><div>「让止损决定仓位」，而不是「先决定买多少再看止损」—— 这和 🔺 加仓章节「止损宽→仓位小」是同一条原理。</div></div>`,
+        source:"《止损的艺术》· §2②"
+      },
+      {
+        title:"③ 结构止损（关键价位 / Darvas 箱体 / Kell shelf）", tags:[["trend","趋势"],["risk","风控"]],
+        body:`<p>核心思想：把止损放在一个<strong>「如果跌破，就说明我的交易逻辑错了」</strong>的位置 —— 通常是前期低点、箱体底部、整理形态下沿。</p>
+        <p><strong>Nicolas Darvas 箱体理论</strong>是经典代表：股票上涨中形成一个个「箱体」，价格在区间内震荡。突破箱体上限买入、止损设在箱体底部；跌回箱体下方 = 突破失败 = 离场。</p>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <!-- 箱体 -->
+          <rect x="118" y="66" width="270" height="64" fill="rgba(88,166,255,.07)" stroke="rgba(88,166,255,.5)" stroke-dasharray="5 3"/>
+          <text x="124" y="60" font-size="11" fill="#8ec5ff">箱体上限 $105（突破=买）</text>
+          <text x="124" y="146" font-size="11" fill="#8ec5ff">箱体底部 $95</text>
+          <!-- 止损线 -->
+          <line x1="118" y1="150" x2="470" y2="150" stroke="#f87171" stroke-width="1.6" stroke-dasharray="5 3"/>
+          <text x="392" y="166" font-size="11" fill="#f8a5a5" font-weight="700">止损 $94.50（箱体底下方）</text>
+          <!-- 价格 -->
+          <polyline points="50,128 118,108 150,90 190,124 240,86 300,122 360,92 388,66 470,40 540,26" fill="none" stroke="#e6edf3" stroke-width="2.4" stroke-linejoin="round"/>
+          <circle cx="396" cy="66" r="5" fill="#fbbf24" stroke="#0a0d13" stroke-width="2"/>
+          <text x="408" y="58" font-size="11" fill="#fbbf24" font-weight="700">突破买入</text>
+        </svg>
+        <div class="vcp-cap">$95–$105 箱体 → 突破 $105 买入 → 止损 $94.50；跌破 $95 = 突破是假的、机构没跟进 = 买入理由不成立 = 走人。</div>
+        </div>
+        <div class="callout co-info"><span class="ci">💡</span><div><strong>Oliver Kell 的 shelf 做法</strong>更精细：用突破前那段 3–5 天窄幅整理（「平台 / shelf」）的最低点作天然止损。和 VCP 的 pivot 下方止损一脉相承。</div></div>`,
+        source:"《止损的艺术》· §2③"
+      },
+      {
+        title:"④ 均线止损（EMA 追踪）⭐", tags:[["trend","趋势"],["risk","风控"]],
+        body:`<p>专业 swing trader 最常用之一：股票在关键均线上方就持有，<strong>收盘</strong>跌破就离场。选哪条取决于持仓周期：</p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin:12px 0">
+          <tr style="color:var(--text2);font-size:11px"><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)">均线</th><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)">灵敏度</th><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)">适用</th></tr>
+          <tr><td style="padding:6px 8px;color:#f5d020;font-weight:700">5 EMA</td><td style="padding:6px 8px">极高</td><td style="padding:6px 8px;color:var(--text2)">日内 / scalp</td></tr>
+          <tr><td style="padding:6px 8px;color:#f0902b;font-weight:700">10 EMA</td><td style="padding:6px 8px">高</td><td style="padding:6px 8px;color:var(--text2)">Swing 5–20 天（主力止损线）</td></tr>
+          <tr><td style="padding:6px 8px;color:#39c5cf;font-weight:700">20 EMA</td><td style="padding:6px 8px">中</td><td style="padding:6px 8px;color:var(--text2)">中线 2–8 周</td></tr>
+          <tr><td style="padding:6px 8px;color:#c084fc;font-weight:700">50 SMA</td><td style="padding:6px 8px">低</td><td style="padding:6px 8px;color:var(--text2)">中长线 / 大趋势保护</td></tr>
+        </table>
+        <div class="callout co-formula"><span class="ci">→</span><div>关键：<strong>看收盘价不看盘中</strong>。Oliver Kell 在 3:59 PM 检查，收盘 &lt; <strong>10 EMA × 0.99</strong> 才触发（留 1% 缓冲，避免盘中刺破被洗）。</div></div>
+        <div class="callout co-info"><span class="ci">💭</span><div>这条 = 🪜 Trailing 状态机的「状态 D」。深度版（每阶段切换 5/10/21/50、抛物线段处理）见那一章；本章只作 7 种方法之一并列。</div></div>`,
+        source:"《止损的艺术》· §2④"
+      },
+      {
+        title:"⑤–⑦ 待补（保本止损 / …）", tags:[["base","待续"]],
+        body:`<div class="callout co-warn"><span class="ci">📥</span><div><strong>本文共 7 种止损方法，目前截图到第 5 种（保本止损 Breakeven Stop）开头。</strong>⑤ 保本止损、⑥、⑦ 以及后面的「动态止损系统 + 真实案例拆解」等你补发截图，我接着填。</div></div>`,
+        source:"《止损的艺术》· §2⑤（待续）"
+      },
+    ]
+  },
+  {
     id:"edu-indicator", group:"Kova 教育", icon:"🎛️", title:"指标用法说明",
     intro:"Kova 各指标(Kova Score / 健康度 / 量能配色 / 震荡器)的官方解释与参数设置。",
     cards:[]
@@ -1404,6 +1502,51 @@ const CHAPTERS = [
         <p>交易者的进化方向是：更少的交易、更长的持有、更小的风险、更稳的复利。金字塔加仓法不是让你更激进 —— 恰恰相反，它是让你在做对的时候有序地放大收益，在做错的时候自动地限制损失。你不需要每天交易。你只需要一套系统、一份纪律、和对复利的信仰。</p>
         <p style="color:var(--text2)">—— Kova</p>`,
         source:"《加仓方法》全文 · §7+§8"
+      },
+    ]
+  },
+  {
+    id:"art-stops7", group:"📄 原文全文", icon:"📄", title:"全文④《止损的艺术》（1–4种，待续）",
+    intro:"《止损的艺术：从理论到实战的完整框架》(Apr 06 2026) 中文原文全录；当前到第 4 种止损方法，5–7 待补。图解见 🛑 七种止损方法。",
+    cards:[
+      {
+        title:"引子 + 一、为什么止损是第一原则", tags:[["risk","风控"]],
+        body:`<p style="color:var(--text2);font-size:13px"><em>KOVA · Apr 06 2026 · PAID · 七种止损方法详解 · 动态止损系统 · 真实交易案例拆解</em></p>
+        <p>止损是交易中最违反人性的动作 —— 它要求你在亏钱的时候主动承认错误。但所有顶级交易者都有一个共识：止损不是「如果」的问题，而是「怎么设」的问题。这篇文章把我研究过的所有止损方法做一个系统梳理，从最基础的固定百分比，到专业交易者使用的多阶段动态止损体系。</p>
+        <p><strong>先说结论：</strong>止损是你对自己的承诺。如果你连对自己的承诺都守不住，你不可能在这个市场活下来。每一笔交易，在你点买入之前，就应该知道自己的止损在哪里。</p>
+        <h4>一、为什么止损是第一原则</h4>
+        <p>我见过太多交易者 —— 包括早期的我自己 —— 在讨论选股、入场时机、仓位大小之前，完全忽略了止损。但事实是，你可以选错股、可以买贵了，只要止损纪律到位，你的账户就能活下来。反过来，就算你十次里选对八次，一次没止损就可能把八次的利润全吐回去。</p>
+        <p>Jim Roppel 说过一句话，我印象很深：「想象一下，如果你永远把每笔亏损控制在 5% 以内…… 那些爆仓的人，就是没做到这一点。」</p>
+        <p>Nicolas Darvas 在他的箱体理论里把止损比作「保险」：你买了一只股票，止损就是你为这笔交易买的保险。保险不触发，说明一切顺利；触发了，你损失有限。没有保险裸奔？那你就是在赌博。</p>
+        <p>Chris Flanders 讲过一个叫「交易者死亡螺旋」的概念：正常交易流程应该是 行动→结果→复盘→计划→行动。但很多人一旦开始亏损，就变成了 行动→亏损→行动→亏损→行动→亏损，中间没有任何停顿和复盘。一天之内 20 笔交易，账户回撤 25%。止损纪律就是打断这个螺旋的关键。</p>`,
+        source:"《止损的艺术》全文 · 引子+§1"
+      },
+      {
+        title:"二、七种主流止损方法（① 固定百分比 / ② ATR）", tags:[["risk","风控"],["vol","量能"]],
+        body:`<p>下面是我整理的七种止损方法，从简单到复杂排列。每种方法有它适用的场景，没有「最好的止损」，只有「最适合你当前交易风格的止损」。</p>
+        <h4>① 固定百分比止损</h4>
+        <p>最基础的方法：买入后设定一个固定的亏损百分比，比如 -5% 或 -7%，到了就走。William O'Neil 在 CAN SLIM 体系中推荐的就是这个 —— 任何一笔交易，最多亏 7%-8%，没有例外。</p>
+        <p>实战案例：以 $100 买入一只成长股。止损线设 $93（-7%）。股价跌到 $93，立刻卖出。最大亏损 $7/股，可控且确定。</p>
+        <p>优点是简单，任何人都能执行。缺点是不考虑个股的波动性 —— 一只日波动 3% 的票和一只日波动 0.5% 的票，用同样的 7% 止损，效果天差地别。波动大的票可能还没真正走坏就把你洗出去了。</p>
+        <h4>② ATR 止损（基于波动率）⭐ 推荐</h4>
+        <p>ATR（Average True Range，真实波动幅度均值）衡量的是一只股票在过去 N 天内平均每天的波动幅度。用 ATR 来设止损的逻辑是：让止损适应个股自身的「呼吸节奏」。常见做法是止损设在入场价下方 1 到 1.5 倍 ATR 的位置。这样波动大的票止损宽一点，波动小的票止损紧一点，每只票的止损都是「量身定制」的。</p>
+        <p>实战案例：股票A 价格 $100、14日ATR $3（日均波动3%）→ 止损 = $100 − 1.5×$3 = $95.50（-4.5%）；股票B 价格 $100、14日ATR $8（日均波动8%）→ 止损 = $100 − 1.5×$8 = $88（-12%）。同样的方法、不同的止损宽度，因为 B 波动更大，需要更多空间「呼吸」。</p>
+        <p>ATR 止损的另一个核心用途是仓位计算：如果你每笔交易愿意承受账户 1% 的风险，那你的仓位大小 = (账户总值 × 1%) ÷ (入场价 − 止损价)。止损越紧、仓位越大；止损越宽、仓位越小。风险恒定。举例：账户 $100,000、每笔风险 1%($1,000)，止损距离 $4.50 → 可买 222 股；止损距离 $12 → 只能买 83 股。这就是「让止损决定仓位」，而不是「先决定买多少再看止损」。</p>`,
+        source:"《止损的艺术》全文 · §2①②"
+      },
+      {
+        title:"二、③ 结构止损 / ④ 均线止损（EMA）", tags:[["trend","趋势"],["risk","风控"]],
+        body:`<h4>③ 结构止损（关键价位止损）</h4>
+        <p>结构止损的核心思想是：把止损放在一个「如果跌破，就说明我的交易逻辑错了」的位置。通常是前期低点、箱体底部、或者整理形态的下沿。</p>
+        <p>Nicolas Darvas 的箱体理论就是这个方法的经典代表。他发现股票在上涨过程中会形成一个个「箱体」—— 价格在一定范围内来回震荡。当价格向上突破箱体上限时买入，止损设在箱体底部。如果价格跌回箱体下方，说明突破失败，立刻离场。</p>
+        <p>实战案例：股票在 $95-$105 之间震荡形成箱体。突破 $105 时买入，止损设在 $94.50（箱体底部下方一点）。逻辑：如果跌破 $95 箱体底部 = 突破是假的，机构没有跟进 = 我的买入理由不成立了 = 走人。</p>
+        <p>Oliver Kell 的做法类似但更精细 —— 他会用「shelf」（平台）的低点作为止损。比如一只股票在突破前有一个为期 3-5 天的窄幅整理，这个整理的最低点就是天然的止损位。</p>
+        <h4>④ 均线止损（EMA 追踪）⭐ 推荐</h4>
+        <p>这是专业 swing trader 最常用的止损方法之一。核心思想是：只要股票还在关键均线上方运行，就继续持有；一旦收盘跌破均线，就离场。</p>
+        <p>最常用的是 10 日 EMA。更保守的用 20 日 EMA，更激进的用 5 日 EMA。Oliver Kell 的做法是用 10 EMA 下方 1% 作为追踪止损 —— 不是精确到 EMA 上就跑，而是给一点缓冲空间。各均线适用：5 EMA 极高灵敏度(日内/短线 scalp)；10 EMA 高灵敏度(Swing 5-20天，主力止损线)；20 EMA 中等(中线 2-8周)；50 SMA 低灵敏度(大趋势保护线)。</p>
+        <p>关键细节：EMA 止损看的是收盘价而不是盘中价。很多时候股票盘中会刺破均线然后拉回来，如果你用盘中价止损，会被频繁洗出去。Oliver Kell 的做法是在 3:59 PM 检查 —— 如果收盘价低于 10 EMA × 0.99，才触发止损。</p>
+        <div class="callout co-warn"><span class="ci">📥</span><div><strong>（原文续）⑤ 保本止损（Breakeven Stop）⑥ ⑦ + 动态止损系统 + 真实案例 —— 待补发截图。</strong></div></div>`,
+        source:"《止损的艺术》全文 · §2③④（待续）"
       },
     ]
   },
