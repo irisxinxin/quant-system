@@ -1035,7 +1035,7 @@ const CHAPTERS = [
   },
   {
     id:"edu-stops7", group:"Kova 教育", icon:"🛑", title:"七种止损方法（目录）",
-    intro:"专文《止损的艺术》(Apr 06 2026)。把所有止损方法系统梳理成 7 种 —— <strong>「没有最好的止损，只有最适合你当前交易风格的止损」</strong>。⭐ = 作者推荐。<span style='color:var(--text3)'>(本文较长，当前记录 1–4 种 + 引子；5–7 待补。)</span>",
+    intro:"专文《止损的艺术》(Apr 06 2026)。把所有止损方法系统梳理成 7 种 —— <strong>「没有最好的止损，只有最适合你当前交易风格的止损」</strong>，再串成「多阶段、只上移」的动态止损系统。⭐ = 作者推荐。<span style='color:var(--text3)'>(全文已完整记录。)</span>",
     cards:[
       {
         title:"引子 + 一、为什么止损是第一原则", tags:[["risk","风控"],["base","纪律"]],
@@ -1180,9 +1180,51 @@ const CHAPTERS = [
         </svg>
         <div class="vcp-cap">买入时止损最宽(ATR) → 随预期上涨不断提高(保本→EMA追踪) → 锁住大量利润；若一买不动/走坏，时间止损&派发日检查会在 ATR 触发前先把你踢出，损失更小。</div>
         </div>
-        <div class="callout co-key"><span class="ci">🧭</span><div><strong>这张图就是把全部 7 种止损整合成「一台机器」</strong> —— 和 🪜 Trailing 状态机(A→E) 是同一套东西的两种画法。这套<strong>多阶段、只上移</strong>的逻辑，正是我们止损面板和 Pine 指标要实现的核心。</div></div>
-        <div class="callout co-warn"><span class="ci">📥</span><div>第四部分「完整案例」($100 买入、14日ATR $5 …) 截图刚开头，等你补发后我填上从入场到离场的完整推演。</div></div>`,
-        source:"《止损的艺术》· §3（+§4 待续）"
+        <div class="callout co-key"><span class="ci">🧭</span><div><strong>这张图就是把全部 7 种止损整合成「一台机器」</strong> —— 和 🪜 Trailing 状态机(A→E) 是同一套东西的两种画法。这套<strong>多阶段、只上移</strong>的逻辑，正是我们止损面板和 Pine 指标要实现的核心。</div></div>`,
+        source:"《止损的艺术》· §3"
+      },
+      {
+        title:"四、完整案例：动态止损从入场到离场（$100→+28%）", tags:[["risk","风控"],["base","总纲"]],
+        body:`<p>$100 买入、14 日 ATR = $5，整套系统跑一遍：</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin:10px 0">
+          <tr style="color:var(--text2);font-size:10.5px"><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">节点</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">股价</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">事件</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">止损</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">状态</th></tr>
+          <tr><td style="padding:5px 7px">D1 开盘</td><td class="mono">$100</td><td style="color:var(--text2)">买入 100 股</td><td class="mono" style="color:#fcd9a0">$95 (-1ATR)</td><td style="color:var(--text2)">持仓</td></tr>
+          <tr><td style="padding:5px 7px">D1 盘中</td><td class="mono">$105</td><td style="color:var(--text2)">+1ATR 加仓50</td><td class="mono" style="color:#fcd9a0">$99.50 (-0.5%)</td><td style="color:var(--text2)">提止损</td></tr>
+          <tr><td style="padding:5px 7px">D2</td><td class="mono">$110</td><td style="color:var(--text2)">+2ATR 加仓25</td><td class="mono" style="color:#fcd9a0">$100.10 (+0.1%)</td><td style="color:#7ee8a0">保本</td></tr>
+          <tr><td style="padding:5px 7px">D3</td><td class="mono">$108</td><td style="color:var(--text2)">小幅回调</td><td class="mono" style="color:#fcd9a0">$100.10</td><td style="color:var(--text2)">不下调</td></tr>
+          <tr><td style="padding:5px 7px">D5</td><td class="mono">$115</td><td style="color:var(--text2)">涨超3%确认</td><td class="mono" style="color:#fcd9a0">$100.10</td><td style="color:#7ee8a0">已保本</td></tr>
+          <tr><td style="padding:5px 7px">D7</td><td class="mono">$122</td><td style="color:var(--text2)">EMA 追踪启动</td><td class="mono" style="color:#fcd9a0">$118.80 (10EMA×.99)</td><td style="color:var(--text2)">追踪</td></tr>
+          <tr><td style="padding:5px 7px">D10</td><td class="mono">$135</td><td style="color:var(--text2)">EMA 上移</td><td class="mono" style="color:#fcd9a0">$129.70</td><td style="color:var(--text2)">追踪</td></tr>
+          <tr><td style="padding:5px 7px">D12</td><td class="mono">$130</td><td style="color:var(--text2)">回调未触发</td><td class="mono" style="color:#fcd9a0">$129.70</td><td style="color:var(--text2)">持有</td></tr>
+          <tr><td style="padding:5px 7px">D15</td><td class="mono">$128</td><td style="color:var(--text2)">跌破止损</td><td class="mono">—</td><td style="color:#4ade80;font-weight:700">卖出 +28%</td></tr>
+        </table>
+        <div class="callout co-key"><span class="ci">🔑</span><div>节奏：从 <strong>-5% 初始止损</strong> → 逐步提到保本 → 最终 <strong>+29.7% 追踪止损</strong>。即使最后回调了，仍锁住 <strong>+28% 利润</strong>。这就是「多阶段、只上移」的威力。</div></div>`,
+        source:"《止损的艺术》· §4"
+      },
+      {
+        title:"五·六 · 止盈是硬币另一面 + 连续止损冷却机制", tags:[["risk","风控"]],
+        body:`<p><strong>五、止盈和止损是一枚硬币的两面</strong> —— 本质都是「<strong>什么时候退出一笔交易</strong>」。最有效：<strong>分批止盈 + 追踪止损组合</strong>，以 ATR 为刻度，每涨一定 ATR 卖一部分、同时提高剩余仓位止损（如 +2ATR 卖20%、+4ATR 卖25%… 最后 runner 跟 EMA）。</p>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>但 Monster Stock 要反过来想。</strong>Jim Roppel：「我在 Monster 上最大的遗憾不是亏损，而是仓位太轻。」→ 另一种做法：涨 +3ATR 只卖 50%，剩 50% 死跟 EMA 跑。NVDA $50→$500，留 10 股 vs 留 50 股差 5 倍。<strong>一笔 Monster 就能改变整个账户。</strong></div></div>
+        <p><strong>六、连续止损冷却机制</strong> —— 摧毁交易者的不是单次大亏，而是连续止损「失血」（连亏3次=15%回撤+心态崩）。</p>
+        <div class="callout co-formula"><span class="ci">❄</span><div>冷却规则：<strong>连续 3 笔被止损 → 强制暂停新开仓 5 个交易日</strong>。对比：无冷却 6 连亏总亏 $8,100；有冷却第3笔后暂停，总亏 $4,500。<br>Chris Flanders 用 <strong>5% 月度回撤规则</strong>：当月亏到账户 5% 就强制休息，回来用更小仓位。「市场永远在，你的资金不是。」</div></div>`,
+        source:"《止损的艺术》· §5+§6"
+      },
+      {
+        title:"七、七种止损方法 · 速查对比 + 写在最后", tags:[["base","总纲"]],
+        body:`<table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0">
+          <tr style="color:var(--text2);font-size:10.5px"><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">方法</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">原理</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">优点</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">缺点</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">适合谁</th></tr>
+          <tr><td style="padding:5px 7px;font-weight:600">固定百分比</td><td style="color:var(--text2)">跌 X% 就走</td><td style="color:var(--text2)">简单易执行</td><td style="color:var(--text2)">不顾波动率</td><td style="color:var(--text2)">新手/长线</td></tr>
+          <tr><td style="padding:5px 7px;font-weight:600">ATR 止损</td><td style="color:var(--text2)">N 倍波动率</td><td style="color:var(--text2)">适应个股</td><td style="color:var(--text2)">需计算</td><td style="color:var(--text2)">所有人</td></tr>
+          <tr><td style="padding:5px 7px;font-weight:600">结构止损</td><td style="color:var(--text2)">关键价位</td><td style="color:var(--text2)">逻辑清晰</td><td style="color:var(--text2)">需读图</td><td style="color:var(--text2)">技术交易者</td></tr>
+          <tr><td style="padding:5px 7px;font-weight:600">均线追踪</td><td style="color:var(--text2)">趋势跟随</td><td style="color:var(--text2)">自动锁利</td><td style="color:var(--text2)">滞后性</td><td style="color:var(--text2)">Swing trader</td></tr>
+          <tr><td style="padding:5px 7px;font-weight:600">保本止损</td><td style="color:var(--text2)">心理保护</td><td style="color:var(--text2)">消除焦虑</td><td style="color:var(--text2)">可能被洗</td><td style="color:var(--text2)">所有人</td></tr>
+          <tr><td style="padding:5px 7px;font-weight:600">时间止损</td><td style="color:var(--text2)">资金效率</td><td style="color:var(--text2)">不浪费机会成本</td><td style="color:var(--text2)">错过慢热股</td><td style="color:var(--text2)">活跃交易者</td></tr>
+          <tr><td style="padding:5px 7px;font-weight:600">派发日</td><td style="color:var(--text2)">量价行为</td><td style="color:var(--text2)">识别机构出货</td><td style="color:var(--text2)">偶尔假信号</td><td style="color:var(--text2)">中高级</td></tr>
+        </table>
+        <div class="callout co-key"><span class="ci">❝</span><div>「止损是什么？它只不过是你对自己的承诺 —— 如果价格到这个水平，你就出场。如果你不遵守对自己的承诺，你觉得你会遵守止损吗？」—— Chris Flanders</div></div>
+        <p>止损不是技术问题，是<strong>性格问题</strong>。建议：先从固定百分比练「到了就走、不犹豫」的肌肉记忆，能稳定执行后再升级 ATR + 动态系统。方法可慢慢进阶，<strong>纪律从第一天就不能妥协</strong>。</p>
+        <div class="callout co-key"><span class="ci">🎯</span><div>最后一句：<strong>止损不是亏损，止损是投资</strong> —— 是你为留在这个游戏里支付的成本。只要你还在牌桌上，下一笔 Monster Stock 就可能改变一切。<em>「交易中没有完美，只有纪律。」</em></div></div>`,
+        source:"《止损的艺术》· §7 + 写在最后"
       },
     ]
   },
@@ -1561,8 +1603,8 @@ const CHAPTERS = [
     ]
   },
   {
-    id:"art-stops7", group:"📄 原文全文", icon:"📄", title:"全文④《止损的艺术》（1–4种，待续）",
-    intro:"《止损的艺术：从理论到实战的完整框架》(Apr 06 2026) 中文原文全录；当前到第 4 种止损方法，5–7 待补。图解见 🛑 七种止损方法。",
+    id:"art-stops7", group:"📄 原文全文", icon:"📄", title:"全文④《止损的艺术》",
+    intro:"《止损的艺术：从理论到实战的完整框架》(Apr 06 2026) 中文原文全录（已完整：7 种方法 + 动态系统 + 案例 + 冷却机制）。图解见 🛑 七种止损方法。",
     cards:[
       {
         title:"引子 + 一、为什么止损是第一原则", tags:[["risk","风控"]],
@@ -1634,8 +1676,23 @@ const CHAPTERS = [
         <p>这个体系的精妙之处在于：你买入时的止损是最宽的（ATR 止损），随着股票按预期上涨，止损不断被提高 —— 先到保本，再到 EMA 追踪 —— 最终你的止损可能在入场价上方很远的位置，锁住了大量利润。而如果股票一买就不动或者走坏，时间止损和派发日检查会在 ATR 止损触发之前就把你踢出去，损失更小。</p>
         <h4>四、完整案例：一笔交易从入场到离场</h4>
         <p>用一个假设案例把整个系统串起来。假设我们以 $100 买入一只成长股，14日 ATR = $5。</p>
-        <div class="callout co-warn"><span class="ci">📥</span><div><strong>（此案例截图刚开头，从入场到离场的完整推演待补发。）</strong></div></div>`,
-        source:"《止损的艺术》全文 · §3+§4（开头）"
+        <p>Day 1 开盘 $100 买入 100 股，止损 $95(-1ATR)；Day 1 盘中 $105 涨+1ATR 加仓 50 股，止损提 $99.50(-0.5%)；Day 2 $110 涨+2ATR 加仓 25 股，止损 $100.10(+0.1% 保本)；Day 3 $108 小幅回调不动，止损 $100.10 不下调；Day 5 $115 涨超 3% 确认保本；Day 7 $122 EMA 追踪启动，止损 $118.80(10EMA×0.99)；Day 10 $135 EMA 上移，止损 $129.70；Day 12 $130 回调但 EMA 止损 $129.70 未触发，继续持有；Day 15 $128 跌破止损 $129.70，<strong>卖出 +28%</strong>。</p>
+        <p>注意看这笔交易的节奏：从 -5% 的初始止损，逐步提高到保本，再到最终 +29.7% 的追踪止损位。即使股票最终回调了，我们仍然锁住了 +28% 的利润。</p>
+        <h4>五、止盈和止损是一枚硬币的两面</h4>
+        <p>很多人把止损和止盈看作两件事，但它们本质上是同一个问题的两面：什么时候退出一笔交易。最有效的做法是分批止盈 + 追踪止损组合使用。以 ATR 为刻度尺，股票每涨一定的 ATR 幅度，就卖掉一部分，同时提高剩余仓位的止损。（例：+2ATR 卖20%/止损提入场+1%；+4ATR 卖25%/+5%；+6ATR 卖25%/+10%；+8ATR 卖20%；回调触发 EMA 卖掉 runner，累计锁利 $2,500。）</p>
+        <p>但对 Monster Stock 要反过来想。Jim Roppel 说过：「我在 Monster Stock 上最大的遗憾不是亏损，而是仓位太轻。如果你每三年抓到一只，用 18% 的仓位，你还需要什么？」所以另一种做法是：涨到 +3 ATR 只卖 50%，剩 50% 跟 EMA 跑。NVDA 从 $50 涨到 $500，留 10 股 vs 留 50 股，差距是 5 倍。一笔 Monster 就能改变整个账户。</p>
+        <h4>六、连续止损怎么办？冷却机制</h4>
+        <p>最容易摧毁交易者的不是单次大亏损，而是连续止损导致的「失血」。市场不好的时候，你可能买一只被止损、再买一只又被止损、再买又被止损 —— 每次亏 5%，三次下来就是 15% 的回撤，而且你的心态已经完全崩了。</p>
+        <p>解决方案是建立一个冷却机制：连续 3 笔被止损后，强制暂停新开仓 5 个交易日。（对比：无冷却 6 连亏总亏 $8,100；有冷却第 3 笔后暂停 5 天再恢复，总亏 $4,500。）Chris Flanders 用的是 5% 月度回撤规则 —— 当月亏损达到账户 5% 时，强制休息，回来后用更小仓位交易。这不是懦弱，这是生存策略。市场永远在那里，你的资金不是。</p>
+        <h4>七、各种止损方法速查对比</h4>
+        <p>固定百分比(跌X%就走/简单/不顾波动/新手·长线)；ATR(N倍波动/适应个股/需计算/所有人)；结构(关键价位/逻辑清晰/需读图/技术派)；均线追踪(趋势跟随/自动锁利/滞后/Swing)；保本(心理保护/消除焦虑/可能被洗/所有人)；时间(资金效率/不浪费机会成本/错过慢热股/活跃)；派发日(量价/识别机构出货/偶尔假信号/中高级)。</p>
+        <h4>写在最后</h4>
+        <p>「止损是什么？它只不过是你对自己的承诺 —— 如果价格到这个水平，你就出场。如果你不遵守对自己的承诺，你觉得你会遵守止损吗？」—— Chris Flanders</p>
+        <p>止损不是一个技术问题，它是一个性格问题。纪律好的人、守信用的人，在交易中也会守住止损。反过来，总是「再等等、可能会反弹」的人，你给他再好的止损方法他也会找理由不执行。</p>
+        <p>我的建议是：先从固定百分比止损开始，练习「到了就走、不犹豫」的肌肉记忆。等你能做到每次都执行了，再升级到 ATR 止损和动态系统。方法可以慢慢进阶，但纪律从第一天就不能妥协。</p>
+        <p>最后一句话：<strong>止损不是亏损，止损是投资。</strong>它是你为留在这个游戏里而支付的成本。只要你还在牌桌上，下一笔 Monster Stock 就可能改变一切。</p>
+        <p style="color:var(--text2)"><em>—— 交易中没有完美，只有纪律 ——</em></p>`,
+        source:"《止损的艺术》全文 · §3+§4+§5+§6+§7+结语"
       },
     ]
   },
