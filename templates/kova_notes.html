@@ -788,6 +788,153 @@ const CHAPTERS = [
     ]
   },
   {
+    id:"edu-pyramid", group:"Kova 教育", icon:"🔺", title:"加仓 · 仓位管理（深度）",
+    intro:"专文《加仓方法》(Apr 02 2026)。核心金句：<strong>「Price will hurt you, but size will kill you（价格只让你受伤，仓位会要你的命）」</strong>。决定你最终赚多少的不是买什么，而是买多少、怎么加、何时收。",
+    cards:[
+      {
+        title:"核心铁律 · 金字塔（底大上小）vs 倒金字塔", tags:[["risk","风控"],["mom","动量"]],
+        body:`<p>想象埃及金字塔：底部最宽最重，往上逐层收窄变轻。仓位必须如此 —— <strong>第一注最大，第二注缩小，第三注最小</strong>。</p>
+        <div class="callout co-warn"><span class="ci">⛔</span><div><strong>铁律：后一注绝对不能大于前一注。</strong>这不是建议，是生死线。</div></div>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 740 312" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <text x="190" y="28" text-anchor="middle" font-size="13" fill="#4ade80" font-weight="700">正确 · 金字塔（底大上小）</text>
+          <text x="550" y="28" text-anchor="middle" font-size="13" fill="#f87171" font-weight="700">错误 · 倒金字塔（越涨越多）</text>
+          <!-- 左：金字塔 -->
+          <rect x="130" y="46" width="120" height="26" rx="3" fill="#4ade80" opacity="0.4"/>
+          <text x="190" y="64" text-anchor="middle" font-size="11" fill="#06210f" font-weight="700">第三注 5万 @$60</text>
+          <rect x="100" y="76" width="180" height="26" rx="3" fill="#4ade80" opacity="0.6"/>
+          <text x="190" y="94" text-anchor="middle" font-size="11" fill="#06210f" font-weight="700">第二注 7.5万 @$55</text>
+          <rect x="70" y="106" width="240" height="26" rx="3" fill="#4ade80" opacity="0.85"/>
+          <text x="190" y="124" text-anchor="middle" font-size="11" fill="#06210f" font-weight="700">第一注 10万 @$50</text>
+          <rect x="55" y="150" width="270" height="120" rx="8" fill="rgba(74,222,128,.08)" stroke="rgba(74,222,128,.3)"/>
+          <text x="70" y="176" font-size="12" fill="#9ba6b4">平均成本 <tspan fill="#e6edf3" font-weight="700">$53.61</tspan>（上移 +7.2%）</text>
+          <text x="70" y="202" font-size="12" fill="#9ba6b4">$60 → 回调10%到$54</text>
+          <text x="70" y="226" font-size="12.5" fill="#7ee8a0" font-weight="700">仍有利润 ✓</text>
+          <text x="190" y="256" text-anchor="middle" font-size="16" fill="#4ade80" font-weight="800">✅ 安全</text>
+          <!-- VS -->
+          <text x="370" y="150" text-anchor="middle" font-size="15" fill="#6b7585" font-weight="700">VS</text>
+          <!-- 右：倒金字塔 -->
+          <rect x="430" y="46" width="240" height="26" rx="3" fill="#f87171" opacity="0.85"/>
+          <text x="550" y="64" text-anchor="middle" font-size="11" fill="#2a0a0a" font-weight="700">第三注 10万 @$60</text>
+          <rect x="460" y="76" width="180" height="26" rx="3" fill="#f87171" opacity="0.6"/>
+          <text x="550" y="94" text-anchor="middle" font-size="11" fill="#2a0a0a" font-weight="700">第二注 7.5万 @$55</text>
+          <rect x="490" y="106" width="120" height="26" rx="3" fill="#f87171" opacity="0.4"/>
+          <text x="550" y="124" text-anchor="middle" font-size="11" fill="#2a0a0a" font-weight="700">第一注 5万 @$50</text>
+          <rect x="415" y="150" width="270" height="120" rx="8" fill="rgba(248,113,113,.08)" stroke="rgba(248,113,113,.3)"/>
+          <text x="430" y="176" font-size="12" fill="#9ba6b4">平均成本 <tspan fill="#e6edf3" font-weight="700">$55.83</tspan>（上移 +11.7%）</text>
+          <text x="430" y="202" font-size="12" fill="#9ba6b4">$60 → 回调8.3%到$55</text>
+          <text x="430" y="226" font-size="12.5" fill="#fbb6b6" font-weight="700">已经亏钱 ✗</text>
+          <text x="550" y="256" text-anchor="middle" font-size="16" fill="#f87171" font-weight="800">⛔ 致命</text>
+        </svg>
+        <div class="vcp-cap">同样的股票、同样的买入价，<strong>仅注码顺序不同</strong> → 一个安全、一个致命。</div>
+        </div>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>我的思考：</strong>本质是「成本上移幅度」决定安全垫。底大上小让平均成本只上移 7.2%；倒金字塔上移 11.7%，一次正常回调就转亏。这也是为什么有<strong>「加完成本上移 &gt; 8% 就必须砍注码」</strong>这条判据（见下卡）。</div></div>`,
+        source:"《加仓方法》· Apr 02 2026 · §1"
+      },
+      {
+        title:"注码分配 + 均等 vs 递减（>8% 必砍）", tags:[["risk","风控"]],
+        body:`<h4>起始仓位（第一注）= 总资金 5–10%</h4>
+        <p>取决于止损宽度：<strong>止损窄(3–4%)可以到 8–10%；止损宽(7–8%)应压到 3–5%</strong>。</p>
+        <h4>成熟交易者的加仓路径</h4>
+        <ul>
+          <li><strong>第一注 8–10%</strong>：突破买点 / 盈利跳空当天</li>
+          <li><strong>第二注 5–6%</strong>：3–5 天 tight 后突破，或第一个小旗形</li>
+          <li><strong>第三注 2–3%</strong>：更高的支撑位确认（如 10 日线 bounce）</li>
+          <li>合计 <strong>15–18%</strong> 的总账户敞口</li>
+        </ul>
+        <h4>均等注码 vs 递减注码</h4>
+        <p>不是所有情况都递减，关键看<strong>第二注离第一注多远</strong>：</p>
+        <ul>
+          <li><strong>均等</strong>：加仓点贴近原始成本（如 $50 买、$54–55 就出信号，涨 8–10%）→ 平均成本只上移 4–5%，安全垫足，可均等。</li>
+          <li><strong>递减</strong>：加仓点远离原始成本（如 $50 买、$65–70 才出信号，涨 30–40%）→ 必须递减，否则平均成本被拉高十几个点，一次正常回调抹掉全部利润。</li>
+        </ul>
+        <div class="callout co-formula"><span class="ci">⚖</span><div>判据：加完仓后算<strong>平均成本上移了多少</strong>。<strong>&gt; 8% → 注码必须砍（递减）</strong>。</div></div>`,
+        source:"《加仓方法》· §1"
+      },
+      {
+        title:"三个合法加仓买点", tags:[["trend","趋势"],["vol","量能"]],
+        body:`<p>不是股票在涨就能加，只有三种情况值得加仓：</p>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 740 330" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <!-- ① Tight Action -->
+          <rect x="20" y="12" width="700" height="94" rx="10" fill="rgba(46,125,82,.14)" stroke="rgba(46,125,82,.5)"/>
+          <text x="36" y="40" font-size="13.5" fill="#7ee8a0" font-weight="700">① 突破后紧缩 Tight Action</text>
+          <text x="36" y="66" font-size="12" fill="#9ba6b4">日波幅收窄到 1–2% + 量缩（消化获利盘）</text>
+          <text x="36" y="88" font-size="12" fill="#9ba6b4">→ 重新突破时加仓 5%（⚠ 约半数会失败）</text>
+          <polyline points="410,82 450,58 480,50 505,48 555,47 590,48 610,46 668,22" fill="none" stroke="#7ee8a0" stroke-width="2"/>
+          <circle cx="610" cy="46" r="4.5" fill="#7ee8a0"/>
+          <!-- ② Tennis Ball -->
+          <rect x="20" y="118" width="700" height="94" rx="10" fill="rgba(47,109,168,.14)" stroke="rgba(47,109,168,.5)"/>
+          <text x="36" y="146" font-size="13.5" fill="#8ec5ff" font-weight="700">② 网球反弹 Tennis Ball</text>
+          <text x="36" y="172" font-size="12" fill="#9ba6b4">上涨中回调 8–12% 到 21/50 日线</text>
+          <text x="36" y="194" font-size="12" fill="#9ba6b4">→ 几天内快速弹回、破前高时加仓</text>
+          <polyline points="410,190 450,160 482,152 522,188 560,162 612,134" fill="none" stroke="#8ec5ff" stroke-width="2"/>
+          <circle cx="612" cy="134" r="4.5" fill="#8ec5ff"/>
+          <!-- ③ Gap Consolidation -->
+          <rect x="20" y="224" width="700" height="94" rx="10" fill="rgba(176,122,46,.14)" stroke="rgba(176,122,46,.5)"/>
+          <text x="36" y="252" font-size="13.5" fill="#e0b462" font-weight="700">③ 盈利跳空消化 Gap Consolidation</text>
+          <text x="36" y="278" font-size="12" fill="#9ba6b4">跳空后 3–10 天横盘不跌 → 突破消化区加仓</text>
+          <text x="36" y="300" font-size="12" fill="#fbb6b6">⚠ 若收在日线下 1/4 = 减仓信号，不是加仓</text>
+          <polyline points="410,300 442,300 442,266 458,266 545,266 600,266 620,266 668,246" fill="none" stroke="#e0b462" stroke-width="2"/>
+          <line x1="442" y1="300" x2="442" y2="266" stroke="#e0b462" stroke-width="2" stroke-dasharray="3 3"/>
+          <circle cx="620" cy="266" r="4.5" fill="#e0b462"/>
+        </svg>
+        <div class="vcp-cap">三种合法加仓形态：突破后紧缩 / 回踩均线快速反弹 / 跳空后横盘消化。</div>
+        </div>`,
+        source:"《加仓方法》· §2"
+      },
+      {
+        title:"网球行为 = 加仓　vs　鸡蛋行为 = 离场", tags:[["mom","动量"],["risk","风控"]],
+        body:`<p>同样是回调，<strong>怎么弹</strong>决定加仓还是离场：</p>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 740 250" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <!-- 左 网球 -->
+          <rect x="20" y="14" width="345" height="222" rx="10" fill="rgba(46,125,82,.12)" stroke="rgba(46,125,82,.5)"/>
+          <text x="192" y="42" text-anchor="middle" font-size="14" fill="#7ee8a0" font-weight="700">🎾 网球行为 = 加仓</text>
+          <polyline points="50,120 130,78 175,118 250,62" fill="none" stroke="#7ee8a0" stroke-width="2.4"/>
+          <line x1="120" y1="74" x2="270" y2="74" stroke="#4a5568" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="86" y="68" font-size="10.5" fill="#9ba6b4">前高</text>
+          <text x="180" y="135" font-size="10.5" fill="#9ba6b4">缓跌 -10%</text>
+          <text x="218" y="62" font-size="10.5" fill="#7ee8a0">破前高=加仓</text>
+          <text x="192" y="170" text-anchor="middle" font-size="10.5" fill="#9ba6b4">1-2周收复 · 反弹力度&gt;下跌</text>
+          <text x="192" y="190" text-anchor="middle" font-size="10.5" fill="#9ba6b4">成交量反弹时放大</text>
+          <text x="192" y="218" text-anchor="middle" font-size="12" fill="#7ee8a0" font-weight="700">→ 果断加仓 / 买回</text>
+          <!-- 右 鸡蛋 -->
+          <rect x="375" y="14" width="345" height="222" rx="10" fill="rgba(160,40,40,.12)" stroke="rgba(160,40,40,.5)"/>
+          <text x="547" y="42" text-anchor="middle" font-size="14" fill="#f87171" font-weight="700">🥚 鸡蛋行为 = 离场</text>
+          <polyline points="405,80 470,62 510,108 545,92 590,140 625,120 670,178" fill="none" stroke="#f87171" stroke-width="2.4"/>
+          <line x1="460" y1="58" x2="690" y2="58" stroke="#4a5568" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="430" y="52" font-size="10.5" fill="#9ba6b4">前高</text>
+          <text x="556" y="86" font-size="10.5" fill="#f8a5a5">反弹无力</text>
+          <text x="632" y="114" font-size="10.5" fill="#f8a5a5">越弹越低</text>
+          <text x="547" y="190" text-anchor="middle" font-size="10.5" fill="#9ba6b4">lower highs 不断 · 跌时放量涨缩量</text>
+          <text x="547" y="218" text-anchor="middle" font-size="12" fill="#f87171" font-weight="700">→ 立即减仓 / 清仓</text>
+        </svg>
+        <div class="vcp-cap">网球：缓跌后快速弹回破前高（反弹力度&gt;下跌、量放大）→ 加仓；鸡蛋：lower highs 不断、越弹越低 → 离场。</div>
+        </div>`,
+        source:"《加仓方法》· §2/§3"
+      },
+      {
+        title:"低风险敞口也能赚大钱（回测 A/B）+ 完整加仓案例", tags:[["risk","风控"],["base","总纲"]],
+        body:`<p>很多人觉得不满仓就赚不到钱 —— 这是最大的误解。作者的回测：</p>
+        <ul>
+          <li><strong>方案 A 极保守</strong>：总敞口仅 10%（90% 永远现金），每次只拿 10% 进一只票，平均赢 12%/亏 6%、胜率 40%，年约 130 笔 → <strong>年回报 40%</strong></li>
+          <li><strong>方案 B 稳健</strong>：单笔 25%、现金 75%，同样赢12/亏6/胜率40%，年约 54 笔 → <strong>年回报 40%</strong></li>
+        </ul>
+        <div class="callout co-key"><span class="ci">🔑</span><div>两种敞口截然不同，<strong>年回报都是 40%</strong> —— 说明赚钱靠的是<strong>「胜率×盈亏比×执行次数」的复利</strong>，不是满仓。低敞口反而让你在烂行情里活下来。</div></div>
+        <h4>完整加仓案例（总敞口仅 16%）</h4>
+        <ul>
+          <li><strong>第一注 8%</strong>：cup&amp;handle 突破 @$80.50，止损 $76.50(-5%)，最大风险仅占账户 0.4%</li>
+          <li><strong>第二注 5%</strong>：3天后 tight action 突破 @$84(+4.3%)，新均成本 $81.84，止损上移 $79</li>
+          <li><strong>第三注 3%</strong>：两周后 50日线反弹 @$92(+15%)，新均成本 $83.72，止损上移 $87（<strong>锁定利润</strong>）</li>
+        </ul>
+        <div class="callout co-formula"><span class="ci">∑</span><div>总仓 1,914 股 · 敞口 16% · 均成本 $83.72 · 止损 $87　→　涨到 $130 = <strong>+88,000（+8.8% 账户）</strong>；跌到 $83 ≈ 打平（金字塔保护了你）。一年抓 3–4 笔 = 30–40% 年回报。</div></div>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>我的思考：</strong>注意第三注后<strong>止损已上移到 $87 &gt; 均成本 $83.72</strong> —— 这就是「加仓 + trailing」的合体：每加一注、止损同步上移到锁定利润。完全自洽于 🪜 Trailing 状态机。</div></div>`,
+        source:"《加仓方法》· §4"
+      },
+    ]
+  },
+  {
     id:"edu-indicator", group:"Kova 教育", icon:"🎛️", title:"指标用法说明",
     intro:"Kova 各指标(Kova Score / 健康度 / 量能配色 / 震荡器)的官方解释与参数设置。",
     cards:[]
@@ -1053,6 +1200,65 @@ const CHAPTERS = [
         <p><strong>这 10 分钟，就是 +30% 和 +130% 之间的差距。</strong></p>
         <p style="color:var(--text2)">—— Kova</p>`,
         source:"《如何正确上抬止损》全文 · §3+§4+结语"
+      },
+    ]
+  },
+  {
+    id:"art-pyramid", group:"📄 原文全文", icon:"📄", title:"全文③《加仓方法》",
+    intro:"《加仓方法》(Apr 02 2026) 中文原文全录、不简化；图解见 🔺 加仓·仓位管理（深度）。",
+    cards:[
+      {
+        title:"引子 + 一、金字塔加仓法：核心铁律", tags:[["risk","风控"]],
+        body:`<p style="color:var(--text2);font-size:13px"><em>作者 KOVA INVESTMENT RESEARCH 动量交易 · Apr 02 2026 · PAID</em></p>
+        <p><strong>金字塔加仓与进阶持仓管理。</strong></p>
+        <p>「Price will hurt you, but size will kill you.（价格只会让你受伤，仓位会要你的命。）」</p>
+        <p>你已经学会了如何选股、如何找买点。但真正决定你最终赚多少钱的，不是你买了什么，而是你买了多少、怎么加、何时收。</p>
+        <p>今天我们要解决一个核心问题：一只你看对了的股票，如何通过加仓把收益最大化，同时不让自己暴露在致命风险中？答案就是金字塔加仓法。</p>
+        <h4>一、金字塔加仓法：核心铁律</h4>
+        <p>想象一座埃及金字塔：底部最宽、最重，往上逐层收窄、变轻。你的仓位也必须如此 —— 第一注最大，第二注缩小，第三注最小。</p>
+        <p><strong>铁律：后一注绝对不能大于前一注。这不是建议，这是生死线。</strong></p>
+        <p>数学很残酷。假设你有 100 万资金，买了一只 $50 的股票：</p>
+        <p><strong>正确做法（金字塔）：</strong>第一注 10万 @ $50，均成本 $50.00 → 第二注 7.5万 @ $55，均成本 $52.08（+4.2%）→ 第三注 5万 @ $60，均成本 $53.61（+7.2%）。平均成本只上移 7.2%，就算股票从 $60 回调到 $54（跌10%），你仍然有利润。</p>
+        <p><strong>错误做法（倒金字塔，越涨买越多）：</strong>第一注 5万 @ $50 → 第二注 7.5万 @ $55，均成本 $52.87（+5.7%）→ 第三注 10万 @ $60，均成本 $55.83（+11.7%）。平均成本被拉高到 $55.83，股价只要从 $60 回调到 $55（跌8.3%），你就已经亏钱了。</p>
+        <p>同样的股票、同样的买入价格，仅仅因为注码顺序不同，一个安全、一个致命。</p>
+        <h4>怎么分配注码？</h4>
+        <p>起始仓位（第一注）：总资金的 5–10%。取决于止损宽度 —— 止损窄（3–4%）可以到 8–10%，止损宽（7–8%）应该压到 3–5%。</p>
+        <p>一个成熟交易者的加仓路径：第一注 8–10%（突破买点 / 盈利跳空当天）；第二注 5–6%（3–5天 tight 后突破，或第一个小旗形）；第三注 2–3%（更高的支撑位确认，如 10 日线 bounce）。合计 15–18% 的总账户敞口。</p>
+        <h4>均等注码 vs 递减注码</h4>
+        <p>不是所有情况都用递减。关键取决于第二注的价格离第一注有多远。</p>
+        <p><strong>均等注码</strong>适用于加仓点贴近原始成本：第一注 $50、股票只涨到 $54–55 就出加仓信号（涨幅 8–10%），均等可以，因为平均成本只上移 4–5%，安全垫依然充足。</p>
+        <p><strong>递减注码</strong>适用于加仓点远离原始成本：第一注 $50、股票涨到 $65–70 才出信号（涨幅 30–40%），必须递减，否则平均成本会被拉高十几个百分点，一次正常回调就能把全部利润抹掉。</p>
+        <p>判断标准很简单：算一下加完仓后平均成本上移了多少。<strong>超过 8%，注码必须砍。</strong></p>`,
+        source:"《加仓方法》全文 · 引子+§1"
+      },
+      {
+        title:"二、加仓的三个合法买点 + 网球 vs 鸡蛋", tags:[["trend","趋势"],["vol","量能"]],
+        body:`<p>不是股票在涨就能加。只有三种情况值得加仓：</p>
+        <h4>买点一：突破后的紧缩（Tight Action After Breakout）</h4>
+        <p>股票突破形态后，在 3–7 天内出现价格紧缩（日波幅收窄到 1–2%），成交量萎缩，这是消化获利盘的信号。当它重新向上突破这个小范围时，加仓。</p>
+        <p>但要注意：这类形态大约有一半会失败。所以只加 5% 左右的仓位，不要为了一个短线消化形态赌上全部筹码。</p>
+        <h4>买点二：网球反弹（Tennis Ball Bounce）</h4>
+        <p>股票在上涨趋势中回调到支撑位（21日/50日均线），然后像网球一样快速弹回 —— 几天内收复全部跌幅，并创出新高。</p>
+        <h4>网球行为 = 加仓　vs　鸡蛋行为 = 离场</h4>
+        <p><strong>网球行为（加仓）：</strong>前高 → 缓跌 -10% → 快速反弹破前高 = 加仓。特征：1–2 周收复失地、反弹力度 &gt; 下跌力度、成交量反弹时放大 → 果断加仓 / 买回。</p>
+        <p><strong>鸡蛋行为（离场）：</strong>前高 → 反弹无力 → 越弹越低。特征：lower highs 不断、跌时放量涨时缩量 → 立即减仓 / 清仓。</p>
+        <h4>买点三：盈利跳空消化（Gap Consolidation）</h4>
+        <p>跳空高开后 3–10 天横盘不跌 → 突破消化区间时加仓。<strong>⚠ 如果收在日线下 1/4 = 减仓信号，不是加仓。</strong></p>`,
+        source:"《加仓方法》全文 · §2/§3"
+      },
+      {
+        title:"四、低风险敞口也能赚大钱 + 完整加仓案例", tags:[["risk","风控"],["base","总纲"]],
+        body:`<h4>完整加仓案例（cup &amp; handle）</h4>
+        <p><strong>第一注（初始建仓）：</strong>cup&amp;handle 突破，买入 8万（8%）@ $80.50，993 股，止损 $76.50（-5%），最大风险 4,000 元（仅 0.4% 账户）。仓位 8%，成本 $80.50。</p>
+        <p><strong>第二注：</strong>3 天后 tight action 突破，当前 $84.00（+4.3%），买入 5万（5%），+595 股，新均成本 $81.84（上移 +1.7%），止损上移至 $79。仓位 13%。</p>
+        <p><strong>第三注：</strong>两周后 50 日线反弹，当前 $92.00（+15%），买入 3万（3%），+326 股，新均成本 $83.72（上移 +4.0%），止损上移至 $87（锁定利润）。仓位 16%。</p>
+        <p><strong>合计：</strong>总仓 1,914 股 · 敞口 16% · 均成本 $83.72 · 止损 $87。涨到 $130 = +88,000 元（占总账户 +8.8%）；跌到 $83 ≈ 打平 —— 金字塔保护了你。一年抓 3–4 笔这样的交易 = 30–40% 年回报。</p>
+        <h4>低风险敞口也能赚大钱</h4>
+        <p>很多人觉得不满仓就赚不到钱。这是最大的误解。我之前做过一个回测模型，结论让我自己都吃惊：</p>
+        <p><strong>方案 A（极保守型）：</strong>总敞口仅 10%（90% 永远是现金），每次只拿总资金的 10% 进一只股票，平均赢 12%、平均亏 6%、胜率 40%，一年约 130 笔（月均 11 笔）→ 年回报 40%。</p>
+        <p><strong>方案 B（稳健型）：</strong>现金 75%、单笔 25%，同样赢 12/亏 6/胜率 40%，年约 54 笔 → 年回报 40%。</p>
+        <p>两种敞口截然不同，年回报都是 40% —— 赚钱靠的是「胜率 × 盈亏比 × 执行次数」的复利，不是满仓。</p>`,
+        source:"《加仓方法》全文 · §4"
       },
     ]
   },
