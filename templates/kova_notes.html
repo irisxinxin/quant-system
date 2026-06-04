@@ -1698,7 +1698,7 @@ const CHAPTERS = [
   },
   {
     id:"rpt-avgo-0604", group:"📊 盘后解读 (Trading Reports)", icon:"📊", title:"AVGO 盘后 −12%：跌的是预期，不是基本面",
-    intro:"《AVGO 今晚跌的不是基本面，是预期》(Jun 04 2026)。「Broadcom didn't miss — the bar did.」<strong>直接关系到你的持仓 MRVL</strong>(被点名为 read-across 承压最大)。<span style='color:var(--text3)'>(记录到第 4 节开头，后续待补。)</span>",
+    intro:"《AVGO 今晚跌的不是基本面，是预期》(Jun 04 2026)。「The company didn't miss. The price did.」<strong>直接关系到你的持仓 MRVL</strong>(被点名为 read-across 承压最大)。含财报记分牌、四剧本概率加权、持仓 playbook。",
     cards:[
       {
         title:"核心论点 + 💭 与你持仓的关系", tags:[["risk","风控"],["base","盘后"]],
@@ -1775,10 +1775,40 @@ const CHAPTERS = [
         source:"《AVGO 盘后》· §3"
       },
       {
-        title:"四、历史会押韵：「强财报、弱股价」不是第一次（待续）", tags:[["base","盘后"]],
-        body:`<p>这不是 AI 时代第一次「好财报、坏股价」。最完美的样本是 <strong>Nvidia</strong>：据 The Motley Fool，截至今年 5 月，NVDA 已连续多个季度在 <strong>beat-and-raise 之后股价收跌</strong>。原因和今晚的 AVGO 同构 —— 股价提前把完美预期 price 进去，再好的财报也只是兑现。</p>
-        <div class="callout co-warn"><span class="ci">📥</span><div><strong>本文记录到第 4 节开头。</strong>后面「两个有据可查的样本」+ 持仓处理建议 + 明早 9:30 EST 会员直播相关，等你补发截图我接着填。</div></div>`,
-        source:"《AVGO 盘后》· §4（待续）"
+        title:"四、历史会押韵：「强财报、弱股价」不是第一次", tags:[["base","盘后"],["trend","趋势"]],
+        body:`<p>这不是 AI 时代第一次「好财报、坏股价」。最完美的样本是 <strong>Nvidia</strong>（据 The Motley Fool，截至今年 5 月已连续多季 beat-and-raise 后收跌）：</p>
+        <ul>
+          <li><strong>2024/11/20（Q3 FY25）：</strong>营收 $35.1B +94%、EPS $0.81，但毛利率从 75.7% 微降到 75.0%、环比增速放缓，指引高于共识 —— <strong>照样盘后跌 ~2.5%</strong>。和今晚 AVGO 对得上：beat、guide 过线，但<strong>减速 + 不上限</strong>就够了。</li>
+          <li><strong>2025/8/27（Q2 FY26）：</strong>营收 $46.7B +56%，盘后跌 ~3%。</li>
+        </ul>
+        <p><strong>之后呢？</strong>这些「强财报弱股价」的回调，事后看<strong>绝大多数是 consolidation，不是 top</strong> —— NVDA 基本面没断，股价最终都收复，并在 2026/5/14 创下 $235.74 新高。但不骗你：这条路上有真正的 drawdown（如今年 1 月底 DeepSeek 那次，基本面被质疑的独立事件，那一下是真跌）。</p>
+        <div class="callout co-key"><span class="ci">🔑</span><div><strong>规律是条件化的：当 fundamental 还在，盘后急跌更接近震仓；当 fundamental 真的裂开，同样一根 K 线就是顶部第一根。</strong>两者长得一模一样，区别只在「需求叙事有没有被打破」。反面极端样本 = Cisco（2000/3 全球市值最高、财报一直 beat，然后见顶再没回来 —— 那次 capex 故事是真的破了）。</div></div>
+        <p>所以分叉问题：<strong>多头说</strong> Hock Tan guidance 一向保守，$100B 不上调只是惯性 sandbag、需求全绿 = 健康洗盘；<strong>空头说</strong> 94 倍 forward P/E、内部人在卖、$100B 第一次没上调、AI 指引低于共识 = custom ASIC 行情第一个「上限信号」。两个都成立 —— <strong>谁对，由明天开始的量能告诉你，不由今晚的情绪。</strong></p>`,
+        source:"《AVGO 盘后》· §4"
+      },
+      {
+        title:"五、完整 playbook（持有怎么办 + read-across 筛选）", tags:[["risk","风控"],["base","盘后"]],
+        body:`<h4>第一：持有 AVGO 的人，今晚什么都别做</h4>
+        <p>盘后/盘前流动性极薄，−13% 收窄到 −5% 更像<strong>恐慌定价</strong>，不是真实定价。真正算数的是明天 cash session 的开盘量能。在盘后 panic 里砍仓，很容易把 NVDA 那几次「事后看应该拿住」的回调，亲手变成你账户里那次「事后看不该卖」。</p>
+        <div class="callout co-key"><span class="ci">🎯</span><div>原则（和 5 月卖美光那次一样）：<strong>不猜顶。把 stop loss 收紧，让 party 继续开 —— 除非价格跌破你画的 trend line 且伴随放量。</strong>（美光那次是 130% 浮盈 + 高位放量出货才主动离场；AVGO 这次是别人财报砸的盘后噪音，性质完全不同 —— 一根长下影是流动性被抽走，不是 trend line 被破。）若有可观浮盈又怕回吐：正确动作不是「全卖」，是 <strong>free trade</strong>（卖一部分把成本拿回、剩下零成本持有）。</div></div>
+        <h4>第二：read-across 那些票（MRVL、AI 网络与电源链）用这两条筛</h4>
+        <div class="callout co-formula"><span class="ci">✓</span><div>① <strong>跌破关键 EMA(21/50)</strong>（中期趋势被破坏）　AND　② <strong>下跌伴随放量</strong>（机构在卖，不是散户）<br>→ <strong>两条同时成立 = 这票本来就弱、AVGO 只是给了下跌借口 = 该砍。</strong><br>→ 都不成立 = 更像被母叙事拖累的强势票回踩 = noise，等价量继续恶化才升级成真风险，不是现在。</div></div>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>对你的实操：</strong>今晚就拿这两条把手里每只 AI 芯片票（MRVL/ARM/ALAB/NBIS…）过一遍 —— 配合 <a href="#" onclick="return false" style="color:var(--accent2)">/stops 面板</a>看是否跌破 EMA + 量能。「牛市的 regret 是少赚一点；被盘后噪音吓下车的 regret，是看着它收复后再也追不回来。」</div></div>`,
+        source:"《AVGO 盘后》· §5"
+      },
+      {
+        title:"六、接下来几周的四个剧本（概率加权）⭐", tags:[["risk","风控"],["trend","趋势"]],
+        body:`<p><strong>先认触发条件，再认概率（Trigger first, probability second）。</strong>概率基于 NVDA 历史 base rate + 当前盘面，非确定性预测：</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin:10px 0">
+          <tr style="color:var(--text2);font-size:10.5px"><th style="text-align:left;padding:6px 7px;border-bottom:1px solid var(--border)">剧本</th><th style="text-align:left;padding:6px 7px;border-bottom:1px solid var(--border)">触发条件</th><th style="text-align:left;padding:6px 7px;border-bottom:1px solid var(--border)">应对</th></tr>
+          <tr><td style="padding:7px 7px;vertical-align:top"><span style="color:#4ade80;font-weight:700">Super Bull</span><br><span style="color:#4ade80">10%</span><div style="height:3px;width:30px;background:#4ade80;border-radius:2px;margin-top:3px"></div></td><td style="padding:7px 7px;color:var(--text2);vertical-align:top">高开放量反包，收上前高 $481.57</td><td style="padding:7px 7px;color:var(--text2);vertical-align:top">仅在 setup 重立、且已 free trade 时 add</td></tr>
+          <tr><td style="padding:7px 7px;vertical-align:top"><span style="color:#8ec5ff;font-weight:700">Bull</span><br><span style="color:#8ec5ff">25%</span><div style="height:3px;width:55px;background:#8ec5ff;border-radius:2px;margin-top:3px"></div></td><td style="padding:7px 7px;color:var(--text2);vertical-align:top">关键 EMA 获量能承接，收出长下影</td><td style="padding:7px 7px;color:var(--text2);vertical-align:top">持有；空仓者等放量阳线确认再进，不抢第一根</td></tr>
+          <tr style="background:rgba(245,158,11,.07)"><td style="padding:7px 7px;vertical-align:top"><span style="color:#fcd9a0;font-weight:700">Base ★</span><br><span style="color:#fbbf24">50%</span><div style="height:3px;width:110px;background:#f59e0b;border-radius:2px;margin-top:3px"></div><span style="font-size:10px;color:var(--text3)">我的基准</span></td><td style="padding:7px 7px;color:var(--text2);vertical-align:top">首日放量后量能衰竭，−5% 到 −8% 区间反复</td><td style="padding:7px 7px;color:var(--text2);vertical-align:top">收紧 stop、让它走 1–3 周 base；想加的等新 pivot，不在中段反复进出</td></tr>
+          <tr><td style="padding:7px 7px;vertical-align:top"><span style="color:#f87171;font-weight:700">Bear</span><br><span style="color:#f87171">15%</span><div style="height:3px;width:40px;background:#f87171;border-radius:2px;margin-top:3px"></div></td><td style="padding:7px 7px;color:var(--text2);vertical-align:top">放量破 EMA 数日不收复，<strong>且整个板块跟随破位</strong></td><td style="padding:7px 7px;color:var(--text2);vertical-align:top"><strong>唯一该主动降仓的剧本</strong>：砍弱票，向 RS&gt;90 的 leader 集中</td></tr>
+        </table>
+        <div class="callout co-key"><span class="ci">🧭</span><div><strong>Base（50%）是基准</strong>：盘后 panic 在 cash session 被部分消化、落 −5%~−8%、随后 1–3 周横盘消化估值，基本面叙事不变。最舒服的应对 —— 收紧 stop 让它走 base，别在中段反复进出（手续费 + 情绪双重消耗）。只有 <strong>Bear（板块跟随破位）</strong>才主动降仓、向真现金流 + RS&gt;90 的 leader <strong>集中</strong>（drawdown 里分散只保证跑输指数）。</div></div>
+        <div class="callout co-key"><span class="ci">❝</span><div>财报季最贵的错误，从来不是看错一家公司，而是<strong>把「股价的反应」当成「公司的现实」</strong>。一份 +48%、AI +143% 的季报，和一个 94 倍估值里被提前用光的好消息，是两件完全不同的事。<br><strong style="color:var(--accent2)">The company didn't miss. The price did.</strong></div></div>`,
+        source:"《AVGO 盘后》· §6 + 结语"
       },
     ]
   },
