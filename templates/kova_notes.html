@@ -1125,9 +1125,64 @@ const CHAPTERS = [
         source:"《止损的艺术》· §2④"
       },
       {
-        title:"⑤–⑦ 待补（保本止损 / …）", tags:[["base","待续"]],
-        body:`<div class="callout co-warn"><span class="ci">📥</span><div><strong>本文共 7 种止损方法，目前截图到第 5 种（保本止损 Breakeven Stop）开头。</strong>⑤ 保本止损、⑥、⑦ 以及后面的「动态止损系统 + 真实案例拆解」等你补发截图，我接着填。</div></div>`,
-        source:"《止损的艺术》· §2⑤（待续）"
+        title:"⑤ 保本止损（Breakeven Stop）", tags:[["risk","风控"]],
+        body:`<p>逻辑很简单：当股票从入场价涨了一定幅度（通常 <strong>3%</strong>），就把止损提到入场价附近，确保这笔交易<strong>最差也不亏钱</strong>。</p>
+        <div class="callout co-formula"><span class="ci">→</span><div>例：入场 $136.20，初始止损 $134.50(ATR)。涨到 $140.30(+3%) → 止损从 $134.50 提到 <strong>$136.34（入场价 +0.1%）</strong>。<br>为什么 +0.1% 而非刚好入场价？扣手续费后还是正的，心理上真正「不亏」。</div></div>
+        <div class="callout co-key"><span class="ci">🔑</span><div>保本止损最大价值是<strong>心理层面</strong> —— 一旦提到保本位，这笔交易就成了「free trade」，你才能毫无压力地让利润奔跑。（= 🪜 状态机的状态 C）</div></div>`,
+        source:"《止损的艺术》· §2⑤"
+      },
+      {
+        title:"⑥ 时间止损（无跟进退出）", tags:[["risk","风控"],["base","纪律"]],
+        body:`<p>很多人不知道，但实战极有用：如果一只股票<strong>买入后 3 天都没起色</strong> —— 价格还在入场价附近甚至还在亏、且从未涨超入场价 2% —— <strong>直接砍掉</strong>。</p>
+        <p>逻辑：你买突破股，期望的是买入后机构资金跟进推高。3 天没动 = 突破没得到市场认可。你占着资金等一只不动的票，还可能错过真正的好机会。</p>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>资金是有时间成本的。</strong>一只占 15% 仓位的票不动 = 你 15% 的资金在「睡觉」。与其等它慢慢走坏触发 ATR 止损亏更多，不如在它「不动」时就走人、把钱给下一个机会。<strong>这点 Kova 之前没单独讲过，是新维度。</strong></div></div>`,
+        source:"《止损的艺术》· §2⑥"
+      },
+      {
+        title:"⑦ 派发日止损（Distribution Day Exit）", tags:[["vol","量能"],["risk","风控"]],
+        body:`<p>派发日（distribution day）来自 <strong>IBD 体系</strong>：当天<strong>收阴（收盘 &lt; 开盘）+ 成交量显著放大（&gt; 20 日均量 1.5 倍）</strong>。这个组合 = 机构在大规模出货。</p>
+        <p>想象：一只票跌了、且量比平时大 50%+。谁在卖？散户没那个量 —— 只有机构（基金、hedge fund）能制造放量下跌。聪明钱在跑，你还留着干什么？</p>
+        <div class="callout co-formula"><span class="ci">⚠</span><div>distribution_day = (close &lt; open) AND (vol &gt; 1.5 × MA20_vol)　·　<strong>下午 3 点后检查</strong>（要确认「全天是跌的」—— 上午跌下午拉回不算，尾盘仍收阴+巨量才是真危险）。</div></div>
+        <div class="callout co-key"><span class="ci">🔑</span><div>这呼应了选股的「M 市场环境」—— <strong>派发日计数</strong>正是判断大盘/个股是否被机构抛售的核心指标。可量化、可写进 scanner。</div></div>`,
+        source:"《止损的艺术》· §2⑦"
+      },
+      {
+        title:"三、动态止损系统：把七种方法串成一个体系 ⭐", tags:[["risk","风控"],["base","总纲"]],
+        body:`<p>七种方法<strong>不是互斥的</strong>。成熟交易者把它们组合成一个<strong>多阶段、只上移不下调</strong>的动态止损系统。核心原则只有一条：<strong>止损只能越来越高，永远不能降低。</strong></p>
+        <div class="vcp-fig">
+        <svg viewBox="0 0 600 524" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+          <defs><marker id="da" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#6b7585"/></marker></defs>
+          <g stroke="#6b7585" stroke-width="1.5" marker-end="url(#da)">
+            <line x1="300" y1="100" x2="300" y2="116"/><line x1="300" y1="200" x2="300" y2="216"/>
+            <line x1="300" y1="288" x2="300" y2="304"/><line x1="300" y1="388" x2="300" y2="404"/>
+          </g>
+          <g text-anchor="middle">
+            <rect x="70" y="18" width="460" height="82" rx="9" fill="rgba(245,158,11,.1)" stroke="rgba(245,158,11,.5)"/>
+            <text x="300" y="44" font-size="12.5" fill="#fcd9a0" font-weight="700">阶段1 · 初始止损（最宽）</text>
+            <text x="300" y="66" font-size="11.5" fill="#9ba6b4">开盘入场 → 5分钟K线低点</text>
+            <text x="300" y="86" font-size="11.5" fill="#9ba6b4">盘中入场 → 入场价 − 1×ATR</text>
+            <rect x="70" y="118" width="460" height="82" rx="9" fill="#141923" stroke="var(--border2)"/>
+            <text x="300" y="144" font-size="12.5" fill="#e6edf3" font-weight="700">阶段2 · 金字塔提止损</text>
+            <text x="300" y="166" font-size="11.5" fill="#9ba6b4">涨 +1ATR 加仓 → 止损提到 −0.5%</text>
+            <text x="300" y="186" font-size="11.5" fill="#9ba6b4">涨 +2ATR 加仓 → 止损提到 +0.1%（保本）</text>
+            <rect x="70" y="218" width="460" height="70" rx="9" fill="#141923" stroke="var(--border2)"/>
+            <text x="300" y="244" font-size="12.5" fill="#e6edf3" font-weight="700">阶段3 · 保本止损</text>
+            <text x="300" y="268" font-size="11.5" fill="#9ba6b4">最高价涨过 +3% → 止损锁定 入场价 +0.1%</text>
+            <rect x="70" y="306" width="460" height="82" rx="9" fill="#141923" stroke="var(--border2)"/>
+            <text x="300" y="332" font-size="12.5" fill="#e6edf3" font-weight="700">阶段4 · EMA 追踪止损</text>
+            <text x="300" y="354" font-size="11.5" fill="#9ba6b4">持仓 &gt;5天 → 止损 = 10 EMA × 0.99</text>
+            <text x="300" y="374" font-size="11.5" fill="#9ba6b4">只在「新值 &gt; 当前止损」时更新</text>
+            <rect x="70" y="406" width="460" height="92" rx="9" fill="rgba(248,113,113,.08)" stroke="rgba(248,113,113,.45)"/>
+            <text x="300" y="432" font-size="12.5" fill="#fbb6b6" font-weight="700">并行检查 · 时间 / 派发 / 硬EMA</text>
+            <text x="300" y="454" font-size="11.5" fill="#9ba6b4">3天无跟进 → 砍　｜　尾盘派发 → 砍</text>
+            <text x="300" y="474" font-size="11.5" fill="#9ba6b4">3:59PM 收在 EMA 下 → 砍</text>
+          </g>
+        </svg>
+        <div class="vcp-cap">买入时止损最宽(ATR) → 随预期上涨不断提高(保本→EMA追踪) → 锁住大量利润；若一买不动/走坏，时间止损&派发日检查会在 ATR 触发前先把你踢出，损失更小。</div>
+        </div>
+        <div class="callout co-key"><span class="ci">🧭</span><div><strong>这张图就是把全部 7 种止损整合成「一台机器」</strong> —— 和 🪜 Trailing 状态机(A→E) 是同一套东西的两种画法。这套<strong>多阶段、只上移</strong>的逻辑，正是我们止损面板和 Pine 指标要实现的核心。</div></div>
+        <div class="callout co-warn"><span class="ci">📥</span><div>第四部分「完整案例」($100 买入、14日ATR $5 …) 截图刚开头，等你补发后我填上从入场到离场的完整推演。</div></div>`,
+        source:"《止损的艺术》· §3（+§4 待续）"
       },
     ]
   },
@@ -1545,8 +1600,42 @@ const CHAPTERS = [
         <p>这是专业 swing trader 最常用的止损方法之一。核心思想是：只要股票还在关键均线上方运行，就继续持有；一旦收盘跌破均线，就离场。</p>
         <p>最常用的是 10 日 EMA。更保守的用 20 日 EMA，更激进的用 5 日 EMA。Oliver Kell 的做法是用 10 EMA 下方 1% 作为追踪止损 —— 不是精确到 EMA 上就跑，而是给一点缓冲空间。各均线适用：5 EMA 极高灵敏度(日内/短线 scalp)；10 EMA 高灵敏度(Swing 5-20天，主力止损线)；20 EMA 中等(中线 2-8周)；50 SMA 低灵敏度(大趋势保护线)。</p>
         <p>关键细节：EMA 止损看的是收盘价而不是盘中价。很多时候股票盘中会刺破均线然后拉回来，如果你用盘中价止损，会被频繁洗出去。Oliver Kell 的做法是在 3:59 PM 检查 —— 如果收盘价低于 10 EMA × 0.99，才触发止损。</p>
-        <div class="callout co-warn"><span class="ci">📥</span><div><strong>（原文续）⑤ 保本止损（Breakeven Stop）⑥ ⑦ + 动态止损系统 + 真实案例 —— 待补发截图。</strong></div></div>`,
-        source:"《止损的艺术》全文 · §2③④（待续）"
+`,
+        source:"《止损的艺术》全文 · §2③④"
+      },
+      {
+        title:"二、⑤ 保本止损 / ⑥ 时间止损 / ⑦ 派发日止损", tags:[["risk","风控"],["vol","量能"]],
+        body:`<h4>⑤ 保本止损（Breakeven Stop）</h4>
+        <p>保本止损的逻辑很简单：当股票从你的入场价涨了一定幅度（通常 3%），就把止损提到入场价附近，确保这笔交易最差也不亏钱。</p>
+        <p>实战案例：入场价 $136.20，初始止损 $134.50（ATR 止损）。股票涨到 $140.30（涨幅超过 3%）→ 触发保本止损 → 止损从 $134.50 提到 $136.34（入场价 +0.1%）。为什么是 +0.1% 而不是刚好入场价？扣掉手续费后还是正的，心理上真正「不亏」。</p>
+        <p>保本止损的最大价值是心理层面的 —— 一旦止损提到保本位，你就可以毫无压力地让利润奔跑。这笔交易对你来说已经是「free trade」了。</p>
+        <h4>⑥ 时间止损（无跟进退出）</h4>
+        <p>这个方法很多人不知道，但在实战中极其有用：如果一只股票买入后 3 天都没有起色 —— 价格还在入场价附近甚至还在亏，而且从未涨超过入场价 2% —— 直接砍掉。</p>
+        <p>逻辑是：你买突破股，期望的是买入后机构资金跟进推高价格。如果 3 天过去了，什么也没发生，说明这个突破没有得到市场认可。你占用着资金等一只不动的票，同时可能错过真正的好机会。果断砍掉，释放资金。</p>
+        <p>资金是有时间成本的。一只占用你 15% 仓位的票在那里不动，等于你 15% 的资金在「睡觉」。与其等它慢慢走坏触发 ATR 止损亏更多，不如在它「不动」的时候就走人，把钱给到下一个机会。</p>
+        <h4>⑦ 派发日止损（Distribution Day Exit）</h4>
+        <p>派发日是一个来自 IBD 体系的概念：当天收阴（收盘价低于开盘价）+ 成交量显著放大（超过 20 日均量的 1.5 倍以上）。这个组合意味着什么？机构在大规模出货。</p>
+        <p>想象一下：一只股票跌了，而且成交量比平时大 50% 以上。谁在卖？散户没有那个量。只有机构 —— 基金、hedge fund —— 才能制造这种放量下跌。当聪明钱在跑的时候，你还留着干什么？</p>
+        <p>实战中，派发日止损通常在下午 3 点后检查。因为你需要看到「全天是跌的」这个事实 —— 有些股票上午跌下午拉回来，那不是派发。只有到尾盘仍然是收阴+巨量，才是真正的危险信号。</p>`,
+        source:"《止损的艺术》全文 · §2⑤⑥⑦"
+      },
+      {
+        title:"三、动态止损系统 + 四、完整案例（开头）", tags:[["risk","风控"],["base","总纲"]],
+        body:`<h4>三、动态止损系统：把七种方法串成一个体系</h4>
+        <p>上面七种方法并不是互相排斥的。真正成熟的交易者会把它们组合成一个多阶段、只上移不下调的动态止损系统。核心原则只有一条：止损只能越来越高，永远不能降低。</p>
+        <p><strong>五个阶段（图解见 🛑 章节）：</strong></p>
+        <ul>
+          <li><strong>阶段1 初始止损：</strong>开盘入场 → 5分钟K线低点；盘中入场 → 入场价 − 1×ATR</li>
+          <li><strong>阶段2 金字塔提止损：</strong>涨 +1ATR 加仓 → 止损提到 -0.5%；涨 +2ATR 加仓 → 止损提到 +0.1%(保本)</li>
+          <li><strong>阶段3 保本止损：</strong>最高价涨过 +3% → 止损锁定 入场价 +0.1%</li>
+          <li><strong>阶段4 EMA 追踪止损：</strong>持仓 &gt;5天 → 止损 = 10 EMA × 0.99；只在「新值 &gt; 当前止损」时更新</li>
+          <li><strong>并行检查：</strong>3天无跟进→砍 ｜ 尾盘派发→砍 ｜ 3:59PM 收在 EMA 下→砍</li>
+        </ul>
+        <p>这个体系的精妙之处在于：你买入时的止损是最宽的（ATR 止损），随着股票按预期上涨，止损不断被提高 —— 先到保本，再到 EMA 追踪 —— 最终你的止损可能在入场价上方很远的位置，锁住了大量利润。而如果股票一买就不动或者走坏，时间止损和派发日检查会在 ATR 止损触发之前就把你踢出去，损失更小。</p>
+        <h4>四、完整案例：一笔交易从入场到离场</h4>
+        <p>用一个假设案例把整个系统串起来。假设我们以 $100 买入一只成长股，14日 ATR = $5。</p>
+        <div class="callout co-warn"><span class="ci">📥</span><div><strong>（此案例截图刚开头，从入场到离场的完整推演待补发。）</strong></div></div>`,
+        source:"《止损的艺术》全文 · §3+§4（开头）"
       },
     ]
   },
