@@ -1,0 +1,61 @@
+//@version=5
+// ════════════════════════════════════════════════════════════════
+// Kova Trend Trail — E状态趋势线 + 5EMA 跟随止损
+// 用法：TradingView → Pine 编辑器 → 粘贴 → 添加到图表，
+//       然后翻看每只持仓的日线图，它会自动画：
+//       · 5/10/21EMA + 50SMA 均线带
+//       · 价格远离 21EMA >25% 时 → 红色背景标记「E 抛物线」
+//       · 红线 = 5EMA×0.99 跟随止损（E 状态显示）
+//       · 绿线 = 自动连最近两个上升 pivot 低点的趋势线（可手动微调）
+// ⚠ 趋势线为「起稿线」：连的是最近两个确认 pivot 低点，
+//    抛物线段常需你按真实走势手动调整。
+// ════════════════════════════════════════════════════════════════
+indicator("Kova Trend Trail", overlay=true, max_lines_count=30, max_labels_count=20)
+
+// ── 输入 ──
+showRibbon = input.bool(true,  "显示均线带 5/10/21/50")
+eThresh    = input.float(25.0, "E抛物线阈值：距21EMA % >", minval=5)
+pivLen     = input.int(3,      "趋势线 pivot 强度(左右各N根)", minval=1)
+trailMult  = input.float(0.99, "5EMA trail 系数", minval=0.90, maxval=1.0)
+
+// ── 均线 ──
+ema5  = ta.ema(close, 5)
+ema10 = ta.ema(close, 10)
+ema21 = ta.ema(close, 21)
+sma50 = ta.sma(close, 50)
+plot(showRibbon ? ema5  : na, "5 EMA",  color.yellow, 1)
+plot(showRibbon ? ema10 : na, "10 EMA", color.orange, 1)
+plot(showRibbon ? ema21 : na, "21 EMA", color.aqua,   1)
+plot(showRibbon ? sma50 : na, "50 SMA", color.purple, 1)
+
+// ── E 抛物线状态（不依赖成本：价格远离 21EMA 程度）──
+dist21 = (close / ema21 - 1) * 100
+isE = dist21 > eThresh
+bgcolor(isE ? color.new(color.red, 92) : na, title="E抛物线区")
+
+// ── 5EMA×0.99 跟随止损（E 状态显示）──
+trail = ema5 * trailMult
+plot(isE ? trail : na, "5EMA trail", color.red, 2, style=plot.style_linebr)
+
+// ── 自动趋势线：连最近两个上升 pivot 低点，向右延伸 ──
+pl = ta.pivotlow(low, pivLen, pivLen)
+var float px1 = na
+var float py1 = na
+var float px2 = na
+var float py2 = na
+var line   tl = na
+if not na(pl)
+    px1 := px2
+    py1 := py2
+    px2 := bar_index - pivLen
+    py2 := pl
+    if not na(px1) and py2 > py1            // 只画「抬高的低点」= 上升趋势线
+        line.delete(tl)
+        tl := line.new(int(px1), py1, int(px2), py2, color=color.lime, width=2, extend=extend.right)
+
+// ── 最后一根：状态标签 ──
+var label lb = na
+if barstate.islast
+    label.delete(lb)
+    txt = isE ? "🔴 E 抛物线\n📐 画趋势线 + 减仓20-50%\n5EMA trail " + str.tostring(trail, format.mintick) : "距21EMA " + str.tostring(dist21, "#.#") + "%"
+    lb := label.new(bar_index, high, txt, style=label.style_label_left, color=isE ? color.red : color.new(color.gray, 30), textcolor=color.white, size=size.small)

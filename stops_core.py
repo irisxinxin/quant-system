@@ -60,6 +60,7 @@ def _make_quote_ctx():
 def _analyze(df, cost):
     c = df.Close
     last = float(c.iloc[-1])
+    ema5 = float(c.ewm(span=5).mean().iloc[-1])
     ema10 = float(c.ewm(span=10).mean().iloc[-1])
     ema21 = float(c.ewm(span=21).mean().iloc[-1])
     sma50 = float(c.rolling(50).mean().iloc[-1])
@@ -82,8 +83,8 @@ def _analyze(df, cost):
         action = "止损提到保本+0.1%（收盘上半区确认）"
     elif dist21 > 25:
         state, sc, win = "E 抛物线", "#39c5cf", True
-        follow, flabel = ema10 * 0.99, "10EMA×0.99（收盘判断）"
-        action = "EMA 跟不上：收紧到 10EMA/5EMA/趋势线 + 主动减仓 20–50%"
+        follow, flabel = ema5 * 0.99, "5EMA×0.99（收盘判断）"
+        action = "📐 手动画趋势线确认；5EMA 紧跟随；主动减仓 20–50%"
     else:
         state, sc, win = "D 趋势", "#4ade80", True
         follow, flabel = ema10 * 0.99, "10EMA×0.99（收盘判断）"
@@ -92,7 +93,7 @@ def _analyze(df, cost):
     disaster = round(swing * 0.98, 2) if win else None
     return dict(
         tk="", cost=round(cost, 2), last=round(last, 2), gain=round(gain, 1),
-        state=state, sc=sc, ema10=round(ema10, 2), ema21=round(ema21, 2),
+        state=state, sc=sc, ema5=round(ema5, 2), ema10=round(ema10, 2), ema21=round(ema21, 2),
         sma50=round(sma50, 2), atr=round(atr, 2), dist21=round(dist21, 1),
         follow=round(follow, 2), follow_label=flabel, disaster=disaster,
         swing=round(swing, 2), action=action,
