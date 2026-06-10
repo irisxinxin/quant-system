@@ -308,6 +308,18 @@ const CHAPTERS = [
         <div class="callout co-info"><span class="ci">💭</span><div><strong>我的拆解：</strong>这条和前面学的完全一脉相承 —— 「<strong>不交易也是一种交易</strong>」「Hard Penny 时期持 50%+ 现金、等 follow-through day」「reduce 就 reduce、不要贪」。<br>关键警告：<strong>杠杆只放大你已有的东西</strong> —— 有 edge 时放大盈利；<strong>没 edge 或在烂环境用杠杆，放大的就是亏损和爆仓风险</strong>。所以"何时不交易"比"何时开杠杆"更重要。</div></div>`,
         source:"Kova 心得"
       },
+      {
+        title:"QQQ 在 10EMA 以下时，不做多", tags:[["trend","趋势"],["risk","风控"]],
+        body:`<div class="callout co-key"><span class="ci">❝</span><div><strong>当 QQQ 在 10EMA 以下的时候，不做多。</strong></div></div>
+        <p>这是一个<strong>大盘做多开关 / regime 过滤器</strong>。QQQ（纳指 100）= 科技/AI 股的大盘代表：</p>
+        <ul>
+          <li>QQQ <strong>站上 10EMA</strong> → 大盘短期趋势健康 → 做多开关 <strong style="color:#4ade80">ON</strong></li>
+          <li>QQQ <strong>跌破 10EMA</strong>（收盘）→ 短期趋势转弱 → 做多开关 <strong style="color:#f87171">OFF</strong>，不开新多</li>
+        </ul>
+        <div class="callout co-formula"><span class="ci">→</span><div>long_allowed = QQQ.close &gt; QQQ.EMA10　（按收盘价；跌破即关多）</div></div>
+        <div class="callout co-info"><span class="ci">💭</span><div><strong>我的拆解：</strong>约 75% 个股跟随大盘（CANSLIM 的「M」）。大盘短期趋势向下时，再好的个股突破失败率也飙升 —— 所以索性关掉做多开关，等 QQQ 重新站上 10EMA 再开。这就是「<strong>健康 HEALTHY 市场过滤器</strong>」的一个具体量化版，也和「Hard Penny 持现金」「大盘确认上升趋势才进场」「Kova 清仓+买 SQQQ」完全一致。<br><strong>注意：</strong>它管的是"开不开新多"，不替代个股止损；两者叠加 = 大盘不行不进场 + 进了的按个股 trailing 走。</div></div>`,
+        source:"Kova 心得"
+      },
     ]
   },
   {
