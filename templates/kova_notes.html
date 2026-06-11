@@ -1399,8 +1399,58 @@ const CHAPTERS = [
         </table>
         <div class="callout co-key"><span class="ci">⭐</span><div><strong>重点：亮蓝 + 亮紫是 Kova 体系最重要的两个颜色。</strong>亮蓝出现在<strong>突破日 = 真突破</strong>；亮紫出现在<strong>收缩末期 = 即将启动</strong>。</div></div>
         <div class="callout co-info"><span class="ci">🔬</span><div><strong>倒推线索（核心突破口！）：</strong>成交额柱配色完全可量化 —— 按<strong>量能分档 × 涨跌方向</strong>：<br><code>S级放量 = vol &gt; k_S × MA_vol</code>(如 2x/top分位)、<code>明显放量 = vol &gt; k_M × MA_vol</code>(如 1.5x)、<code>缩量 = vol &lt; MA_vol</code>；再 ×(close&gt;open 涨 / close&lt;open 跌) → 六色。<br>而且它<strong>直接编码了三大体系</strong>：满红=O'Neil <strong>distribution day</strong>、亮蓝=Morales <strong>pocket pivot/追买</strong>、亮紫=Minervini <strong>VCP 量缩</strong>。这块我现在就能写进 Pine。</div></div>
-        <div class="callout co-info"><span class="ci">📥</span><div>注：Kova Essentials 还显示<strong>"健康 HEALTHY"</strong>标签（= 实战搭配里"显示健康+动能连续亮蓝=高质量入场"）。健康度/Kova Score 的<strong>具体算法</strong>还没在 tutorial 里给 —— 等后续。</div></div>`,
+        <div class="callout co-info"><span class="ci">📊</span><div>Kova Essentials 顶部还有<strong>三行面板</strong>：Kova Score / 健康状态 / Reduce 信号 —— 见下卡 ④。</div></div>`,
         source:"Kova 官方 tutorial · Kova Essentials"
+      },
+      {
+        title:"④ 面板三行：Kova Score + 健康状态 + Reduce ⭐ 全确认", tags:[["trend","趋势"],["risk","风控"],["base","选股"]],
+        body:`<p>行情图上那个小面板的<strong>三行</strong>，官方算法说明终于齐了：</p>
+        <h4>第一行：Kova Score（评分 1–99）— 这票现在多牛，越高越关注</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0">
+          <tr style="color:var(--text2);font-size:11px"><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">区间</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">状态</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">底色</th></tr>
+          <tr><td class="mono" style="padding:5px 7px">85–99</td><td style="padding:5px 7px;color:#4ade80;font-weight:600">顶级领涨股</td><td style="padding:5px 7px;color:var(--text2)">🟢 绿底</td></tr>
+          <tr><td class="mono" style="padding:5px 7px">60–84</td><td style="padding:5px 7px;color:var(--text2)">不错</td><td style="padding:5px 7px;color:var(--text2)">⬜ 灰底</td></tr>
+          <tr><td class="mono" style="padding:5px 7px">1–59</td><td style="padding:5px 7px;color:#f87171">一般/偏弱</td><td style="padding:5px 7px;color:var(--text2)">🔴 红底</td></tr>
+        </table>
+        <p>分数旁两个额外标记：<strong>↑/↓</strong> = 最近几天分数在涨还是跌；<strong>🚀 火箭</strong> = 背后有"暗流涌动"、可能要爆发（强烈关注）；<strong>⭐ 星星</strong> = 已在领跑队列、主流强势股。<br><strong>实战：扫盘只看 Kova Score 85+ 带 🚀 或 ⭐ 的票。</strong></p>
+        <h4>第二行：健康状态 — 能不能拿在手里（三档）</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0">
+          <tr style="color:var(--text2);font-size:11px"><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">状态</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">色</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">含义</th></tr>
+          <tr><td style="padding:5px 7px;color:#4ade80;font-weight:600">✓ HEALTHY 健康</td><td style="padding:5px 7px">🟢</td><td style="padding:5px 7px;color:var(--text2)">完全健康，可持仓/加仓</td></tr>
+          <tr><td style="padding:5px 7px;color:#f59e0b;font-weight:600">⚠ WATCH 注意</td><td style="padding:5px 7px">🟠</td><td style="padding:5px 7px;color:var(--text2)">警觉，有点不对劲但没出大问题</td></tr>
+          <tr><td style="padding:5px 7px;color:#f87171;font-weight:600">✗ UNHEALTHY 不健康</td><td style="padding:5px 7px">🔴</td><td style="padding:5px 7px;color:var(--text2)">不要继续持有/新仓</td></tr>
+        </table>
+        <p>判定综合<strong>价格位置 + 趋势方向 + 距高点距离</strong>等多维度，背后一套严格规则集 —— <strong>绿色 = 所有条件同时满足</strong>。</p>
+        <h4>第三行：Reduce 信号 —（只在 HEALTHY 下显示）该不该卖一部分锁利</h4>
+        <ul>
+          <li><strong>Hold</strong> = 安心拿，还没到时候</li>
+          <li><strong>🔥 REDUCE</strong> = 涨得过头了，建议卖出 <strong>1/3 到 1/2 仓位</strong></li>
+        </ul>
+        <p>这个信号<strong>按每只票自己的脾性(波动率)自适应</strong> —— 爱蹦的票给更多容忍、慢吞吞的票更早触发，不一刀切。</p>
+        <div class="callout co-info"><span class="ci">🔬</span><div><strong>倒推线索（系统全解码）：</strong><br>· <strong>Kova Score 1–99</strong> = 综合分(相对强度 RS + 趋势模板 + 动量 + 量能)归一化到 1–99，三档分色。<strong>↑↓</strong>=分数斜率；<strong>🚀</strong>=动能积累转蓝/低分但暗流(吸筹)；<strong>⭐</strong>=已是领跑(高分+延伸)。<br>· <strong>健康度</strong> = <strong>Minervini 趋势模板式的布尔 AND</strong>(价&gt;各均线 + 多头排列 + 距高点近)：全过=HEALTHY、部分破=WATCH、趋势破=UNHEALTHY。<br>· <strong>Reduce</strong> = 价格对关键 EMA 的 <strong>ATR 乖离</strong>(price &gt; 21EMA + N×ATR，N 随波动自适应)→ 印证了之前"远离 21EMA &gt;25%/乖离过大"的推断。注意 ON/MU/OKTA 都是 <strong>高分+HEALTHY 却 REDUCE</strong> = Reduce 独立于分数/健康，只管"贵不贵"。</div></div>`,
+        source:"Kova 官方 tutorial · 面板三行"
+      },
+      {
+        title:"⑤ 整套使用流程 + 案例验证（IESC/ARM/CRWV/MRVL/ON）", tags:[["base","总纲"]],
+        body:`<h4>整套指标的使用流程（官方）</h4>
+        <ol style="padding-left:20px">
+          <li><strong>早上扫盘</strong>：看 watchlist 的 Kova Score，只关注 <strong>85+ 带 🚀 或 ⭐</strong> 的票</li>
+          <li><strong>深度研究</strong>：切日线 → 四均线排列是否整齐 + 健康是否 HEALTHY + 成交额柱有没有 <strong>亮蓝(机构吸筹)或亮紫(即将启动)</strong></li>
+          <li><strong>入场决策</strong>：<strong>HEALTHY + Kova Score 高 + 近期亮蓝/亮紫 → 高质量入场窗口</strong></li>
+          <li><strong>持仓监控</strong>：HEALTHY→继续拿；变 WATCH→提高警觉准备减；变 UNHEALTHY→不再持有；出现 🔥REDUCE→立即卖一部分锁利</li>
+        </ol>
+        <h4>官方案例（可用于回测校准）</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0">
+          <tr style="color:var(--text2);font-size:11px"><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">票</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">面板</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">Kova 解读</th></tr>
+          <tr><td style="padding:5px 7px;font-weight:700">IESC</td><td style="padding:5px 7px;color:#4ade80">99↑⭐ HEALTHY Hold</td><td style="padding:5px 7px;color:var(--text2)">连续动能 bar 出现 = 准备加仓</td></tr>
+          <tr><td style="padding:5px 7px;font-weight:700">ARM</td><td style="padding:5px 7px;color:#4ade80">88↑ HEALTHY Hold</td><td style="padding:5px 7px;color:var(--text2)">动能 bar 都是蓝色 = 开始加仓</td></tr>
+          <tr><td style="padding:5px 7px;font-weight:700">CRWV</td><td style="padding:5px 7px;color:#f87171">49↓ UNHEALTHY</td><td style="padding:5px 7px;color:var(--text2)">不健康 = 不想投这种票</td></tr>
+          <tr><td style="padding:5px 7px;font-weight:700">MRVL</td><td style="padding:5px 7px;color:#4ade80">99↑⭐ HEALTHY Hold</td><td style="padding:5px 7px;color:var(--text2)">蓝亮向上 + 高亮绿 + 高分 99 = 想投</td></tr>
+          <tr><td style="padding:5px 7px;font-weight:700">ON</td><td style="padding:5px 7px;color:#f59e0b">99↑⭐ HEALTHY <strong>REDUCE</strong></td><td style="padding:5px 7px;color:var(--text2)">动能向上、虽健康，但提醒你减仓</td></tr>
+        </table>
+        <div class="callout co-key"><span class="ci">🧭</span><div><strong>关键（Kova 本人）：</strong>「算法设计是给 day 看<strong>日线</strong>」 —— 整套指标是<strong>日线周期</strong>，给 swing/position 交易者。还有官方文档(待拿)。</div></div>
+        <div class="callout co-key"><span class="ci">🎉</span><div><strong>至此整套 Kova 指标系统全部解码！</strong>四均线 + 成交额柱六色 + 动能积累震荡器 + Kova Score + 健康度 + Reduce + ATR 止损 —— <strong>每一块的逻辑和参数都已知</strong>。下一步：写成完整 Pine 指标 + 用这 5 个案例(IESC/ARM/CRWV/MRVL/ON)校准 Score/健康/Reduce 的阈值。</div></div>`,
+        source:"Kova 官方 tutorial · 使用流程 + 案例"
       },
     ]
   },
