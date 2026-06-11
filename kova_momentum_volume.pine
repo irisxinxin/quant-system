@@ -1,0 +1,81 @@
+// ============================================================================
+//  Kova 动量维度复刻 — 六色成交额柱 + 动能震荡器(AD速度波)
+//  反推自 Kova Investment Research 指标 (workflow 5-agent 校准, 35样本)
+//
+//  ⚠ 这是【两个独立指标】。TradingView → Pine 编辑器里新建两个指标,
+//     分别复制下面【指标①】和【指标②】的代码块(各自含 //@version=5)。
+//     两个都加到图上, 会各占一个副图(和 Kova 一样底部两条)。
+//
+//  置信度(基于 06/05+06/10 共35样本, 5样本有动量颜色标签):
+//    · 六色量柱  0.72  (末柱颜色 5/5 吻合, 紫/红有清晰空档)
+//    · 动能震荡  0.62  (蓝族 4/5, 缺红/浅标签, 阈值偏实验)
+//  → 量柱可放心用; 动能标"实验", 等更多红/浅动能截图再锁阈值。
+// ============================================================================
+
+
+// ============================================================================
+//  【指标①】Kova 六色成交额柱  (置信 0.72 · 可放心用)
+//  颜色 = 当日成交额 / 20日均成交额 的倍数 R, 配合涨跌方向 → 六色
+//    涨日: R≥2.6 🟦亮蓝(机构追买/pocket pivot) | 1.6≤R<2.6 🟢中绿(明显放量涨) | R<1.6 ⬜浅(正常)
+//    跌日: R≥2.6 🟥满红(派发/distribution)      | 1.6≤R<2.6 🔴中红(明显放量跌) | R<1.6 🟪亮紫(缩量=卖盘衰竭)
+//  关键: 紫不是"量比<1×", 而是"<1.6×"=量没放大到足以确认这个方向(ARM/MU跌12%却只1.4x量=紫)
+// ============================================================================
+//@version=5
+indicator("Kova 六色成交额柱 (反推)", overlay=false, format=format.volume, precision=0)
+
+kM   = input.float(1.6, "明显放量阈 k_M", step=0.1, tooltip="紫/中 的分界, 由 MU(1.53紫)/SPY(2.0红)双向夹逼, 较可靠")
+kS   = input.float(2.6, "S级放量阈 k_S", step=0.1, tooltip="中/S级 的分界, 仅QQQ(2.54中红)一个边界点, 不确定, 可在2.4-2.8间调")
+mlen = input.int(20, "均量窗口", minval=5)
+useTurnover = input.bool(true, "用成交额(×hlc3)而非纯股数", tooltip="Kova叫'成交额柱'; TV无原生turnover, 用 volume×hlc3 近似")
+
+basis = useTurnover ? volume * hlc3 : volume
+R = basis / ta.sma(basis, mlen)
+up = close >= open
+
+cBlue  = color.new(#2196f3, 0)   // 亮蓝  放量涨 S级
+cGreen = color.new(#26a69a, 0)   // 中绿  明显放量涨
+cLight = color.new(#5d6673, 35)  // 浅    正常涨
+cRed   = color.new(#ef5350, 0)   // 满红  放量跌 S级(派发)
+cMidR  = color.new(#e57373, 0)   // 中红  明显放量跌
+cPurp  = color.new(#ab47bc, 0)   // 亮紫  缩量(卖盘衰竭)
+
+barCol = up ? (R >= kS ? cBlue : R >= kM ? cGreen : cLight) : (R >= kS ? cRed : R >= kM ? cMidR : cPurp)
+plot(volume, "量柱", color=barCol, style=plot.style_columns)
+plot(ta.sma(volume, mlen), "20日均量", color=color.new(color.gray, 30), linewidth=1)
+
+
+// ============================================================================
+//  【指标②】Kova 动能震荡器 — AD速度波  (置信 0.62 · 实验)
+//  = 累积/分布线(AD)的"速度" = EMA10(AD)−EMA30(AD), 再120日z标准化
+//  胜过 OBV/CMF/MFI: AD用收盘在当日区间位置(CLV)加权, 高位放量收低=派发立刻压斜率
+//    🟦亮蓝(资金加速进场): z≥0.3 且 还在加速(Δ3z≥−0.3)
+//    🟦蓝转弱(峰后回落):   z≥0.3 但 二阶导转负(Δ3z<−0.3)
+//    ⬜浅(停滞):           −0.8<z<0.3
+//    🟥亮红(资金加速撤出): z≤−0.8
+// ============================================================================
+//@version=5
+indicator("Kova 动能震荡器 AD速度波 (反推·实验)", overlay=false)
+
+fast = input.int(10, "AD 快 EMA")
+slow = input.int(30, "AD 慢 EMA")
+zlen = input.int(120, "z 标准化窗口")
+zBlue = input.float(0.3,  "亮蓝 z 阈")
+zRed  = input.float(-0.8, "亮红 z 阈")
+dPres = input.float(-0.3, "蓝在场/转弱 加速阈(Δ3z)")
+
+clv = (high == low) ? 0.0 : ((close - low) - (high - close)) / (high - low)
+ad  = ta.cum(clv * volume)
+wave = ta.ema(ad, fast) - ta.ema(ad, slow)
+z  = (wave - ta.sma(wave, zlen)) / ta.stdev(wave, zlen)
+d3 = z - z[3]                                  // 3-bar 斜率 ≈ 加速度(二阶导)
+
+cPresent = color.new(#1e90ff, 0)   // 亮蓝  加速进场
+cWeak    = color.new(#6fa8dc, 0)   // 蓝转弱 峰后回落
+cFlat    = color.new(#9aa0aa, 20)  // 浅    停滞
+cOut     = color.new(#e03b3b, 0)   // 亮红  加速撤出
+
+mcol = z >= zBlue ? (d3 >= dPres ? cPresent : cWeak) : (z <= zRed ? cOut : cFlat)
+plot(z, "动能", color=mcol, style=plot.style_area, linewidth=2)
+hline(0, "0轴", color=color.new(color.gray, 50))
+hline(zBlue, "亮蓝阈", color=color.new(#1e90ff, 70), linestyle=hline.style_dotted)
+hline(zRed, "亮红阈", color=color.new(#e03b3b, 70), linestyle=hline.style_dotted)

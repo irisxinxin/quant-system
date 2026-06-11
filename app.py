@@ -142,6 +142,7 @@ CACHE_TTL = {
     "cm_wl":   24 * 3600,
     "cn":      24 * 3600,
     "stops":       10 * 60,  # 持仓止损面板：10分钟（盘中现价会变；刷新可加 ?force=1 强拉）
+    "regime":      10 * 60,  # 大盘核按钮（QQQ/SPY 放量抛售检测）：10分钟
 }
 
 
@@ -271,6 +272,20 @@ def api_stops(force: int = 0):
         for p in _CACHE_DIR.glob("stops_*.json"):   # 同时清磁盘缓存
             p.unlink(missing_ok=True)
     data, ts = _get_cached("stops", compute_stops, CACHE_TTL["stops"])
+    out = dict(data)
+    out["cached_at"] = _fmt_age(ts)
+    return JSONResponse(out)
+
+
+@app.get("/api/regime")
+def api_regime(force: int = 0):
+    """大盘风险核按钮：QQQ/SPY 放量抛售检测（反推 Kova 6/5 全清信号）。缓存 10 分钟。"""
+    from market_regime import market_regime
+    if force:
+        _mem_cache.pop("regime", None)
+        for p in _CACHE_DIR.glob("regime_*.json"):
+            p.unlink(missing_ok=True)
+    data, ts = _get_cached("regime", market_regime, CACHE_TTL["regime"])
     out = dict(data)
     out["cached_at"] = _fmt_age(ts)
     return JSONResponse(out)

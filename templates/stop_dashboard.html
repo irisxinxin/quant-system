@@ -42,8 +42,11 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
   <div class="btns">
     <a class="nav" href="/notes">📄 学习笔记</a>
-    <button class="ref" id="refBtn" onclick="load(true)">⟳ 刷新</button>
+    <button class="ref" id="refBtn" onclick="load(true);loadRegime(true)">⟳ 刷新</button>
   </div>
+</div>
+<div id="regime" style="margin:0 0 14px;border-radius:12px;padding:13px 16px;border:1px solid var(--border);background:#11161d;font-size:13px;line-height:1.55">
+  <span class="spin"></span> 正在检测大盘风险（QQQ/SPY 放量抛售）…
 </div>
 <div id="content"><div class="msg"><span class="spin"></span>正在拉取最新日线、计算止损…</div></div>
 <div class="legend">
@@ -110,6 +113,30 @@ async function load(force){
   btn.disabled=false;
 }
 
+async function loadRegime(force){
+  const el=document.getElementById('regime');
+  try{
+    const j=await (await fetch('/api/regime'+(force?'?force=1':''),{cache:'no-store'})).json();
+    const STYLE={
+      RISK_ON:{bg:'#0e1f14',bd:'#1f7a45',fg:'#4ade80',tag:'🟢 RISK-ON 可持有/可开仓'},
+      CAUTION:{bg:'#241f0c',bd:'#9a7d1e',fg:'#f59e0b',tag:'🟠 CAUTION 警觉·收紧止损·不加仓'},
+      RISK_OFF:{bg:'#2a1113',bd:'#a02b30',fg:'#f87171',tag:'🔴 RISK-OFF 大盘放量抛售·清仓/不做多'},
+      UNKNOWN:{bg:'#11161d',bd:'#2a3441',fg:'#9ba6b4',tag:'⚪ 未知（数据获取失败）'},
+    };
+    const s=STYLE[j.regime]||STYLE.UNKNOWN;
+    el.style.background=s.bg; el.style.borderColor=s.bd;
+    let idx='';
+    for(const k in (j.indexes||{})){const v=j.indexes[k];
+      idx+=`<span style="margin-right:14px">${k} <b style="color:${v.chg<0?'#f87171':'#4ade80'}">${v.chg>0?'+':''}${v.chg}%</b> 量比${v.vr}${v.below_10e?' <span style="color:#f87171">破10E</span>':''} 派发${v.dist_days_25}${v.selloff?' <b style="color:#f87171">🚨放量抛售</b>':''}</span>`;}
+    el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span style="font-weight:800;font-size:15px;color:${s.fg}">大盘核按钮 · ${s.tag}</span>
+        <span style="color:var(--text2);font-size:11px">截至 ${j.as_of||'-'} · ${j.cached_at||''}</span></div>
+      <div style="margin-top:6px;color:#cdd5df">${(j.reason||'').replace(/；/g,' ｜ ')}</div>
+      <div style="margin-top:7px;font-size:12px;color:var(--text2)">${idx}</div>
+      <div style="margin-top:6px;font-size:11px;color:#6b7480">反推自 Kova 6/5「index high volume selloff」全清信号 · 指数跌≥1.5%且量比≥1.5×50日均量=放量抛售 · 近25日派发日≥5=见顶簇</div>`;
+  }catch(e){ el.innerHTML='大盘核按钮加载失败：'+e; }
+}
+
 // ── 交互日线图 ──
 let _chart=null;
 async function openChart(tk){
@@ -148,6 +175,6 @@ function closeChart(){const m=document.getElementById('chartModal');m.style.disp
 document.getElementById('chartModal').addEventListener('click',e=>{if(e.target.id==='chartModal')closeChart();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeChart();});
 
-load(false);
+load(false); loadRegime(false);
 </script>
 </body></html>
