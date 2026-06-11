@@ -62,3 +62,8 @@ date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screens
 2026-06-02,NOK,95,HEALTHY,Hold,16.64,0,NOK 95H(6/2)→89U(6/10)见顶回落,中绿放量,亮蓝在场,kova_screenshots/2026-06-02/NOK.webp
 2026-06-02,SYNA,94,HEALTHY,Hold,142.31,0,新票-强趋势站全均线,亮紫缩量,蓝转正,kova_screenshots/2026-06-02/SYNA.webp
 2026-06-02,KGS,75,UNHEALTHY,-,66.53,0,新票-Kodiak Gas见顶回落破10/20E,中红,蓝衰减,kova_screenshots/2026-06-02/KGS.webp
+2026-06-02,BB,99,HEALTHY,REDUCE,9.77,1,★REDUCE@3.61抛物线尖顶,亮蓝中绿climax,亮蓝在场,kova_screenshots/2026-06-02/BB.webp
+2026-06-02,OKTA,96,HEALTHY,REDUCE,131.18,0,★REDUCE@4.35抛物线spike,亮蓝climax,亮蓝刚转正,kova_screenshots/2026-06-02/OKTA.webp
+2026-06-02,ALAB,97,HEALTHY,Hold,337.62,0,ALAB序列97(6/2)→98(6/4)→94(6/10),亮紫缩量,亮蓝在场,kova_screenshots/2026-06-02/ALAB.webp
+2026-06-02,GOOG,75,UNHEALTHY,-,367.46,0,GOOG见顶回落破10/20E(6/2=6/5都75U),满红派发,蓝转弱,kova_screenshots/2026-06-02/GOOG.webp
+2026-06-02,DTM,43,UNHEALTHY,-,140.45,0,新票DT Midstream-低分破位;动能近零,浅,蓝衰减,kova_screenshots/2026-06-02/DTM.webp
