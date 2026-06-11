@@ -263,6 +263,17 @@ const CHAPTERS = [
         source:"每日例行 SOP"
       },
       {
+        title:"06/10 盘前 · CPI 砸盘，市场不好别 trade", date:"06/10", tags:[["risk","风控"],["base","盘前"]],
+        body:`<p><strong>Kova 直播（June 10）：</strong>「CPI data out，市场不好的时候 avoid trading please」。</p>
+        <ul>
+          <li>大盘转弱：<strong>QQQ 跌破 10E+20E → 健康显示 UNHEALTHY</strong>（Kova Score 89 但不健康）。<strong>MXL −8.4%、SQQQ(做空)反弹</strong>。</li>
+          <li>我的持仓跟跌：MXL（−8.4%，本就 UNHEALTHY 弱票）、MRVL 等 AI 链回调。</li>
+        </ul>
+        <div class="callout co-key"><span class="ci">🎯</span><div><strong>印证心得：</strong>① 「市场不好别 trade」=今天就是 ② 「QQQ &lt; 10EMA 不做多」—— QQQ 现在正跌破 10/20EMA、做多开关 OFF。<strong>今天的纪律：不开新多、守持仓止损、别抄底。</strong></div></div>
+        <div class="callout co-info"><span class="ci">📋</span><div>这天的 5 张图(OSCR/ALAB/QQQ/MXL/SQQQ)我也用作<strong>指标校准样本</strong> → 见 🎛️ 指标用法 ⑦ 校准样本库。</div></div>`,
+        source:"交易日志 · 06/10 盘前"
+      },
+      {
         title:"06/08 盘前", date:"06/08", tags:[["base","盘前"],["risk","风控"]],
         body:`<h4>victor 盘前（偏谨慎多）</h4>
         <ul>
@@ -1470,6 +1481,23 @@ const CHAPTERS = [
         <div class="callout co-warn"><span class="ci">③</span><div><strong>唯一可能的外部依赖 = 基准指数(给 RS 用)。</strong>单标的 Pine 算不了"全市场排名百分位(IBD式)" → Kova 的 RS 几乎必是<strong>"相对基准"RS</strong>(股价 vs SPX/QQQ，Mansfield RSC)，用 <code>request.security("SPX")</code> 能算。这是全系统唯一要请求第二个 symbol 的地方。</div></div>
         <div class="callout co-info"><span class="ci">🧭</span><div><strong>结论：</strong>除 Score 的 RS 组件可能要请求一个基准，其余全部<strong>自包含、纯 OHLCV、100% 可 Pine 复刻</strong>。剩下不是数据问题，全是<strong>阈值/权重校准</strong>(用实盘图 + 5 案例调)。</div></div>`,
         source:"倒推 · 数据源地图（自分析）"
+      },
+      {
+        title:"⑦ 校准样本库（带真实数据的标签表）📋 持续累积", tags:[["base","总纲"]],
+        body:`<p>每张 Kova 截图 = 一个带标签的样本。我用长桥拉真实 OHLCV 并排，反推阈值/权重。<strong>新样本持续往这加。</strong></p>
+        <h4>06/10 批（CPI 砸盘日）</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:11.5px;margin:8px 0">
+          <tr style="color:var(--text2);font-size:10px"><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)">票</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)">Kova Score</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)">健康</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)">1月%</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)">RSvsQQQ</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)">距60高</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)">价vs[10E20E50S200S]</th></tr>
+          <tr><td style="padding:4px 6px;font-weight:700">OSCR</td><td style="padding:4px 6px;color:#4ade80">99 ↑</td><td style="padding:4px 6px;color:#4ade80">HEALTHY</td><td class="mono" style="padding:4px 6px">+17</td><td class="mono" style="padding:4px 6px">+19</td><td class="mono" style="padding:4px 6px">−5%</td><td class="mono" style="padding:4px 6px;color:#4ade80">↑↑↑↑</td></tr>
+          <tr><td style="padding:4px 6px;font-weight:700">ALAB</td><td style="padding:4px 6px;color:#4ade80">94 ↓</td><td style="padding:4px 6px;color:#4ade80">HEALTHY</td><td class="mono" style="padding:4px 6px">+62</td><td class="mono" style="padding:4px 6px">+64</td><td class="mono" style="padding:4px 6px">−11%</td><td class="mono" style="padding:4px 6px">↓↑↑↑</td></tr>
+          <tr><td style="padding:4px 6px;font-weight:700">QQQ</td><td style="padding:4px 6px;color:#4ade80">89 ↓</td><td style="padding:4px 6px;color:#f87171">UNHEALTHY</td><td class="mono" style="padding:4px 6px">−2</td><td class="mono" style="padding:4px 6px">0</td><td class="mono" style="padding:4px 6px">−7%</td><td class="mono" style="padding:4px 6px">↓↓↑↑</td></tr>
+          <tr><td style="padding:4px 6px;font-weight:700">MXL</td><td style="padding:4px 6px;color:var(--text2)">75 ↓</td><td style="padding:4px 6px;color:#f87171">UNHEALTHY</td><td class="mono" style="padding:4px 6px">−22</td><td class="mono" style="padding:4px 6px">−20</td><td class="mono" style="padding:4px 6px">−32%</td><td class="mono" style="padding:4px 6px">↓↓↑↑</td></tr>
+          <tr><td style="padding:4px 6px;font-weight:700">SQQQ</td><td style="padding:4px 6px;color:#f87171">3 ↑</td><td style="padding:4px 6px;color:#f87171">UNHEALTHY</td><td class="mono" style="padding:4px 6px">+4</td><td class="mono" style="padding:4px 6px">+6</td><td class="mono" style="padding:4px 6px">−50%</td><td class="mono" style="padding:4px 6px;color:#f87171">↑↓↓</td></tr>
+        </table>
+        <div class="callout co-key"><span class="ci">🔑</span><div><strong>重大发现：Score 和 健康 是两个独立维度。</strong>QQQ 89 / MXL 75 都是<strong>不低的分却 UNHEALTHY</strong> → Score 管"曾经多强"、健康管"现在还能不能拿"。</div></div>
+        <div class="callout co-info"><span class="ci">📈</span><div><strong>初步模式（待更多样本验证）：</strong><br>· <strong>健康度</strong>：HEALTHY 的 OSCR/ALAB 都在 <strong>20EMA 上方</strong>；UNHEALTHY 的 QQQ/MXL <strong>跌破 10E+20E</strong>、SQQQ 跌破 50S/200S → <strong>健康 ≈ 收盘价 vs 20EMA + 均线多头排列</strong>。<br>· <strong>Score</strong>：重奖「在 50/200 均线上方 + 近高点 + RS 强」。SQQQ 跌破 50/200S、距高 −50% → 3 分(底)；越靠近高点 + 均线多头 + RS 高 → 分越高(OSCR −5%/全多头=99)。<br>· 注意 ALAB RS +64 却 94、OSCR RS +19 却 99 → <strong>Score 不是纯 RS，"距高点近 + 均线全多头"权重很大</strong>。</div></div>
+        <div class="callout co-warn"><span class="ci">📥</span><div><strong>还缺的样本（继续拍）：</strong>① WATCH 橙(一个都没有) ② 多个 REDUCE(目前只有 ON) ③ 中间分数 40–60 ④ 量柱颜色能对上日期的。凑齐就能反解阈值/权重。</div></div>`,
+        source:"倒推 · 校准样本库 · 06/10"
       },
     ]
   },
