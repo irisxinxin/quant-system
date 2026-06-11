@@ -1,7 +1,7 @@
 # Kova 指标校准样本库 — 每行=一张带标签的截图。date=直播/截图日(数据截至该日)。
 # score: 整数/NaN(数据不足或被遮挡)。health: HEALTHY/WATCH/UNHEALTHY。reduce: REDUCE/Hold/-(WATCH与UNHEALTHY显示—)。
 # panel_price: 面板盘中价(空=用结算收盘回退)。star:1=⭐。vol_color:末根六色量柱(视觉)。momentum:动能震荡器形态(视觉)。screenshot:原图路径。
-# 参数发现(05/18截图): Kova动能积累参数=9,21(非猜的10/30); Kova Essentials=10E/20E/50S/200S+50均量。DDOG周线另算不混入。
+# 参数(05/18): 动能积累=9,21; Essentials=10E/20E/50S/200S+50均量。⚠REDUCE非纯dev21阈值(BAND3.03/DDOG3.25 Hold vs MU2.96 REDUCE)需'加速冲顶'第二因子。
 date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screenshot
 2026-06-10,OSCR,99,HEALTHY,Hold,27.85,0,批4-截图Hold@2.65ATR(<3.0阈值);用户口述某刻REDUCE是另一更冲顶时刻,,,kova_screenshots/2026-06-10/OSCR.webp
 2026-06-10,CRDO,99,HEALTHY,Hold,254.27,1,批2/3-满分贴高完美stack,,,kova_screenshots/2026-06-10/CRDO.webp
@@ -89,3 +89,10 @@ date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screens
 2026-05-18,SNDK,92,HEALTHY,Hold,1332.00,0,SNDK序列92(5/18)→99(5/27)→...→93(6/10)爬升后衰减,亮紫缩量,亮蓝在场,kova_screenshots/2026-05-18/SNDK.webp
 2026-05-18,BE,88,HEALTHY,Hold,266.30,0,BE序列88(5/18)→93(5/27)→91(6/2)→79U(6/10),中红,蓝在场,kova_screenshots/2026-05-18/BE.webp
 2026-05-18,LWLG,88,UNHEALTHY,-,12.22,0,新票LightwaveLogic-4涨到19后崩盘破20E(高分但破位),满红派发,蓝衰减,kova_screenshots/2026-05-18/LWLG.webp
+2026-05-18,OSCR,49,HEALTHY,REDUCE,24.76,0,★爬升gem;OSCR序列49R(5/18)→41(6/2)→45(6/4)→99(6/10);dev21=3.33冲顶中,中绿放量,蓝爬升,kova_screenshots/2026-05-18/OSCR.webp
+2026-05-18,DDOG,49,HEALTHY,Hold,209.19,0,★爬升gem;DDOG序列49(5/18)→99(6/2);⚠REDUCE反例dev21=3.25却Hold(高位盘整非加速),中绿放量,亮蓝在场,kova_screenshots/2026-05-18/DDOG.webp
+2026-05-18,BAND,99,HEALTHY,Hold,55.62,1,⚠REDUCE反例dev21=3.03延伸23天却Hold(稳步非冲顶),亮蓝放量,亮蓝在场,kova_screenshots/2026-05-18/BAND.webp
+2026-05-18,RKLB,98,HEALTHY,Hold,130.28,0,RKLB序列98(5/18)→99(5/27)→92(6/2)→84U(6/10),亮蓝climax,亮蓝在场,kova_screenshots/2026-05-18/RKLB.webp
+2026-05-18,AEHR,91,UNHEALTHY,-,85.62,0,新票-跌14%破20E(高分破位),满红派发,蓝衰减,kova_screenshots/2026-05-18/AEHR.webp
+2026-05-18,WULF,86,UNHEALTHY,-,20.93,0,新票TeraWulf-破20E(高分破位),亮紫缩量,蓝,kova_screenshots/2026-05-18/WULF.webp
+2026-05-18,AAOI,94,UNHEALTHY,-,170.99,0,20E边界闪烁(170.99≈20E171.3);截图HEALTHY/UNHEALTHY两读数=贴线,亮紫缩量,蓝回落,kova_screenshots/2026-05-18/AAOI.webp
