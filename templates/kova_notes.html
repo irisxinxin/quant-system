@@ -1452,6 +1452,25 @@ const CHAPTERS = [
         <div class="callout co-key"><span class="ci">🎉</span><div><strong>至此整套 Kova 指标系统全部解码！</strong>四均线 + 成交额柱六色 + 动能积累震荡器 + Kova Score + 健康度 + Reduce + ATR 止损 —— <strong>每一块的逻辑和参数都已知</strong>。下一步：写成完整 Pine 指标 + 用这 5 个案例(IESC/ARM/CRWV/MRVL/ON)校准 Score/健康/Reduce 的阈值。</div></div>`,
         source:"Kova 官方 tutorial · 使用流程 + 案例"
       },
+      {
+        title:"⑥ 数据源地图（写 Pine 的地基）⭐⭐", tags:[["base","总纲"],["vol","量能"]],
+        body:`<p>倒推前必须想清楚每个输出的<strong>数据从哪来</strong>。逐个抠：</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0">
+          <tr style="color:var(--text2);font-size:10.5px"><th style="text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)">输出</th><th style="text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)">原始数据</th><th style="text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)">Pine能算</th><th style="text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)">倒推公式</th></tr>
+          <tr><td style="padding:5px 6px;font-weight:600">四均线</td><td style="padding:5px 6px;color:var(--text2)">close</td><td style="padding:5px 6px;color:#4ade80">✅</td><td style="padding:5px 6px;color:var(--text2)">ema(10/20)、sma(50/200)</td></tr>
+          <tr><td style="padding:5px 6px;font-weight:600">六色量柱</td><td style="padding:5px 6px;color:var(--text2)">vol,close,open</td><td style="padding:5px 6px;color:#4ade80">✅</td><td style="padding:5px 6px;color:var(--text2)">量分档 × 涨跌</td></tr>
+          <tr><td style="padding:5px 6px;font-weight:600">动能积累</td><td style="padding:5px 6px;color:var(--text2)">OHLCV</td><td style="padding:5px 6px;color:#4ade80">✅</td><td style="padding:5px 6px;color:var(--text2)">A/D或CMF累积+斜率分色</td></tr>
+          <tr><td style="padding:5px 6px;font-weight:600">健康度</td><td style="padding:5px 6px;color:var(--text2)">close,high,MA</td><td style="padding:5px 6px;color:#4ade80">✅</td><td style="padding:5px 6px;color:var(--text2)">趋势模板布尔AND</td></tr>
+          <tr><td style="padding:5px 6px;font-weight:600">Reduce</td><td style="padding:5px 6px;color:var(--text2)">close,ATR,EMA</td><td style="padding:5px 6px;color:#4ade80">✅</td><td style="padding:5px 6px;color:var(--text2)">price&gt;21EMA+N×ATR</td></tr>
+          <tr><td style="padding:5px 6px;font-weight:600">ATR止损</td><td style="padding:5px 6px;color:var(--text2)">OHLCV</td><td style="padding:5px 6px;color:#4ade80">✅</td><td style="padding:5px 6px;color:var(--text2)">price−N×ATR</td></tr>
+          <tr><td style="padding:5px 6px;font-weight:600">Kova Score</td><td style="padding:5px 6px;color:var(--text2)">OHLCV+<strong>基准</strong></td><td style="padding:5px 6px;color:#f59e0b">⚠️</td><td style="padding:5px 6px;color:var(--text2)">加权(趋势+动量+量能+RS)归一1–99</td></tr>
+        </table>
+        <div class="callout co-key"><span class="ci">①</span><div><strong>整套唯一输入 = 单标的日线 OHLCV。</strong>Pine 拿不到订单流/暗池/L2/机构持仓 → "机构资金"全是 <code>close 在区间位置 × 量</code> 推断的代理，非真实数据。6 个输出无一例外。</div></div>
+        <div class="callout co-key"><span class="ci">②</span><div><strong>Kova Score 是纯技术分，不含基本面。</strong>硬推理：Score 每天带 ↑↓ 在变 = 日频可变；而 EPS/Sales/ROE 季度才更新，不可能让分数每天动 → <strong>Score = 纯价量合成(趋势+动量+量能+RS)，不接财报</strong>。基本面选股是另一层(scanner)。→ Score 完全能在 Pine 复刻。</div></div>
+        <div class="callout co-warn"><span class="ci">③</span><div><strong>唯一可能的外部依赖 = 基准指数(给 RS 用)。</strong>单标的 Pine 算不了"全市场排名百分位(IBD式)" → Kova 的 RS 几乎必是<strong>"相对基准"RS</strong>(股价 vs SPX/QQQ，Mansfield RSC)，用 <code>request.security("SPX")</code> 能算。这是全系统唯一要请求第二个 symbol 的地方。</div></div>
+        <div class="callout co-info"><span class="ci">🧭</span><div><strong>结论：</strong>除 Score 的 RS 组件可能要请求一个基准，其余全部<strong>自包含、纯 OHLCV、100% 可 Pine 复刻</strong>。剩下不是数据问题，全是<strong>阈值/权重校准</strong>(用实盘图 + 5 案例调)。</div></div>`,
+        source:"倒推 · 数据源地图（自分析）"
+      },
     ]
   },
   {
