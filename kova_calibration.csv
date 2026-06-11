@@ -1,7 +1,7 @@
 # Kova 指标校准样本库 — 每行=一张带标签的截图。date=直播/截图日(数据截至该日)。
 # score: 整数/NaN(数据不足或被遮挡)。health: HEALTHY/WATCH/UNHEALTHY。reduce: REDUCE/Hold/-(WATCH与UNHEALTHY显示—)。
 # panel_price: 面板盘中价(空=用结算收盘回退)。star:1=⭐。vol_color:末根六色量柱(视觉)。momentum:动能震荡器形态(视觉)。screenshot:原图路径。
-# 注: DDOG 05/27为周线(1W)图 Score88 HEALTHY REDUCE — 指标周线也能用但分数另算, 不混入日线校准。
+# 参数发现(05/18截图): Kova动能积累参数=9,21(非猜的10/30); Kova Essentials=10E/20E/50S/200S+50均量。DDOG周线另算不混入。
 date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screenshot
 2026-06-10,OSCR,99,HEALTHY,Hold,27.85,0,批4-截图Hold@2.65ATR(<3.0阈值);用户口述某刻REDUCE是另一更冲顶时刻,,,kova_screenshots/2026-06-10/OSCR.webp
 2026-06-10,CRDO,99,HEALTHY,Hold,254.27,1,批2/3-满分贴高完美stack,,,kova_screenshots/2026-06-10/CRDO.webp
@@ -84,3 +84,8 @@ date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screens
 2026-05-27,ARM,98,HEALTHY,Hold,303.11,0,ARM序列98(5/27)→99(6/2)→98(6/4)→97(6/5);dev21=2.89刚低于REDUCE2.93=Hold印证阈值,亮紫缩量,亮蓝在场,kova_screenshots/2026-05-27/ARM.webp
 2026-05-27,BE,93,HEALTHY,Hold,290.16,0,BE见顶序列93(5/27)→91(6/2)→79U(6/10),中绿放量,亮蓝在场,kova_screenshots/2026-05-27/BE.webp
 2026-05-27,AXTI,96,HEALTHY,Hold,121.96,0,AXTI见顶序列96H(5/27)→80U(6/10)大幅衰减,亮紫缩量,亮蓝在场,kova_screenshots/2026-05-27/AXTI.webp
+2026-05-18,NBIS,98,HEALTHY,Hold,203.90,0,NBIS序列98(5/18)→99(6/2)→93(6/10),亮紫缩量,蓝回落,kova_screenshots/2026-05-18/NBIS.webp
+2026-05-18,AXTI,94,HEALTHY,Hold,114.26,0,AXTI序列94(5/18)→96(5/27)→80U(6/10),中红,亮蓝在场,kova_screenshots/2026-05-18/AXTI.webp
+2026-05-18,SNDK,92,HEALTHY,Hold,1332.00,0,SNDK序列92(5/18)→99(5/27)→...→93(6/10)爬升后衰减,亮紫缩量,亮蓝在场,kova_screenshots/2026-05-18/SNDK.webp
+2026-05-18,BE,88,HEALTHY,Hold,266.30,0,BE序列88(5/18)→93(5/27)→91(6/2)→79U(6/10),中红,蓝在场,kova_screenshots/2026-05-18/BE.webp
+2026-05-18,LWLG,88,UNHEALTHY,-,12.22,0,新票LightwaveLogic-4涨到19后崩盘破20E(高分但破位),满红派发,蓝衰减,kova_screenshots/2026-05-18/LWLG.webp
