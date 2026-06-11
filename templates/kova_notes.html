@@ -1354,12 +1354,53 @@ const CHAPTERS = [
         source:"Kova 官方 tutorial · ATR Stop Loss"
       },
       {
-        title:"② Kova 动能积累（机构资金进出）", tags:[["vol","量能"],["mom","动量"]],
-        body:`<div class="callout co-key"><span class="ci">📊</span><div><strong>Kova 动能积累用一种特殊方式追踪机构资金的进出节奏。</strong></div></div>
-        <p>普通成交量指标只告诉你"今天量大还是小"，但回答不了更重要的问题：<strong>"过去这一段时间，到底是聪明钱在悄悄进场，还是在悄悄离场？"</strong></p>
-        <p>Kova 动能积累把这个问题量化成<strong>一条上下波动的彩色柱状图</strong>——你不用看具体数字，只看<strong>颜色变化</strong>就能读懂当前资金的<strong>方向和力度</strong>。</p>
-        <div class="callout co-info"><span class="ci">🔬</span><div><strong>倒推线索（重大）：这就是我最早在你行情图<strong>底部</strong>看到的那条蓝/红震荡器！</strong>之前我猜是"资金流/CVD"，现在确认了 —— 它是个<strong>机构资金累积指标</strong>（类 CVD 累积量差 / OBV / Chaikin Money Flow 的平滑版），<strong>彩色柱 = 方向(进/出) + 力度</strong>。倒推候选：累积资金流(close 相对区间位置 × 量) 平滑后分颜色档。量程不对称(+200/−100)也对得上"累积"特征。</div></div>`,
+        title:"② Kova 动能积累（机构资金进出）· 完整颜色码", tags:[["vol","量能"],["mom","动量"]],
+        body:`<p>追踪机构资金进出节奏 = 行情图<strong>底部那条彩色柱状震荡器</strong>。普通成交量只说"今天量大量小"，它回答"<strong>过去这段时间，聪明钱在悄悄进场还是离场</strong>"。看颜色不看数字。</p>
+        <h4>三种颜色，三种状态</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0">
+          <tr style="color:var(--text2);font-size:11px"><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)">颜色</th><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)">状态</th><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)">含义</th></tr>
+          <tr><td style="padding:6px 8px;color:#3b9eff;font-weight:700">🟦 亮蓝</td><td style="padding:6px 8px">资金加速<strong>进场</strong></td><td style="padding:6px 8px;color:var(--text2)">机构主动累积，连续亮蓝=真金白银持续买入（最关键）</td></tr>
+          <tr><td style="padding:6px 8px;color:#8b95a5;font-weight:700">⬜ 浅色</td><td style="padding:6px 8px">动能<strong>停滞</strong></td><td style="padding:6px 8px;color:var(--text2)">资金无方向、观望 → 不行动，等方向明朗</td></tr>
+          <tr><td style="padding:6px 8px;color:#f04444;font-weight:700">🟥 亮红</td><td style="padding:6px 8px">资金加速<strong>撤出</strong></td><td style="padding:6px 8px;color:var(--text2)">机构持续派发，顶部形成的早期信号（高度警惕）</td></tr>
+        </table>
+        <div class="callout co-key"><span class="ci">⚡</span><div><strong>最有价值的"预警信号"：亮红 → 突然变亮蓝。</strong>原本撤退的机构开始减弱卖压、资金风向悄悄转变，往往出现在<strong>真正反转前几天</strong>，比看价格图提前。常见于：① 下跌后建底 ② <strong>VCP 最后一次收缩</strong> ③ <strong>Pocket Pivot 前夜</strong> ④ 大盘修正末期、强势股率先转向。</div></div>
+        <h4>三条使用原则</h4>
+        <ol style="padding-left:20px">
+          <li><strong>颜色 &gt; 绝对位置</strong>：柱子在零轴上下不关键，<strong>颜色变化</strong>才是。亮蓝=好信号，亮红=警报。</li>
+          <li><strong>连续性 &gt; 单根</strong>：一根可能是噪音，<strong>连续几根同色</strong>才说明趋势确立。</li>
+          <li><strong>配合价格用</strong>：它是<strong>领先指标</strong>（告诉资金方向），但入场出场要看价格+均线确认。<strong>先看动能信号，再等价格配合</strong>。</li>
+        </ol>
+        <div class="callout co-info"><span class="ci">❓</span><div><strong>背离 = 最强信号：</strong>价涨但动能<strong>亮红</strong>=散户追、机构悄悄出货=顶部明确信号；价跌但动能<strong>亮蓝</strong>=恐慌盘抛、机构低位吸筹=底部反转最早征兆。日线最稳，分钟图噪音多。</div></div>
+        <div class="callout co-formula"><span class="ci">📌</span><div>一句话：<strong>看到亮蓝就关注，看到亮红就警惕，看到红变蓝就提前布局。</strong></div></div>
+        <div class="callout co-info"><span class="ci">🔬</span><div><strong>倒推线索：</strong>这就是行情图底部那条蓝/红震荡器（已确认）。是<strong>机构资金累积指标</strong>(类 CVD/OBV/CMF 平滑版)：累积资金流(close 相对区间位置×量)平滑后，<strong>按斜率/变化方向分三色</strong>(上升加速=亮蓝、走平=浅、下降加速=亮红)。"红变蓝"= 斜率由负转正。完全可复刻。</div></div>`,
         source:"Kova 官方 tutorial · 动能积累"
+      },
+      {
+        title:"③ Kova Essentials（主指标）· 四均线 + 成交额柱六色 ⭐", tags:[["trend","趋势"],["vol","量能"]],
+        body:`<p>这是 Kova 的<strong>主图指标</strong>（行情图上那套）。两层结构：</p>
+        <h4>第一层：四条均线 — 趋势骨架（精确确认）</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0">
+          <tr style="color:var(--text2);font-size:11px"><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)">颜色</th><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)">均线</th><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)">用途</th></tr>
+          <tr><td style="padding:6px 8px;color:#f5d020;font-weight:700">🟡 黄</td><td class="mono" style="padding:6px 8px">10 EMA</td><td style="padding:6px 8px;color:var(--text2)">短期 swing 节奏</td></tr>
+          <tr><td style="padding:6px 8px;color:#39c5cf;font-weight:700">🔵 青</td><td class="mono" style="padding:6px 8px">20 EMA</td><td style="padding:6px 8px;color:var(--text2)">中短期趋势</td></tr>
+          <tr><td style="padding:6px 8px;color:#c084fc;font-weight:700">🟣 紫</td><td class="mono" style="padding:6px 8px">50 SMA</td><td style="padding:6px 8px;color:var(--text2)">趋势锚点、机构关注线</td></tr>
+          <tr><td style="padding:6px 8px;color:#4ade80;font-weight:700">🟢 绿</td><td class="mono" style="padding:6px 8px">200 SMA</td><td style="padding:6px 8px;color:var(--text2)">长期方向、牛熊分界</td></tr>
+        </table>
+        <p style="color:var(--text3);font-size:12px">⚠ 注意：10/20 是 <strong>EMA</strong>，50/200 是 <strong>SMA</strong>。之前我猜的周期对了，但 EMA/SMA 现在精确确认。</p>
+        <h4>第二层：成交额柱 — 机构动作（六色，全可量化）</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0">
+          <tr style="color:var(--text2);font-size:11px"><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">颜色</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">条件</th><th style="text-align:left;padding:5px 7px;border-bottom:1px solid var(--border)">含义</th></tr>
+          <tr><td style="padding:5px 7px;color:#3b9eff;font-weight:700">🟦 亮蓝</td><td style="padding:5px 7px;color:var(--text2)">S级放量 + 上涨</td><td style="padding:5px 7px;color:var(--text2)"><strong>机构追买，最强买盘信号</strong></td></tr>
+          <tr><td style="padding:5px 7px;color:#f04444;font-weight:700">🟥 满红</td><td style="padding:5px 7px;color:var(--text2)">S级放量 + 下跌</td><td style="padding:5px 7px;color:var(--text2)"><strong>分销日(distribution)，机构出货</strong></td></tr>
+          <tr><td style="padding:5px 7px;color:#4ade80;font-weight:700">🟢 中度绿</td><td style="padding:5px 7px;color:var(--text2)">明显放量 + 上涨</td><td style="padding:5px 7px;color:var(--text2)">健康跟进</td></tr>
+          <tr><td style="padding:5px 7px;color:#f87171;font-weight:700">🔴 中度红</td><td style="padding:5px 7px;color:var(--text2)">明显放量 + 下跌</td><td style="padding:5px 7px;color:var(--text2)">卖压抬头，警惕</td></tr>
+          <tr><td style="padding:5px 7px;color:#c084fc;font-weight:700">🟪 亮紫</td><td style="padding:5px 7px;color:var(--text2)">缩量</td><td style="padding:5px 7px;color:var(--text2)"><strong>卖压消化中，常见于 VCP 末端 / Pocket Pivot 前夜</strong></td></tr>
+          <tr><td style="padding:5px 7px;color:#8b95a5;font-weight:700">⬜ 浅色</td><td style="padding:5px 7px;color:var(--text2)">正常波动</td><td style="padding:5px 7px;color:var(--text2)">无特殊信号</td></tr>
+        </table>
+        <div class="callout co-key"><span class="ci">⭐</span><div><strong>重点：亮蓝 + 亮紫是 Kova 体系最重要的两个颜色。</strong>亮蓝出现在<strong>突破日 = 真突破</strong>；亮紫出现在<strong>收缩末期 = 即将启动</strong>。</div></div>
+        <div class="callout co-info"><span class="ci">🔬</span><div><strong>倒推线索（核心突破口！）：</strong>成交额柱配色完全可量化 —— 按<strong>量能分档 × 涨跌方向</strong>：<br><code>S级放量 = vol &gt; k_S × MA_vol</code>(如 2x/top分位)、<code>明显放量 = vol &gt; k_M × MA_vol</code>(如 1.5x)、<code>缩量 = vol &lt; MA_vol</code>；再 ×(close&gt;open 涨 / close&lt;open 跌) → 六色。<br>而且它<strong>直接编码了三大体系</strong>：满红=O'Neil <strong>distribution day</strong>、亮蓝=Morales <strong>pocket pivot/追买</strong>、亮紫=Minervini <strong>VCP 量缩</strong>。这块我现在就能写进 Pine。</div></div>
+        <div class="callout co-info"><span class="ci">📥</span><div>注：Kova Essentials 还显示<strong>"健康 HEALTHY"</strong>标签（= 实战搭配里"显示健康+动能连续亮蓝=高质量入场"）。健康度/Kova Score 的<strong>具体算法</strong>还没在 tutorial 里给 —— 等后续。</div></div>`,
+        source:"Kova 官方 tutorial · Kova Essentials"
       },
     ]
   },
