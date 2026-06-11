@@ -1337,8 +1337,31 @@ const CHAPTERS = [
   },
   {
     id:"edu-indicator", group:"Kova 教育", icon:"🎛️", title:"指标用法说明",
-    intro:"Kova 各指标(Kova Score / 健康度 / 量能配色 / 震荡器)的官方解释与参数设置。",
-    cards:[]
+    intro:"Kova 各指标的官方 tutorial（用于倒推其量化系统）。⭐ 已收到：ATR 止损 + 动能积累；其余(Kova Score / 健康度 / 量能配色)待补。",
+    cards:[
+      {
+        title:"① Kova ATR Stop Loss（止损查找器）", tags:[["risk","风控"],["vol","量能"]],
+        body:`<p style="color:var(--text2);font-size:13px"><em>Kova 官方 tutorial · 2026/5/15</em></p>
+        <p>止损是交易里最重要、也最容易做错的一件事：<strong>太紧</strong>的止损常被正常波动洗出来、错过后面大涨；<strong>太松</strong>的止损一次大跌就吃掉好几次小利。</p>
+        <div class="callout co-key"><span class="ci">📍</span><div><strong>Kova ATR Stop Loss 用每只股票自己的波动率算合理止损位</strong> —— 让股票自己告诉你它的"呼吸空间"有多大。<strong>红色虚线 = 建议止损位。</strong></div></div>
+        <h4>设置面板（Inputs）</h4>
+        <ul>
+          <li><strong>止损风格（Stop style）</strong> 下拉两档：
+            <ul><li><strong>Swing 短线</strong>（更紧）</li><li><strong>Position 中长线</strong>（更松）</li></ul>
+          </li>
+        </ul>
+        <div class="callout co-info"><span class="ci">🔬</span><div><strong>倒推线索（关键）：</strong>这就是《止损的艺术》方法②(ATR 止损)的指标化 —— <code>stop = price − N × ATR</code>。Swing/Position 两档 = <strong>两套 N（短线 N 小=止损紧、中长线 N 大=止损松）</strong>。这是<strong>完全可复刻</strong>的：Pine 里 ta.atr(len) × mult，mult 按风格切换。红虚线就是这条 stop 线。</div></div>`,
+        source:"Kova 官方 tutorial · ATR Stop Loss"
+      },
+      {
+        title:"② Kova 动能积累（机构资金进出）", tags:[["vol","量能"],["mom","动量"]],
+        body:`<div class="callout co-key"><span class="ci">📊</span><div><strong>Kova 动能积累用一种特殊方式追踪机构资金的进出节奏。</strong></div></div>
+        <p>普通成交量指标只告诉你"今天量大还是小"，但回答不了更重要的问题：<strong>"过去这一段时间，到底是聪明钱在悄悄进场，还是在悄悄离场？"</strong></p>
+        <p>Kova 动能积累把这个问题量化成<strong>一条上下波动的彩色柱状图</strong>——你不用看具体数字，只看<strong>颜色变化</strong>就能读懂当前资金的<strong>方向和力度</strong>。</p>
+        <div class="callout co-info"><span class="ci">🔬</span><div><strong>倒推线索（重大）：这就是我最早在你行情图<strong>底部</strong>看到的那条蓝/红震荡器！</strong>之前我猜是"资金流/CVD"，现在确认了 —— 它是个<strong>机构资金累积指标</strong>（类 CVD 累积量差 / OBV / Chaikin Money Flow 的平滑版），<strong>彩色柱 = 方向(进/出) + 力度</strong>。倒推候选：累积资金流(close 相对区间位置 × 量) 平滑后分颜色档。量程不对称(+200/−100)也对得上"累积"特征。</div></div>`,
+        source:"Kova 官方 tutorial · 动能积累"
+      },
+    ]
   },
   {
     id:"edu-cases", group:"Kova 教育", icon:"📈", title:"实战案例 / 直播解读",
