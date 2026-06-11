@@ -48,3 +48,8 @@ date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screens
 2026-06-04,AVGO,76,UNHEALTHY,-,405.55,0,财报-15%崩盘破20E;满红派发量比3.1,满红放量3.1,蓝转弱,kova_screenshots/2026-06-04/AVGO.webp
 2026-06-04,OSCR,45,HEALTHY,Hold,23.18,0,★罕见低分HEALTHY-底部回升;45→99(06/10)疑真RS百分位,亮紫缩量,蓝转正,kova_screenshots/2026-06-04/OSCR.webp
 2026-06-04,NVTS,93,HEALTHY,Hold,28.46,0,06/04-动能放量回升;站全部均线,亮蓝放量,亮蓝在场,kova_screenshots/2026-06-04/NVTS.webp
+2026-06-02,DELL,99,HEALTHY,REDUCE,452.52,0,★REDUCE@5.55ATR(不同环境RISK-ON周),亮蓝中绿climax,亮蓝在场,kova_screenshots/2026-06-02/DELL.webp
+2026-06-02,DDOG,99,HEALTHY,REDUCE,262.58,0,★REDUCE@4.10ATR,中绿放量,亮蓝在场,kova_screenshots/2026-06-02/DDOG.webp
+2026-06-02,MU,99,HEALTHY,REDUCE,1030.82,0,★REDUCE@3.61ATR;MU序列99(6/2)→...→93(6/10),亮紫缩量,亮蓝在场,kova_screenshots/2026-06-02/MU.webp
+2026-06-02,INTC,81,UNHEALTHY,-,106.54,0,破10/20E;序列81(6/2)→...,满红派发,蓝转弱,kova_screenshots/2026-06-02/INTC.webp
+2026-06-02,MXL,82,UNHEALTHY,-,86.43,0,MXL序列82U(6/2)→82H(6/4)→75U(6/10)边界震荡,浅,蓝衰减,kova_screenshots/2026-06-02/MXL.webp
