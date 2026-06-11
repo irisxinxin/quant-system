@@ -41,6 +41,7 @@ def _pull_longport(ctx, tk, count=260):
     if not bars:
         return None
     return pd.DataFrame({
+        "Open": [float(b.open) for b in bars],
         "High": [float(b.high) for b in bars], "Low": [float(b.low) for b in bars],
         "Close": [float(b.close) for b in bars], "Volume": [float(b.volume) for b in bars],
     }, index=[b.timestamp for b in bars]).sort_index()
@@ -53,7 +54,7 @@ def _pull_yf(tk):
         return None
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
-    return df[["High", "Low", "Close", "Volume"]].copy()
+    return df[["Open", "High", "Low", "Close", "Volume"]].copy()
 
 
 def _pull(ctx, tk):
@@ -80,7 +81,7 @@ def _slice_to_date(df, date):
 
 def features(df, panel_price=None, bench_df=None):
     """从截到当日的 df 算 Kova 特征。panel_price 优先(盘中面板价), 否则用结算收盘。"""
-    c = df.Close
+    c, o, h, l, v = df.Close, df.Open, df.High, df.Low, df.Volume
     n = len(df)
     last = float(c.iloc[-1])
     px = float(panel_price) if panel_price and not pd.isna(panel_price) else last
@@ -93,29 +94,51 @@ def features(df, panel_price=None, bench_df=None):
     hi = float(c.tail(250).max())
     rs = np.nan
     if bench_df is not None and len(bench_df) >= 60:
-        # Mansfield 式相对强度: 个股 vs 基准 的 60 日表现差(%)
         bc = bench_df.Close
         stock_ret = last / float(c.iloc[-60]) - 1 if n >= 60 else np.nan
         bench_ret = float(bc.iloc[-1]) / float(bc.iloc[-60]) - 1 if len(bc) >= 60 else np.nan
         if not (pd.isna(stock_ret) or pd.isna(bench_ret)):
             rs = round((stock_ret - bench_ret) * 100, 1)
+    # ── 动量代理 (反推动能震荡器 + 六色量柱) ──
+    vol_ma = v.rolling(20).mean()
+    cmf = float((((c - l) - (h - c)) / (h - l + 1e-9) * v).tail(21).sum() / (v.tail(21).sum() + 1e-9))
+    obv = (np.sign(c.diff()).fillna(0) * v).cumsum()
+    obv_sl = float((obv.iloc[-1] - obv.iloc[-6]) / (v.tail(60).mean() * 5 + 1e-9))   # 归一: 近5日净OBV / 5日均量
+    dist_days = int((((c < c.shift()) & (v > 1.5 * vol_ma)).tail(25).sum()))
+    vr = float(v.iloc[-1] / (vol_ma.iloc[-1] + 1e-9))
+    last_up = bool(c.iloc[-1] > c.shift().iloc[-1])
     return dict(
         bars=n, px=round(px, 2),
         a10=int(px > e10), a20=int(px > e20),
         a50=int(px > s50) if not pd.isna(s50) else -1,
         a200=int(px > s200) if not pd.isna(s200) else -1,
         stack=int((e10 > e20) and (not pd.isna(s50) and e20 > s50) and (not pd.isna(s200) and s50 > s200)),
+        d10=round((px / e10 - 1) * 100, 1), d20=round((px / e20 - 1) * 100, 1),
         dist_hi=round((px / hi - 1) * 100, 1),
         dev21_atr=round((px - e21) / atr, 2) if atr else np.nan,
-        rs=rs,
+        rs=rs, cmf=round(cmf, 3), obv_sl=round(obv_sl, 2),
+        distd=dist_days, vr=round(vr, 2), lastbar=("涨" if last_up else "跌"),
     )
 
 
+# WATCH 假设(n=1, QQQ 06/05, 待更多橙样本验证):
+#   顶部预警 = 贴高 + 破10E + 贴20E + 带派发(放量下跌)。仅 MA 挤压不够(SPMO/MU 反例)。
+WATCH_CUSHION = 3.0     # 距20E垫子 < 此值
+WATCH_NEAR_HIGH = -6.0  # 距高 > 此值(贴高)
+WATCH_DISTRIB = 1.5     # 末柱量比 ≥ 此值(放量派发)
+
+
 def predict_health(f):
-    """反解公式: HEALTHY = px>20EMA AND px>50SMA AND px>200SMA(10E不参与)。"""
+    """三档反解: 破20/50/200 = UNHEALTHY；在三线上方再分 HEALTHY / WATCH。
+       WATCH(顶部预警) = 破10E 且 贴20E(垫子<3%) 且 贴高(>-6%) 且 放量派发(量比≥1.5)。"""
     if f["a200"] == -1:
-        return "UNHEALTHY"   # 算不出200S(次新股) → 实测均为 UNHEALTHY
-    return "HEALTHY" if (f["a20"] == 1 and f["a50"] == 1 and f["a200"] == 1) else "UNHEALTHY"
+        return "UNHEALTHY"
+    if not (f["a20"] == 1 and f["a50"] == 1 and f["a200"] == 1):
+        return "UNHEALTHY"
+    if (f["a10"] == 0 and not pd.isna(f["d20"]) and 0 <= f["d20"] < WATCH_CUSHION
+            and f["dist_hi"] > WATCH_NEAR_HIGH and f["vr"] >= WATCH_DISTRIB):
+        return "WATCH"
+    return "HEALTHY"
 
 
 def predict_reduce(f, health):
@@ -162,8 +185,9 @@ def main():
         ))
 
     res = pd.DataFrame(out)
-    cols = ["tk", "score", "health", "pred_health", "H", "reduce",
-            "a10", "a20", "a50", "a200", "stack", "dist_hi", "dev21_atr", "rs", "bars"]
+    cols = ["date", "tk", "score", "health", "pred_health", "H", "reduce",
+            "a10", "a20", "a50", "a200", "d20", "dist_hi", "dev21_atr",
+            "cmf", "obv_sl", "distd", "vr", "rs"]
     print("\n=== Kova 校准特征表 (站位: 1=价在均线上方) ===")
     print(res[cols].to_string(index=False))
     print(f"\n健康度公式命中: {h_ok}/{h_tot} = {h_ok/max(h_tot,1)*100:.0f}%")
