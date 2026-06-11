@@ -1566,7 +1566,7 @@ const CHAPTERS = [
         <div class="callout co-info"><span class="ci">🏗️</span><div><strong>已落地校准基础设施：</strong><code>kova_calibration.csv</code>(65样本/4日期)＋<code>kova_calibrate.py</code>(验证+拟合)＋<code>kova_screenshots/</code>(原图归档)＋<code>kova_stop_analysis.py</code>(止损反推)＋<code>market_regime.py</code>(大盘核按钮)＋<code>rs_scanner.py</code>(RS百分位)＋<code>kova_momentum_volume.pine</code>。新日期只追加行、一键重跑。</div></div>
         <div class="callout co-key"><span class="ci">🎯</span><div><strong>RS 百分位 scanner 补上 Score 唯一盲区（06/11 建成）：</strong>广谱 160 票池(含强势+弱势防御股锚定两端)算中期(3-6月)RS 百分位。<strong>排除指数后 RS 与 Score 相关 +0.844</strong>(中期 &gt; IBD12月 +0.769 &gt; 短期 +0.680)。加进 Score 回归：<strong>R² 0.62 → 0.82</strong>(LOO-CV MAE 也改善=非过拟合)。⚠<strong>全面优化诚实纠正</strong>：早期"相关+0.844、R²0.62→0.82"是小池子(160,半数=校准票自身)自指虚高。扩到诚实335广谱池后：近1月 r21 RS 相关 <strong>+0.72</strong>(真实但更弱)，加进回归只 +0.02 R²(与MA共线)。RS是Score真组件(TSLA批注"LOST MOMENTUM"印证)但<strong>不足以单独解释低分异常</strong>(OSCR 41→99 八天爬升=还有"趋势成熟度"成分)。Score精确值置信诚实定 ~62%。<br><strong>动量置信度也拉高了</strong>：workflow 从 12 张图抽动能颜色时间线，AD 速度波符号验证从 5 点扩到 <strong>32 点 = 84% 命中</strong>(蓝段z&gt;0/红段z&lt;0)，证明"抽整条颜色时间线"=拉高动量置信的正确方法。</div></div>
         <div class="callout co-warn"><span class="ci">📥</span><div><strong>还缺的样本：</strong><s>WATCH 橙</s>✅06/05 QQQ 抓到首个！但 <strong>仍需 2-3 个 WATCH</strong> 来确认"放量派发"是不是必需条件（现 n=1）。最该补：<strong>远离高点+破10E+放量</strong>的票（看是 HEALTHY 还是 WATCH，能一击区分）。另：<strong>动量颜色样本</strong>（动能蓝/红、量柱六色对应的具体日期）——正在后台 workflow 反推动能震荡器+六色量柱公式。</div></div>`,
-        source:"倒推 · 校准样本库 · 06/02+04+05+10（78 样本/5日期：批1-14）"
+        source:"倒推 · 校准样本库 · 06/02+04+05+10（81 样本/5日期：批1-15）"
       },
       {
         title:"⑧ 动量维度反推 + 大盘核按钮（workflow 深挖）🧠", tags:[["base","总纲"]],
