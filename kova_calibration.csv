@@ -67,3 +67,7 @@ date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screens
 2026-06-02,ALAB,97,HEALTHY,Hold,337.62,0,ALAB序列97(6/2)→98(6/4)→94(6/10),亮紫缩量,亮蓝在场,kova_screenshots/2026-06-02/ALAB.webp
 2026-06-02,GOOG,75,UNHEALTHY,-,367.46,0,GOOG见顶回落破10/20E(6/2=6/5都75U),满红派发,蓝转弱,kova_screenshots/2026-06-02/GOOG.webp
 2026-06-02,DTM,43,UNHEALTHY,-,140.45,0,新票DT Midstream-低分破位;动能近零,浅,蓝衰减,kova_screenshots/2026-06-02/DTM.webp
+2026-06-02,TSLA,18,HEALTHY,Hold,420.96,0,★★站全均线却18分=RS仅28;Kova批注'LOST MOMENTUM横盘2年'=RS scanner最强验证,浅横盘,动能近零,kova_screenshots/2026-06-02/TSLA.webp
+2026-06-02,RKLB,92,HEALTHY,Hold,127.40,0,RKLB 92H(6/2)→84U(6/10);RS=85,亮蓝climax,亮蓝在场,kova_screenshots/2026-06-02/RKLB.webp
+2026-06-02,BE,91,HEALTHY,Hold,299.30,0,BE 91H(6/2)→79U(6/10);RS=82,亮蓝中绿放量,亮蓝在场,kova_screenshots/2026-06-02/BE.webp
+2026-06-02,SIVE,99,HEALTHY,Hold,94.05,1,"瑞典股SEK(LongPort拉不到,引擎跳过);+54%爆发⭐",亮蓝climax,亮蓝在场,kova_screenshots/2026-06-02/SIVE.webp
