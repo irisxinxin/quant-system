@@ -53,3 +53,12 @@ date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screens
 2026-06-02,MU,99,HEALTHY,REDUCE,1030.82,0,★REDUCE@3.61ATR;MU序列99(6/2)→...→93(6/10),亮紫缩量,亮蓝在场,kova_screenshots/2026-06-02/MU.webp
 2026-06-02,INTC,81,UNHEALTHY,-,106.54,0,破10/20E;序列81(6/2)→...,满红派发,蓝转弱,kova_screenshots/2026-06-02/INTC.webp
 2026-06-02,MXL,82,UNHEALTHY,-,86.43,0,MXL序列82U(6/2)→82H(6/4)→75U(6/10)边界震荡,浅,蓝衰减,kova_screenshots/2026-06-02/MXL.webp
+2026-06-02,MRVL,99,HEALTHY,REDUCE,271.85,1,★REDUCE@3.92(+24%财报gap);MRVL序列99R(6/2)→98R(6/4)→98H(6/5),亮蓝climax,亮蓝在场,kova_screenshots/2026-06-02/MRVL.webp
+2026-06-02,ARM,99,HEALTHY,REDUCE,401.18,0,★REDUCE@3.95,亮蓝放量,亮蓝在场,kova_screenshots/2026-06-02/ARM.webp
+2026-06-02,NBIS,99,HEALTHY,Hold,266.82,1,★99分却Hold(dev21=2.49<3.0)=REDUCE独立于分数铁证,亮紫缩量,亮蓝在场,kova_screenshots/2026-06-02/NBIS.webp
+2026-06-02,DOCN,99,HEALTHY,Hold,173.13,0,★99分却Hold(dev21=2.12),亮紫缩量,亮蓝在场,kova_screenshots/2026-06-02/DOCN.webp
+2026-06-02,OSCR,41,HEALTHY,Hold,22.33,0,★低分健康;OSCR序列41(6/2)→45(6/4)→99(6/10)=真RS百分位爬升铁证,亮紫缩量,蓝底部,kova_screenshots/2026-06-02/OSCR.webp
+2026-06-02,SNDK,99,HEALTHY,Hold,1729.98,0,SNDK序列99(6/2)→99(6/4)→96(6/5)→93(6/10),亮紫缩量,亮蓝在场,kova_screenshots/2026-06-02/SNDK.webp
+2026-06-02,NOK,95,HEALTHY,Hold,16.64,0,NOK 95H(6/2)→89U(6/10)见顶回落,中绿放量,亮蓝在场,kova_screenshots/2026-06-02/NOK.webp
+2026-06-02,SYNA,94,HEALTHY,Hold,142.31,0,新票-强趋势站全均线,亮紫缩量,蓝转正,kova_screenshots/2026-06-02/SYNA.webp
+2026-06-02,KGS,75,UNHEALTHY,-,66.53,0,新票-Kodiak Gas见顶回落破10/20E,中红,蓝衰减,kova_screenshots/2026-06-02/KGS.webp
