@@ -76,3 +76,7 @@ date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screens
 2026-05-27,RKLB,99,HEALTHY,Hold,145.39,1,★RKLB见顶序列99H(5/27)→92(6/2)→84U(6/10),中绿放量,亮蓝在场,kova_screenshots/2026-05-27/RKLB.webp
 2026-05-27,HUT,98,HEALTHY,Hold,111.33,0,新周HUT强势,中绿放量,亮蓝在场,kova_screenshots/2026-05-27/HUT.webp
 2026-05-27,CRWV,34,UNHEALTHY,-,101.59,0,新票CoreWeave-顶部回落破50S距高-45%,亮紫缩量,蓝衰减,kova_screenshots/2026-05-27/CRWV.webp
+2026-05-27,NOK,99,HEALTHY,Hold,15.91,0,NOK见顶序列99(5/27)→95(6/2)→89U(6/10),亮蓝climax,亮蓝在场,kova_screenshots/2026-05-27/NOK.webp
+2026-05-27,MXL,89,HEALTHY,Hold,98.60,0,MXL序列89H(5/27)→82U(6/2)→82H(6/4)→75U(6/10)震荡,中红,亮蓝在场,kova_screenshots/2026-05-27/MXL.webp
+2026-05-27,AAOI,90,HEALTHY,Hold,186.00,0,AAOI序列90(5/27)→81(6/10),亮蓝放量,亮蓝在场,kova_screenshots/2026-05-27/AAOI.webp
+2026-05-27,LITE,78,UNHEALTHY,-,880.48,0,新票Lumentum-顶部回落破10/20E(距高-16%),中红派发,蓝转弱,kova_screenshots/2026-05-27/LITE.webp
