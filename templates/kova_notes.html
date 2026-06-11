@@ -1576,6 +1576,21 @@ const CHAPTERS = [
         <div class="callout co-warn"><span class="ci">📥</span><div><strong>workflow 列的补样本优先级：</strong>P0 <strong>cushion20 在 −0.5%~−2.5% 边界带</strong>的多只票(定标WATCH)；P1 <strong>含红/浅动能的下跌票</strong>10-15张(锁动能阈值)；P2 <strong>成交额&gt;3×的放量日</strong>(锁量柱k_S)；P3 <strong>远离高+破10E+放量</strong>票(验"贴高"是否WATCH必要)；P5 <strong>非6/5/6/10的新日期</strong>score样本(验RS+IREN异常)。</div></div>`,
         source:"倒推 · 动量维度 workflow(5 agent/21万 token) · 06/11"
       },
+      {
+        title:"⑨ Kova 真实止损设法（从 Trade Note 反推）🎯", tags:[["base","总纲"]],
+        body:`<p>用户截到 Kova 真实交易表(Numbers · Trade Note)，含每笔 <strong>买入价 + 止损价</strong>。这是反推他止损法的<strong>真值数据</strong>——23 笔初始止损实测：</p>
+        <table style="width:100%;border-collapse:collapse;font-size:11.5px;margin:8px 0">
+          <tr style="color:var(--text2);font-size:10px"><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)">假设</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)">实测</th><th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border)">结论</th></tr>
+          <tr><td style="padding:4px 6px">固定 %</td><td class="mono" style="padding:4px 6px">止损% 1–8%，中位 4.3%</td><td style="padding:4px 6px;color:#f87171">❌ 非固定%（比7-8%硬止损更紧）</td></tr>
+          <tr><td style="padding:4px 6px">N×ATR</td><td class="mono" style="padding:4px 6px">/ATR 0.26–1.05（散4倍）</td><td style="padding:4px 6px;color:#f87171">❌ 非干净ATR倍数</td></tr>
+          <tr><td style="padding:4px 6px;font-weight:700">入场日 K 线最低点</td><td class="mono" style="padding:4px 6px;color:#4ade80">vs入场日低 中位 −0.02ATR，<strong>77% 在 ±0.5ATR 内</strong></td><td style="padding:4px 6px;color:#4ade80">✅ 就是它</td></tr>
+          <tr><td style="padding:4px 6px">10日 swing 低</td><td class="mono" style="padding:4px 6px">止损在其上 +2.9ATR</td><td style="padding:4px 6px;color:#f87171">❌ 非swing低（那太松）</td></tr>
+        </table>
+        <div class="callout co-key"><span class="ci">🎯</span><div><strong>结论：Kova 的初始止损 = 买入那根 K 线的最低点（下方一点点）= 结构止损。</strong>止损% 之所以 1–8% 不固定，是因为入场当天 K 线振幅不同——<strong>他买的是紧凑突破日，所以止损天然就紧（中位才 4.3%，远比 7-8% 硬止损纪律）</strong>。逻辑：买在突破/pocket pivot 日，止损放当日低下——若收回当日低之下=突破失败=立刻出。</div></div>
+        <div class="callout co-formula"><span class="ci">→</span><div>复刻（纯 OHLCV，比 ATR 线还简单）：<strong>initial_stop = 入场日 Low − 小缓冲(≈0.1×ATR)</strong>。我们 <code>stops_core.py</code> 现成有结构止损逻辑，可直接产出"Kova 式入场止损"。<code>kova_stop_analysis.py</code> 固化了这 23 笔反推。</div></div>
+        <div class="callout co-info"><span class="ci">📈</span><div>另从 Trade Note 看到：① <strong>赢家把止损一路上移到买价之上</strong>（AXTI 买74.60→止损95、DDOG 买201→止损267、SNDK 买1024→止损1390）= 趋势确立后 EMA 追踪锁利，印证已记的"止损只能上移"。② <strong>风险/仓位</strong>：单笔 Position ≈$1000–3700、Max Loss ≈$30–170 = 每笔风险约仓位 2–8%。③ Add Position 列有 "Reduce"/"Yes" = 记录减仓/加仓动作。</div></div>`,
+        source:"倒推 · Kova Trade Note 真实止损(23笔) · 06/11"
+      },
     ]
   },
   {
