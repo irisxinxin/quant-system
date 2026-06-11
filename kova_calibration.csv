@@ -34,3 +34,6 @@ date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screens
 2026-06-05,QQQ,95,WATCH,-,726.26,0,★首个WATCH橙-破10E贴20E+放量派发,中红放量2.37,蓝转弱,kova_screenshots/2026-06-05/QQQ.png
 2026-06-05,SPY,99,HEALTHY,Hold,749.98,0,06/05-站10E贴高,中红放量1.92,蓝转弱,kova_screenshots/2026-06-05/SPY.png
 2026-06-05,SNDK,96,HEALTHY,Hold,1634.91,0,06/05-破10E但厚垫缩量回调,亮紫缩量,蓝在场,kova_screenshots/2026-06-05/SNDK.png
+2026-06-05,MRVL,98,HEALTHY,Hold,295.06,0,06/05-抛物线上冲后回-6.75%仍远在均线上,中红放量,亮蓝在场,kova_screenshots/2026-06-05/MRVL.png
+2026-06-05,HYLN,99,HEALTHY,Hold,7.93,1,06/05-小盘火箭2→8⭐,中绿放量,亮蓝在场,kova_screenshots/2026-06-05/HYLN.png
+2026-06-05,GOOG,75,UNHEALTHY,-,366.78,0,"06/05-用户持仓,见顶回落破10/20E",中红,蓝转弱,kova_screenshots/2026-06-05/GOOG.png
