@@ -1594,6 +1594,16 @@ const CHAPTERS = [
         <div class="callout co-info"><span class="ci">📈</span><div>另从 Trade Note 看到：① <strong>赢家把止损一路上移到买价之上</strong>（AXTI 买74.60→止损95、DDOG 买201→止损267、SNDK 买1024→止损1390）= 趋势确立后 EMA 追踪锁利，印证已记的"止损只能上移"。② <strong>风险/仓位</strong>：单笔 Position ≈$1000–3700、Max Loss ≈$30–170 = 每笔风险约仓位 2–8%。③ Add Position 列有 "Reduce"/"Yes" = 记录减仓/加仓动作。</div></div>`,
         source:"倒推 · Kova Trade Note 真实止损(23笔) · 06/11"
       },
+      {
+        title:"⑩ 终极优化报告（深度分析+对抗验证）🔬 诚实第一", tags:[["base","总纲"]],
+        body:`<p>91样本×35特征(速度/加速度/趋势年龄/新鲜度/RS)，4 路并行深挖 REDUCE 第二因子 + Score 趋势成熟度，含专门的<strong>对抗验证 agent</strong>用排列检验/LOO-CV 把过拟合的"发现"判掉。结论有正有负，如实记录。</p>
+        <div class="callout co-key"><span class="ci">🔴</span><div><strong>REDUCE = 一维现象，没有第二因子（对抗验证证伪）。</strong>规则：<strong>HEALTHY + dev21_atr ≥ ~3.3</strong>（dev21 单特征 AUC=0.998，LOO-CV=0.996，排列检验 p&lt;0.0002）。<br>一路力推 dev10_atr 做第二开关(acc 0.984)，但对抗验证证明它与 dev21 <strong>相关 0.92-0.97 = 同一个"被拉伸"的重复测量</strong>，增量≈0；ret/accel/vr/days_ext 排列检验 p≈0.5=与随机无异。BAND/DDOG/STRL(高乖离却 Hold)是<strong>不可约的标注噪声/缺失维度</strong>，不是第二因子能救的。<strong>减仓只看一条乖离线，加第二维=过拟合那 3 个反例。</strong>置信 0.90(规则)。</div></div>
+        <div class="callout co-key"><span class="ci">📈</span><div><strong>Score 的"趋势成熟度"= 新鲜度(距新高天数)，不是趋势年龄。</strong>原假说(days_above_200s 驱动分数)被<strong>否定</strong>(r≈+0.02=噪声)。真正驱动 = <strong>days_since_hi(距上次新高天数)</strong>(Spearman −0.74，站齐4均线子集仍 −0.52，perm-p=0.0003)。<br>· <strong>突破侧加分 = 近端动量 ret_3d/accel_3d</strong>：DDOG 49(ret_3d=1.7 平) vs MRVL 98(ret_3d=44 爆发)，同样贴新高站全均线，分差全在动量推力。<br>· <strong>见顶衰减三件套</strong>(监控顶部比数趋势年龄可靠)：<code>days_since_hi↑ + dev21转负 + 跌破10/20EMA</code>。证据 QQQ 99→89(趋势年龄不变)/RKLB 99→84/BE 93→79/AXTI 96→80。<br>Score ≈ <strong>站位 × 近端动量 × 新鲜度</strong>。置信 0.72。</div></div>
+        <div class="callout co-formula"><span class="ci">∑</span><div>Score 最佳诚实公式(R²=0.51 LOO)：<strong>Score ≈ 82·站200S + 6.6·站20E − 0.27·距高% + 0.04·RS − 1.16·距新高天 + 0.085·ret10d</strong>。仅作内部参考分，<strong>不当唯一决策</strong>。</div></div>
+        <div class="callout co-warn"><span class="ci">⚠</span><div><strong>三条数据诚实红线：</strong>① REDUCE 有效独立样本仅约 8 个(MRVL/MU 重复 ticker)，0.98 级精度<strong>不可直接上线</strong>，需前向验证+按 ticker 分组 CV。② <strong>~29% 误差集中在 OSCR/DDOG/TSLA 4 个"位置好却低分"异常</strong>上——Kova Score 含一个静态 OHLCV 特征<strong>复现不了的内部维度</strong>(疑似动量背离/资金流健康度/专有内部状态)，剔除这 4 行连基线 R²=0.74。别假装现有列能算出官方分。③ days_above_* 趋势年龄列全系列<strong>不进打分公式</strong>(in-sample R²涨但 LOO-MAE 从 9.4 劣化到 10.4=过拟合)。</div></div>
+        <div class="callout co-info"><span class="ci">✅</span><div><strong>能落地的 3 件：</strong>① REDUCE 减仓开关 <code>HEALTHY AND dev21_atr≥3.3</code>(阈值 3.2-3.5 区间，别精修小数点)。② 见顶衰减三件套监控。③ Score 近似参考分(标注"≈估算非官方")。基础设施：<code>kova_features.py</code>(91样本×35特征矩阵)。</div></div>`,
+        source:"深度优化 workflow(5 agent/21万 token, 含对抗验证) · 06/12"
+      },
     ]
   },
   {
