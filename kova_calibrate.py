@@ -126,8 +126,8 @@ def features(df, panel_price=None, bench_df=None):
 WATCH_CUSHION = 3.0     # 距20E垫子 < 此值
 WATCH_NEAR_HIGH = -6.0  # 距高 > 此值(贴高)
 WATCH_DISTRIB = 1.5     # 末柱量比 ≥ 此值(放量派发)
-# REDUCE 触发: price 高于 21EMA ≥ 此 ATR 数。MRVL 06/04 锚死: 3.13ATR=REDUCE / 2.91ATR=Hold → 3.0
-REDUCE_DEV = 3.0
+# REDUCE 触发: price 高于 21EMA ≥ 此 ATR 数。9正样本锚死:最低MU 05/27 REDUCE@2.96 / 最高MRVL 06/05 Hold@2.91 → 2.93
+REDUCE_DEV = 2.93
 
 
 def predict_health(f):

@@ -71,3 +71,8 @@ date,ticker,score,health,reduce,panel_price,star,note,vol_color,momentum,screens
 2026-06-02,RKLB,92,HEALTHY,Hold,127.40,0,RKLB 92H(6/2)→84U(6/10);RS=85,亮蓝climax,亮蓝在场,kova_screenshots/2026-06-02/RKLB.webp
 2026-06-02,BE,91,HEALTHY,Hold,299.30,0,BE 91H(6/2)→79U(6/10);RS=82,亮蓝中绿放量,亮蓝在场,kova_screenshots/2026-06-02/BE.webp
 2026-06-02,SIVE,99,HEALTHY,Hold,94.05,1,"瑞典股SEK(LongPort拉不到,引擎跳过);+54%爆发⭐",亮蓝climax,亮蓝在场,kova_screenshots/2026-06-02/SIVE.webp
+2026-05-27,MU,99,HEALTHY,REDUCE,911.60,1,★新周!MU突破REDUCE@2.96(最低REDUCE锚点);序列99R(5/27)→99R(6/2)→96(6/5)→93(6/10),亮蓝climax,亮蓝在场,kova_screenshots/2026-05-27/MU.webp
+2026-05-27,QQQ,99,HEALTHY,Hold,728.46,0,★QQQ见顶序列99H(5/27)→95WATCH(6/5)→89U(6/10),亮紫缩量,亮蓝在场,kova_screenshots/2026-05-27/QQQ.webp
+2026-05-27,RKLB,99,HEALTHY,Hold,145.39,1,★RKLB见顶序列99H(5/27)→92(6/2)→84U(6/10),中绿放量,亮蓝在场,kova_screenshots/2026-05-27/RKLB.webp
+2026-05-27,HUT,98,HEALTHY,Hold,111.33,0,新周HUT强势,中绿放量,亮蓝在场,kova_screenshots/2026-05-27/HUT.webp
+2026-05-27,CRWV,34,UNHEALTHY,-,101.59,0,新票CoreWeave-顶部回落破50S距高-45%,亮紫缩量,蓝衰减,kova_screenshots/2026-05-27/CRWV.webp
