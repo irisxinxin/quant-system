@@ -126,6 +126,8 @@ def features(df, panel_price=None, bench_df=None):
 WATCH_CUSHION = 3.0     # 距20E垫子 < 此值
 WATCH_NEAR_HIGH = -6.0  # 距高 > 此值(贴高)
 WATCH_DISTRIB = 1.5     # 末柱量比 ≥ 此值(放量派发)
+# REDUCE 触发: price 高于 21EMA ≥ 此 ATR 数。MRVL 06/04 锚死: 3.13ATR=REDUCE / 2.91ATR=Hold → 3.0
+REDUCE_DEV = 3.0
 
 
 def predict_health(f):
@@ -144,7 +146,7 @@ def predict_health(f):
 def predict_reduce(f, health):
     if health != "HEALTHY":
         return "-"
-    return "REDUCE" if (not pd.isna(f["dev21_atr"]) and f["dev21_atr"] >= 2.3) else "Hold"
+    return "REDUCE" if (not pd.isna(f["dev21_atr"]) and f["dev21_atr"] >= REDUCE_DEV) else "Hold"
 
 
 def main():
