@@ -1,0 +1,47 @@
+file,is_kova,ticker,read_date,score,health,reduce,star,panel_price,vol_color,momentum,watch_signal,extreme_vol,note
+image-1781165642542.webp,True,AVGO,2026-06-04,76,UNHEALTHY,无,1,405.55,亮红,亮蓝,True,True,UNHEALTHY红色预警，高位贴近高点+明显放量派发，动能蓝柱突出
+image-1781165645039.webp,True,ALAB,2026-06-11,98,HEALTHY,Hold,0,344.87,浅紫,浅蓝,False,True,ALAB处于强势HEALTHY状态，Score 98.5，Panel价格344.87USD。最右K线浅紫成交柱，底部动能浅蓝。5月中旬有明显巨量放量信号。
+image-1781165647709.webp,True,MRVL,2026-06-04,58,HEALTHY,REDUCE,0,286.09,亮红,中蓝,False,False,MRVL日线图，Score 58 HEALTHY但有REDUCE信号，最右成交柱亮红+中蓝动能，无明显放量或顶部预警
+image-1781165650324.webp,True,OSCR,2026-06-12,45,HEALTHY,Hold,0,23.18,亮紫,浅蓝,False,False,绿底Hold健康度，中等Kova评分45，无预警信号
+image-1781165652758.webp,True,STRL,2026-06-17,99,HEALTHY,无,1,944.26,亮蓝,亮蓝,False,False,"STRL HEALTHY绿色面板, Score 99高分, 价格944.26, 强势上升中"
+image-1781165655341.webp,True,AMD,,-1,UNHEALTHY,无,0,-1,亮蓝,浅蓝,False,False,右侧评分面板过小，无法精确读取score/health/price等数值，需要更清晰的截图
+image-1781165657477.webp,True,MXL,2026-06-04,82,HEALTHY,Hold,0,93.33,亮蓝,亮蓝,False,True,股价在所有均线上方，上升趋势中，5月中旬出现巨量，当前成交正常
+image-1781165659693.webp,True,ARM,2026-06-03,68,HEALTHY,Hold,0,375.5,浅紫,浅蓝,False,False,ARM 1D日线，评分68处于中等健康状态，动能偏弱，建议观望
+image-1781165662476.webp,True,CLS,2026-06-04,91,HEALTHY,Hold,0,405.53,紫色,亮蓝色,False,False,CLS日线图，Score 91 HEALTHY状态，最右成交额柱紫色，动能柱亮蓝色
+image-1781165665237.webp,True,SNDK,,99,HEALTHY,Hold,0,1775.06,浅蓝,浅蓝,False,False,"Kova Score 99 HEALTHY状态;成交额和动能柱均为浅蓝色;右侧价格1,775.06;评分面板显示Hold;未见REDUCE提示;日期信息不清"
+image-1781166775978.webp,True,NVTS,2026-06-09,93,HEALTHY,Hold,0,28.46,亮蓝,浅蓝,False,False,强势上升，四线金叉排列，高分健康度，成交量支撑
+image-1781166778559.webp,False,,,-1,未知,无,0,-1,,,False,False,非Kova行情图，这是股票列表表格，无法提取K线指标
+image-1781167301073.webp,True,DELL,2026-06-12,99,HEALTHY,REDUCE,0,-1,浅蓝,浅蓝,False,True,Score 99 HEALTHY 但有 REDUCE 提示；最右巨量青蓝柱明显高出周围
+image-1781167303694.webp,True,DDOG,2026-06-03,58,HEALTHY,REDUCE,0,278.73,浅绿,浅蓝,False,True,"DDOG 1日线,得分58分HEALTHY状态+REDUCE提示。右侧成交额柱明显浅绿色,动能柱浅蓝。成交额区间存在多根明显高于周围数倍的巨量柱(特别是中部和右"
+image-1781167306609.webp,True,INTC,2026-06-01,81,HEALTHY,无,0,-1,浅紫,浅蓝,False,False,"INTC 1D, Kova Score 81 HEALTHY, 最右成交额柱浅紫色, 底部动能柱浅蓝色, 无明显巨量放量"
+image-1781167309029.webp,True,MU,2026-06-11,98,HEALTHY,REDUCE,0,-1,绿,浅蓝,True,True,"高分+REDUCE双重信号, 顶部放量派发危险; 股价在所有均线上方贴近高点, 动能偏弱(浅蓝)"
+image-1781167311765.webp,True,MXL,2024-06-28,82,UNHEALTHY,无,0,91.2,浅紫,浅蓝,True,True,UNHEALTHY红色预警; 高于均线; 5月中旬巨量放量信号
+image-1781167315129.webp,True,MRVL,2026-06-04,91,HEALTHY,REDUCE,1,-1,浅蓝,浅蓝,False,True,"MRVL日线趋势健康(Kova评分91分),但右侧现红蓝大量柱是放量派发信号,已触发REDUCE预警"
+image-1781167317983.webp,True,NBIS,2026-06-03,91,HEALTHY,Hold,0,-1,浅粉色,浅蓝,False,False,NBIS得分91 HEALTHY，股价在上升通道但无派发信号
+image-1781167322953.webp,True,ARM,2026-06-11,99,HEALTHY,REDUCE,0,401.98,亮蓝,深蓝,False,False,REDUCE提示与HEALTHY并存；价格在均线上方，近期有上升趋势
+image-1781167325589.webp,False,MU,2026-06-05,-1,未知,无,0,-1,绿色,浅蓝,False,False,非Kova格式图表，缺少评分面板。这是TradingView标准行情图，有4条均线+成交量柱+动能指标，但无Kova Score、Health状态或REDUCE
+image-1781167327883.webp,True,DOCN,2026-06-11,99,HEALTHY,Hold,0,177.83,浅蓝,深红,False,True,强势上升，均线多头排列，最右成交量柱极端放大
+image-1781167333627.webp,True,OSCR,2026-06-02,41,HEALTHY,Hold,0,-1,亮紫,浅蓝,False,True,底部成交额柱(Mar-Apr间)有明显巨量，超出周围柱高3倍以上；动能震荡器在底部处于浅蓝色反弹状态；股价穿过四条均线在上方，形成强势上行
+image-1781167336279.webp,True,NOK,2026-06-11,95,HEALTHY,Hold,0,3000,中绿,亮蓝,False,False,强势上涨趋势，4条均线完美排列，成交量稳健，动能指标强势蓝色
+image-1781167338776.webp,True,SNDK,2026-06-04,90,HEALTHY,Hold,0,10368.9,浅紫,浅蓝,False,True,良好上升趋势，四条均线呈多头排列，成交额柱显示近期有明显放量
+image-1781167341809.webp,True,KGS,2025-05,76,UNHEALTHY,无,0,-1,浅蓝,浅蓝,True,True,UNHEALTHY红色预警，K线贴近高点在均线上方，右侧成交显著放量，典型派发危险状态
+image-1781167344746.webp,False,SYNA,2026-06-05,-1,未知,无,0,-1,红色,深蓝,False,False,TradingView平台图表，非Kova原生界面，无评分面板
+image-1781167764766.webp,True,ALAB,2026-06-05,97,HEALTHY,Hold,0,361.62,亮紫,亮蓝,False,False,Score 97 HEALTHY 健康上升，股价突破均线，右侧成交紫柱配亮蓝动能
+image-1781167767101.webp,True,BB,,59,HEALTHY,REDUCE,1,-1,浅绿,浅蓝,False,False,59分 HEALTHY + REDUCE提示，健康度绿色正常，建议适度减仓
+image-1781167772587.webp,True,DTM,2026-06-10,43,UNHEALTHY,无,0,-1,中红色,浅蓝色,True,False,UNHEALTHY低分预警，43分危险信号，需要规避
+image-1781167774949.webp,True,GOOG,2026-06-09,75,UNHEALTHY,无,0,-1,深红,深红,True,True,Kova Score 75分+不健康红警; 最右侧有明显巨量红柱(成交额和动能都深红); 价格在所有均线上方贴近高点存派发风险
+image-1781167777606.webp,True,OKTA,2026-06-03,98,HEALTHY,REDUCE,0,-1,亮蓝,亮蓝,False,True,高分 98 HEALTHY 但有 REDUCE 减仓警告，右侧成交量巨幅放大
+image-1781193664629.webp,True,MU,2026-06-04,90,HEALTHY,REDUCE,0,911.6,亮蓝,亮蓝,False,False,HEALTHY 90分但有REDUCE警示，成交额与动能均为亮蓝偏正向
+image-1781193667129.webp,True,QQQ,2026-06-13,99,HEALTHY,Hold,0,740.47,中红,浅蓝,False,False,强势上升趋势，价格在所有均线上方，最右侧成交额柱为中等红色，动能震荡器显示浅蓝色（正向），健康度明确显示 HEALTHY，建议 Hold
+image-1781193669362.webp,True,CRWW,2026-05-22,34,UNHEALTHY,REDUCE,0,-1,浅紫,浅紫,False,True,"Score 34分UNHEALTHY状态,右侧评分面板清晰可见REDUCE提示;最右成交额柱浅紫色;动能震荡器底部显示红蓝柱状态,当前处于弱势;图中可见多处巨量"
+image-1781193671645.webp,True,HUT,2026-06-26,98,HEALTHY,Hold,0,-1,亮蓝,亮蓝,False,False,HUT 强势上升，评分高达98.6，四线齐上排，健康度绿色，无预警信号
+image-1781193674697.webp,True,RKLB,2026-06-12,99,HEALTHY,Hold,1,-1,浅紫色,浅蓝色,False,True,强势上涨，均线排列完美，无顶部预警，成交温和
+image-1781193677892.webp,True,LITE,2026-05-29,78,UNHEALTHY,Hold,0,-1,浅紫色,浅紫色,True,True,顶部放量派发，UNHEALTHY红警，高风险
+image-1781193680123.webp,True,NOK,2026-05-29,99,HEALTHY,Hold,0,15.91,浅/中蓝,浅蓝,False,False,Score 99 HEALTHY，价格15.91，最右成交量柱和动能柱均为浅蓝色，无顶部预警信号
+image-1781193682444.webp,True,MXL,,99,HEALTHY,Hold,0,98.6,亮蓝,浅蓝,False,True,"极高评分(98.6),HEALTHY健康,动能浅蓝正向,成交温和放量,无顶部风险"
+image-1781193684711.webp,True,AAOI,,90,HEALTHY,Hold,0,186,浅紫色,浅蓝色,False,False,强势上涨，Kova 90分评价，在200日线上方
+image-1781193687013.webp,True,MU,2026-05-28,97,HEALTHY,无,0,-1,浅蓝,浅蓝,False,True,97分HEALTHY强势股，底部支撑完整，最近成交浅蓝修复中
+image-1781193690420.webp,True,DOGG,,98,HEALTHY,REDUCE,0,210,亮蓝,浅蓝,False,True,Score 98 + HEALTHY but marked REDUCE - accumulation weakening signal
+image-1781193692910.webp,True,AXTI,2026-05-28,96,HEALTHY,Hold,0,121.96,浅紫,浅蓝,False,True,"Score 96分绿色HEALTHY, 右侧浅紫成交柱, 底部动能震荡器浅蓝, 有多根特别高的巨量柱"
+image-1781193695586.webp,True,BE,,93,HEALTHY,Hold,0,-1,浅绿,浅蓝,False,False,绿色HEALTHY评分93，上升趋势，动能正向
+image-1781193698498.webp,True,ARM,2026-06-04,98,HEALTHY,Hold,0,302.11,浅蓝,浅蓝,False,False,ARM日线强势上升，Kova评分98分HEALTHY状态，建议Hold持有
