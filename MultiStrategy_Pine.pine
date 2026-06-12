@@ -3,15 +3,15 @@
 //  MultiStrategy — 自动按 ticker 匹配 V8 最优策略 + 严格对齐 Python 回测
 // ═══════════════════════════════════════════════════════════════════════
 //  对应 Python: backtest_engine.py + signals/strategies/intraday_pool.py
-//  V8 矩阵 (21/23 通过, 1 只长持 SKIP): output/best_strategy_per_ticker.csv
+//  V8 矩阵 (19/23 通过, 3 只 SKIP, 1 只 FAIL): output/best_strategy_per_ticker.csv
 //
 //  自动分发表 (基于 V8 composite_score 最高者):
 //    ORB15_VWAP : TSLZ, EOSE, OKLO, AMZN
 //    ORB5_Z     : INTC, IREN, NBIS, MSFL, CRWV, SNDK, LITE, CRCL
 //    VWAP_PB    : CIFR, TSLL, MSFU
 //    DC20       : RKLB, NVDS, HOOD, NVDL
-//    ST_10_3    : PLTR, SOXL
-//    OFF (跳过): AMD (用户长持, 不日内交易), SOXS (V8 失败)
+//    ST_10_3    : (暂无 ticker — PLTR 被剔除后此策略池为空, 但策略代码保留供手动模式选择)
+//    OFF (跳过): AMD (用户长持), SOXL (用户 DRAM 定投), PLTR (近期所有策略均亏), SOXS (V8 FAIL)
 //    未实现 Pine: EMA_X (V8 csv 把 AMD 分到 EMA_X, 但因长持已跳过)
 //
 //  用法:
@@ -31,7 +31,7 @@ indicator("Multi-Strategy Auto", shorttitle="MS", overlay=true,
 // ═══════════════════════ 模式选择 ═══════════════════════
 modeOpt = input.string("AUTO", title="策略模式",
     options=["AUTO", "ORB15_VWAP", "ORB5_Z", "VWAP_PB", "DC20", "ST_10_3", "OFF"],
-    tooltip="AUTO = 根据 ticker 自动选 V7 最优策略")
+    tooltip="AUTO = 根据 ticker 自动选 V8 最优策略")
 longOnly      = input.bool(true, "只做多", group="入场")
 showLabels    = input.bool(true, "显示信号标签")
 showLines     = input.bool(true, "显示入场/止损/止盈线")
@@ -39,7 +39,7 @@ showTable     = input.bool(true, "显示状态表格")
 showVwap      = input.bool(true, "显示 VWAP 紫线")
 
 // 自动 ticker → mode 映射 (V8 best_strategy_per_ticker.csv, 2026-05)
-// 21 只覆盖, 1 只跳过 (AMD = 用户长持, 不日内交易)
+// 19 只覆盖, 3 只跳过 (AMD=长持, SOXL=DRAM定投, PLTR=近期所有策略均亏), 1 只 FAIL (SOXS)
 string tk = syminfo.ticker
 string autoMode = na
 if tk == "TSLZ" or tk == "EOSE" or tk == "OKLO" or tk == "AMZN"
@@ -50,10 +50,10 @@ else if tk == "CIFR" or tk == "TSLL" or tk == "MSFU"
     autoMode := "VWAP_PB"
 else if tk == "RKLB" or tk == "NVDS" or tk == "HOOD" or tk == "NVDL"
     autoMode := "DC20"
-else if tk == "PLTR" or tk == "SOXL"
-    autoMode := "ST_10_3"
 else
-    // AMD (长持) 和未列入 V8 的 ticker 都走 OFF, 不发任何信号
+    // AMD (长持), SOXL (DRAM 定投), PLTR (近期所有策略均亏), SOXS (V8 FAIL),
+    // 其他未列入 V8 的 ticker 都走 OFF, 不发任何信号.
+    // ST_10_3 策略代码保留 (供手动模式选), 但 AUTO 不分配任何 ticker.
     autoMode := "OFF"
 
 mode = modeOpt == "AUTO" ? autoMode : modeOpt
@@ -196,7 +196,9 @@ if just5Leave
 
 // 第 2 根 5m bar 开始时(09:35:00)触发: 用市价 entry @ Open of 第 2 根
 just5Trade = inTradeWinE and not inTradeWinE[1]   // 09:35 这根 bar 进入交易窗口
-orb5Sig = isORB5 and or5Formed and or5Bullish and not alertedToday and just5Trade and (or5High - or5Low) > 0
+// 对齐 Python: stop_dist = next_open - or_low > 0 (而非 OR range > 0)
+// 跳空穿透 OR 低点的极端日, Python 不发信号, Pine 也不发
+orb5Sig = isORB5 and or5Formed and or5Bullish and not alertedToday and just5Trade and (open - or5Low) > 0
 
 if orb5Sig
     refOpen = open    // 第 2 根 5m 的 Open
@@ -220,42 +222,46 @@ vwpbTpR       = input.float(2.0, "VWAP_PB TP R 倍数", group="VWAP_PB")
 var int  daySessBarIdx = 0
 var int  aboveVwapCnt  = 0
 var float[] dayVwaps = array.new<float>()
+var bool trendQualified = false   // 与 Python 对齐: warmup 末端一次性判定, 全天不再变
 if isFirstBar
     daySessBarIdx := 1
     aboveVwapCnt  := close > nz(dayVwap, close) ? 1 : 0
     array.clear(dayVwaps)
     array.push(dayVwaps, nz(dayVwap, close))
+    trendQualified := false
 else if inRegular
     daySessBarIdx := daySessBarIdx + 1
-    if close > dayVwap
+    // Python 仅在 warm = day_df.iloc[:warmup_bars] 范围内统计 above_pct
+    if daySessBarIdx <= vwpbWarmup and close > dayVwap
         aboveVwapCnt := aboveVwapCnt + 1
     array.push(dayVwaps, dayVwap)
 
-// VWAP 上倾: 当前 vwap > 几根前 vwap (warmup 末)
-vwapSlopeOk = false
-if daySessBarIdx >= vwpbWarmup
+// 在 warmup 末端 (daySessBarIdx == vwpbWarmup) 一次性评估 trendQualified
+// 对齐 Python: above_pct >= 0.6 且 vwap[warmup-1] > vwap[warmup-trend_check_bars-1]
+if inRegular and daySessBarIdx == vwpbWarmup
     idxNow  = array.size(dayVwaps) - 1
     idxBack = idxNow - vwpbTrendBars
-    if idxBack >= 0
-        vwapSlopeOk := array.get(dayVwaps, idxNow) > array.get(dayVwaps, idxBack)
+    bool slopeOk = idxBack >= 0 and array.get(dayVwaps, idxNow) > array.get(dayVwaps, idxBack)
+    float abovePct = aboveVwapCnt / float(vwpbWarmup)   // float 除, 避免 int 截断
+    trendQualified := abovePct >= 0.6 and slopeOk
 
 vwarmDone = daySessBarIdx > vwpbWarmup
-vAbovePct = vwarmDone ? aboveVwapCnt / vwpbWarmup : 0
-trendOk   = vwarmDone and vAbovePct >= 0.6 and vwapSlopeOk
+trendOk   = vwarmDone and trendQualified
 
 // pullback 跟踪
 var float pbHigh = na
 var float pbLow  = na
 var int   pbBarIdx = -1
+var bool  dayAbandoned = false   // 对齐 Python: pullback 失效后整天 return [], 不再找新 pullback
 
 // 当根能否做 pullback?
-isPullback = isVWPB and inTradeWin and trendOk and low <= dayVwap and close >= dayVwap * 0.999 and na(pbHigh)
+isPullback = isVWPB and inTradeWin and trendOk and not dayAbandoned and low <= dayVwap and close >= dayVwap * 0.999 and na(pbHigh)
 
 // 当根能否做反弹入场? (前根已设 pullback)
-canRebound = isVWPB and inTradeWin and not na(pbHigh) and daySessBarIdx > pbBarIdx
+canRebound = isVWPB and inTradeWin and not dayAbandoned and not na(pbHigh) and daySessBarIdx > pbBarIdx
 isRebound  = canRebound and close > dayVwap and close > pbHigh and (pbHigh - pbLow) > 0
 
-// pullback 失效: close 跌破 vwap
+// pullback 失效: close 跌破 vwap → Python 当天 return [], Pine 锁住整天
 pbInvalid = canRebound and close < dayVwap
 
 if isPullback
@@ -267,6 +273,7 @@ if pbInvalid
     pbHigh := na
     pbLow  := na
     pbBarIdx := -1
+    dayAbandoned := true   // 对齐 Python: 整天弃单, 不再找新 pullback
 
 vwpbSig = isRebound and not alertedToday
 
@@ -285,6 +292,7 @@ if isFirstBar
     pbHigh := na
     pbLow  := na
     pbBarIdx := -1
+    dayAbandoned := false
 
 // ═══════════════════════ 策略 4: DC20 ═══════════════════════
 // close>前20根最高 + close>EMA50 → LMT @ upper. 止损 ATR×2, TP 2R.
@@ -318,7 +326,9 @@ stAtrM   = input.float(1.5, "ST stop ATR mult", group="ST_10_3")
 stTpR    = input.float(2.0, "ST TP R 倍数", group="ST_10_3")
 
 [stVal, stDir] = ta.supertrend(stMult, stPeriod)   // Pine 内置 Supertrend
-stFlipUp = stDir == 1 and stDir[1] == -1   // Pine 内置 ta.supertrend: +1=多头 -1=空头
+// Pine 内置 ta.supertrend: -1=多头(supertrend 在 close 下方), +1=空头(在 close 上方)
+// 与 Python indicators.supertrend 的约定相反, 别记混
+stFlipUp = stDir == -1 and stDir[1] == 1
 
 // 日线 EMA200 (request.security)
 dailyClose = request.security(syminfo.tickerid, "1D", close, lookahead=barmerge.lookahead_off)
@@ -367,7 +377,7 @@ plot(showLines and isDC20 ? ema50 : na,
 
 // ST
 plot(showLines and isST ? stVal : na,
-     title="Supertrend", color=stDir == 1 ? color.green : color.red, linewidth=2)
+     title="Supertrend", color=stDir == -1 ? color.green : color.red, linewidth=2)
 plot(showLines and isST and not na(dailyEma200) ? dailyEma200 : na,
      title="Daily EMA200", color=color.new(color.gray, 0), linewidth=1, style=plot.style_circles)
 
@@ -381,7 +391,8 @@ plot(showLines and not na(tpPrice) ? tpPrice : na,
 
 // 信号标签
 if anySig and showLabels
-    rrLong = (tpPrice - entryPrice) / (entryPrice - stopPrice)
+    stopDist = entryPrice - stopPrice
+    rrLong = stopDist > 0 ? (tpPrice - entryPrice) / stopDist : na
     label.new(bar_index, high,
          text="🚀 " + mode + " " + orderType + "\n"
             + "Entry: " + str.tostring(entryPrice, format.mintick) + "\n"
@@ -390,14 +401,14 @@ if anySig and showLabels
             + "TP:    " + str.tostring(tpPrice,    format.mintick)
             + " (+" + str.tostring((tpPrice - entryPrice)/entryPrice * 100, "#.##") + "%)\n"
             + "R/R: " + str.tostring(rrLong, "#.##") + "\n"
-            + nz(sigNote, ""),
+            + (na(sigNote) ? "" : sigNote),
          style=label.style_label_down, color=color.green, textcolor=color.white, size=size.normal)
 
 // ═══════════════════════ 状态表 ═══════════════════════
 var table tbl = table.new(position.top_right, 2, 8,
      bgcolor=color.new(color.black, 75), border_width=1, frame_color=color.gray)
 if showTable and barstate.islast
-    statusTxt = mode == "OFF" ? "⛔ ticker 不在 V7 表" :
+    statusTxt = mode == "OFF" ? "⛔ ticker 不在 V8 表" :
        alertedToday ? "🟢 已触发 " + mode :
        "🔵 监测中 " + mode
     table.cell(tbl, 0, 0, "Ticker / Mode", bgcolor=color.new(color.blue, 30), text_color=color.white)
@@ -413,7 +424,7 @@ if showTable and barstate.islast
     table.cell(tbl, 0, 4, "ATR(14)", text_color=color.white)
     table.cell(tbl, 1, 4, na(atr14) ? "-" : str.tostring(atr14, format.mintick), text_color=color.white)
     table.cell(tbl, 0, 5, "Entry", text_color=color.white)
-    table.cell(tbl, 1, 5, na(entryPrice) ? "-" : str.tostring(entryPrice, format.mintick) + " (" + nz(orderType, "-") + ")",
+    table.cell(tbl, 1, 5, na(entryPrice) ? "-" : str.tostring(entryPrice, format.mintick) + " (" + (na(orderType) ? "-" : orderType) + ")",
         text_color=color.new(color.blue, 0))
     table.cell(tbl, 0, 6, "Stop", text_color=color.white)
     table.cell(tbl, 1, 6, na(stopPrice) ? "-" : str.tostring(stopPrice, format.mintick),
@@ -423,14 +434,18 @@ if showTable and barstate.islast
         text_color=color.new(color.green, 0))
 
 // ═══════════════════════ 警报 ═══════════════════════
-// indicator() 警报只能用 {{ticker}} {{time}} {{close}} {{interval}} 等占位符,
-// 不支持 {{strategy.*}} / {{plot_N}}. 入场/止损/止盈通过 str.tostring 在
-// 触发当根直接拼到 message 字符串里 (Pine 在 alertcondition 触发时会把
-// 当根的字符串值送出).
+// Pine v6: alertcondition.message 必须是 const string (运行时占位符 {{plot_N}}/
+// {{ticker}} 等会在 TradingView 触发时替换). 不能直接拼 series string.
+// 动态字符串 (mode, orderType — 这俩 plot 不出来) 用 alert() 函数补充, 用户在
+// TradingView 创建告警时选 "Any alert() function call" 即可拿到完整消息.
+
 alertcondition(anySig,
      title="🚀 多头突破 (auto)",
-     message="🚀 {{ticker}} " + mode + " " + nz(orderType, "?") +
-             " | entry=" + str.tostring(entryPrice, format.mintick) +
-             " stop="    + str.tostring(stopPrice,  format.mintick) +
-             " tp="      + str.tostring(tpPrice,    format.mintick) +
-             " | t={{time}} close={{close}}")
+     message='🚀 {{ticker}} 多头信号 | Entry={{plot("Entry")}} Stop={{plot("Stop")}} TP={{plot("TP")}} | close={{close}} t={{time}}')
+
+if anySig
+    alertMsg = "🚀 " + syminfo.ticker + " " + mode + " " + (na(orderType) ? "?" : orderType) +
+               " | entry=" + str.tostring(entryPrice, format.mintick) +
+               " stop="    + str.tostring(stopPrice,  format.mintick) +
+               " tp="      + str.tostring(tpPrice,    format.mintick)
+    alert(alertMsg, alert.freq_once_per_bar_close)
