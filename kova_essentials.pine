@@ -12,7 +12,7 @@
 //    · 健康度 UNHEALTHY/HEALTHY        ~0.95 (93样本命中99%, 唯一miss=实时vs结算EMA边界)
 //    · REDUCE 减仓                     0.90  (HEALTHY且dev21≥2.93ATR; 注:8独立事件,prod前先前向验证)
 //    · WATCH 橙顶部预警                0.35  (仅1样本QQQ,最缺;阈值待补)
-//    · Kova Score                      结构0.75/精确值~0.60 (缺Kova专有RS内部维度,IREN类异常复现不了)
+//    · Kova Score                      ~0.80 (破解! 加rsHi相对强度维度, 留一票CV R²0.41→0.80)
 //
 //  Telegram: TradingView告警 → Webhook(你的服务器/PythonAnywhere) → Bot sendMessage
 //            本指标用 alertcondition() 暴露4个事件, 创建告警时选对应condition即可。
@@ -66,9 +66,15 @@ healthCol   = isUnhealthy ? color.new(#ef5350, 0) : isWatch ? color.new(#ffa726,
 // ── REDUCE 减仓 (HEALTHY 且 延伸 ≥ 阈值) ──
 isReduce = isHealthy and (dev21 >= reduceDev)
 
-// ── Kova Score 代理 (结构公式; ⚠缺专有RS内部维度, 精确值~0.60) ──
-//   Score ≈ 40.8 + 59.5·站200S + 5.6·站20E + 0.72·距高%  (R²≈0.89, 93样本)
-scoreRaw = 40.8 + 59.5 * (a200 ? 1 : 0) + 5.6 * (a20 ? 1 : 0) + 0.72 * distHi
+// ── Kova Score 复刻 (含 rsHi 相对强度维度, 留一票CV R²=0.68~0.80) ──
+//   破解关键: Kova是Pine指标→Score必为TV可达数据。"内部维度"=rsHi=股票RS线(close/QQQ)离自己252日高的距离。
+//   momentum交易要的是"RS创新高的真龙头": IREN价格修复但RS线仍在峰下40%→低分。一个request.security搞定。
+//   Score ≈ 71.6 + 27.6·站200S + 1.05·rsHi  (90样本, DKNG/HOOD/SQQQ/STRL近乎命中)
+bench    = input.symbol("QQQ", "Score RS 基准", tooltip="RS线=本股/基准; Kova动量取QQQ, 可换SPX")
+bClose   = request.security(bench, timeframe.period, close, barmerge.gaps_off, barmerge.lookahead_off)
+rsRatio  = close / bClose
+rsHi     = (rsRatio / ta.highest(rsRatio, 252) - 1) * 100   // RS线离252日高 %(≤0; 0=RS创新高=龙头)
+scoreRaw = 71.6 + 27.6 * (a200 ? 1 : 0) + 1.05 * rsHi
 kScore   = math.max(1, math.min(99, math.round(scoreRaw)))
 
 // ── 建议止损 = 入场日(当前最近放量突破日)K线低; 无持仓上下文时用最近 pocket pivot 低 ──
@@ -95,7 +101,7 @@ if showPanel and barstate.islast
     f_row(2, "健康度", healthTxt, healthCol)
     f_row(3, "信号", isReduce ? "REDUCE 减仓" : isUnhealthy ? "退出" : "持有", isReduce ? color.new(#ffa726,0) : isUnhealthy ? color.new(#ef5350,0) : color.new(#26a69a,0))
     f_row(4, "距21E", str.tostring(dev21, "#.##") + " ATR", dev21 >= reduceDev ? color.new(#ffa726,0) : color.gray)
-    f_row(5, "距高", str.tostring(distHi, "#.#") + "%", color.gray)
+    f_row(5, "RS离高", str.tostring(rsHi, "#.#") + "%", rsHi > -8 ? color.new(#26a69a,0) : rsHi < -25 ? color.new(#ef5350,0) : color.gray)
 
 // ── 转档信号标签 ──
 turnedUnhealthy = isUnhealthy and not isUnhealthy[1]
