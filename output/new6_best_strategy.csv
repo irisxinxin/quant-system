@@ -1,0 +1,7 @@
+symbol,strategy,filled,phantom_rate_pct,win_rate,pf,cum_pct,max_dd,avg_pnl,recency_avg_pnl,recency_win_rate,recency_pf,last_90d_n,last_90d_pf,last_90d_cum_pct,last_180d_n,last_180d_pf,last_180d_cum_pct,n_tp,n_stop,composite_score,passes_filter,filter_fail_reasons,verdict
+AAOI.US,ORB15_VWAP,31,71.8,54.8,1.92,24.6,-8.41,0.765,2.382,64.5,4.61,2,inf,12.74,9,2.84,16.15,4,5,1.882,True,,OK
+ARM.US,ORB5_Z,190,0.0,36.3,1.25,35.71,-24.76,0.197,0.354,38.3,1.35,37,1.57,26.27,69,1.2,11.72,2,108,0.267,True,,OK
+MU.US,ORB15_VWAP,28,81.5,53.6,1.69,6.17,-3.37,0.222,0.269,64.1,1.53,6,1.62,2.14,7,1.75,2.61,1,2,0.291,True,,OK
+MRVL.US,ORB15_VWAP,29,82.2,55.2,3.09,19.17,-2.09,0.62,1.051,60.9,5.17,4,10.88,5.98,8,3.4,5.72,2,1,0.864,True,,OK
+DELL.US,ORB5_Z,194,0.0,43.3,1.53,72.0,-12.51,0.298,0.883,55.5,2.66,31,3.49,51.88,62,2.63,68.7,2,95,0.834,True,,OK
+ALAB.US,ORB5_Z,173,0.0,38.7,1.4,79.83,-14.59,0.386,0.83,40.9,1.8,35,2.14,47.43,63,2.05,84.23,1,100,0.893,True,,OK
