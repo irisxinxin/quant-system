@@ -22,17 +22,19 @@ from signals.strategies.intraday_pool import STRATEGIES
 from run_strategy_matrix import composite_score, passes_filter
 
 _DEFAULT = ["AAOI.US", "ARM.US", "MU.US", "MRVL.US", "DELL.US", "ALAB.US"]
-NEW = [(a if a.endswith(".US") else a + ".US").upper() for a in sys.argv[1:]] or _DEFAULT
+FORCE = "--force" in sys.argv          # 强制重抓(绕过JSON存在跳过 + pkl 24h缓存)
+_ARGS = [a for a in sys.argv[1:] if a != "--force"]
+NEW = [(a if a.endswith(".US") else a + ".US").upper() for a in _ARGS] or _DEFAULT
 HIST_CACHE = Path(__file__).parent / "cache" / "longport_history"
 
 
 def fetch_and_save(ctx):
-    print("📥 抓 5m 数据 + 转 JSON")
+    print(f"📥 抓 5m 数据 + 转 JSON  (FORCE={FORCE})")
     for sym in NEW:
-        if load_5m_data(sym).shape[0] > 0:
+        if not FORCE and load_5m_data(sym).shape[0] > 0:
             print(f"   {sym:<10} 已有JSON, 跳过抓取")
             continue
-        df = fetch_history(ctx, sym)
+        df = fetch_history(ctx, sym, force=FORCE)
         if df is None or df.empty:
             print(f"   {sym:<10} ❌ 无数据")
             continue
