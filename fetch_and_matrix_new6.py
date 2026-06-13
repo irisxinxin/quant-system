@@ -21,7 +21,8 @@ from backtest_engine import run_backtest, compute_metrics, load_5m_data, KLINES_
 from signals.strategies.intraday_pool import STRATEGIES
 from run_strategy_matrix import composite_score, passes_filter
 
-NEW = ["AAOI.US", "ARM.US", "MU.US", "MRVL.US", "DELL.US", "ALAB.US"]
+_DEFAULT = ["AAOI.US", "ARM.US", "MU.US", "MRVL.US", "DELL.US", "ALAB.US"]
+NEW = [(a if a.endswith(".US") else a + ".US").upper() for a in sys.argv[1:]] or _DEFAULT
 HIST_CACHE = Path(__file__).parent / "cache" / "longport_history"
 
 
