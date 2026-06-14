@@ -20,7 +20,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>source /Users/xin/.longport_creds.env &amp;&amp; /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/signal_swing.py</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/signal_swing.py --levels</string>
     </array>
 
     <key>WorkingDirectory</key>

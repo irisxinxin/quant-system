@@ -17,6 +17,7 @@ signal_swing.py — 波段择时信号 (日线; 吃隔夜+趋势; 仅 Telegram �
 """
 import os, sys, json
 import urllib.request, urllib.parse
+from datetime import datetime
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 import warnings; warnings.filterwarnings("ignore")
@@ -110,6 +111,34 @@ def main():
     if not SWING_POOL:
         print("⚠️ 未找到 output/swing_ranked.csv, 先跑 python3 swing_backtest.py"); return
     ctx = QuoteContext(Config.from_env())
+
+    # ── 每日挂单清单 digest (一条TG消息列出全部21只的买入价/止损价) ──
+    if "--levels" in sys.argv:
+        buys, holds, reduces = [], [], []
+        for sym, cfg in sorted(SWING_POOL.items(), key=lambda kv: -kv[1]["swing90"]):
+            df = pull(ctx, sym)
+            if df is None:
+                continue
+            a = analyze(df, cfg["ma"])
+            if a is None:
+                continue
+            nm = cfg["name"][:8]; sw = cfg["swing90"]
+            if a["in_trend"] and a["dev21"] >= REDUCE_DEV:
+                reduces.append(f"  🟠 {sym} {nm} 减仓 (距21E {a['dev21']:.1f}ATR, 近90{sw:+.0f}%)")
+            elif a["in_trend"]:
+                holds.append(f"  🔵 {sym} {nm} 持有·跌破{a['stop']:.2f}止损 ({cfg['ma']}, 近90{sw:+.0f}%)")
+            else:
+                buys.append(f"  🟢 {sym} {nm} 站上 {a['ma']:.2f} 买入(buy-stop) ({cfg['ma']}, 近90{sw:+.0f}%)")
+        today = datetime.now().strftime("%m-%d")
+        parts = [f"📋 波段挂单清单 {today} ({len(SWING_POOL)}只, 按近90收益)"]
+        if buys: parts.append("🟢 可买入(站上触发买入):\n" + "\n".join(buys))
+        if reduces: parts.append("🟠 减仓:\n" + "\n".join(reduces))
+        if holds: parts.append("🔵 持有中(守跌破止损):\n" + "\n".join(holds))
+        parts.append("⚠️ 波段·手动下单; buy-stop=突破挂单, 止损=收盘跌破")
+        send_telegram(parts[0], "\n\n".join(parts[1:]))
+        print("\n".join(parts))
+        return
+
     print(f"📊 波段择时信号 (日线·仅提醒不下单) | 池 {len(SWING_POOL)} 只(各用最优跟踪线)")
     state = load_state()
     fired = 0
