@@ -24,13 +24,25 @@ import pandas as pd
 from longport.openapi import Config, QuoteContext, Period, AdjustType
 
 REDUCE_DEV = 2.93
-# 票池: symbol -> (名称, 波段历史收益备注)  波段=20EMA trail
-SWING_POOL = {
-    "7747.HK": "三星2x(波段20E回测+725%)", "7709.HK": "海力士2x(+413%)",
-    "SOXL.US": "半导体3x(+474%)", "NVDL.US": "英伟达2x", "MSFL.US": "微软2x", "TSLL.US": "特斯拉2x",
-    "MXL.US": "MaxLinear(+308%)", "NBIS.US": "Nebius(+253%)", "AAOI.US": "AAOI(+161%)",
-    "DELL.US": "Dell", "SNDK.US": "SanDisk", "MU.US": "美光",
-}
+RANK_CSV = Path(__file__).parent / "output" / "swing_ranked.csv"
+
+
+def load_pool():
+    """从 swing_ranked.csv 读全票最优跟踪线; 只收 ✅波段好 + ⚠️一般 (❌不适合的剔除)。
+       返回 {symbol: dict(name, ma, ret, calmar, verdict)}。"""
+    if not RANK_CSV.exists():
+        return {}
+    df = pd.read_csv(RANK_CSV)
+    pool = {}
+    for _, r in df.iterrows():
+        if str(r["verdict"]).startswith("❌"):
+            continue
+        pool[r["symbol"]] = dict(name=r["name"], ma=r["best_ma"], ret=r["swing_ret"],
+                                 calmar=r["calmar"], verdict=r["verdict"])
+    return pool
+
+
+SWING_POOL = load_pool()
 
 
 def send_telegram(title, body):
@@ -56,52 +68,52 @@ def pull(ctx, sym, n=260):
     return df
 
 
-def analyze(df):
-    """返回最新状态 dict 或 None。检测当日转档信号。"""
+def analyze(df, ma_choice="20E"):
+    """用该票最优跟踪线(10E/20E/50S)检测当日波段转档信号。返回状态 dict 或 None。"""
     c, h, l = df.C, df.H, df.L
     if len(c) < 60:
         return None
-    e10 = c.ewm(span=10).mean(); e20 = c.ewm(span=20).mean(); e21 = c.ewm(span=21).mean()
-    s50 = c.rolling(50).mean(); s200 = c.rolling(200).mean()
+    e21 = c.ewm(span=21).mean(); s50full = c.rolling(50).mean(); s200 = c.rolling(200).mean()
+    ma = {"10E": c.ewm(span=10).mean(), "20E": c.ewm(span=20).mean(), "50S": s50full}.get(ma_choice, c.ewm(span=20).mean())
     tr = pd.concat([h - l, (h - c.shift()).abs(), (l - c.shift()).abs()], axis=1).max(axis=1)
     atr = tr.rolling(14).mean()
-    px = c.iloc[-1]; e20n = e20.iloc[-1]; e20p = e20.iloc[-2]; pxp = c.iloc[-2]
+    px = c.iloc[-1]; man = ma.iloc[-1]; map_ = ma.iloc[-2]; pxp = c.iloc[-2]
     dev21 = (px - e21.iloc[-1]) / atr.iloc[-1]
-    uptrend = (px > s50.iloc[-1]) and (pd.isna(s200.iloc[-1]) or px > s200.iloc[-1])
-    in_trend = px > e20n * 0.99
-    # 转档检测
-    buy = (pxp <= e20p) and (px > e20n) and uptrend
-    exit_ = (pxp >= e20p * 0.99) and (px < e20n * 0.99)
+    uptrend = (px > s50full.iloc[-1]) and (pd.isna(s200.iloc[-1]) or px > s200.iloc[-1])
+    in_trend = px > man * 0.99
+    buy = (pxp <= map_) and (px > man) and uptrend
+    exit_ = (pxp >= map_ * 0.99) and (px < man * 0.99)
     reduce = in_trend and dev21 >= REDUCE_DEV
     sig = "买入" if buy else ("退出" if exit_ else ("减仓" if reduce else ("持有" if in_trend else "观望")))
-    return dict(px=px, e20=e20n, e10=e10.iloc[-1], s50=s50.iloc[-1], dev21=dev21,
-                stop=e20n * 0.99, sig=sig, in_trend=in_trend)
+    return dict(px=px, ma=man, ma_choice=ma_choice, dev21=dev21, stop=man * 0.99, sig=sig, in_trend=in_trend)
 
 
 def main():
     status = "--status" in sys.argv
+    if not SWING_POOL:
+        print("⚠️ 未找到 output/swing_ranked.csv, 先跑 python3 swing_backtest.py"); return
     ctx = QuoteContext(Config.from_env())
-    print("📊 波段择时信号 (日线·仅提醒不下单)")
+    print(f"📊 波段择时信号 (日线·仅提醒不下单) | 池 {len(SWING_POOL)} 只(各用最优跟踪线)")
     fired = 0
-    for sym, note in SWING_POOL.items():
+    # 按 Calmar 排序展示
+    items = sorted(SWING_POOL.items(), key=lambda kv: -kv[1]["calmar"])
+    for sym, cfg in items:
         df = pull(ctx, sym)
         if df is None:
-            print(f"   {sym} 无数据"); continue
-        a = analyze(df)
+            continue
+        a = analyze(df, cfg["ma"])
         if a is None:
             continue
         emoji = {"买入": "🟢🆕", "退出": "🔴", "减仓": "🟠", "持有": "🔵", "观望": "⚪"}[a["sig"]]
-        line = (f"{emoji} {sym} {note.split('(')[0]} | {a['sig']} | 价{a['px']:.2f} "
-                f"20E止损{a['stop']:.2f} 距21E {a['dev21']:+.1f}ATR")
         if status:
-            print("  " + line)
-        # 只对转档(买入/退出/减仓)发 Telegram
+            print(f"  {emoji} {sym:9}{cfg['name'][:9]:10} {a['sig']:4} 价{a['px']:.2f} "
+                  f"{cfg['ma']}止损{a['stop']:.2f} 距21E{a['dev21']:+.1f}ATR (波段{cfg['ret']:+.0f}%/Calmar{cfg['calmar']})")
         if a["sig"] in ("买入", "退出", "减仓"):
             fired += 1
             risk = (a["px"] - a["stop"]) / a["px"] * 100
-            title = f"📈 波段{a['sig']}: {sym} {note.split('(')[0]}"
-            body = (f"信号: 波段{a['sig']}  | {note}\n"
-                    f"现价 {a['px']:.2f} · 20EMA跟踪止损 {a['stop']:.2f} ({-risk:.1f}%)\n"
+            title = f"📈 波段{a['sig']}: {sym} {cfg['name']}"
+            body = (f"信号: 波段{a['sig']} ({cfg['verdict']}, 历史波段{cfg['ret']:+.0f}%/Calmar{cfg['calmar']})\n"
+                    f"现价 {a['px']:.2f} · {cfg['ma']}跟踪止损 {a['stop']:.2f} ({-risk:.1f}%)\n"
                     f"距21EMA {a['dev21']:+.1f} ATR" + (" (涨过头, 减1/3~1/2)" if a['sig'] == '减仓' else "") + "\n"
                     f"⚠️ 波段·请手动下单(本系统不自动执行)")
             send_telegram(title, body)

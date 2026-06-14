@@ -1,9 +1,8 @@
 """
-swing_backtest.py — 验证波段择时(日线持有, 吃隔夜+趋势)能否胜过日内/接近买入持有。
+swing_backtest.py — 全票波段择时回测。每只算买入持有 vs 波段(10E/20E/50S),
+选风险调整最优(Calmar=收益/|最大回撤|)的跟踪线, 判定波段是否可做。输出 output/swing_ranked.csv。
 
-波段规则(long-only, 日线, mark-to-market): 站上均线趋势线就持有, 收盘跌破 MA×0.99 出场, 重新站上再进。
-对比: 买入持有 vs 波段(10E/20E/50S 三档) — 看总收益 + 最大回撤 + 在场时间。
-目标: 证明波段吃到趋势大头(远胜日内+19%), 且回撤比裸持有小。
+波段规则(long-only, 日线, mark-to-market): 收盘>MA(且>200S)持有, 收盘<MA×0.99出场, 重新站上再进。
 """
 import sys
 from pathlib import Path
@@ -13,60 +12,73 @@ import numpy as np
 import pandas as pd
 from longport.openapi import Config, QuoteContext, Period, AdjustType
 
-UNIVERSE = {  # 杠杆ETF + 港股2x + 几只强趋势股做对照
-    "7747.HK": "三星2x", "7709.HK": "海力士2x", "SOXL.US": "半导体3x", "NVDL.US": "英伟达2x",
-    "MSFL.US": "微软2x?", "TSLL.US": "特斯拉2x", "MXL.US": "MaxLinear", "NBIS.US": "Nebius", "AAOI.US": "AAOI",
-}
+# 全票池(美股 from all_tickers_ranked + 港股2x + 额外)
+US = ["AAOI", "MXL", "SNDK", "ALAB", "DELL", "INTC", "CRWV", "CRCL", "MSFL", "ORCL", "EOSE", "SOXL", "MU", "PLTR",
+      "OKLO", "IREN", "LITE", "TSLZ", "RKLB", "ARM", "MSFU", "NVDL", "HOOD", "AMD", "CIFR", "TSLL", "NBIS",
+      "AMZN", "MRVL", "NVDS", "SOXS", "SOXX", "TWLO", "BMNR", "CONL"]
+HK = ["7747", "7709"]
+NAMES = {"7747.HK": "三星2x", "7709.HK": "海力士2x", "SOXL.US": "半导体3x", "NVDL.US": "英伟达2x",
+         "MSFL.US": "微软2x", "MSFU.US": "微软2x", "TSLL.US": "特斯拉2x", "TSLZ.US": "特斯拉反", "NVDS.US": "英伟达反",
+         "SOXS.US": "半导体反", "CONL.US": "Coinbase2x", "BMNR.US": "BitMine", "SOXX.US": "半导体ETF"}
 
 
 def pull(ctx, sym, n=300):
     try:
-        b = list(ctx.candlesticks(sym, Period.Day, n, AdjustType.ForwardAdjust if sym.endswith('.US') else AdjustType.NoAdjust))
-        c = pd.Series([float(x.close) for x in b], index=[x.timestamp for x in b]).sort_index()
-        return c
-    except Exception as e:
-        print(f"  {sym} ❌ {e}"); return None
+        adj = AdjustType.ForwardAdjust if sym.endswith(".US") else AdjustType.NoAdjust
+        b = list(ctx.candlesticks(sym, Period.Day, n, adj))
+        return pd.DataFrame({"C": [float(x.close) for x in b]}, index=[x.timestamp for x in b]).sort_index().C
+    except Exception:
+        return None
 
 
 def maxdd(eq):
-    peak = np.maximum.accumulate(eq)
-    return float((eq / peak - 1).min()) * 100
+    return float((eq / np.maximum.accumulate(eq) - 1).min()) * 100
 
 
-def swing(close, ma, s200, use200=True):
-    """日线波段: 收盘>MA(且>200S)进; 收盘<MA×0.99出。返回(总收益%, 最大回撤%, 交易数, 在场比例%)。"""
-    eq = [1.0]; inpos = False; trades = 0; bars_in = 0
-    for i in range(1, len(close)):
+def swing(c, ma, s200):
+    eq = [1.0]; inpos = False
+    for i in range(1, len(c)):
         if inpos:
-            eq.append(eq[-1] * close.iloc[i] / close.iloc[i - 1]); bars_in += 1
-            if close.iloc[i] < ma.iloc[i] * 0.99:
+            eq.append(eq[-1] * c.iloc[i] / c.iloc[i - 1])
+            if c.iloc[i] < ma.iloc[i] * 0.99:
                 inpos = False
         else:
             eq.append(eq[-1])
-            cond = close.iloc[i] > ma.iloc[i] and (not use200 or pd.isna(s200.iloc[i]) or close.iloc[i] > s200.iloc[i])
-            if cond:
+            if c.iloc[i] > ma.iloc[i] and (pd.isna(s200.iloc[i]) or c.iloc[i] > s200.iloc[i]):
                 inpos = True
     eq = np.array(eq)
-    return (eq[-1] - 1) * 100, maxdd(eq), trades, bars_in / len(close) * 100
+    return (eq[-1] - 1) * 100, maxdd(eq)
 
 
 def main():
     ctx = QuoteContext(Config.from_env())
-    print(f"{'票':9}{'名称':10}{'天数':>5}{'买入持有':>9}{'波段10E':>9}{'(回撤)':>8}{'波段20E':>9}{'(回撤)':>8}{'波段50S':>9}{'BH回撤':>8}")
-    print("-" * 95)
-    for sym, name in UNIVERSE.items():
+    syms = [f"{s}.US" for s in US] + [f"{s}.HK" for s in HK]
+    rows = []
+    for sym in syms:
         c = pull(ctx, sym)
         if c is None or len(c) < 60:
             continue
         e10 = c.ewm(span=10).mean(); e20 = c.ewm(span=20).mean(); s50 = c.rolling(50).mean(); s200 = c.rolling(200).mean()
-        bh = (c.iloc[-1] / c.iloc[0] - 1) * 100
-        bh_dd = maxdd((c / c.iloc[0]).values)
-        r10, dd10, _, _ = swing(c, e10, s200)
-        r20, dd20, _, t20 = swing(c, e20, s200)
-        r50, dd50, _, _ = swing(c, s50, s200)
-        print(f"{sym:9}{name:10}{len(c):>5}{bh:>+8.0f}%{r10:>+8.0f}%{dd10:>7.0f}%{r20:>+8.0f}%{dd20:>7.0f}%{r50:>+8.0f}%{bh_dd:>7.0f}%")
-    print("\n说明: 波段=收盘站上均线持有(含隔夜)、跌破均线×0.99出场。对比日内策略只吃盘中(三星2x日内仅+19%)。")
-    print("      看波段能否吃到趋势大头 + 回撤是否比买入持有(BH回撤)小。")
+        bh = (c.iloc[-1] / c.iloc[0] - 1) * 100; bh_dd = maxdd((c / c.iloc[0]).values)
+        variants = {"10E": swing(c, e10, s200), "20E": swing(c, e20, s200), "50S": swing(c, s50, s200)}
+        # 选 Calmar(收益/|回撤|) 最高的跟踪线
+        best = max(variants, key=lambda k: variants[k][0] / (abs(variants[k][1]) + 1e-9))
+        br, bd = variants[best]
+        calmar = br / (abs(bd) + 1e-9)
+        verdict = ("✅波段好" if calmar >= 4 and br >= 50 else "⚠️一般" if br >= 20 and br > 0 else "❌不适合波段")
+        rows.append(dict(symbol=sym, name=NAMES.get(sym, sym.replace(".US", "").replace(".HK", "")),
+                         days=len(c), buyhold=round(bh), bh_dd=round(bh_dd),
+                         best_ma=best, swing_ret=round(br), swing_dd=round(bd), calmar=round(calmar, 1),
+                         verdict=verdict, r10=round(variants["10E"][0]), r20=round(variants["20E"][0]), r50=round(variants["50S"][0])))
+    df = pd.DataFrame(rows).sort_values("calmar", ascending=False)
+    df.to_csv("output/swing_ranked.csv", index=False)
+    print(f"{'票':9}{'名称':10}{'买持':>7}{'最优线':>6}{'波段%':>7}{'回撤':>6}{'Calmar':>7}  判定")
+    print("-" * 70)
+    for _, x in df.iterrows():
+        print(f"{x.symbol:9}{x['name'][:9]:10}{x.buyhold:>+6}%{x.best_ma:>6}{x.swing_ret:>+6}%{x.swing_dd:>5}%{x.calmar:>7}  {x.verdict}")
+    n_ok = (df.verdict == "✅波段好").sum()
+    print(f"\n✅波段好 {n_ok} | ⚠️一般 {(df.verdict=='⚠️一般').sum()} | ❌不适合 {(df.verdict=='❌不适合波段').sum()}")
+    print("存 → output/swing_ranked.csv  (Calmar=波段收益/|最大回撤|, 越高越是好波段标的)")
 
 
 if __name__ == "__main__":
