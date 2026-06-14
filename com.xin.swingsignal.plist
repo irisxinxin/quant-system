@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.xin.swingsignal.plist — 波段择时信号 (signal_swing.py), 每日跑一次, 仅Telegram提醒
+
+  安装:
+    cp com.xin.swingsignal.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.xin.swingsignal.plist
+  日志: tail -f /Users/xin/Documents/Claude/Projects/money/quant_system/swingsignal.log
+  ⚠ 需先在 ~/.longport_creds.env 里加 TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID
+  说明: 每日08:00 SGT跑(US收盘04-05点后, HK昨收16点后; 早于HK开盘09:30与US开盘21:30)。
+        内置去重(output/swing_alerted.json), 非交易日重跑不会重复推。
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.xin.swingsignal</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/signal_swing.py</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system</string>
+
+    <!-- 周二到周六 08:00 SGT (每个US/HK交易日次晨); 跑一次即退, 不KeepAlive -->
+    <key>RunAtLoad</key>
+    <false/>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Weekday</key><integer>2</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>3</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>6</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system/swingsignal.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system/swingsignal.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key><string>/usr/local/bin:/usr/bin:/bin</string>
+        <key>LANG</key><string>en_US.UTF-8</string>
+    </dict>
+</dict>
+</plist>

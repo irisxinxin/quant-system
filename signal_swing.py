@@ -15,7 +15,7 @@ signal_swing.py — 波段择时信号 (日线; 吃隔夜+趋势; 仅 Telegram �
   python3 signal_swing.py          # 跑一次, 推当天发生转档的票
   python3 signal_swing.py --status # 不只转档, 打印所有票当前波段状态
 """
-import os, sys
+import os, sys, json
 import urllib.request, urllib.parse
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -25,6 +25,21 @@ from longport.openapi import Config, QuoteContext, Period, AdjustType
 
 REDUCE_DEV = 2.93
 RANK_CSV = Path(__file__).parent / "output" / "swing_ranked.csv"
+STATE_JSON = Path(__file__).parent / "output" / "swing_alerted.json"   # 去重: {sym: "barDate:信号"}
+
+
+def load_state():
+    try:
+        return json.loads(STATE_JSON.read_text())
+    except Exception:
+        return {}
+
+
+def save_state(s):
+    try:
+        STATE_JSON.write_text(json.dumps(s, ensure_ascii=False))
+    except Exception:
+        pass
 
 
 def load_pool():
@@ -85,7 +100,8 @@ def analyze(df, ma_choice="20E"):
     exit_ = (pxp >= map_ * 0.99) and (px < man * 0.99)
     reduce = in_trend and dev21 >= REDUCE_DEV
     sig = "买入" if buy else ("退出" if exit_ else ("减仓" if reduce else ("持有" if in_trend else "观望")))
-    return dict(px=px, ma=man, ma_choice=ma_choice, dev21=dev21, stop=man * 0.99, sig=sig, in_trend=in_trend)
+    return dict(px=px, ma=man, ma_choice=ma_choice, dev21=dev21, stop=man * 0.99, sig=sig,
+                in_trend=in_trend, bar_date=str(c.index[-1].date()))
 
 
 def main():
@@ -94,6 +110,7 @@ def main():
         print("⚠️ 未找到 output/swing_ranked.csv, 先跑 python3 swing_backtest.py"); return
     ctx = QuoteContext(Config.from_env())
     print(f"📊 波段择时信号 (日线·仅提醒不下单) | 池 {len(SWING_POOL)} 只(各用最优跟踪线)")
+    state = load_state()
     fired = 0
     # 按 Calmar 排序展示
     items = sorted(SWING_POOL.items(), key=lambda kv: -kv[1]["calmar"])
@@ -109,6 +126,10 @@ def main():
             print(f"  {emoji} {sym:9}{cfg['name'][:9]:10} {a['sig']:4} 价{a['px']:.2f} "
                   f"{cfg['ma']}止损{a['stop']:.2f} 距21E{a['dev21']:+.1f}ATR (波段{cfg['ret']:+.0f}%/Calmar{cfg['calmar']})")
         if a["sig"] in ("买入", "退出", "减仓"):
+            stamp = f"{a['bar_date']}:{a['sig']}"
+            if state.get(sym) == stamp:
+                continue   # 同一bar同一信号已推过, 防重复(每日自动跑)
+            state[sym] = stamp
             fired += 1
             risk = (a["px"] - a["stop"]) / a["px"] * 100
             title = f"📈 波段{a['sig']}: {sym} {cfg['name']}"
@@ -117,6 +138,7 @@ def main():
                     f"距21EMA {a['dev21']:+.1f} ATR" + (" (涨过头, 减1/3~1/2)" if a['sig'] == '减仓' else "") + "\n"
                     f"⚠️ 波段·请手动下单(本系统不自动执行)")
             send_telegram(title, body)
+    save_state(state)
     if not status and fired == 0:
         print("   今日无波段转档信号 (用 --status 看所有票当前状态)")
 

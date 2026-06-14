@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.xin.hksignal.plist — 港股2x信号提示 (signal_live_hk.py), 仅Telegram提醒不下单
+
+  安装:
+    cp com.xin.hksignal.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.xin.hksignal.plist
+  日志: tail -f /Users/xin/Documents/Claude/Projects/money/quant_system/hksignal.log
+  ⚠ 需先在 ~/.longport_creds.env 里加 TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.xin.hksignal</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/signal_live_hk.py</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system</string>
+
+    <!-- 不在load时启动; 周一到五 09:25 SGT(=港股开盘前)触发, 脚本循环到16:00港股收盘自退 -->
+    <key>RunAtLoad</key>
+    <false/>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>25</integer></dict>
+        <dict><key>Weekday</key><integer>2</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>25</integer></dict>
+        <dict><key>Weekday</key><integer>3</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>25</integer></dict>
+        <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>25</integer></dict>
+        <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>25</integer></dict>
+    </array>
+
+    <!-- 仅崩溃(非0退出)时重启; 收盘 clean exit 不被反复拉起 -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system/hksignal.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system/hksignal.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key><string>/usr/local/bin:/usr/bin:/bin</string>
+        <key>LANG</key><string>en_US.UTF-8</string>
+    </dict>
+</dict>
+</plist>
