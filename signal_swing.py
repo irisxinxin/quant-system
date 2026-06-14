@@ -53,7 +53,8 @@ def load_pool():
         if str(r["verdict"]).startswith("❌"):
             continue
         pool[r["symbol"]] = dict(name=r["name"], ma=r["best_ma"], ret=r["swing_ret"],
-                                 calmar=r["calmar"], verdict=r["verdict"])
+                                 calmar=r["calmar"], verdict=r["verdict"],
+                                 swing90=float(r.get("swing90", 0)))
     return pool
 
 
@@ -112,8 +113,8 @@ def main():
     print(f"📊 波段择时信号 (日线·仅提醒不下单) | 池 {len(SWING_POOL)} 只(各用最优跟踪线)")
     state = load_state()
     fired = 0
-    # 按 Calmar 排序展示
-    items = sorted(SWING_POOL.items(), key=lambda kv: -kv[1]["calmar"])
+    # 按近90天波段实际收益排序(与日内同口径)
+    items = sorted(SWING_POOL.items(), key=lambda kv: -kv[1]["swing90"])
     for sym, cfg in items:
         df = pull(ctx, sym)
         if df is None:
@@ -124,7 +125,8 @@ def main():
         emoji = {"买入": "🟢🆕", "退出": "🔴", "减仓": "🟠", "持有": "🔵", "观望": "⚪"}[a["sig"]]
         if status:
             print(f"  {emoji} {sym:9}{cfg['name'][:9]:10} {a['sig']:4} 价{a['px']:.2f} "
-                  f"{cfg['ma']}止损{a['stop']:.2f} 距21E{a['dev21']:+.1f}ATR (波段{cfg['ret']:+.0f}%/Calmar{cfg['calmar']})")
+                  f"{cfg['ma']}止损{a['stop']:.2f} 距21E{a['dev21']:+.1f}ATR "
+                  f"(近90波段{cfg['swing90']:+.0f}% 全{cfg['ret']:+.0f}%/Calmar{cfg['calmar']})")
         if a["sig"] in ("买入", "退出", "减仓"):
             stamp = f"{a['bar_date']}:{a['sig']}"
             if state.get(sym) == stamp:
@@ -133,7 +135,7 @@ def main():
             fired += 1
             risk = (a["px"] - a["stop"]) / a["px"] * 100
             title = f"📈 波段{a['sig']}: {sym} {cfg['name']}"
-            body = (f"信号: 波段{a['sig']} ({cfg['verdict']}, 历史波段{cfg['ret']:+.0f}%/Calmar{cfg['calmar']})\n"
+            body = (f"信号: 波段{a['sig']} (近90天波段{cfg['swing90']:+.0f}% · 全周期{cfg['ret']:+.0f}%/Calmar{cfg['calmar']})\n"
                     f"现价 {a['px']:.2f} · {cfg['ma']}跟踪止损 {a['stop']:.2f} ({-risk:.1f}%)\n"
                     f"距21EMA {a['dev21']:+.1f} ATR" + (" (涨过头, 减1/3~1/2)" if a['sig'] == '减仓' else "") + "\n"
                     f"⚠️ 波段·请手动下单(本系统不自动执行)")
