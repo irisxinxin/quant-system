@@ -101,14 +101,14 @@ STRATEGY_MAP, TIER_MAP, TICKERS, EXCLUDED = load_strategy_map()
 
 
 def load_priority() -> dict:
-    """读 output/intraday_priority.csv: 每只票的近期胜率/PF/每笔/优先级排名。
-       多信号同时来时, Telegram 显示这些值供人工取舍(优先级#小=近期期望值高=优先做)。"""
+    """读 output/intraday_priority.csv: 优先级按【近90天收益率】排(≥8笔护栏)。
+       多信号同时来时, Telegram 显示供人工取舍(优先级#小=近90天最赚钱=优先做)。"""
     f = PROJECT_DIR / "output" / "intraday_priority.csv"
     if not f.exists():
         return {}
     df = pd.read_csv(f)
-    return {r["symbol"]: dict(rank=int(r["优先级"]), win=float(r["rec_win"]),
-                              pf=float(r["rec_pf"]), avg=float(r["rec_avg"]))
+    return {r["symbol"]: dict(rank=int(r["优先级"]), ret90=float(r["last90ret"]), n90=int(r["last90n"]),
+                              win=float(r["rec_win"]), pf=float(r["rec_pf"]))
             for _, r in df.iterrows()}
 
 PRIORITY = load_priority()
@@ -300,8 +300,8 @@ def dispatch_strategies(quote_ctx):
             pri = PRIORITY.get(symbol, {})
             prank = pri.get("rank")
             ptag = f"⭐#{prank}/{_PRI_N} " if prank else ""
-            pline = (f"📊 近期: 优先级#{prank}/{_PRI_N} · 胜率{pri['win']:.0f}% · "
-                     f"PF{pri['pf']:.2f} · 每笔{pri['avg']:+.2f}%\n") if prank else ""
+            pline = (f"📊 优先级#{prank}/{_PRI_N} · 近90天{pri['ret90']:+.0f}%({pri['n90']}笔) · "
+                     f"近期PF{pri['pf']:.2f} · 胜率{pri['win']:.0f}%\n") if prank else ""
             title = f"🚀 {ptag}{symbol} [{tier}] {strategy_name} 信号 ({plan.order_type})"
             body = (f"时间: {now_str()}\n"
                     f"{pline}"
