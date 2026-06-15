@@ -285,6 +285,13 @@ def dispatch_strategies(quote_ctx):
         if plan.side != "long":
             continue   # 我们只做多
 
+        # 防滞后: 只派发"刚触发"的信号(入场bar接近最新bar)。早先的旧信号其参考价已过时,
+        # MKT会按当前价成交但显示入场/止损/止盈仍按旧价 → 风险错位。滞后>15min(约3根5m)跳过不追。
+        if plan.entry_ts < today_df.index[-1] - pd.Timedelta(minutes=15):
+            log_event({"event": "skip_stale_signal", "symbol": symbol, "strategy": strategy_name,
+                       "plan_entry_ts": str(plan.entry_ts), "latest_bar": str(today_df.index[-1])})
+            continue
+
         # 算 tier × 信号强度 → 实际仓位
         tier = TIER_MAP.get(symbol, "B")
         signal_strength = compute_signal_strength(strategy_name, plan, today_df)
