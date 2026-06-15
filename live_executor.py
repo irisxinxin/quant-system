@@ -21,12 +21,18 @@ live_executor.py — LongPort 模拟盘自动下单 (Plan-Driven, 多策略版)
 """
 import os
 import json
+import time as _time
 from decimal import Decimal
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("US/Eastern")
+
+# 卖单冷却: {symbol: 上次市价卖出 submit 的时间戳}. 防止合成平仓重试 / force_close 重叠
+# 在持仓回写延迟窗口内对同一票重复下卖单 (超卖/反向开空).
+_sell_cooldown: dict = {}
+SELL_COOLDOWN_SEC = 60
 
 # ═══ 全局状态 ═══
 _TRADE_CTX = None
@@ -242,8 +248,13 @@ def check_fills_and_arm_brackets(quote_ctx=None):
         print(f"   🎯 {sym} 合成 bracket 已 arm: stop≤{stop_px}  tp≥{tp_px}  (轮询触发, 不挂 resting 子单)")
 
 
-def _market_sell(sym: str, qty: int, reason: str) -> bool:
-    """市价平仓 (合成 bracket / force_close 共用). 卖前以实际持仓为准, 返回成功/失败."""
+def _market_sell(sym: str, qty: int, reason: str, force: bool = False) -> bool:
+    """市价平仓 (合成 bracket / force_close 共用). 卖前以实际持仓为准, 返回成功/失败.
+    冷却: 同一票 SELL_COOLDOWN_SEC 内不重复下卖单 (防回写延迟窗口内超卖). force=True 跳过冷却."""
+    if not force:
+        last = _sell_cooldown.get(sym, 0)
+        if _time.time() - last < SELL_COOLDOWN_SEC:
+            return False   # 冷却中, 上一张卖单可能还没回写, 不重复下
     try:
         from longport.openapi import OrderType, OrderSide, TimeInForceType
     except ImportError:
@@ -253,6 +264,7 @@ def _market_sell(sym: str, qty: int, reason: str) -> bool:
             symbol=sym, order_type=OrderType.MO, side=OrderSide.Sell,
             submitted_quantity=Decimal(str(qty)), time_in_force=TimeInForceType.Day,
             remark=reason[:30])
+        _sell_cooldown[sym] = _time.time()
         print(f"   💰 {sym} 市价平 {qty} 股 ({reason}) id={resp.order_id}")
         return True
     except Exception as e:
@@ -271,8 +283,17 @@ def check_synthetic_exits(quote_ctx):
     if not open_syms:
         return
     # 批量拉现价 (一次 quote 调用, 省 API)
+    # ⚠️ 逐条容错: 某只票停牌/盘前/当日无成交时 last_done 可能 None, float(None) 会炸.
+    # 必须只跳过坏值, 不能让一只票拖垮整批 (否则所有持仓本轮漏检止损 = 原大bug复发).
+    quotes = {}
     try:
-        quotes = {q.symbol: float(q.last_done) for q in quote_ctx.quote(open_syms)}
+        for q in quote_ctx.quote(open_syms):
+            if q.last_done is None:
+                continue
+            try:
+                quotes[q.symbol] = float(q.last_done)
+            except (ValueError, TypeError):
+                pass
     except Exception as e:
         print(f"   ⚠️ check_synthetic_exits 拉现价失败: {e}")
         return

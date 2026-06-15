@@ -213,10 +213,17 @@ def fetch_daily_ema200(quote_ctx, symbol: str, period: int = 200, lookback: int 
         return None
     if len(bars) < period + 2:
         return None   # 日线数据不足以算 EMA200
+    # 丢掉"今日未收盘"的 forming 日 K (与 stops_core 同款纪律), 再用最后一根已收盘日的 EMA.
+    # 不再硬编码 iloc[-2] (收盘后 bars[-1] 已是今日收盘, iloc[-2] 反而取到前天).
+    last_et = bars[-1].timestamp.astimezone(ET)
+    now_et = datetime.now(ET)
+    if last_et.date() == now_et.date() and now_et.time() < dtime(16, 0):
+        bars = bars[:-1]   # 今日还没收盘 → 丢掉 forming bar
+    if len(bars) < period + 1:
+        return None
     closes = pd.Series([float(b.close) for b in bars])
     ema = closes.ewm(span=period, adjust=False).mean()
-    # 用倒数第 2 根 (上一已收盘日) 的 EMA, 避免用今日 forming bar
-    return float(ema.iloc[-2])
+    return float(ema.iloc[-1])   # 最后一根已收盘日的 EMA200
 
 def compute_signal_strength(strategy_name: str, plan, today_df: pd.DataFrame) -> float:
     """
@@ -470,7 +477,8 @@ def main():
                     print(f"   ⚠️ 派发/fill 检查异常: {e}")
 
             # 合成 bracket 平仓检查 (每 15s, 比派发频繁 — 止损/止盈靠这个触发)
-            if time.time() - last_exit_check >= 15 and n_et.time() >= MARKET_OPEN:
+            # force_close 后停掉, 避免与 15:50 强平重叠对同一票重复下卖单
+            if not force_close_done and time.time() - last_exit_check >= 15 and n_et.time() >= MARKET_OPEN:
                 last_exit_check = time.time()
                 try:
                     live_executor.check_synthetic_exits(quote_ctx)
