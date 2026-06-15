@@ -17,7 +17,7 @@ AI = ["NBIS", "CRWV", "ORCL", "PLTR", "SMCI", "VRT", "DELL", "ANET", "SNOW", "NO
 STOR = ["SNDK", "STX", "WDC"]
 NEW = ["IREN", "CIFR", "RKLB", "OKLO", "SMR", "CCJ", "AAOI", "LITE", "OUST", "HOOD", "COIN", "MSTR", "HIMS", "SOFI", "NOK", "EOSE"]
 ETF = ["SOXL", "NVDL", "TSLL", "MSFL", "SOXX"]
-HK = ["7747", "7709"]
+HK = ["7747", "7709", "0522", "3076"]   # 三星2x/海力士2x/ASMPT/港股3076
 UNIVERSE = [f"{s}.US" for s in MEGA + SEMI + AI + STOR + NEW + ETF] + [f"{s}.HK" for s in HK]
 
 
