@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.filmhousebot.swingsignal.plist — 波段信号每日清单 (含买点临近预警)
+
+  每个交易日 (Tue-Sat SGT 08:00 = 美股收盘后) 跑 signal_swing.py --levels,
+  推一条 Telegram: 买点临近 / 可买入 / 减仓 / 持有 全清单. 仅提醒不下单.
+
+  安装:
+    cp com.filmhousebot.swingsignal.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.filmhousebot.swingsignal.plist
+  手动测试: launchctl start com.filmhousebot.swingsignal
+  卸载:    launchctl unload ~/Library/LaunchAgents/com.filmhousebot.swingsignal.plist
+  日志:    tail -f /Users/filmhousebot/Desktop/project/quant-system/swingsignal.log
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.filmhousebot.swingsignal</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>source /Users/filmhousebot/.longport_creds.env &amp;&amp; exec /opt/homebrew/bin/python3.13 /Users/filmhousebot/Desktop/project/quant-system/signal_swing.py --levels</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/filmhousebot/Desktop/project/quant-system</string>
+
+    <!-- 不在 load 时跑; 由日历触发 -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Tue-Sat (周二到周六) SGT 08:00 = 周一到周五美股收盘后, 日线已结算 -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Weekday</key><integer>2</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>3</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Weekday</key><integer>6</integer><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>/Users/filmhousebot/Desktop/project/quant-system/swingsignal.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/filmhousebot/Desktop/project/quant-system/swingsignal.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>LANG</key>
+        <string>en_US.UTF-8</string>
+        <key>DYLD_LIBRARY_PATH</key>
+        <string>/opt/homebrew/opt/expat/lib</string>
+    </dict>
+</dict>
+</plist>
