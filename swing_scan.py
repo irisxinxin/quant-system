@@ -13,10 +13,10 @@ from longport.openapi import Config, QuoteContext, Period, AdjustType
 
 MEGA = ["GOOG", "GOOGL", "AAPL", "MSFT", "META", "NVDA", "TSLA", "NFLX", "AMZN"]
 SEMI = ["AMD", "INTC", "MU", "MXL", "ARM", "AVGO", "MRVL", "TSM", "ASML", "LRCX", "AMAT", "KLAC", "ON", "MCHP", "QCOM", "TXN", "MPWR", "ALAB", "CRDO", "NXPI",
-        "UMC", "ASX", "ENTG", "TER", "COHR", "AEHR", "SITM"]   # +台湾ADR(UMC/ASX) +半导体设备/材料/封测
+        "UMC", "ASX", "ENTG", "TER", "COHR", "AEHR", "SITM", "VECO"]   # +台湾ADR(UMC/ASX) +半导体设备/材料/封测(VECO)
 AI = ["NBIS", "CRWV", "ORCL", "PLTR", "SMCI", "VRT", "DELL", "ANET", "SNOW", "NOW", "PANW", "CRWD", "DDOG", "NET", "APP"]
 STOR = ["SNDK", "STX", "WDC"]
-NEW = ["IREN", "CIFR", "RKLB", "OKLO", "SMR", "CCJ", "AAOI", "LITE", "OUST", "HOOD", "COIN", "MSTR", "HIMS", "SOFI", "NOK", "EOSE"]
+NEW = ["IREN", "CIFR", "RKLB", "OKLO", "SMR", "CCJ", "AAOI", "LITE", "OUST", "HOOD", "COIN", "MSTR", "HIMS", "SOFI", "NOK", "EOSE", "RDW"]
 ETF = ["SOXL", "NVDL", "TSLL", "MSFL", "SOXX"]
 HK = ["7747", "7709", "0522", "3076"]   # 三星2x/海力士2x/ASMPT/港股3076
 UNIVERSE = [f"{s}.US" for s in MEGA + SEMI + AI + STOR + NEW + ETF] + [f"{s}.HK" for s in HK]
@@ -64,7 +64,7 @@ def main():
         for k, ma in mas.items():
             eq = swing_eq(c, ma, s200); r = (eq[-1] - 1) * 100; dd = maxdd(eq); cal = r / (abs(dd) + 1e-9)
             if cal > bestcal: best, bestcal, bestret, bestdd = k, cal, r, dd
-        if bestcal < 4 or bestret < 50:   # 不适合波段, 跳过
+        if bestcal < 3 or bestret < 50:   # 不适合波段, 跳过 (Calmar≥3, 含高收益高波动名如ALAB/VECO)
             continue
         n_ok += 1
         eq = swing_eq(c, mas[best], s200); w = min(63, len(eq) - 1); sw90 = (eq[-1] / eq[-1 - w] - 1) * 100
@@ -82,7 +82,7 @@ def main():
             hold.append(rec)
         else:
             watch.append(rec)
-    print(f"扫描 {len(UNIVERSE)} 只, 其中 {n_ok} 只是好波段标的(Calmar≥4)")
+    print(f"扫描 {len(UNIVERSE)} 只, 其中 {n_ok} 只是好波段标的(Calmar≥3)")
     print(f"\n🟢🟢 现在新鲜买点 (未延伸, 进还来得及) — {len(fresh)} 只 [按近90收益排]:")
     print(f"{'票':8}{'线':4}{'现价':>9}{'关键线':>9}{'距线%':>7}{'距21E':>7}{'近90%':>7}{'Calmar':>7}  操作")
     for r in sorted(fresh, key=lambda x: -x["sw90"]):
