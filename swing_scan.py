@@ -12,7 +12,8 @@ import numpy as np, pandas as pd
 from longport.openapi import Config, QuoteContext, Period, AdjustType
 
 MEGA = ["GOOG", "GOOGL", "AAPL", "MSFT", "META", "NVDA", "TSLA", "NFLX", "AMZN"]
-SEMI = ["AMD", "INTC", "MU", "MXL", "ARM", "AVGO", "MRVL", "TSM", "ASML", "LRCX", "AMAT", "KLAC", "ON", "MCHP", "QCOM", "TXN", "MPWR", "ALAB", "CRDO", "NXPI"]
+SEMI = ["AMD", "INTC", "MU", "MXL", "ARM", "AVGO", "MRVL", "TSM", "ASML", "LRCX", "AMAT", "KLAC", "ON", "MCHP", "QCOM", "TXN", "MPWR", "ALAB", "CRDO", "NXPI",
+        "UMC", "ASX", "ENTG", "TER", "COHR", "AEHR", "SITM"]   # +台湾ADR(UMC/ASX) +半导体设备/材料/封测
 AI = ["NBIS", "CRWV", "ORCL", "PLTR", "SMCI", "VRT", "DELL", "ANET", "SNOW", "NOW", "PANW", "CRWD", "DDOG", "NET", "APP"]
 STOR = ["SNDK", "STX", "WDC"]
 NEW = ["IREN", "CIFR", "RKLB", "OKLO", "SMR", "CCJ", "AAOI", "LITE", "OUST", "HOOD", "COIN", "MSTR", "HIMS", "SOFI", "NOK", "EOSE"]
