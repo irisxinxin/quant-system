@@ -110,9 +110,11 @@ def analyze(df, ma_choice="20E"):
     buy = (pxp <= map_) and (px > man) and uptrend
     exit_ = (pxp >= map_ * 0.99) and (px < man * 0.99)
     reduce = in_trend and dev21 >= REDUCE_DEV
+    # 买点临近: 趋势上 + 还没站上均线 + 现价在均线下方 3% 内 (快触发, 可提前挂 buy-stop)
+    near_buy = uptrend and (not in_trend) and (px >= man * 0.97)
     sig = "买入" if buy else ("退出" if exit_ else ("减仓" if reduce else ("持有" if in_trend else "观望")))
     return dict(px=px, ma=man, ma_choice=ma_choice, dev21=dev21, stop=man * 0.99, sig=sig,
-                in_trend=in_trend, bar_date=str(c.index[-1].date()))
+                in_trend=in_trend, uptrend=uptrend, near_buy=near_buy, bar_date=str(c.index[-1].date()))
 
 
 def main():
@@ -123,7 +125,7 @@ def main():
 
     # ── 每日挂单清单 digest (一条TG消息列出全部21只的买入价/止损价) ──
     if "--levels" in sys.argv:
-        buys, holds, reduces = [], [], []
+        buys, near, holds, reduces = [], [], [], []
         for sym, cfg in sorted(SWING_POOL.items(), key=lambda kv: -kv[1]["swing90"]):
             df = pull(ctx, sym)
             if df is None:
@@ -131,15 +133,19 @@ def main():
             a = analyze(df, cfg["ma"])
             if a is None:
                 continue
-            nm = cfg["name"][:8]; sw = cfg["swing90"]
+            nm = cfg["name"][:8]
             if a["in_trend"] and a["dev21"] >= REDUCE_DEV:
-                reduces.append(f"  🟠 {sym} {nm} 减仓 (距21E {a['dev21']:.1f}ATR, 近90{sw:+.0f}%)")
+                reduces.append(f"  🟠 {sym} {nm} 减仓·现价{a['px']:.2f}·跌破{a['stop']:.2f}止损 (距21E {a['dev21']:.1f}ATR)")
             elif a["in_trend"]:
-                holds.append(f"  🔵 {sym} {nm} 持有·跌破{a['stop']:.2f}止损 ({cfg['ma']}, 近90{sw:+.0f}%)")
+                holds.append(f"  🔵 {sym} {nm} 持有·现价{a['px']:.2f}·跌破{a['stop']:.2f}止损 ({cfg['ma']})")
+            elif a.get("near_buy"):
+                gap = (a["ma"] / a["px"] - 1) * 100
+                near.append(f"  ⏰ {sym} {nm} 现价{a['px']:.2f}·距买点{a['ma']:.2f}仅{gap:.1f}%·挂buy-stop·止{a['stop']:.2f} ({cfg['ma']})")
             else:
-                buys.append(f"  🟢 {sym} {nm} 站上 {a['ma']:.2f} 买入(buy-stop) ({cfg['ma']}, 近90{sw:+.0f}%)")
+                buys.append(f"  🟢 {sym} {nm} 站上{a['ma']:.2f}买入·入场后跌破{a['stop']:.2f}止损 ({cfg['ma']})")
         today = datetime.now().strftime("%m-%d")
-        parts = [f"📋 波段挂单清单 {today} ({len(SWING_POOL)}只, 按近90收益)"]
+        parts = [f"📋 波段挂单清单 {today} ({len(SWING_POOL)}只)"]
+        if near: parts.append("⏰ 买点临近(距均线≤3%, 提前挂buy-stop):\n" + "\n".join(near))
         if buys: parts.append("🟢 可买入(站上触发买入):\n" + "\n".join(buys))
         if reduces: parts.append("🟠 减仓:\n" + "\n".join(reduces))
         if holds: parts.append("🔵 持有中(守跌破止损):\n" + "\n".join(holds))
@@ -179,6 +185,21 @@ def main():
             if send_telegram(title, body):
                 state[sym] = stamp
                 save_state(state)   # 逐条增量落盘, 中途崩也不丢已推状态
+                fired += 1
+        elif a.get("near_buy"):
+            # 买点临近预警: 距均线≤3% 快触发, 提前推一次让你挂好 buy-stop (每天每票最多一次)
+            stamp = f"{a['bar_date']}:near"
+            if state.get(sym) == stamp:
+                continue
+            gap = (a["ma"] / a["px"] - 1) * 100
+            title = f"⏰ 买点临近: {sym} {cfg['name']}"
+            body = (f"现价 {a['px']:.2f} · 距买点 {a['ma']:.2f} 仅 {gap:.1f}%\n"
+                    f"站上 {a['ma']:.2f} 即触发买入 → 可提前挂 buy-stop @ {a['ma']:.2f}\n"
+                    f"入场后跌破 {a['stop']:.2f} 止损 ({cfg['ma']})\n"
+                    f"⚠️ 波段·手动下单")
+            if send_telegram(title, body):
+                state[sym] = stamp
+                save_state(state)
                 fired += 1
     save_state(state)
     if not status and fired == 0:
