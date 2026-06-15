@@ -6,7 +6,29 @@ stops_core.py — 持仓止损计算核心（按 Kova A–E 状态机）。
 import pandas as pd
 import numpy as np
 import warnings
+from datetime import datetime, time as _dtime
+from zoneinfo import ZoneInfo
 warnings.filterwarnings("ignore")
+
+_ET = ZoneInfo("US/Eastern")
+
+def _drop_forming_bar(df):
+    """
+    关键修 (6/15): 丢掉"今日未收盘"的日 K.
+    本项目纪律是【收盘判断】(follow_label 写明 'EMA×0.99 收盘判断'), 但盘中拉日线时
+    最后一根是当日 forming bar (= 现价), 会让 dist21/抛物线/A-E 状态盘中乱跳.
+    若最后一根日期 == 今日 ET 且现在 ET < 16:00 (未收盘), 丢掉它, 用昨收决策.
+    """
+    if df is None or df.empty:
+        return df
+    try:
+        last_date = pd.Timestamp(df.index[-1]).date()
+        now_et = datetime.now(_ET)
+        if last_date == now_et.date() and now_et.time() < _dtime(16, 0):
+            return df.iloc[:-1]
+    except Exception:
+        pass
+    return df
 
 # 真实持仓: ticker -> 成本（取自长桥 App 持仓截图，可在此维护）
 # None = 待补成本（EMA 止损照常算，但盈亏%/A·B·C 状态需补成本后才准）
@@ -47,10 +69,15 @@ def _fetch_longport(ctx, tk, count=250):
     bars = list(ctx.candlesticks(f"{tk}.US", Period.Day, count, AdjustType.ForwardAdjust))
     if not bars:
         return None
-    return pd.DataFrame({
+    def _et_naive(ts):
+        t = pd.Timestamp(ts)
+        # longport 返回 tz-aware → 转 ET 再去 tz (与 yfinance 的 naive 口径统一)
+        return t.tz_convert(_ET).tz_localize(None) if t.tzinfo is not None else t
+    df = pd.DataFrame({
         "High": [float(b.high) for b in bars], "Low": [float(b.low) for b in bars],
         "Close": [float(b.close) for b in bars], "Volume": [float(b.volume) for b in bars],
-    }, index=[b.timestamp for b in bars]).sort_index()
+    }, index=[_et_naive(b.timestamp) for b in bars]).sort_index()
+    return _drop_forming_bar(df)
 
 
 def _fetch_yfinance(tk):
@@ -60,7 +87,8 @@ def _fetch_yfinance(tk):
         return None
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
-    return df[["High", "Low", "Close", "Volume"]].copy()
+    df = df[["High", "Low", "Close", "Volume"]].copy()
+    return _drop_forming_bar(df)
 
 
 def _make_quote_ctx():

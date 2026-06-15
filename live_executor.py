@@ -168,13 +168,18 @@ def place_entry(symbol: str, plan, position_usd: int = None, is_replay: bool = F
 
 def check_fills_and_arm_brackets(quote_ctx=None):
     """
-    心跳调用. 检查所有 pending 订单是否已成交; 成交后挂 stop+tp.
-    quote_ctx 参数保留但不再使用 (策略各自有 RVOL/趋势过滤, 不再后置检查).
+    心跳调用. 检查所有 pending 入场单是否已成交; 成交 + 持仓到账后 → arm 合成 bracket.
+
+    ⚠️ 关键修复 (6/15): 不再挂 resting 止损/止盈子单.
+    LongPort 不支持原生 OCO: 同一持仓挂止盈(LO)+止损(MIT)两个全仓卖单, 先挂的锁仓,
+    后挂的报 "Insufficient holdings" 被拒 → 历史上 52 个止损单全 Rejected/Canceled,
+    仓位实际从无止损保护. 现在改成: fill 后只记录 stop_px/tp_px, 由 check_synthetic_exits
+    每个心跳轮询现价, 触及就市价平 (合成 bracket). 一并消除 603301 误判做空.
     """
     if not _LIVE or _TRADE_CTX is None:
         return
     try:
-        from longport.openapi import OrderType, OrderSide, TimeInForceType, OrderStatus
+        from longport.openapi import OrderStatus
     except ImportError:
         return
 
@@ -193,18 +198,15 @@ def check_fills_and_arm_brackets(quote_ctx=None):
             continue   # 还没成交
 
         fill_price = float(d.executed_price) if d.executed_price else float(rec["limit_price"])
-        # 只在第一次检测到 fill 时打印, 避免重试时刷屏
         was_filled_before = rec.get("filled", False)
         rec["filled"] = True
         rec["buy_fill_price"] = fill_price
         if not was_filled_before:
             print(f"   ✅ {sym} {rec['order_type']} 单成交 @ ${fill_price:.2f}  策略={rec['strategy']}")
 
-        qty = Decimal(rec.get("qty", "1"))
+        qty = int(Decimal(rec.get("qty", "1")))
 
-        # ⚠️ 关键修复: LongPort papertrading 时序 bug — fill 后持仓需要时间 reflect
-        # 直接挂 SELL stop/tp 会被 LongPort 误判为做空 (603301).
-        # 等下次心跳时 query stock_positions 确认持仓 ≥ qty 后再挂.
+        # 确认持仓到账 (防 race), 用实际持仓数量
         try:
             positions_now = _TRADE_CTX.stock_positions(symbols=[sym])
             actual_qty = 0
@@ -212,102 +214,114 @@ def check_fills_and_arm_brackets(quote_ctx=None):
                 for p in ch.positions:
                     if p.symbol == sym:
                         actual_qty = max(actual_qty, int(p.quantity))
-            if actual_qty < int(qty):
+            if actual_qty < qty:
                 if not was_filled_before:
-                    print(f"   ⏳ {sym} 持仓还未到账 ({actual_qty}/{int(qty)}), 等下次心跳再挂子单")
-                continue   # 不 mark armed, 下轮重试
+                    print(f"   ⏳ {sym} 持仓还未到账 ({actual_qty}/{qty}), 等下次心跳")
+                continue   # 不 arm, 下轮重试
         except Exception as e:
             print(f"   ⚠️ {sym} 查持仓失败, 跳过本轮: {e}")
             continue
-        stop_px = _round_tick(rec["stop_price"])
-        tp_px = _round_tick(rec["tp_price"])
 
-        # 安全检查: stop 必须 < fill, tp 必须 > fill (long-only)
-        if float(stop_px) >= fill_price:
-            print(f"   ⚠️ {sym} stop {stop_px} >= fill {fill_price}, 调整 stop = fill * 0.99")
-            stop_px = _round_tick(fill_price * 0.99)
-        if float(tp_px) <= fill_price:
-            print(f"   ⚠️ {sym} tp {tp_px} <= fill {fill_price}, 调整 tp = fill * 1.02")
-            tp_px = _round_tick(fill_price * 1.02)
+        stop_px = float(_round_tick(rec["stop_price"]))
+        tp_px = float(_round_tick(rec["tp_price"]))
+        # 安全检查: stop < fill, tp > fill (long-only)
+        if stop_px >= fill_price:
+            stop_px = float(_round_tick(fill_price * 0.99))
+        if tp_px <= fill_price:
+            tp_px = float(_round_tick(fill_price * 1.02))
 
-        # 挂止损 (MIT)
-        try:
-            stop_resp = _TRADE_CTX.submit_order(
-                symbol=sym, order_type=OrderType.MIT, side=OrderSide.Sell,
-                submitted_quantity=qty, trigger_price=stop_px,
-                time_in_force=TimeInForceType.Day,
-                remark=f"{rec['strategy']}-Stop")
-            rec["stop_id"] = stop_resp.order_id
-            rec["stop_px"] = str(stop_px)
-        except Exception as e:
-            rec["stop_error"] = str(e)
-            print(f"      ❌ 挂止损失败: {e}")
-
-        # 挂止盈 (LO)
-        try:
-            tp_resp = _TRADE_CTX.submit_order(
-                symbol=sym, order_type=OrderType.LO, side=OrderSide.Sell,
-                submitted_quantity=qty, submitted_price=tp_px,
-                time_in_force=TimeInForceType.Day,
-                remark=f"{rec['strategy']}-TP")
-            rec["tp_id"] = tp_resp.order_id
-            rec["tp_px"] = str(tp_px)
-        except Exception as e:
-            rec["tp_error"] = str(e)
-            print(f"      ❌ 挂止盈失败: {e}")
-
+        # 合成 bracket: 只记录价位, 不挂子单
+        rec["stop_px"] = stop_px
+        rec["tp_px"] = tp_px
+        rec["held_qty"] = actual_qty
         rec["armed"] = True
         rec["closed"] = False
         _OPEN_POSITIONS[sym] = rec
         _PENDING_ENTRIES.pop(sym, None)
         _persist(sym, "open_position", rec)
-        print(f"   🎯 {sym} 子单已挂: stop @ {stop_px}  tp @ {tp_px}")
+        print(f"   🎯 {sym} 合成 bracket 已 arm: stop≤{stop_px}  tp≥{tp_px}  (轮询触发, 不挂 resting 子单)")
+
+
+def _market_sell(sym: str, qty: int, reason: str) -> bool:
+    """市价平仓 (合成 bracket / force_close 共用). 卖前以实际持仓为准, 返回成功/失败."""
+    try:
+        from longport.openapi import OrderType, OrderSide, TimeInForceType
+    except ImportError:
+        return False
+    try:
+        resp = _TRADE_CTX.submit_order(
+            symbol=sym, order_type=OrderType.MO, side=OrderSide.Sell,
+            submitted_quantity=Decimal(str(qty)), time_in_force=TimeInForceType.Day,
+            remark=reason[:30])
+        print(f"   💰 {sym} 市价平 {qty} 股 ({reason}) id={resp.order_id}")
+        return True
+    except Exception as e:
+        print(f"   ❌ {sym} 市价平失败 ({reason}): {e}")
+        return False
+
+
+def check_synthetic_exits(quote_ctx):
+    """
+    合成 bracket 核心: 心跳轮询所有未平仓位的现价, 触及 stop/tp 就市价平.
+    替代 LongPort 不支持的 OCO resting 子单.
+    """
+    if not _LIVE or _TRADE_CTX is None or quote_ctx is None:
+        return
+    open_syms = [s for s, r in _OPEN_POSITIONS.items() if not r.get("closed")]
+    if not open_syms:
+        return
+    # 批量拉现价 (一次 quote 调用, 省 API)
+    try:
+        quotes = {q.symbol: float(q.last_done) for q in quote_ctx.quote(open_syms)}
+    except Exception as e:
+        print(f"   ⚠️ check_synthetic_exits 拉现价失败: {e}")
+        return
+
+    for sym in open_syms:
+        rec = _OPEN_POSITIONS.get(sym)
+        if not rec or rec.get("closed"):
+            continue
+        px = quotes.get(sym)
+        if px is None:
+            continue
+        # 强制 float (旧 jsonl 记录里 stop_px/tp_px 可能是字符串)
+        try:
+            stop_px = float(rec["stop_px"]) if rec.get("stop_px") is not None else None
+            tp_px = float(rec["tp_px"]) if rec.get("tp_px") is not None else None
+        except (ValueError, TypeError):
+            continue
+        hit = None
+        if stop_px is not None and px <= stop_px:
+            hit = "stop"
+        elif tp_px is not None and px >= tp_px:
+            hit = "tp"
+        if not hit:
+            continue
+        # 以实际持仓数量市价平 (防止超卖)
+        try:
+            positions_now = _TRADE_CTX.stock_positions(symbols=[sym])
+            actual_qty = 0
+            for ch in positions_now.channels:
+                for p in ch.positions:
+                    if p.symbol == sym:
+                        actual_qty = max(actual_qty, int(p.quantity))
+        except Exception as e:
+            print(f"   ⚠️ {sym} 平仓前查持仓失败: {e}")
+            continue
+        if actual_qty <= 0:
+            rec["closed"] = True; rec["close_reason"] = f"{hit}_already_flat"
+            _persist(sym, "open_position", rec)
+            continue
+        if _market_sell(sym, actual_qty, f"{rec.get('strategy','?')}-{hit.upper()}@{px}"):
+            rec["closed"] = True
+            rec["close_reason"] = hit
+            rec["close_px"] = px
+            _persist(sym, "open_position", rec)
 
 
 def reconcile_oco():
-    """OCO 仿真: 检查每个未平仓票的 stop/tp 状态, 任一成交则撤另一"""
-    if not _LIVE or _TRADE_CTX is None:
-        return
-    try:
-        from longport.openapi import OrderStatus
-    except ImportError:
-        return
-
-    for sym, rec in list(_OPEN_POSITIONS.items()):
-        if rec.get("closed"):
-            continue
-        stop_id = rec.get("stop_id")
-        tp_id = rec.get("tp_id")
-        stop_filled = tp_filled = False
-        try:
-            if stop_id:
-                d = _TRADE_CTX.order_detail(stop_id)
-                if d.status in (OrderStatus.Filled, OrderStatus.PartialFilled):
-                    stop_filled = True
-            if tp_id:
-                d = _TRADE_CTX.order_detail(tp_id)
-                if d.status in (OrderStatus.Filled, OrderStatus.PartialFilled):
-                    tp_filled = True
-        except Exception as e:
-            print(f"   ⚠️ {sym} 查子单失败: {e}")
-            continue
-
-        if stop_filled and tp_id:
-            try:
-                _TRADE_CTX.cancel_order(tp_id)
-                print(f"   🔁 {sym} 止损成交, 已撤止盈")
-            except Exception:
-                pass
-            rec["closed"] = True; rec["close_reason"] = "stop_filled"
-            _persist(sym, "open_position", rec)
-        elif tp_filled and stop_id:
-            try:
-                _TRADE_CTX.cancel_order(stop_id)
-                print(f"   🔁 {sym} 止盈成交, 已撤止损")
-            except Exception:
-                pass
-            rec["closed"] = True; rec["close_reason"] = "tp_filled"
-            _persist(sym, "open_position", rec)
+    """[DEPRECATED] 合成 bracket 取代了 OCO resting 子单, 此函数保留为 no-op 兼容旧调用."""
+    return
 
 
 _orphan_pending_retry: dict = {}   # {symbol: {"qty": int, "attempts": int}}
@@ -416,20 +430,8 @@ def force_close_all():
             except Exception:
                 pass
 
-    # 撤所有 open position 的 stop/tp 子单
-    for sym, rec in _OPEN_POSITIONS.items():
-        if rec.get("closed"):
-            continue
-        for key in ("stop_id", "tp_id"):
-            oid = rec.get(key)
-            if oid:
-                try:
-                    _TRADE_CTX.cancel_order(oid)
-                    print(f"   ↩️ 撤 {sym} {key}")
-                except Exception:
-                    pass
-
-    # ⚠️ 关键: 撤单后等 LongPort 处理 (5/1 教训: 同步撤+下 SELL 触发 603301)
+    # 合成 bracket 后没有 resting 止损/止盈子单要撤了 (只可能有未成交 LIT 入场单, 上面已撤).
+    # 撤单后等 LongPort 处理, 再 submit MO sell, 避免 603301 时序冲突.
     print("   ⏳ 等 3s 让撤单 settle...")
     _time.sleep(3)
 

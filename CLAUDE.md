@@ -1,8 +1,8 @@
 # quant-system — Claude 工作守则
 
-## 🔒 铁律: 6/1 之前所有自动下单必须是 LongPort 模拟盘
+## 🔒 铁律: 所有自动下单必须是 LongPort 模拟盘 (直到用户明确说切换)
 
-**绝对不可在 6/1 之前接入真钱账户**。本仓库的 `signal_live_longport.py` + `live_executor.py` 配合 `LIVE_TRADING=true` 会真实下单, 必须确保对接的是 `lb_papertrading`.
+**必须一直用模拟盘, 直到用户明确口头说"切真钱/切实盘"为止** —— 没有截止日期 (原 6/1 已作废, 2026-06-15 用户明确: "在我说切换之前要一直用模拟盘")。本仓库的 `signal_live_longport.py` + `live_executor.py` 配合 `LIVE_TRADING=true` 会真实下单, 必须确保对接的是 `lb_papertrading`.
 
 ### 改任何代码前必须 double-check 模拟盘
 

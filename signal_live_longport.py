@@ -201,6 +201,23 @@ def fetch_recent_bars(quote_ctx, symbol: str, count: int = 50) -> pd.DataFrame:
     df = pd.DataFrame(rows).set_index("timestamp")
     return df
 
+def fetch_daily_ema200(quote_ctx, symbol: str, period: int = 200, lookback: int = 260):
+    """
+    单独拉日线算 EMA200 大方向值 (给 ST_10_3 用).
+    用【上一根已收盘日线】的 EMA (shift 1, 避免 lookahead). 拉不到/数据不足返回 None.
+    """
+    try:
+        bars = list(quote_ctx.candlesticks(symbol, Period.Day, lookback, AdjustType.ForwardAdjust))
+    except Exception as e:
+        print(f"   ⚠️ {symbol} 拉日线失败: {e}")
+        return None
+    if len(bars) < period + 2:
+        return None   # 日线数据不足以算 EMA200
+    closes = pd.Series([float(b.close) for b in bars])
+    ema = closes.ewm(span=period, adjust=False).mean()
+    # 用倒数第 2 根 (上一已收盘日) 的 EMA, 避免用今日 forming bar
+    return float(ema.iloc[-2])
+
 def compute_signal_strength(strategy_name: str, plan, today_df: pd.DataFrame) -> float:
     """
     根据当下信号质量给 0.7-1.4x 倍数. 越强信号倍数越高.
@@ -268,12 +285,20 @@ def dispatch_strategies(quote_ctx):
         full_df = fetch_recent_bars(quote_ctx, symbol, count=50)
         if full_df.empty:
             continue
-        today_df, _full = split_today_full(full_df)
+        today_df, full_rth = split_today_full(full_df)
         if today_df.empty:
             continue
-        # 美股开盘前 (today_df 长度 < 1) 跳过
+        # ST_10_3 需要日线 EMA200 大方向过滤, 但 50 根 5m resample 不出 200 日 →
+        # 单独拉日线算 EMA200 注入 (否则 daily_ema_from_5m 全 NaN, 策略永不开单).
+        extra_kw = {}
+        if strategy_name == "ST_10_3":
+            d_ema = fetch_daily_ema200(quote_ctx, symbol)
+            if d_ema is None:
+                continue  # 拉不到日线大方向, 本轮跳过 (宁可不开)
+            extra_kw["daily_ema200_value"] = d_ema
+        # 关键修 (6/15): 传 RTH 过滤后的 full_rth, 不是含盘前的 full_df (5/1 同类坑回归).
         try:
-            plans = strategy_fn(today_df, full_df)
+            plans = strategy_fn(today_df, full_rth, **extra_kw)
         except Exception as e:
             print(f"   ⚠️ {symbol} 策略 {strategy_name} 报错: {e}")
             continue
@@ -350,7 +375,7 @@ def main():
         usd = BASE_POSITION_USD * TIER_MULT[tier]
         print(f"   {i:<3} {sym.replace('.US',''):<8} {tier:<3} ${usd:<9,.0f} {STRATEGY_MAP[sym]}")
     if EXCLUDED:
-        print(f"   ⛔ 排除 (avg_pnl≤0 或 1y@5k<\$100): {', '.join(s.replace('.US','') for s in EXCLUDED)}")
+        print(f"   ⛔ 排除 (avg_pnl≤0 或 1y@5k<$100): {', '.join(s.replace('.US','') for s in EXCLUDED)}")
     print("=" * 70)
 
     print("\n🔌 连接 LongPort...")
@@ -395,6 +420,7 @@ def main():
     print(f"\n🔄 主循环启动 (每 {POLL_INTERVAL}s 派发一轮)")
     last_status_print = time.time()
     last_dispatch = 0.0
+    last_exit_check = 0.0          # 合成 bracket 平仓检查 (比派发更频繁)
     force_close_done = False
     orphan_cleaned_today = False   # 开盘后只清一次隔夜孤儿
     last_dispatch_day = None
@@ -434,7 +460,7 @@ def main():
                 print(f"\n{now_str()} — 已收盘, 退出")
                 break
 
-            # 主派发 + fill 检查
+            # 主派发 + fill 检查 (每 30s)
             if time.time() - last_dispatch >= POLL_INTERVAL:
                 last_dispatch = time.time()
                 try:
@@ -443,11 +469,17 @@ def main():
                 except Exception as e:
                     print(f"   ⚠️ 派发/fill 检查异常: {e}")
 
-            # 5min 一次心跳 + OCO + retry orphan
+            # 合成 bracket 平仓检查 (每 15s, 比派发频繁 — 止损/止盈靠这个触发)
+            if time.time() - last_exit_check >= 15 and n_et.time() >= MARKET_OPEN:
+                last_exit_check = time.time()
+                try:
+                    live_executor.check_synthetic_exits(quote_ctx)
+                except Exception as e:
+                    print(f"   ⚠️ 合成平仓检查异常: {e}")
+
+            # 5min 一次心跳 + retry orphan
             if time.time() - last_status_print > 300:
                 last_status_print = time.time()
-                try: live_executor.reconcile_oco()
-                except Exception: pass
                 try: live_executor.retry_orphan_cleanup()  # 重试上次失败的孤儿
                 except Exception: pass
                 try: retry_telegram_queue()  # 重试上次失败的 telegram 推送

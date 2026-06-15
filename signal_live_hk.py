@@ -49,14 +49,25 @@ def send_telegram(title: str, body: str):
         print(f"   ⚠️ TG失败: {e}")
 
 
+def _hk_rth(t) -> bool:
+    """港股常规交易时段: 上午 09:30-12:00, 下午 13:00-16:00 (HKT). 排除 09:00-09:20 集合竞价."""
+    return (dtime(9, 30) <= t < dtime(12, 0)) or (dtime(13, 0) <= t < dtime(16, 0))
+
 def fetch_5m(ctx, sym, count=200) -> pd.DataFrame:
     bars = ctx.candlesticks(sym, Period.Min_5, count, AdjustType.NoAdjust)
     if not bars:
         return pd.DataFrame()
+    # 时间戳归一到 HKT (LongPort 可能返回 tz-aware), 用于 RTH 过滤
+    idx = [b.timestamp.astimezone(HKT) for b in bars]
     df = pd.DataFrame({"Open": [float(b.open) for b in bars], "High": [float(b.high) for b in bars],
                        "Low": [float(b.low) for b in bars], "Close": [float(b.close) for b in bars],
                        "Volume": [float(b.volume) for b in bars]},
-                      index=[b.timestamp for b in bars]).sort_index()
+                      index=idx).sort_index()
+    # 关键修 (6/15): 过滤掉盘前集合竞价 K 线 (美股 5/1 同类坑, 港股之前漏改).
+    # 否则 ORB5_Z 的 iloc[0] / TTM_SQ 的 index[0]+30min 会锚在竞价 bar 上, OR/止损/方向全错.
+    df = df[[_hk_rth(ts.time()) for ts in df.index]]
+    if df.empty:
+        return df
     df["date"] = df.index.date
     return df
 

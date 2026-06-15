@@ -462,16 +462,19 @@ def strat_supertrend(day_df: pd.DataFrame, full_df: pd.DataFrame,
                      stop_atr_mult: float = 1.5,
                      tp_r: float = 2.0,
                      max_hold_bars: int = 30,
+                     daily_ema200_value: float = None,
                      **kw) -> list[TradePlan]:
     """
     日内 5m Supertrend 翻多 + close > 日线 EMA200 (大方向过滤) → MKT BUY 下根
+    daily_ema200_value: live 时由外部注入 (单独拉日线算; live 只有 50 根 5m, resample 不出 200 日).
+                        回测时为 None, 退回从 full_df 完整 5m 历史 resample 算.
     """
     if len(day_df) < st_period + 5:
         return []
     st_v, st_dir = supertrend(day_df["High"], day_df["Low"], day_df["Close"],
                               st_period, st_mult)
     atr_v = atr(day_df["High"], day_df["Low"], day_df["Close"], atr_period)
-    daily_ema200 = daily_ema_from_5m(full_df, 200)
+    daily_ema200 = daily_ema_from_5m(full_df, 200) if daily_ema200_value is None else None
 
     for i in range(1, len(day_df) - 1):
         ts = day_df.index[i]
@@ -479,8 +482,11 @@ def strat_supertrend(day_df: pd.DataFrame, full_df: pd.DataFrame,
         # 翻多: 前 -1, 当 +1
         if not (st_dir.loc[prev_ts] == -1 and st_dir.loc[ts] == 1):
             continue
-        # daily EMA200 过滤
-        d_ema = daily_ema200.loc[ts] if ts in daily_ema200.index else np.nan
+        # daily EMA200 过滤 (live 用注入值, 回测用 resample)
+        if daily_ema200_value is not None:
+            d_ema = daily_ema200_value
+        else:
+            d_ema = daily_ema200.loc[ts] if ts in daily_ema200.index else np.nan
         if pd.isna(d_ema):
             continue
         if day_df.loc[ts, "Close"] <= d_ema:

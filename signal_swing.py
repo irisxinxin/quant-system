@@ -62,22 +62,31 @@ def load_pool():
 SWING_POOL = load_pool()
 
 
-def send_telegram(title, body):
+def send_telegram(title, body) -> bool:
+    """返回成功/失败. 失败时调用方不应把信号标记为已推 (否则永久吞掉该信号)."""
     token = os.environ.get("TELEGRAM_BOT_TOKEN"); chat = os.environ.get("TELEGRAM_CHAT_ID")
     if not (token and chat):
-        print(f"\n[无TG·本地打印]\n{title}\n{body}\n"); return
+        print(f"\n[无TG·本地打印]\n{title}\n{body}\n"); return False
     data = urllib.parse.urlencode({"chat_id": chat, "text": f"{title}\n{body}"}).encode()
     try:
         urllib.request.urlopen(urllib.request.Request(
             f"https://api.telegram.org/bot{token}/sendMessage", data=data, method="POST"), timeout=10)
         print(f"   ✅ TG已发: {title}")
+        return True
     except Exception as e:
         print(f"   ⚠️ TG失败: {e}")
+        return False
 
 
 def pull(ctx, sym, n=260):
-    adj = AdjustType.ForwardAdjust if sym.endswith(".US") else AdjustType.NoAdjust
-    b = list(ctx.candlesticks(sym, Period.Day, n, adj))
+    # 关键修 (6/15): 加 try/except — 单只票异常 (限流/退市/网络) 不能让整轮崩,
+    # 否则 save_state 到不了 → 已推信号的 stamp 不落盘 → 重启后重复推送.
+    try:
+        adj = AdjustType.ForwardAdjust if sym.endswith(".US") else AdjustType.NoAdjust
+        b = list(ctx.candlesticks(sym, Period.Day, n, adj))
+    except Exception as e:
+        print(f"   ⚠️ {sym} 拉日线失败: {e}")
+        return None
     if not b:
         return None
     df = pd.DataFrame({"H": [float(x.high) for x in b], "L": [float(x.low) for x in b],
@@ -160,15 +169,17 @@ def main():
             stamp = f"{a['bar_date']}:{a['sig']}"
             if state.get(sym) == stamp:
                 continue   # 同一bar同一信号已推过, 防重复(每日自动跑)
-            state[sym] = stamp
-            fired += 1
             risk = (a["px"] - a["stop"]) / a["px"] * 100
             title = f"📈 波段{a['sig']}: {sym} {cfg['name']}"
             body = (f"信号: 波段{a['sig']} (近90天波段{cfg['swing90']:+.0f}% · 全周期{cfg['ret']:+.0f}%/Calmar{cfg['calmar']})\n"
                     f"现价 {a['px']:.2f} · {cfg['ma']}跟踪止损 {a['stop']:.2f} ({-risk:.1f}%)\n"
                     f"距21EMA {a['dev21']:+.1f} ATR" + (" (涨过头, 减1/3~1/2)" if a['sig'] == '减仓' else "") + "\n"
                     f"⚠️ 波段·请手动下单(本系统不自动执行)")
-            send_telegram(title, body)
+            # 关键修 (6/15): 只有 TG 发送成功才标记已推, 失败则不记, 下次重试 (避免吞信号).
+            if send_telegram(title, body):
+                state[sym] = stamp
+                save_state(state)   # 逐条增量落盘, 中途崩也不丢已推状态
+                fired += 1
     save_state(state)
     if not status and fired == 0:
         print("   今日无波段转档信号 (用 --status 看所有票当前状态)")
