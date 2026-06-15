@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.filmhousebot.hksignal.plist — 港股 2x ETF 信号 (7747/7709.HK, 仅提醒不下单)
+
+  每交易日 (Mon-Fri SGT 09:25 = 港股开盘前) 启动, 循环监测到 16:00 HKT 自退.
+  信号触发 → Telegram. 港股没接下单路径, 纯只读行情 + 提醒.
+
+  安装: cp com.filmhousebot.hksignal.plist ~/Library/LaunchAgents/
+        launchctl load ~/Library/LaunchAgents/com.filmhousebot.hksignal.plist
+  测试: launchctl start com.filmhousebot.hksignal
+  日志: tail -f /Users/filmhousebot/Desktop/project/quant-system/hksignal.log
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.filmhousebot.hksignal</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>source /Users/filmhousebot/.longport_creds.env &amp;&amp; exec /opt/homebrew/bin/python3.13 /Users/filmhousebot/Desktop/project/quant-system/signal_live_hk.py</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/filmhousebot/Desktop/project/quant-system</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Mon-Fri SGT 09:25 (港股开盘前 5min); HKT=SGT 同时区 -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>25</integer></dict>
+        <dict><key>Weekday</key><integer>2</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>25</integer></dict>
+        <dict><key>Weekday</key><integer>3</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>25</integer></dict>
+        <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>25</integer></dict>
+        <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>25</integer></dict>
+    </array>
+
+    <!-- 崩溃才重启 (脚本 16:00 收盘 clean exit 不重启, 避免收盘后空转) -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/filmhousebot/Desktop/project/quant-system/hksignal.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/filmhousebot/Desktop/project/quant-system/hksignal.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>LANG</key>
+        <string>en_US.UTF-8</string>
+        <key>DYLD_LIBRARY_PATH</key>
+        <string>/opt/homebrew/opt/expat/lib</string>
+    </dict>
+</dict>
+</plist>
