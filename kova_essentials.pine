@@ -26,7 +26,9 @@ reduceDev   = input.float(2.93, "REDUCE 阈值: 距21EMA ATR数", step=0.05, too
 wCushion    = input.float(3.0,  "WATCH: 距20E垫子 <%", tooltip="顶部预警:贴20E")
 wNearHigh   = input.float(-6.0, "WATCH: 距高 >%", tooltip="贴近高点")
 wDistrib    = input.float(1.5,  "WATCH: 末柱量比 ≥", tooltip="放量派发")
-showStop    = input.bool(true,  "显示建议止损(入场日K线低)")
+showLabels  = input.bool(false, "显示转档标签(退出/REDUCE)", tooltip="Kova原版无此标签, 默认关; 想看历史信号点再开")
+showBg      = input.bool(false, "显示状态背景色", tooltip="默认关, 保持Kova干净外观")
+showStop    = input.bool(false, "显示建议止损(入场日K线低)")
 
 // ── Kova Essentials 四均线 ──
 e10  = ta.ema(close, 10)
@@ -34,10 +36,10 @@ e20  = ta.ema(close, 20)
 s50  = ta.sma(close, 50)
 s200 = ta.sma(close, 200)
 e21  = ta.ema(close, 21)      // REDUCE/乖离用21EMA
-plot(showMA ? e10  : na, "10 EMA", color.new(#26a69a, 0), 1)
-plot(showMA ? e20  : na, "20 EMA", color.new(#ffa726, 0), 1)
-plot(showMA ? s50  : na, "50 SMA", color.new(#42a5f5, 0), 2)
-plot(showMA ? s200 : na, "200 SMA", color.new(#ab47bc, 0), 2)
+plot(showMA ? e10  : na, "10 EMA", color.new(#FFD54F, 0), 1)   // 黄 (对齐Kova)
+plot(showMA ? e20  : na, "20 EMA", color.new(#26C6DA, 0), 1)   // 青
+plot(showMA ? s50  : na, "50 SMA", color.new(#AB47BC, 0), 2)   // 紫
+plot(showMA ? s200 : na, "200 SMA", color.new(#66BB6A, 0), 2)  // 绿
 
 // ── 特征 ──
 atr14   = ta.atr(14)
@@ -86,8 +88,8 @@ if isEntryBar
 plot(showStop and isHealthy ? stopLevel : na, "建议止损(入场K低)", color.new(#ef5350, 30), 1, style=plot.style_linebr)
 
 // ── 状态背景 ──
-bgcolor(isReduce ? color.new(#ffa726, 90) : na, title="REDUCE区")
-bgcolor(isUnhealthy ? color.new(#ef5350, 94) : na, title="UNHEALTHY区")
+bgcolor(showBg and isReduce ? color.new(#ffa726, 90) : na, title="REDUCE区")
+bgcolor(showBg and isUnhealthy ? color.new(#ef5350, 94) : na, title="UNHEALTHY区")
 
 // ── Kova 面板 (右上角, 仿原版) ──
 var table panel = table.new(position.top_right, 2, 6, border_width=1)
@@ -107,9 +109,9 @@ if showPanel and barstate.islast
 turnedUnhealthy = isUnhealthy and not isUnhealthy[1]
 turnedReduce    = isReduce and not isReduce[1]
 turnedWatch     = isWatch and not isWatch[1]
-if turnedReduce
+if showLabels and turnedReduce
     label.new(bar_index, high, "REDUCE", style=label.style_label_down, color=color.new(#ffa726,0), textcolor=color.white, size=size.small)
-if turnedUnhealthy
+if showLabels and turnedUnhealthy
     label.new(bar_index, high, "退出", style=label.style_label_down, color=color.new(#ef5350,0), textcolor=color.white, size=size.small)
 
 // ── Telegram 告警条件 (创建告警时选对应 condition, Webhook 消息可用占位符) ──
