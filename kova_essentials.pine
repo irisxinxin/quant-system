@@ -36,9 +36,9 @@ e20  = ta.ema(close, 20)
 s50  = ta.sma(close, 50)
 s200 = ta.sma(close, 200)
 e21  = ta.ema(close, 21)      // REDUCE/乖离用21EMA
-plot(showMA ? e10  : na, "10 EMA", color.new(#FFD54F, 0), 1)   // 黄 (对齐Kova)
-plot(showMA ? e20  : na, "20 EMA", color.new(#26C6DA, 0), 1)   // 青
-plot(showMA ? s50  : na, "50 SMA", color.new(#AB47BC, 0), 2)   // 紫
+plot(showMA ? e10  : na, "10 EMA", color.new(#FFD54F, 0), 2)   // 黄 (加粗)
+plot(showMA ? e20  : na, "20 EMA", color.new(#26C6DA, 0), 2)   // 青 (加粗)
+plot(showMA ? s50  : na, "50 SMA", color.new(#AB47BC, 0), 1)   // 紫
 plot(showMA ? s200 : na, "200 SMA", color.new(#66BB6A, 0), 2)  // 绿
 
 // ── 特征 ──
@@ -78,6 +78,7 @@ rsRatio  = close / bClose
 rsHi     = (rsRatio / ta.highest(rsRatio, 252) - 1) * 100   // RS线离252日高 %(≤0; 0=RS创新高=龙头)
 scoreRaw = 71.6 + 27.6 * (a200 ? 1 : 0) + 1.05 * rsHi
 kScore   = math.max(1, math.min(99, math.round(scoreRaw)))
+scoreCol = kScore >= 85 ? color.new(#26a69a, 0) : kScore >= 60 ? color.new(#b0bec5, 0) : color.new(#ef5350, 0)  // 85+绿/60-84灰/<60红
 
 // ── 建议止损 = 入场日(当前最近放量突破日)K线低; 无持仓上下文时用最近 pocket pivot 低 ──
 //   Kova止损法=入场当天K线低(23笔实盘验证 vs_entry_low中位-0.02ATR)。这里近似=最近一根强势放量阳线的低。
@@ -99,7 +100,8 @@ f_row(r, k, v, vc) =>      // 全局作用域(Pine v5 禁止在if内定义函数
 if showPanel and barstate.islast
     table.cell(panel, 0, 0, "Kova", text_color=color.white, text_size=size.normal)
     table.cell(panel, 1, 0, syminfo.ticker, text_color=color.white, text_size=size.normal, text_halign=text.align_right)
-    f_row(1, "Score", str.tostring(kScore) + " ≈", isHealthy ? color.new(#26a69a,0) : color.gray)
+    table.cell(panel, 0, 1, "Score", text_color=color.gray, text_size=size.normal, text_halign=text.align_left)
+    table.cell(panel, 1, 1, str.tostring(kScore) + "≈", text_color=scoreCol, text_size=size.large, text_halign=text.align_right)
     f_row(2, "健康度", healthTxt, healthCol)
     f_row(3, "信号", isReduce ? "REDUCE 减仓" : isUnhealthy ? "退出" : "持有", isReduce ? color.new(#ffa726,0) : isUnhealthy ? color.new(#ef5350,0) : color.new(#26a69a,0))
     f_row(4, "距21E", str.tostring(dev21, "#.##") + " ATR", dev21 >= reduceDev ? color.new(#ffa726,0) : color.gray)
