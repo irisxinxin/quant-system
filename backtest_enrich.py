@@ -27,7 +27,9 @@ UTC = timezone.utc
 CONTRACTS, TP_MULT, MAX_PREMIUM, FEE = 2, 2.0, 5.0, 0.7
 import os
 SECOND_PARTIAL_CLOSES = os.environ.get("V2","")=="1"   # 二次partial清runner
-RUNNER_STOP = float(os.environ.get("V3_STOP","0") or 0)  # >0: 权利金止损倍数(0.5=-50%), 需期权行情
+RUNNER_STOP = float(os.environ.get("V3_STOP","0") or 0)
+LADDER = os.environ.get("LADDER","")=="1"
+CONTRACTS = int(os.environ.get("N", CONTRACTS))  # >0: 权利金止损倍数(0.5=-50%), 需期权行情
 
 
 def load_events():
@@ -147,6 +149,9 @@ def simulate(q, buy, all_exits):
                         sell_at_open_after(ts_, remain, f"站长减仓(仅剩{remain})"); reduced = True
                     elif lv == "vague":
                         sell_at_open_after(ts_, remain, "模糊催促清仓")
+                    elif lv == "partial" and LADDER:
+                        sell_at_open_after(ts_, min(1, remain) if remain >= 2 else remain,
+                                           f"阶梯减仓(剩{remain})") if remain >= 2 else                             sell_at_open_after(ts_, remain, "阶梯末张清仓")
                     elif lv == "partial" and SECOND_PARTIAL_CLOSES:
                         sell_at_open_after(ts_, remain, "二次减仓→清runner")
         if remain <= 0:
