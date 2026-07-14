@@ -31,6 +31,7 @@ class Signal:
     expiry: date | None = None
     limit_price: float = 0.0  # 权利金限价 (区间取上界)
     size_tag: str = ""        # lotto / 1% / small / "" (口头仓位提示)
+    exit_level: str = ""      # EXIT分级: full全平/partial部分减/vague模糊/alert仅提醒(多票或有豁免词)
     reason: str = ""          # 判定依据 (调试/审计)
     raw: str = ""
 
@@ -51,6 +52,26 @@ SIZE_RE = re.compile(r"\b(lotto|small|starter|light)\b|(\d{1,2})%\s*(?:position|
 
 # $TICKER 误匹配保护: 常见非票词
 NOT_TICKER = {"DTE", "EMA", "ITM", "OTM", "ATM", "PDH", "PMH", "PWH", "EOD", "HTF", "VIP", "AND"}
+
+# 出场分级 (镜像跟单用)
+EXIT_FULL_RE = re.compile(
+    r"\ball\s+out\b|\bclos(?:e|ing|ed)\b|\bcutting\b|\bstopped(?:\s+out)?\b|\bflat\b|"
+    r"\bsold\s+(?:the\s+)?rest\b|\bselling\s+everything\b", re.I)
+EXIT_PARTIAL_RE = re.compile(
+    r"scal(?:e|ing)\s+(?:out|down)|\btrim\w*\b|\b1/[234]\b|\bhalf\b|"
+    r"selling\s+\d{1,2}%|\bdown\s+to\b|taking\s+(?:1/[234]|some|partial)", re.I)
+EXIT_EXEMPT_RE = re.compile(r"\boutside\s+of\b|\bexcept\b|\bother\s+than\b", re.I)
+
+
+def _exit_level(t: str, tickers: list) -> str:
+    """full=清仓跟随 / partial=减仓跟随 / vague=模糊 / alert=仅提醒(多票复盘或有豁免词)。"""
+    if len(set(tickers)) > 1 or EXIT_EXEMPT_RE.search(t):
+        return "alert"
+    if EXIT_FULL_RE.search(t):
+        return "full"
+    if EXIT_PARTIAL_RE.search(t):
+        return "partial"
+    return "vague"
 
 
 def _next_friday(d: date) -> date:
@@ -132,14 +153,15 @@ def parse_signal(text: str, msg_date: date) -> Signal:
         if expiry is None: missing.append("到期")
         if len(set(tickers)) != 1: missing.append("多ticker")
         if EXIT_RE.search(t):
-            return Signal(kind="EXIT", ticker=tickers[0],
+            return Signal(kind="EXIT", ticker=tickers[0], exit_level=_exit_level(t, tickers),
                           reason=f"出场关键词(且入场要素缺{'/'.join(missing)})", raw=raw)
         return Signal(kind="NOISE", ticker=tickers[0],
                       reason=f"有calls/puts但缺{'/'.join(missing)}=评论", raw=raw)
 
     # ── 无 calls/puts: 出场 or 噪音 ──
     if EXIT_RE.search(t):
-        return Signal(kind="EXIT", ticker=tickers[0], reason="出场关键词", raw=raw)
+        return Signal(kind="EXIT", ticker=tickers[0], exit_level=_exit_level(t, tickers),
+                      reason="出场关键词", raw=raw)
     return Signal(kind="NOISE", ticker=tickers[0], reason="无calls/puts无出场词", raw=raw)
 
 

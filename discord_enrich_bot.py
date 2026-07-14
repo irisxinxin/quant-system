@@ -165,6 +165,36 @@ def close_position(positions: dict, osi: str, reason: str):
     _save(POS_JSON, positions)
 
 
+def mirror_reduce(positions: dict, osi: str, level: str):
+    """镜像站长减仓 (2张粒度): 首次部分减→卖1张留跑; 已减过→partial忽略/vague全平。"""
+    p = positions.get(osi)
+    if not p or p["status"] == "closed":
+        return
+    if p["status"] == "pending":            # 还没成交他就开始出 → 撤单/全清, 别再进
+        close_position(positions, osi, "站长已出(未完全入场)")
+        return
+    remain = p.get("filled", 0) - p.get("sold", 0)
+    if remain <= 0:
+        p["status"] = "closed"; _save(POS_JSON, positions); return
+    if not p.get("reduced"):
+        if remain >= 2:
+            ok, r = _submit(osi, side_buy=False, qty=1, price=None, remark="mirror-scale")
+            if ok:
+                p["sold"] = p.get("sold", 0) + 1
+                p["reduced"] = True
+                log(f"🪞 {osi} 镜像减仓: 市价卖1张 (单{r}), 剩{remain-1}张挂止盈跑趋势")
+                push_discord(f"🪞 enrich镜像减仓 {osi} 卖1张, 剩{remain-1}张跑趋势")
+            else:
+                log(f"⚠️ {osi} 镜像减仓下单失败: {r}")
+            _save(POS_JSON, positions)
+        else:                               # 只剩1张, 部分减也=全出
+            close_position(positions, osi, "站长减仓(仅剩1张)")
+    else:
+        if level == "vague":                # 已减过+模糊催促 → 保守全平
+            close_position(positions, osi, "站长模糊出场(已减过)")
+        # partial: 他还留runner, 我们也留 → 不动
+
+
 def manage_positions(positions: dict):
     """轮询: 入场单成交→挂止盈; 止盈成交→记账; 到期日强平。"""
     now_et = datetime.now(ET)
@@ -201,6 +231,7 @@ def manage_positions(positions: dict):
             if st == "Filled":
                 p["sold"] = p.get("sold", 0) + p.get("tp_qty", 0)
                 p["tp_order_id"] = None
+                p["reduced"] = True          # 止盈成交=已完成首次减仓(先到先卖), 站长再喊部分减不重复卖
                 log(f"💰 {osi} 止盈成交 {p.get('tp_qty')}张 @ ${exp}")
                 push_discord(f"💰 enrich止盈成交 {osi} ×{p.get('tp_qty')}张 @ ${exp} — 剩{p['filled']-p['sold']}张跑趋势")
                 if p["filled"] - p["sold"] <= 0:
@@ -227,15 +258,21 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
     if s.kind == "EXIT":
         held = [osi for osi, p in positions.items()
                 if p["status"] in ("pending", "open") and p.get("ticker") == s.ticker]
-        if held and LIVE:
-            log(f"🟠 站长出场信号 [{s.ticker}] → 跟随平仓 {len(held)} 个持仓")
-            push_discord(f"🟠 enrich出场 [{s.ticker}]: {one}")
-            for osi in held:
-                close_position(positions, osi, "站长出场")
-        else:
-            note = f"🟠 enrich出场提醒 [{s.ticker}] (无持仓/DRY_RUN): {one}"
-            log(note)
-            push_discord(note)
+        if not held or not LIVE:
+            note = f"🟠 enrich出场提醒 [{s.ticker}·{s.exit_level}] (无持仓/DRY_RUN): {one}"
+            log(note); push_discord(note)
+            return
+        if s.exit_level == "alert":         # 多票复盘/有豁免词 → 不敢动手, 人工核对
+            note = f"⚠️ enrich出场信号含多票/豁免词, 仅提醒请手动核对 [{s.ticker}]: {one}"
+            log(note); push_discord(note)
+            return
+        log(f"🟠 站长出场[{s.exit_level}] [{s.ticker}] → 处理 {len(held)} 个持仓: {one}")
+        push_discord(f"🟠 enrich出场[{s.exit_level}] [{s.ticker}]: {one}")
+        for osi in held:
+            if s.exit_level == "full":
+                close_position(positions, osi, "站长清仓")
+            else:                           # partial / vague → 镜像
+                mirror_reduce(positions, osi, s.exit_level)
         return
 
     # BUY
