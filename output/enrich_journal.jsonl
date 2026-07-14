@@ -1,0 +1,3 @@
+{"ev": "entry_submit", "osi": "HOOD260724C125000.US", "ticker": "HOOD", "right": "C", "strike": 125.0, "expiry": "2026-07-24", "limit": 1.5, "qty": 2, "order_id": "1261773012991016960", "sig": "$HOOD - 7/24 $125 calls $1.50 2% position @everyone $alert", "ts": "2026-07-15T03:55:29"}
+{"ev": "entry_fill", "osi": "HOOD260724C125000.US", "qty": 2, "avg": 1.5, "ts": "2026-07-15T03:55:32"}
+{"ev": "tp_place", "osi": "HOOD260724C125000.US", "px": 3.0, "qty": 1, "order_id": "1261773027582996480", "ts": "2026-07-15T03:55:32"}

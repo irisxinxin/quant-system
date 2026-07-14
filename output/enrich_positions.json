@@ -1,0 +1,16 @@
+{
+ "HOOD260724C125000.US": {
+  "ticker": "HOOD",
+  "entry_order_id": "1261773012991016960",
+  "qty": 2,
+  "limit": 1.5,
+  "expiry": "2026-07-24",
+  "filled": 2,
+  "sold": 0,
+  "avg": 1.5,
+  "tp_order_id": "1261773027582996480",
+  "tp_qty": 1,
+  "status": "open",
+  "opened": "2026-07-14"
+ }
+}
