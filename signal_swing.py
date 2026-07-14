@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import warnings; warnings.filterwarnings("ignore")
 import pandas as pd
 from longport.openapi import Config, QuoteContext, Period, AdjustType
+from notify import push_discord   # 多路推送: 朋友"跟着收信号"经 Discord 频道
 
 REDUCE_DEV = 2.93
 RANK_CSV = Path(__file__).parent / "output" / "swing_ranked.csv"
