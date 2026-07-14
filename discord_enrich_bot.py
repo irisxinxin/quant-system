@@ -46,6 +46,7 @@ CONTRACTS = int(os.environ.get("OPTION_CONTRACTS", "1"))
 MAX_PREMIUM = float(os.environ.get("MAX_PREMIUM", "5.0"))
 TP_MULT = float(os.environ.get("TP_MULT", "2.0"))     # 止盈倍数 (2.0 = +100%)
 STOP_MULT = float(os.environ.get("STOP_MULT", "0.5")) # 权利金止损 (0.5=-50%, 需OPRA行情; 0=关)
+LOTTO_CONTRACTS = int(os.environ.get("LOTTO_CONTRACTS", "1"))  # 歧义/lotto单张数(他都喊small, 减半)
 ET = ZoneInfo("America/New_York")
 
 OUT = Path(__file__).parent / "output"
@@ -68,6 +69,38 @@ def _option_last(osi: str):
         return float(o[0].last_done) if o else None
     except Exception:
         return None
+
+
+def _osi(ticker, expiry_iso_or_date, right, strike):
+    d = expiry_iso_or_date
+    if isinstance(d, str):
+        d = date.fromisoformat(d)
+    return f"{ticker}{d:%y%m%d}{right}{int(round(strike * 1000)):06d}.US"
+
+
+def resolve_direction(s):
+    """缺方向的信号: 拉同行权价 call/put 实时报价, 谁的价跟信号权利金匹配(0.4~2.2x窗口)
+       且恰好只有一边匹配 → 那边就是方向。返回 ('C'/'P', 说明) 或 (None, 原因)。"""
+    global _quote_ctx
+    try:
+        if _quote_ctx is None:
+            from longport.openapi import Config, QuoteContext
+            _quote_ctx = QuoteContext(Config.from_env())
+        syms = [_osi(s.ticker, s.expiry, r, s.strike) for r in ("C", "P")]
+        px = {}
+        for o in _quote_ctx.option_quote(syms):
+            bid, ask, last = float(o.bid or 0), float(o.ask or 0), float(o.last_done or 0)
+            px[o.symbol] = (bid + ask) / 2 if bid > 0 and ask > 0 else last
+        pc, pp = px.get(syms[0], 0), px.get(syms[1], 0)
+        if pc <= 0 and pp <= 0:
+            return None, "两边都无报价"
+        inwin = [r for r, p in (("C", pc), ("P", pp))
+                 if p > 0 and 0.4 <= p / s.limit_price <= 2.2]
+        if len(inwin) != 1:
+            return None, f"消歧失败(C={pc} P={pp} 信号${s.limit_price}, 匹配{len(inwin)}边)"
+        return inwin[0], f"C={pc} P={pp} vs 信号${s.limit_price} → {inwin[0]}"
+    except Exception as e:
+        return None, f"报价异常: {e}"
 
 
 def log(msg: str):
@@ -299,6 +332,18 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
                 mirror_reduce(positions, osi, s.exit_level)
         return
 
+    # BUY_AMBIG: 缺方向 → 实时报价消歧 (call/put价差大, 信号权利金只会匹配一边)
+    qty = CONTRACTS
+    if s.kind == "BUY_AMBIG":
+        side, info = resolve_direction(s)
+        if side is None:
+            note = f"❓ enrich歧义单无法消歧, 仅提醒 [{s.ticker} ${s.strike} {s.expiry}]: {info}\n原文: {one}"
+            log(note); push_discord(note)
+            return
+        s.right, s.kind = side, "BUY"
+        qty = LOTTO_CONTRACTS               # lotto/歧义单: 减半仓位 (他自己都喊small)
+        log(f"🔍 报价消歧: {info} (按{qty}张跟)")
+
     # BUY
     osi = to_longport_symbol(s)
     key = f"{osi}:{msg_date}"
@@ -314,14 +359,14 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
 
     plan = (f"{'🚀模拟盘' if LIVE else '🧪DRY-RUN'} enrich买入\n"
             f"  {s.ticker} {s.expiry} ${s.strike} {'CALL' if s.right=='C' else 'PUT'}  ({osi})\n"
-            f"  限价 ${s.limit_price} × {CONTRACTS}张 (≈${s.limit_price*100*CONTRACTS:.0f})"
+            f"  限价 ${s.limit_price} × {qty}张 (≈${s.limit_price*100*qty:.0f})"
             + (f"  [{s.size_tag}]" if s.size_tag else "") + f"\n  原文: {one}")
     log(plan)
 
     if LIVE:
-        ok, r = _submit(osi, side_buy=True, qty=CONTRACTS, price=s.limit_price, remark="enrich-entry")
+        ok, r = _submit(osi, side_buy=True, qty=qty, price=s.limit_price, remark="enrich-entry")
         if ok:
-            positions[osi] = dict(ticker=s.ticker, entry_order_id=r, qty=CONTRACTS,
+            positions[osi] = dict(ticker=s.ticker, entry_order_id=r, qty=qty,
                                   limit=s.limit_price, expiry=s.expiry.isoformat(),
                                   filled=0, sold=0, avg=0.0, tp_order_id=None, tp_qty=0,
                                   status="pending", opened=str(msg_date))

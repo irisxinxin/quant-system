@@ -158,7 +158,36 @@ def parse_signal(text: str, msg_date: date) -> Signal:
         return Signal(kind="NOISE", ticker=tickers[0],
                       reason=f"有calls/puts但缺{'/'.join(missing)}=评论", raw=raw)
 
-    # ── 无 calls/puts: 出场 or 噪音 ──
+    # ── 无 calls/puts: 先试歧义买入(缺方向, 靠实时报价消歧), 再出场/噪音 ──
+    #    要素: 单ticker + 到期token + ≥2个$价(最大=行权价, 需≥5×权利金分离) → BUY_AMBIG
+    if len(set(tickers)) == 1:
+        expiry = None; exp_src = ""
+        if re.search(r"\b0\s*DTE\b", t, re.I):
+            expiry, exp_src = msg_date, "0DTE"
+        else:
+            md = DATE_RE.search(t)
+            if md and 1 <= int(md.group(1)) <= 12 and 1 <= int(md.group(2)) <= 31:
+                exp = date(msg_date.year, int(md.group(1)), int(md.group(2)))
+                if exp < msg_date:
+                    exp = date(msg_date.year + 1, int(md.group(1)), int(md.group(2)))
+                expiry, exp_src = exp, "M/D"
+            elif re.search(r"\bweekl(?:y|ies)\b", t, re.I):
+                expiry, exp_src = _next_friday(msg_date), "weekly"
+        prices = [float(x) for x in PRICE_RE.findall(t)]
+        if expiry is not None and len(prices) >= 2:
+            strike = max(prices)
+            m_for = re.search(r"(?:for|@)\s*\$(\d*\.?\d+)(?:\s*-\s*\$(\d*\.?\d+))?", t, re.I)
+            if m_for:
+                prem = float(m_for.group(2) or m_for.group(1))
+            else:
+                rng = re.search(r"\$(\d*\.?\d+)\s*-\s*\$(\d*\.?\d+)", t)
+                prem = float(rng.group(2)) if rng else min(prices)
+            if strike > 0 and 0 < prem < strike / 5 and prem != strike:
+                sz = SIZE_RE.search(t)
+                return Signal(kind="BUY_AMBIG", ticker=tickers[0], right="?", strike=strike,
+                              expiry=expiry, limit_price=prem,
+                              size_tag=(sz.group(0).strip() if sz else ""),
+                              reason=f"缺方向待报价消歧: 到期={exp_src}", raw=raw)
     if EXIT_RE.search(t):
         return Signal(kind="EXIT", ticker=tickers[0], exit_level=_exit_level(t, tickers),
                       reason="出场关键词", raw=raw)
