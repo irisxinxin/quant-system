@@ -45,7 +45,7 @@ LIVE = os.environ.get("ENRICH_LIVE", "").lower() == "true"
 CONTRACTS = int(os.environ.get("OPTION_CONTRACTS", "1"))
 MAX_PREMIUM = float(os.environ.get("MAX_PREMIUM", "5.0"))
 TP_MULT = float(os.environ.get("TP_MULT", "2.0"))     # 止盈倍数 (2.0 = +100%)
-STOP_MULT = float(os.environ.get("STOP_MULT", "0.5")) # 权利金止损 (0.5=-50%, 需OPRA行情; 0=关)
+STOP_MULT = float(os.environ.get("STOP_MULT", "0.7")) # 权利金止损 (0.7=-30%; 回测: -30%档唯一转正+躲跳空)
 LOTTO_CONTRACTS = int(os.environ.get("LOTTO_CONTRACTS", "1"))  # 歧义/lotto单张数(他都喊small, 减半)
 ET = ZoneInfo("America/New_York")
 
@@ -53,6 +53,18 @@ OUT = Path(__file__).parent / "output"
 SEEN_JSON = OUT / "enrich_seen.json"
 POS_JSON = OUT / "enrich_positions.json"
 LOG = OUT / "enrich_bot.log"
+JOURNAL = OUT / "enrich_journal.jsonl"   # 结构化交易日志 (回测原料, 入库)
+
+
+def journal(**kv):
+    """追加一行结构化事件 (JSONL)。永不抛错。"""
+    kv["ts"] = datetime.now().isoformat(timespec="seconds")
+    try:
+        OUT.mkdir(exist_ok=True)
+        with open(JOURNAL, "a") as f:
+            f.write(json.dumps(kv, ensure_ascii=False, default=str) + "\n")
+    except Exception:
+        pass
 
 _trade_ctx = None
 _quote_ctx = None    # OPRA期权行情 (止损轮询用); 拿不到就自动关止损
@@ -208,6 +220,7 @@ def close_position(positions: dict, osi: str, reason: str):
     if remain > 0:
         ok, r = _submit(osi, side_buy=False, qty=remain, price=None, remark=f"exit-{reason[:12]}")
         log(f"   市价卖 {remain} 张: {'✅' + str(r) if ok else '❌' + str(r)}")
+        journal(ev="close_sell", osi=osi, qty=remain, reason=reason, order_id=(r if ok else None), ok=ok)
         push_discord(f"🔻 enrich平仓 {osi} ×{remain}张 ({reason}) {'✅' if ok else '❌' + str(r)}")
     p["status"] = "closed"
     _save(POS_JSON, positions)
@@ -231,6 +244,7 @@ def mirror_reduce(positions: dict, osi: str, level: str):
                 p["sold"] = p.get("sold", 0) + 1
                 p["reduced"] = True
                 log(f"🪞 {osi} 镜像减仓: 市价卖1张 (单{r}), 剩{remain-1}张挂止盈跑趋势")
+                journal(ev="mirror_sell", osi=osi, qty=1, order_id=r)
                 push_discord(f"🪞 enrich镜像减仓 {osi} 卖1张, 剩{remain-1}张跑趋势")
             else:
                 log(f"⚠️ {osi} 镜像减仓下单失败: {r}")
@@ -258,6 +272,7 @@ def manage_positions(positions: dict):
             if exq > p.get("filled", 0):
                 p["filled"], p["avg"] = exq, exp
                 log(f"📥 {osi} 入场成交 {exq}张 @ ${exp}")
+                journal(ev="entry_fill", osi=osi, qty=exq, avg=exp)
                 push_discord(f"📥 enrich成交 {osi} ×{exq}张 @ ${exp} (成本${exp*100*exq:.0f})")
             if st == "Filled" or (st in ("Canceled", "Expired", "Rejected") and exq > 0):
                 p["status"] = "open"
@@ -267,6 +282,7 @@ def manage_positions(positions: dict):
                 if ok:
                     p["tp_order_id"], p["tp_qty"] = r, tp_qty
                     log(f"🎯 {osi} 挂止盈: 卖{tp_qty}张 @ ${tp_px} (+{(TP_MULT-1)*100:.0f}%)")
+                    journal(ev="tp_place", osi=osi, px=tp_px, qty=tp_qty, order_id=r)
                     push_discord(f"🎯 enrich止盈单已挂 {osi} 卖{tp_qty}张 @ ${tp_px}")
                 else:
                     log(f"⚠️ {osi} 止盈挂单失败: {r} (剩靠出场跟随+到期强平)")
@@ -282,6 +298,7 @@ def manage_positions(positions: dict):
                 p["tp_order_id"] = None
                 p["reduced"] = True          # 止盈成交=已完成首次减仓(先到先卖), 站长再喊部分减不重复卖
                 log(f"💰 {osi} 止盈成交 {p.get('tp_qty')}张 @ ${exp}")
+                journal(ev="tp_fill", osi=osi, px=exp, qty=p.get("tp_qty"))
                 push_discord(f"💰 enrich止盈成交 {osi} ×{p.get('tp_qty')}张 @ ${exp} — 剩{p['filled']-p['sold']}张跑趋势")
                 if p["filled"] - p["sold"] <= 0:
                     p["status"] = "closed"
@@ -292,6 +309,7 @@ def manage_positions(positions: dict):
             last = _option_last(osi)
             if last is not None and last <= p["avg"] * STOP_MULT:
                 log(f"🛑 {osi} 权利金止损: 最新${last} ≤ 成本${p['avg']}×{STOP_MULT}")
+                journal(ev="stop_trigger", osi=osi, last=last, avg=p["avg"], mult=STOP_MULT)
                 close_position(positions, osi, f"止损-{(1-STOP_MULT)*100:.0f}%")
                 continue
         # ④ 到期日强平 (15:40 ET 后)
@@ -324,6 +342,7 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
             log(note); push_discord(note)
             return
         log(f"🟠 站长出场[{s.exit_level}] [{s.ticker}] → 处理 {len(held)} 个持仓: {one}")
+        journal(ev="exit_signal", ticker=s.ticker, level=s.exit_level, held=len(held), sig=one)
         push_discord(f"🟠 enrich出场[{s.exit_level}] [{s.ticker}]: {one}")
         for osi in held:
             if s.exit_level == "full":
@@ -343,6 +362,7 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
         s.right, s.kind = side, "BUY"
         qty = LOTTO_CONTRACTS               # lotto/歧义单: 减半仓位 (他自己都喊small)
         log(f"🔍 报价消歧: {info} (按{qty}张跟)")
+        journal(ev="disambig", ticker=s.ticker, strike=s.strike, expiry=str(s.expiry), info=info, sig=one)
 
     # BUY
     osi = to_longport_symbol(s)
@@ -373,6 +393,8 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
             _save(POS_JSON, positions)
             plan += f"\n  ✅已提交 order_id={r} (成交后自动挂+{(TP_MULT-1)*100:.0f}%止盈)"
             log(f"  ✅已提交 {r}")
+            journal(ev="entry_submit", osi=osi, ticker=s.ticker, right=s.right, strike=s.strike,
+                    expiry=str(s.expiry), limit=s.limit_price, qty=qty, order_id=r, sig=one)
         else:
             plan += f"\n  ❌下单失败: {r}"
             log(f"  ❌下单失败: {r}")

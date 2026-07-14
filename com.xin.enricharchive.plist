@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.xin.enricharchive.plist — enrich 跟单数据每日归档 (enrich_archive.py)
+
+  安装:
+    cp com.xin.enricharchive.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.xin.enricharchive.plist
+  每日 05:10 SGT (美股收盘04:00后) 抢救期权5分K + 消息存档 + 订单流水, 自动commit push。
+  ⚠ 长桥期权K线只留约1月, 这个job一天都别断。
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.xin.enricharchive</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/enrich_archive.py >> /Users/xin/Documents/Claude/Projects/money/quant_system/output/enrich_archive_run.log 2>&amp;1</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>5</integer>
+        <key>Minute</key>
+        <integer>10</integer>
+    </dict>
+</dict>
+</plist>

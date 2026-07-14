@@ -26,3 +26,7 @@ orbsignal.log
 orbsignal.err.log
 orders_today.jsonl
 signals_live_longport.jsonl
+# enrich 跟单数据 (回测原料, 长桥1月清K线必须自存)
+!output/enrich_history.json
+!output/enrich_journal.jsonl
+!output/enrich_positions.json

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.xin.enrichbot.plist — enrich Discord期权跟单bot (discord_enrich_bot.py), 常驻
+
+  安装:
+    cp com.xin.enrichbot.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.xin.enrichbot.plist
+  日志: tail -f /Users/xin/Documents/Claude/Projects/money/quant_system/output/enrich_bot.log
+  ⚠ 全程 LongPort 模拟盘 (启动三重校验 lb_papertrading, 不过即退; KeepAlive会重试)
+  规则: 每信号2张限价不追高 | 止盈+100%卖1张 | 镜像站长减仓 | 权利金-30%止损 | 到期强平
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.xin.enrichbot</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; export ENRICH_LIVE=true OPTION_CONTRACTS=2 &amp;&amp; exec /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/discord_enrich_bot.py</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system</string>
+
+    <!-- 常驻: 崩了/断网退出后 30s 自动拉起; 开机自启 -->
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system/output/enrich_bot_stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/xin/Documents/Claude/Projects/money/quant_system/output/enrich_bot_stdout.log</string>
+</dict>
+</plist>
