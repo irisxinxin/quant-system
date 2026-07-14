@@ -45,6 +45,7 @@ LIVE = os.environ.get("ENRICH_LIVE", "").lower() == "true"
 CONTRACTS = int(os.environ.get("OPTION_CONTRACTS", "1"))
 MAX_PREMIUM = float(os.environ.get("MAX_PREMIUM", "5.0"))
 TP_MULT = float(os.environ.get("TP_MULT", "2.0"))     # 止盈倍数 (2.0 = +100%)
+STOP_MULT = float(os.environ.get("STOP_MULT", "0.5")) # 权利金止损 (0.5=-50%, 需OPRA行情; 0=关)
 ET = ZoneInfo("America/New_York")
 
 OUT = Path(__file__).parent / "output"
@@ -53,6 +54,20 @@ POS_JSON = OUT / "enrich_positions.json"
 LOG = OUT / "enrich_bot.log"
 
 _trade_ctx = None
+_quote_ctx = None    # OPRA期权行情 (止损轮询用); 拿不到就自动关止损
+
+
+def _option_last(osi: str):
+    """期权最新价 (需OPRA权限)。失败返回 None。"""
+    global _quote_ctx
+    try:
+        if _quote_ctx is None:
+            from longport.openapi import Config, QuoteContext
+            _quote_ctx = QuoteContext(Config.from_env())
+        o = _quote_ctx.option_quote([osi])
+        return float(o[0].last_done) if o else None
+    except Exception:
+        return None
 
 
 def log(msg: str):
@@ -192,7 +207,8 @@ def mirror_reduce(positions: dict, osi: str, level: str):
     else:
         if level == "vague":                # 已减过+模糊催促 → 保守全平
             close_position(positions, osi, "站长模糊出场(已减过)")
-        # partial: 他还留runner, 我们也留 → 不动
+        else:                               # 已减过+再次partial → 他在连续撤退, 清runner
+            close_position(positions, osi, "站长二次减仓")   # 回测: IBM305 -26%→+56%
 
 
 def manage_positions(positions: dict):
@@ -237,7 +253,15 @@ def manage_positions(positions: dict):
                 if p["filled"] - p["sold"] <= 0:
                     p["status"] = "closed"
                 _save(POS_JSON, positions)
-        # ③ 到期日强平 (15:40 ET 后)
+        # ③ 权利金-50%止损 (轮询OPRA最新价; 回测: HOOD -41%→-17%, LLY +10%→+34%)
+        if STOP_MULT > 0 and p["status"] == "open" and p.get("avg", 0) > 0 \
+                and p.get("filled", 0) - p.get("sold", 0) > 0:
+            last = _option_last(osi)
+            if last is not None and last <= p["avg"] * STOP_MULT:
+                log(f"🛑 {osi} 权利金止损: 最新${last} ≤ 成本${p['avg']}×{STOP_MULT}")
+                close_position(positions, osi, f"止损-{(1-STOP_MULT)*100:.0f}%")
+                continue
+        # ④ 到期日强平 (15:40 ET 后)
         if p["status"] in ("pending", "open"):
             try:
                 exp_d = date.fromisoformat(p["expiry"])
