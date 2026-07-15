@@ -455,7 +455,9 @@ def main():
     if LIVE:
         if not verify_paper_trading():
             print("❌ 模拟盘三重校验不通过, 拒绝启动 LIVE"); sys.exit(1)
-        log(f"🚀 LIVE(模拟盘): 每信号{CONTRACTS}张 | 权利金上限${MAX_PREMIUM} | 止盈+{(TP_MULT-1)*100:.0f}%卖半仓 | 出场跟随+到期强平")
+        size_s = (f"每信号${POSITION_USD:,.0f}/lotto${LOTTO_USD:,.0f} (OI帽{OI_CAP_PCT:.0%})"
+                  if POSITION_USD > 0 else f"每信号{CONTRACTS}张")
+        log(f"🚀 LIVE(模拟盘): {size_s} | 权利金上限${MAX_PREMIUM} | 止盈+{(TP_MULT-1)*100:.0f}%卖半仓 | 镜像出场+止损-{(1-STOP_MULT)*100:.0f}% | 到期强平")
     else:
         log("🧪 DRY_RUN: 只解析播报, 不下单")
 
