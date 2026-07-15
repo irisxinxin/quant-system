@@ -148,6 +148,7 @@ def git_commit_push():
         "output/enrich_positions.json", "output/enrich_orders.csv",
         "output/andy_history.json", "output/zhaoge_history.json")
     run("git", "add", "data/enrich_bars")
+    run("git", "add", "-f", "output/trade_report.html")
     if not run("git", "diff", "--cached", "--quiet").returncode:
         print("④ 无变化, 不提交"); return
     run("git", "commit", "-m", f"data(enrich): 归档 {date.today()}\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>")
@@ -166,6 +167,12 @@ def main():
     cfg = Config.from_env()
     archive_bars(QuoteContext(cfg))
     archive_orders(TradeContext(cfg))
+    try:
+        import subprocess as sp
+        sp.run([sys.executable, str(ROOT / "trade_report.py")], capture_output=True, timeout=120)
+        print("⑤ 战报HTML已刷新")
+    except Exception as e:
+        print(f"⑤ 战报刷新失败: {e}")
     git_commit_push()
 
 
