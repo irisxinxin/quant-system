@@ -506,6 +506,58 @@ def handle_andy(text: str, msg_ts, msg_id: int):
         log(f"📒 andy出场[{'be' if be else lv}] {tk}: {up[:60]}")
 
 
+LAST_MSG_JSON = OUT / "enrich_last_msg.json"   # 每频道最后处理的消息id (停机追赶用)
+
+
+async def catch_up(client, seen, positions):
+    """重连后回看停机期间错过的消息:
+       enrich BUY→仅提醒(旧价不补单); enrich EXIT→照常处理(持仓晚跟好过不跟); andy→照常记录。"""
+    state = _load(LAST_MSG_JSON)
+    for ch_id in (CHANNEL_ID, ANDY_CHANNEL_ID):
+        ch = client.get_channel(ch_id)
+        if ch is None:
+            continue
+        key = str(ch_id)
+        last = state.get(key)
+        try:
+            if not last:                      # 首次运行: 锚定到最新, 不回放历史
+                async for m in ch.history(limit=1):
+                    state[key] = str(m.id)
+                continue
+            missed = [m async for m in ch.history(limit=100, after=discord.Object(id=int(last)),
+                                                  oldest_first=True)]
+        except Exception as e:
+            log(f"追赶失败 ch={ch_id}: {e}")
+            continue
+        for m in missed:
+            state[key] = str(m.id)
+            if m.author.id != AUTHOR_ID or not m.content:
+                continue
+            one = " ".join(m.content.split())[:90]
+            try:
+                if ch_id == ANDY_CHANNEL_ID:
+                    handle_andy(m.content, m.created_at, m.id)   # 纯记录, 无下单
+                    continue
+                s = parse_signal(m.content, m.created_at.date())
+                if s.kind in ("BUY", "BUY_AMBIG"):
+                    note = f"⏰ 停机期间错过的enrich买入信号 (仅提醒, 不按旧价补单): {one}"
+                    log(note); push_discord(note)
+                    journal(ev="missed_during_downtime", sig=one, ts_signal=str(m.created_at))
+                elif s.kind == "EXIT":
+                    handle(m.content, m.created_at.date(), m.id, seen, positions)  # 出场晚跟好过不跟
+            except Exception as e:
+                log(f"追赶处理异常: {e}")
+        if missed:
+            log(f"⏰ 追赶完成 ch={ch_id}: 回看了 {len(missed)} 条停机期间消息")
+    _save(LAST_MSG_JSON, state)
+
+
+def bump_last(ch_id, msg_id):
+    state = _load(LAST_MSG_JSON)
+    state[str(ch_id)] = str(msg_id)
+    _save(LAST_MSG_JSON, state)
+
+
 # ── 信号处理 ──
 
 def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
@@ -649,11 +701,17 @@ def main():
     @client.event
     async def on_ready():
         log(f"✅ 已连接 Discord: {client.user} | 监听频道 {CHANNEL_ID} 作者 {AUTHOR_ID}")
+        try:
+            await catch_up(client, seen, positions)
+        except Exception as e:
+            log(f"追赶异常: {e}")
         if not manager.is_running():
             manager.start()
 
     @client.event
     async def on_message(msg):
+        if msg.channel.id in (CHANNEL_ID, ANDY_CHANNEL_ID):
+            bump_last(msg.channel.id, msg.id)
         if msg.author.id != AUTHOR_ID or not msg.content:
             return
         if msg.channel.id == ANDY_CHANNEL_ID:      # andy: 只观察记录, 永不下单
