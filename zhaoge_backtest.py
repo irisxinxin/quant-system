@@ -73,7 +73,10 @@ def parse_stream():
             continue
         tk = tks[0]
         if is_sell and (not mb or line.index(SELL_PX_RE.search(line).group(0) if SELL_PX_RE.search(line) else "出") < (mb.start() if mb else 9999)):
-            frac = 0.5 if "一半" in line else 1.0
+            if "三分之二" in line: frac = 2/3
+            elif "三分之一" in line: frac = 1/3
+            elif "一半" in line: frac = 0.5
+            else: frac = 1.0
             ms = SELL_PX_RE.search(line)
             px = float(ms.group(1)) if ms else None
             out.append((ts, "sell", tk, px, frac))
@@ -159,6 +162,10 @@ def simulate(stream):
         if side == "buy":
             if px is None or len(pos.get(tk, [])) >= MAX_LOTS:
                 continue
+            ref = next((b for b in B if b["ts"] > ts), None)
+            if ref and px < ref["o"] * 0.3:      # 期权权利金混入股票频道(如1.07的'nvda')
+                n_option = globals().setdefault("_N_OPT", [0]); n_option[0] += 1
+                continue
             deadline = next_trading_day_end(ts)
             fill = None
             for b in B:
@@ -226,7 +233,7 @@ def main():
         for t in trades:
             by_m.setdefault(t["date"][:7], []).append(t["pnl"])
         print("  月度: " + " | ".join(f"{k}: ${sum(v):+,.0f}({len(v)}笔)" for k, v in sorted(by_m.items())))
-    print(f"买入未成交(不追价) {n_nofill} 笔")
+    print(f"买入未成交(不追价) {n_nofill} 笔 | 期权彩票单排除 {globals().get('_N_OPT',[0])[0]} 笔")
     upnl_tot = sum(i["upnl"] for i in inv if i["upnl"] is not None)
     print(f"\n期末库存 {len(inv)} 批 (他没喊卖/我们跟着拿着的): 浮动盈亏合计 ${upnl_tot:+,.0f}")
     for i in sorted(inv, key=lambda x: x["upnl"] or 0):
