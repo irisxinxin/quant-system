@@ -106,25 +106,52 @@ def osi(e):
     return f"{e['ticker']}{e['expiry']:%y%m%d}{e['right']}{s:06d}.US"
 
 
+BE_RE = re.compile(r"breakeven|break\s*even", re.I)
+
 def load_events():
     msgs = json.load(open("output/andy_history.json"))
     buys, exits = [], []
     seen = set()
+    # 先收全部入场, 建立"他交易过的票"全集
+    parsed = []
     for m in msgs:
         ts = datetime.fromisoformat(m["ts"])
         ts = ts.replace(tzinfo=UTC) if ts.tzinfo is None else ts
         t = m["text"]
-        if "RedAlert" in t:
-            e = parse_entry(t, ts.date())
-            if e:
-                key = f"{osi(e)}:{ts.date()}"
-                if key not in seen:
-                    seen.add(key)
-                    buys.append(dict(ts=ts, e=e, raw=" ".join(t.split())[:90]))
-                continue
-        tks, lv = classify_exit(t)
-        if lv and len(tks) == 1:
-            exits.append(dict(ts=ts, ticker=tks[0], level=lv))
+        e = parse_entry(t, ts.date()) if "RedAlert" in t else None
+        parsed.append((ts, t, e))
+        if e:
+            key = f"{osi(e)}:{ts.date()}"
+            if key not in seen:
+                seen.add(key)
+                buys.append(dict(ts=ts, e=e, raw=" ".join(t.split())[:90]))
+    universe = {b["e"]["ticker"] for b in buys}
+    # 出场: 票名=消息词∩universe; 空→最近30分钟内提及过的票(上下文式)
+    last_tk, last_ts = None, None
+    for ts, t, e in parsed:
+        up = " ".join(t.split())
+        mention = [x for x in TICKER_RE.findall(up) if x in universe]
+        if e:
+            last_tk, last_ts = e["ticker"], ts
+        elif len(set(mention)) == 1:
+            last_tk, last_ts = mention[0], ts
+        if e:
+            continue
+        lv = "full" if EXIT_FULL_RE.search(up) else ("partial" if EXIT_PART_RE.search(up) else None)
+        be = bool(BE_RE.search(up))
+        if not lv and not be:
+            continue
+        uniq = list(dict.fromkeys(mention))
+        if len(uniq) == 1:
+            tk = uniq[0]
+        elif len(uniq) == 0 and last_tk and last_ts and (ts - last_ts).total_seconds() <= 1800:
+            tk = last_tk          # 上下文式: 归到30分钟内最近提及的票
+        else:
+            continue              # 多票或无上下文 → 放弃
+        if be:
+            exits.append(dict(ts=ts, ticker=tk, level="be"))
+        if lv:
+            exits.append(dict(ts=ts, ticker=tk, level=lv))
     return buys, exits
 
 
@@ -166,6 +193,8 @@ def simulate(q, buy, all_exits, use_his_stop):
     if entry_px is None:
         return dict(status="no_fill", qty=qty)
     stop = (e["stop"] if (use_his_stop and e["stop"]) else round(entry_px * DEF_STOP, 2))
+    import os as _os
+    AUTO_BE = _os.environ.get("AUTO_BE", "") == "1"
     tp = round(entry_px * TP_MULT, 2)
     remain, reduced = qty, False
     sells = []
@@ -195,9 +224,13 @@ def simulate(q, buy, all_exits, use_his_stop):
                 sell_open_after(ts_, remain, "到期强平")
             elif lv == "full":
                 sell_open_after(ts_, remain, "他清仓")
+            elif lv == "be":
+                stop = max(stop, entry_px)          # 他喊breakeven → 止损上移到成本
             elif lv == "partial":
                 if not reduced and remain >= 2:
                     sell_open_after(ts_, max(1, remain // 2), "跟随减仓"); reduced = True
+                    if AUTO_BE:
+                        stop = max(stop, entry_px)  # 减仓后剩仓保本止损(他的口头禅)
                 elif not reduced:
                     sell_open_after(ts_, remain, "跟随减仓(全)"); reduced = True
                 else:
