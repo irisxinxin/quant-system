@@ -105,8 +105,7 @@ def resolve_direction(s):
         syms = [_osi(s.ticker, s.expiry, r, s.strike) for r in ("C", "P")]
         px = {}
         for o in _quote_ctx.option_quote(syms):
-            bid, ask, last = float(o.bid or 0), float(o.ask or 0), float(o.last_done or 0)
-            px[o.symbol] = (bid + ask) / 2 if bid > 0 and ask > 0 else last
+            px[o.symbol] = float(o.last_done or 0)   # OptionQuote只有last_done, 无bid/ask(实测)
         pc, pp = px.get(syms[0], 0), px.get(syms[1], 0)
         if pc <= 0 and pp <= 0:
             return None, "两边都无报价"
@@ -455,8 +454,8 @@ def handle_andy(text: str, msg_ts, msg_id: int):
                 _quote_ctx = QuoteContext(Config.from_env())
             o = _quote_ctx.option_quote([sym])
             if o:
-                snap = dict(bid=float(o[0].bid or 0), ask=float(o[0].ask or 0),
-                            last=float(o[0].last_done or 0), oi=int(o[0].open_interest or 0))
+                snap = dict(last=float(o[0].last_done or 0), oi=int(o[0].open_interest or 0),
+                            iv=float(getattr(o[0], "implied_volatility", 0) or 0))
         except Exception:
             pass
         journal(ev="andy_entry", osi=sym, ticker=e["ticker"], prem=e["prem"], stop=e["stop"],
@@ -519,7 +518,9 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
 
     # BUY_AMBIG: 缺方向 → 实时报价消歧 (call/put价差大, 信号权利金只会匹配一边)
     qty = CONTRACTS
+    is_ambig = False
     if s.kind == "BUY_AMBIG":
+        is_ambig = True
         side, info = resolve_direction(s)
         if side is None:
             note = f"❓ enrich歧义单无法消歧, 仅提醒 [{s.ticker} ${s.strike} {s.expiry}]: {info}\n原文: {one}"
@@ -544,7 +545,7 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
         return
 
     # 按金额定张数 (POSITION_USD>0时; lotto/歧义单用LOTTO_USD)
-    is_lotto = (qty == LOTTO_CONTRACTS and qty != CONTRACTS) or "lotto" in (s.size_tag or "").lower()
+    is_lotto = is_ambig or "lotto" in (s.size_tag or "").lower() or "scalp" in one.lower() or s.expiry == msg_date
     budget = LOTTO_USD if is_lotto else POSITION_USD
     qty, size_note = size_qty(s.limit_price, budget, osi, fallback=qty)
     log(f"📐 仓位: {qty}张 ({size_note})")
