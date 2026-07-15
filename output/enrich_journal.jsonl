@@ -17,3 +17,16 @@
 {"ev": "andy_entry", "osi": "TGT260724C140000.US", "ticker": "TGT", "prem": 2.7, "stop": 2.2, "expiry": "2026-07-24", "lotto": false, "subset": true, "quote": {"last": 2.77, "oi": 222, "iv": 0.322}, "sig": ":RedAlert: TGT - $140 CALLS EXPIRATION NEXT WEEK $2.70 STOP LOSS AT $2.20 @everyone", "ts": "2026-07-15T23:20:48+08:00"}
 {"ev": "entry_cancel", "osi": "MSFT260715C397500.US", "order_id": "1262065080988651520", "reason": "仓位纠正: is_lotto bug致257张(5万预算), 撤销", "note": "实际发生于23:17", "ts": "2026-07-15T23:36:02+08:00"}
 {"ev": "entry_submit", "osi": "MSFT260715C397500.US", "ticker": "MSFT", "right": "C", "strike": 397.5, "expiry": "2026-07-15", "limit": 0.9, "qty": 111, "order_id": "1262065377576275968", "sig": "Scalp - $MSFT 0DTE $397.50 $.90 (补录:消歧bug修复后手动按纪律补挂)", "note": "实际发生于23:17", "ts": "2026-07-15T23:36:02+08:00"}
+{"ev": "entry_fill", "osi": "MSFT260715C397500.US", "qty": 111, "avg": 0.9, "ts": "2026-07-16T00:36:10+08:00"}
+{"ev": "tp_place", "osi": "MSFT260715C397500.US", "px": 1.8, "qty": 55, "order_id": "1262085242890547200", "ts": "2026-07-16T00:36:10+08:00"}
+{"ev": "stop_trigger", "osi": "MSFT260715C397500.US", "last": 0.52, "avg": 0.9, "mult": 0.7, "ts": "2026-07-16T00:47:10+08:00"}
+{"ev": "close_sell", "osi": "MSFT260715C397500.US", "qty": 111, "reason": "止损-30%", "order_id": "1262088013056315392", "ok": true, "ts": "2026-07-16T00:47:10+08:00"}
+{"ev": "exit_signal", "ticker": "HOOD", "level": "vague", "held": 1, "sig": "All cash now besides $HOOD 1.5% position. WHAT A DAY. Selling into strength is key, we timed that pe", "ts": "2026-07-16T00:51:56+08:00"}
+{"ev": "mirror_sell", "osi": "HOOD260724C125000.US", "qty": 1, "order_id": "1262089210630766592", "ts": "2026-07-16T00:51:56+08:00"}
+{"ev": "andy_entry", "osi": "SPX260715C7560000.US", "ticker": "SPX", "prem": 2.2, "stop": 1.7, "expiry": "2026-07-15", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7560 CALLS 0DTE $2.20 ROLLING PROFITS, STOP LOSS AT $1.70 @everyone", "ts": "2026-07-16T01:28:00+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-07-16T01:29:33+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "@everyone TRIMMED MOST", "ts": "2026-07-16T01:30:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "OK ALL OUT NOW @everyone", "ts": "2026-07-16T01:37:47+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260717C116000.US", "ticker": "HOOD", "prem": 2.42, "stop": 2.0, "expiry": "2026-07-17", "lotto": false, "subset": true, "quote": {"last": 2.48, "oi": 2988, "iv": 0.728}, "sig": ":RedAlert: HOOD - $116 CALLS EXPIRATION THIS WEEK $2.42 STOP LOSS AT $2.00 @everyone", "ts": "2026-07-16T01:56:54+08:00"}
+{"ev": "entry_cancel", "osi": "MSFT260715C397500.US", "order_id": "1262065377576275968", "reason": "用户规则: 错过的信号禁止迟到补单(scalp时效几分钟), 撤销未成交挂单", "ts": "2026-07-16T02:32:24+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260717C120000.US", "ticker": "HOOD", "prem": 0.95, "stop": null, "expiry": "2026-07-17", "lotto": true, "subset": false, "quote": {"last": 0.95, "oi": 28963, "iv": 0.693}, "sig": ":RedAlert: HOOD - $120 CALLS EXPIRATION THIS WEEK .95 CHEAP LOTTO SWINGS @everyone", "ts": "2026-07-16T03:58:39+08:00"}

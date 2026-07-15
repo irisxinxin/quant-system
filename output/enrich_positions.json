@@ -6,11 +6,26 @@
   "limit": 1.5,
   "expiry": "2026-07-24",
   "filled": 2,
-  "sold": 0,
+  "sold": 1,
   "avg": 1.5,
   "tp_order_id": null,
   "tp_qty": 1,
   "status": "open",
-  "opened": "2026-07-14"
+  "opened": "2026-07-14",
+  "reduced": true
+ },
+ "MSFT260715C397500.US": {
+  "ticker": "MSFT",
+  "entry_order_id": "1262065377576275968",
+  "qty": 111,
+  "limit": 0.9,
+  "expiry": "2026-07-15",
+  "filled": 111,
+  "sold": 0,
+  "avg": 0.9,
+  "tp_order_id": null,
+  "tp_qty": 55,
+  "status": "closed",
+  "opened": "2026-07-15"
  }
 }
