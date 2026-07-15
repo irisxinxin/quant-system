@@ -48,8 +48,10 @@ MAX_PREMIUM = float(os.environ.get("MAX_PREMIUM", "5.0"))
 TP_MULT = float(os.environ.get("TP_MULT", "2.0"))     # 止盈倍数 (2.0 = +100%)
 STOP_MULT = float(os.environ.get("STOP_MULT", "0.7")) # 权利金止损 (0.7=-30%; 回测: -30%档唯一转正+躲跳空)
 LOTTO_CONTRACTS = int(os.environ.get("LOTTO_CONTRACTS", "1"))  # 歧义/lotto单张数(POSITION_USD=0时用)
-POSITION_USD = float(os.environ.get("POSITION_USD", "0"))   # >0: 按金额定张数(张=预算//权利金/100), 替代固定张数
-LOTTO_USD = float(os.environ.get("LOTTO_USD", "0")) or (POSITION_USD / 5)  # lotto/歧义单预算(默认1/5)
+POSITION_USD = float(os.environ.get("POSITION_USD", "0"))   # >0: 固定金额模式(旧)
+LOTTO_USD = float(os.environ.get("LOTTO_USD", "0")) or (POSITION_USD / 5)
+POSITION_FRAC = float(os.environ.get("POSITION_FRAC", "0"))  # >0: 按账户净值比例, 常规单=净值×此值
+LOTTO_FRAC = float(os.environ.get("LOTTO_FRAC", "0.3333"))   # lotto/歧义/0DTE=净值×此值
 OI_CAP_PCT = 0.10   # 流动性帽: 张数≤未平仓量10% (防模拟盘假成交失真)
 ET = ZoneInfo("America/New_York")
 
@@ -116,6 +118,22 @@ def resolve_direction(s):
         return inwin[0], f"C={pc} P={pp} vs 信号${s.limit_price} → {inwin[0]}"
     except Exception as e:
         return None, f"报价异常: {e}"
+
+
+_last_equity = [None]
+
+def account_equity_usd():
+    """账户净值(USD)。HKD净值按7.8折算。失败用上次值; 从未成功→None。"""
+    try:
+        for b in _trade_ctx.account_balance():
+            cur, na = str(b.currency), float(b.net_assets)
+            if na > 0:
+                usd = na if cur == "USD" else na / 7.8
+                _last_equity[0] = usd
+                return usd
+    except Exception:
+        pass
+    return _last_equity[0]
 
 
 def size_qty(premium: float, budget: float, osi: str, fallback: int) -> tuple:
@@ -546,8 +564,20 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
 
     # 按金额定张数 (POSITION_USD>0时; lotto/歧义单用LOTTO_USD)
     is_lotto = is_ambig or "lotto" in (s.size_tag or "").lower() or "scalp" in one.lower() or s.expiry == msg_date
-    budget = LOTTO_USD if is_lotto else POSITION_USD
+    if POSITION_FRAC > 0:
+        eq = account_equity_usd()
+        if eq:
+            budget = eq * (LOTTO_FRAC if is_lotto else POSITION_FRAC)
+            size_src = f"净值${eq:,.0f}×{LOTTO_FRAC if is_lotto else POSITION_FRAC:.2f}"
+        else:
+            budget = LOTTO_USD if is_lotto else POSITION_USD
+            size_src = "净值获取失败,退回固定额"
+            log("⚠️ 账户净值获取失败, 用固定金额兜底")
+    else:
+        budget = LOTTO_USD if is_lotto else POSITION_USD
+        size_src = "固定额"
     qty, size_note = size_qty(s.limit_price, budget, osi, fallback=qty)
+    size_note = f"{size_src}; {size_note}"
     log(f"📐 仓位: {qty}张 ({size_note})")
 
     plan = (f"{'🚀模拟盘' if LIVE else '🧪DRY-RUN'} enrich买入\n"
@@ -588,8 +618,12 @@ def main():
     if LIVE:
         if not verify_paper_trading():
             print("❌ 模拟盘三重校验不通过, 拒绝启动 LIVE"); sys.exit(1)
-        size_s = (f"每信号${POSITION_USD:,.0f}/lotto${LOTTO_USD:,.0f} (OI帽{OI_CAP_PCT:.0%})"
-                  if POSITION_USD > 0 else f"每信号{CONTRACTS}张")
+        if POSITION_FRAC > 0:
+            size_s = f"动态仓位: 常规=净值×{POSITION_FRAC:.2f} / lotto=净值×{LOTTO_FRAC:.2f} (OI帽{OI_CAP_PCT:.0%})"
+        elif POSITION_USD > 0:
+            size_s = f"每信号${POSITION_USD:,.0f}/lotto${LOTTO_USD:,.0f} (OI帽{OI_CAP_PCT:.0%})"
+        else:
+            size_s = f"每信号{CONTRACTS}张"
         log(f"🚀 LIVE(模拟盘): {size_s} | 权利金上限${MAX_PREMIUM} | 止盈+{(TP_MULT-1)*100:.0f}%卖半仓 | 镜像出场+止损-{(1-STOP_MULT)*100:.0f}% | 到期强平")
     else:
         log("🧪 DRY_RUN: 只解析播报, 不下单")
