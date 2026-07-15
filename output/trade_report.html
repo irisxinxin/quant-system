@@ -1,59 +1,93 @@
 <!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
-<title>enrich 交易记录报告</title>
+<title>交易战报</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-           background: #0f1419; color: #d8dee5; padding: 14px; font-size: 14px; }
-    h1 { font-size: 18px; margin: 6px 0 2px; color: #fff; }
-    .sub { color: #7d8590; font-size: 12px; margin-bottom: 14px; }
-    h2 { font-size: 15px; margin: 20px 0 8px; color: #79b8ff;
-         border-left: 3px solid #79b8ff; padding-left: 8px; }
+    :root { --bg:#0d0d0d; --surface:#1a1a19; --surface2:#222221; --ink:#ffffff;
+            --ink2:#c3c2b7; --muted:#898781; --line:#2c2c2a;
+            --border:rgba(255,255,255,0.10); --accent:#3987e5;
+            --up:#e66767; --dn:#0ca30c; --warn:#fab219; }
+    body { font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+           background: var(--bg); color: var(--ink2); padding: 16px; font-size: 14px;
+           max-width: 860px; margin: 0 auto; }
+    h1 { font-size: 19px; margin: 4px 0 2px; color: var(--ink); font-weight: 700; }
+    .sub { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .legend { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+    .legend .up, .legend .dn { font-weight: 700; }
+    h2 { font-size: 15px; margin: 22px 0 10px; color: var(--ink); font-weight: 700; }
+    h2 small { color: var(--muted); font-weight: 400; font-size: 12px; }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+             gap: 10px; margin: 14px 0 4px; }
+    .tile { background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 14px; }
+    .tile .k { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .tile .v { font-size: 22px; font-weight: 700; color: var(--ink); }
+    .up { color: var(--up); } .dn { color: var(--dn); } .dim { color: var(--muted); }
+    .num { font-variant-numeric: tabular-nums; }
+    .card { background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .card .head { display: flex; justify-content: space-between; align-items: baseline;
+                  flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .card .title { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .card .osi { color: var(--muted); font-size: 11px; }
+    .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+          gap: 6px 14px; font-size: 13px; }
+    .kv .k { color: var(--muted); font-size: 11px; }
+    .kv .v { color: var(--ink2); }
     .wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table { border-collapse: collapse; width: 100%; min-width: 480px; font-size: 13px; }
-    th, td { border-bottom: 1px solid #263040; padding: 6px 8px; text-align: left;
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: left;
              white-space: nowrap; }
-    th { color: #7d8590; font-weight: 600; background: #161c26; position: sticky; top: 0; }
-    td.wrapcell { white-space: normal; min-width: 160px; }
-    .pos { color: #56d364; } .neg { color: #f85149; } .dim { color: #7d8590; }
-    .tag { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 11px; }
-    .t-open { background: #1b3a2a; color: #56d364; }
-    .t-watch { background: #3a2f1b; color: #e3b341; }
-    .t-done { background: #26303c; color: #9aa7b5; }
-    .card { background: #161c26; border: 1px solid #263040; border-radius: 8px;
-            padding: 10px 12px; margin-bottom: 10px; }
-    .note { color: #e3b341; font-size: 12px; margin: 6px 0; }
-    .empty { color: #7d8590; padding: 8px 2px; }
-    .foot { color: #566270; font-size: 11px; margin-top: 22px; line-height: 1.6; }
-    @media (max-width: 480px) { body { padding: 8px; } table { font-size: 12px; } }
+    td.r, th.r { text-align: right; }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; }
+    tr:last-child td { border-bottom: none; }
+    td.wrapcell { white-space: normal; min-width: 150px; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px;
+           border: 1px solid var(--border); }
+    .t-open { color: var(--warn); }
+    .t-watch { color: var(--accent); }
+    .t-done { color: var(--muted); }
+    .note { color: var(--warn); font-size: 12px; margin: 6px 0; }
+    .empty { color: var(--muted); padding: 10px 2px; }
+    .foot { color: var(--muted); font-size: 11px; margin-top: 26px; line-height: 1.7;
+            border-top: 1px solid var(--line); padding-top: 10px; }
+    @media (max-width: 480px) { body { padding: 10px; } .tile .v { font-size: 19px; } }
     </style></head><body>
-<h1>enrich 交易记录报告</h1>
-<div class='sub'>生成于 2026-07-15 15:40:20 SGT (ET 07-15 03:40) · LongPort 模拟盘</div>
-<h2>enrich 当前持仓</h2>
-<div class='wrap'><table><tr><th>票</th><th>合约</th><th>状态</th><th>持有</th><th>成本</th><th>市值成本</th><th>到期</th><th>挂单状态</th></tr>
-<tr><td><b>HOOD</b></td><td>HOOD260724C125000.US</td><td><span class='tag t-open'>持仓中</span></td><td>2 张</td><td>@1.5</td><td>$300</td><td>2026-07-24</td><td class='wrapcell'>止盈无挂单(轮询) @3 / 止损无挂单(轮询) @≈1.05(理论)</td></tr>
-</table></div>
-<h2>enrich 已平仓回合</h2>
-<div class='empty'>暂无已平仓回合</div>
-<div class='note'>进行中/未闭合回合 1 个: HOOD260724C125000.US (成交2/卖0) — 以〈当前持仓〉为准</div>
-<h2>enrich 事件流 (最近 30 条)</h2>
-<div class='wrap'><table><tr><th>时间 (SGT)</th><th>事件</th><th>ET</th></tr>
-<tr><td>07-15 03:55:29</td><td class='wrapcell'>入场挂单 HOOD260724C125000.US 2张 @限价1.5</td><td class='dim'>(ET 07-14 15:55)</td></tr>
-<tr><td>07-15 03:55:32</td><td class='wrapcell'>入场成交 HOOD260724C125000.US 2张 @均价1.5</td><td class='dim'>(ET 07-14 15:55)</td></tr>
-<tr><td>07-15 03:55:32</td><td class='wrapcell'>挂止盈单 HOOD260724C125000.US 1张 @3.0</td><td class='dim'></td></tr>
-</table></div>
-<h2>andy 观察账本 (subset 单)</h2>
-<div class='empty'>暂无观察记录</div>
-<h2>数据文件索引</h2>
-<div class='wrap'><table><tr><th>文件</th><th>规模</th><th>说明</th></tr>
-<tr><td>output/enrich_journal.jsonl</td><td>3 行</td><td class='wrapcell'>enrich bot 结构化事件流 (JSONL, 回合重建原料)</td></tr>
-<tr><td>output/enrich_positions.json</td><td>1 个合约</td><td class='wrapcell'>当前持仓状态快照 (bot 自维护)</td></tr>
-<tr><td>output/enrich_orders.csv</td><td>174 笔</td><td class='wrapcell'>LongPort 券商订单流水 (成交价真值来源)</td></tr>
-<tr><td>output/andy_tracked.json</td><td>文件不存在</td><td class='wrapcell'>andy 观察中合约 (subset 单)</td></tr>
-<tr><td>output/enrich_history.json</td><td>1479 条</td><td class='wrapcell'>enrich 频道 Discord 消息存档 (UTC)</td></tr>
-<tr><td>output/andy_history.json</td><td>477 条</td><td class='wrapcell'>andy 频道 Discord 消息存档 (UTC)</td></tr>
-<tr><td>output/zhaoge_history.json</td><td>2034 条</td><td class='wrapcell'>zhaoge 频道 Discord 消息存档 (UTC)</td></tr>
-<tr><td>data/enrich_bars/</td><td>64 个合约</td><td class='wrapcell'>期权 1m K线缓存 (每合约一个 csv, ts=UTC)</td></tr>
-</table></div>
-<div class='foot'>时区说明: 报告统一 SGT (Asia/Singapore); ET 为美东时间 (America/New_York, zoneinfo 换算, 自动处理夏令时)。<br>卖出成交价优先取 enrich_orders.csv 的 executed_price 真值; journal 缺价时回退, 估算价以 ≈ 标注。所有交易均为 LongPort 模拟盘。</div>
+<h1>📊 交易战报 · LongPort 模拟盘</h1>
+<div class='sub'>生成于 2026-07-15 15:54:34 SGT (ET 07-15 03:54) · 静态快照, 双击 战报.command 刷新</div>
+<div class='legend'>配色: <span class='up'>▲红=盈利</span> / <span class='dn'>▼绿=亏损</span> (长桥习惯), 数字自带±号</div>
+<div class='tiles'>
+<div class='tile'><div class='k'>浮动盈亏 (持仓中)</div><div class='v'><span class='up num'>▲ $+24</span></div></div>
+<div class='tile'><div class='k'>已实现盈亏</div><div class='v'><span class='dim'>$0</span></div></div>
+<div class='tile'><div class='k'>持仓</div><div class='v'>1 笔</div></div>
+<div class='tile'><div class='k'>andy 观察</div><div class='v'>0 笔</div></div>
+</div>
+<h2>💼 当前持仓 <small>enrich 实盘</small></h2>
+<div class='card'>
+<div class='head'><span class='title'>HOOD 2026-07-24 <span class='dim'>×2张</span></span><span class='up num' style='font-size:1.05em'>▲ $+24 (+8.0%)</span></div>
+<div class='kv'><div><div class='k'>成本</div><div class='v num'>@1.5 ≈$300</div></div><div><div class='k'>现价</div><div class='v num'>1.62 <span class='dim'>(实时)</span></div></div><div><div class='k'>止盈/止损</div><div class='v num'>止盈 @3 / 止损 @≈1.05(理论)</div></div><div><div class='k'>状态</div><div class='v'><span class='tag t-open'>持仓中</span></div></div></div>
+<div class='osi' style='margin-top:6px'>HOOD260724C125000.US · 信号日 2026-07-14</div>
+</div>
+<h2>✅ 已平仓回合</h2>
+<div class='empty'>暂无 (第一笔平仓后自动出现)</div>
+<div class='note'>进行中回合 1 个 (HOOD260724C125000.US) — 见〈当前持仓〉</div>
+<h2>📒 andy 观察账本 <small>波段+止损子集 · 只记录不下单</small></h2>
+<div class='empty'>等他下一条合格信号 (波段+带止损), 自动出现在这里</div>
+<h2>🕒 事件流 <small>最近 30 条 · SGT</small></h2>
+<div class='card'><div class='wrap'><table>
+<tr><td class='num' style='width:110px'>07-15 03:55:32</td><td class='wrapcell'>🎯 挂止盈单 HOOD260724C125000.US 1张 @3.0</td></tr>
+<tr><td class='num' style='width:110px'>07-15 03:55:32</td><td class='wrapcell'>🟦 入场成交 HOOD260724C125000.US 2张 @均价1.5 <span class='dim'>(ET 07-14 15:55)</span></td></tr>
+<tr><td class='num' style='width:110px'>07-15 03:55:29</td><td class='wrapcell'>🟦 入场挂单 HOOD260724C125000.US 2张 @限价1.5 <span class='dim'>(ET 07-14 15:55)</span></td></tr>
+</table></div></div>
+<details style='margin-top:18px'><summary class='dim' style='cursor:pointer'>📁 数据文件索引 (点开)</summary><div class='wrap' style='margin-top:8px'><table>
+<tr><td>output/enrich_journal.jsonl</td><td class='num'>3 行</td><td class='wrapcell dim'>enrich bot 结构化事件流 (JSONL, 回合重建原料)</td></tr>
+<tr><td>output/enrich_positions.json</td><td class='num'>1 个合约</td><td class='wrapcell dim'>当前持仓状态快照 (bot 自维护)</td></tr>
+<tr><td>output/enrich_orders.csv</td><td class='num'>174 笔</td><td class='wrapcell dim'>LongPort 券商订单流水 (成交价真值来源)</td></tr>
+<tr><td>output/andy_tracked.json</td><td class='num'>文件不存在</td><td class='wrapcell dim'>andy 观察中合约 (subset 单)</td></tr>
+<tr><td>output/enrich_history.json</td><td class='num'>1479 条</td><td class='wrapcell dim'>enrich 频道 Discord 消息存档 (UTC)</td></tr>
+<tr><td>output/andy_history.json</td><td class='num'>477 条</td><td class='wrapcell dim'>andy 频道 Discord 消息存档 (UTC)</td></tr>
+<tr><td>output/zhaoge_history.json</td><td class='num'>2034 条</td><td class='wrapcell dim'>zhaoge 频道 Discord 消息存档 (UTC)</td></tr>
+<tr><td>data/enrich_bars/</td><td class='num'>64 个合约</td><td class='wrapcell dim'>期权 1m K线缓存 (每合约一个 csv, ts=UTC)</td></tr>
+</table></div></details>
+<div class='foot'>配色遵循长桥习惯: 红=盈利/上涨, 绿=亏损/下跌, 且数字均带±号与▲▼。时间统一 SGT, (ET ...) 为美东, zoneinfo 换算含夏令时。<br>卖出价优先取券商 executed_price 真值; 现价来源标注: 实时=OPRA / K线收盘=归档数据。所有交易均为 LongPort 模拟盘。</div>
 </body></html>

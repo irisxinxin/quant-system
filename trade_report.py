@@ -156,6 +156,38 @@ def _f(x, default=None):
     except (TypeError, ValueError):
         return default
 
+
+def fetch_marks(osis):
+    """实时期权价 {osi: (价, 来源)}。OPRA实时优先; 失败回退本地K线最后收盘; 再失败缺省。"""
+    marks = {}
+    osis = [o for o in dict.fromkeys(osis) if o]
+    if not osis:
+        return marks
+    try:
+        from longport.openapi import Config, QuoteContext
+        q = QuoteContext(Config.from_env())
+        for i in range(0, len(osis), 20):
+            for o in q.option_quote(osis[i:i + 20]):
+                px = _f(o.last_done)
+                if px:
+                    marks[o.symbol] = (px, "实时")
+    except Exception:
+        pass
+    for osi in osis:
+        if osi in marks:
+            continue
+        f = BARS_DIR / f"{osi}.csv"
+        try:
+            last = None
+            with open(f, encoding="utf-8") as fh:
+                for r in csv.DictReader(fh):
+                    last = r
+            if last and _f(last.get("c")) is not None:
+                marks[osi] = (_f(last["c"]), "K线收盘")
+        except Exception:
+            continue
+    return marks
+
 # ---------------------------------------------------------------- 回合重建
 
 SELL_EVS = ("tp_fill", "tp_poll_sell", "stop_fill", "mirror_sell", "close_sell")
@@ -349,8 +381,21 @@ def section_positions(positions, journal):
             "status": {"pending": "待成交", "open": "持仓中"}.get(status, status),
             "expiry": p.get("expiry", "?"), "opened": p.get("opened", "?"),
             "pend": " / ".join(pend),
+            "mark": None, "mark_src": "", "upnl": None, "upct": None,
         })
     return rows
+
+
+def attach_marks(pos_rows, marks):
+    """给持仓行挂实时价与浮动盈亏。"""
+    for r in pos_rows:
+        m = marks.get(r["osi"])
+        if not m or not r.get("avg") or r["hold"] <= 0:
+            continue
+        px, src = m
+        r["mark"], r["mark_src"] = px, src
+        r["upnl"] = (px - r["avg"]) * MULT * r["hold"]
+        r["upct"] = (px / r["avg"] - 1) * 100
 
 
 def section_andy(journal, tracked):
@@ -457,6 +502,8 @@ def render_terminal(pos_rows, closed, open_rounds, journal, andy_rows, file_rows
         L.append(f"  {r['ticker']}  {r['osi']}")
         L.append(f"    状态: {r['status']}  持有 {r['hold']:g} 张 (成交{r['filled']:g}/已卖{r['sold']:g})"
                  f"  成本 @{r['avg'] if r['avg'] is not None else '?'} ≈{cost}")
+        if r.get("mark") is not None:
+            L.append(f"    现价 {r['mark']:g} ({r['mark_src']})  浮动盈亏 ${r['upnl']:+,.0f} ({r['upct']:+.1f}%)")
         L.append(f"    到期 {r['expiry']}  信号日 {r['opened']}(UTC)")
         L.append(f"    {r['pend']}")
 
@@ -521,148 +568,217 @@ def esc(x):
     return _html.escape(str(x if x is not None else ""))
 
 
-def render_html(pos_rows, closed, open_rounds, journal, andy_rows, file_rows):
+def pnl_html(v, pct=None, big=False):
+    """盈亏着色 (长桥习惯: 红=盈利/绿=亏损), 带显式+/−号, 颜色从不单独承载含义。"""
+    if v is None:
+        return "<span class='dim'>—</span>"
+    cls = "up" if v >= 0 else "dn"
+    arrow = "▲" if v >= 0 else "▼"
+    p = f" ({pct:+.1f}%)" if pct is not None else ""
+    sz = " style='font-size:1.05em'" if big else ""
+    return f"<span class='{cls} num'{sz}>{arrow} ${v:+,.0f}{p}</span>"
+
+
+def render_html(pos_rows, closed, open_rounds, journal, andy_rows, file_rows, marks):
     now = datetime.now(SGT)
     css = """
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-           background: #0f1419; color: #d8dee5; padding: 14px; font-size: 14px; }
-    h1 { font-size: 18px; margin: 6px 0 2px; color: #fff; }
-    .sub { color: #7d8590; font-size: 12px; margin-bottom: 14px; }
-    h2 { font-size: 15px; margin: 20px 0 8px; color: #79b8ff;
-         border-left: 3px solid #79b8ff; padding-left: 8px; }
+    :root { --bg:#0d0d0d; --surface:#1a1a19; --surface2:#222221; --ink:#ffffff;
+            --ink2:#c3c2b7; --muted:#898781; --line:#2c2c2a;
+            --border:rgba(255,255,255,0.10); --accent:#3987e5;
+            --up:#e66767; --dn:#0ca30c; --warn:#fab219; }
+    body { font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+           background: var(--bg); color: var(--ink2); padding: 16px; font-size: 14px;
+           max-width: 860px; margin: 0 auto; }
+    h1 { font-size: 19px; margin: 4px 0 2px; color: var(--ink); font-weight: 700; }
+    .sub { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .legend { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+    .legend .up, .legend .dn { font-weight: 700; }
+    h2 { font-size: 15px; margin: 22px 0 10px; color: var(--ink); font-weight: 700; }
+    h2 small { color: var(--muted); font-weight: 400; font-size: 12px; }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+             gap: 10px; margin: 14px 0 4px; }
+    .tile { background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 14px; }
+    .tile .k { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .tile .v { font-size: 22px; font-weight: 700; color: var(--ink); }
+    .up { color: var(--up); } .dn { color: var(--dn); } .dim { color: var(--muted); }
+    .num { font-variant-numeric: tabular-nums; }
+    .card { background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .card .head { display: flex; justify-content: space-between; align-items: baseline;
+                  flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .card .title { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .card .osi { color: var(--muted); font-size: 11px; }
+    .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+          gap: 6px 14px; font-size: 13px; }
+    .kv .k { color: var(--muted); font-size: 11px; }
+    .kv .v { color: var(--ink2); }
     .wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table { border-collapse: collapse; width: 100%; min-width: 480px; font-size: 13px; }
-    th, td { border-bottom: 1px solid #263040; padding: 6px 8px; text-align: left;
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: left;
              white-space: nowrap; }
-    th { color: #7d8590; font-weight: 600; background: #161c26; position: sticky; top: 0; }
-    td.wrapcell { white-space: normal; min-width: 160px; }
-    .pos { color: #56d364; } .neg { color: #f85149; } .dim { color: #7d8590; }
-    .tag { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 11px; }
-    .t-open { background: #1b3a2a; color: #56d364; }
-    .t-watch { background: #3a2f1b; color: #e3b341; }
-    .t-done { background: #26303c; color: #9aa7b5; }
-    .card { background: #161c26; border: 1px solid #263040; border-radius: 8px;
-            padding: 10px 12px; margin-bottom: 10px; }
-    .note { color: #e3b341; font-size: 12px; margin: 6px 0; }
-    .empty { color: #7d8590; padding: 8px 2px; }
-    .foot { color: #566270; font-size: 11px; margin-top: 22px; line-height: 1.6; }
-    @media (max-width: 480px) { body { padding: 8px; } table { font-size: 12px; } }
+    td.r, th.r { text-align: right; }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; }
+    tr:last-child td { border-bottom: none; }
+    td.wrapcell { white-space: normal; min-width: 150px; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px;
+           border: 1px solid var(--border); }
+    .t-open { color: var(--warn); }
+    .t-watch { color: var(--accent); }
+    .t-done { color: var(--muted); }
+    .note { color: var(--warn); font-size: 12px; margin: 6px 0; }
+    .empty { color: var(--muted); padding: 10px 2px; }
+    .foot { color: var(--muted); font-size: 11px; margin-top: 26px; line-height: 1.7;
+            border-top: 1px solid var(--line); padding-top: 10px; }
+    @media (max-width: 480px) { body { padding: 10px; } .tile .v { font-size: 19px; } }
     """
+    # 汇总数字
+    realized = sum(r["proceeds"] - r["cost"] for r in closed) if closed else 0.0
+    unreal_vals = [r["upnl"] for r in pos_rows if r.get("upnl") is not None]
+    unreal = sum(unreal_vals) if unreal_vals else None
+    n_watch = len(andy_rows)
+
     H = []
     H.append("<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>")
     H.append("<meta name='viewport' content='width=device-width, initial-scale=1'>")
-    H.append("<title>enrich 交易记录报告</title>")
+    H.append("<title>交易战报</title>")
     H.append(f"<style>{css}</style></head><body>")
-    H.append("<h1>enrich 交易记录报告</h1>")
+    H.append("<h1>📊 交易战报 · LongPort 模拟盘</h1>")
     H.append(f"<div class='sub'>生成于 {esc(now.strftime('%Y-%m-%d %H:%M:%S'))} SGT "
-             f"{esc(fmt_et(now))} · LongPort 模拟盘</div>")
+             f"{esc(fmt_et(now))} · 静态快照, 双击 战报.command 刷新</div>")
+    H.append("<div class='legend'>配色: <span class='up'>▲红=盈利</span> / "
+             "<span class='dn'>▼绿=亏损</span> (长桥习惯), 数字自带±号</div>")
 
-    # 当前持仓
-    H.append("<h2>enrich 当前持仓</h2>")
+    # ── 总览瓷砖 ──
+    H.append("<div class='tiles'>")
+    def tile(k, v_html):
+        H.append(f"<div class='tile'><div class='k'>{k}</div><div class='v'>{v_html}</div></div>")
+    tile("浮动盈亏 (持仓中)", pnl_html(unreal) if unreal is not None else "<span class='dim'>—</span>")
+    tile("已实现盈亏", pnl_html(realized) if closed else "<span class='dim'>$0</span>")
+    tile("持仓", f"{len(pos_rows)} 笔")
+    tile("andy 观察", f"{n_watch} 笔")
+    H.append("</div>")
+
+    # ── 当前持仓卡片 ──
+    H.append("<h2>💼 当前持仓 <small>enrich 实盘</small></h2>")
     if not pos_rows:
         H.append("<div class='empty'>无持仓</div>")
-    else:
-        H.append("<div class='wrap'><table><tr><th>票</th><th>合约</th><th>状态</th>"
-                 "<th>持有</th><th>成本</th><th>市值成本</th><th>到期</th><th>挂单状态</th></tr>")
-        for r in pos_rows:
-            cost = f"${r['cost']:,.0f}" if r["cost"] is not None else "?"
-            H.append(f"<tr><td><b>{esc(r['ticker'])}</b></td><td>{esc(r['osi'])}</td>"
-                     f"<td><span class='tag t-open'>{esc(r['status'])}</span></td>"
-                     f"<td>{r['hold']:g} 张</td><td>@{esc(r['avg'])}</td><td>{esc(cost)}</td>"
-                     f"<td>{esc(r['expiry'])}</td><td class='wrapcell'>{esc(r['pend'])}</td></tr>")
-        H.append("</table></div>")
+    for r in pos_rows:
+        mark_s = (f"{r['mark']:g} <span class='dim'>({esc(r['mark_src'])})</span>"
+                  if r.get("mark") is not None else "<span class='dim'>无行情</span>")
+        H.append("<div class='card'>")
+        H.append(f"<div class='head'><span class='title'>{esc(r['ticker'])} "
+                 f"{esc(r['expiry'])} <span class='dim'>×{r['hold']:g}张</span></span>"
+                 f"{pnl_html(r.get('upnl'), r.get('upct'), big=True)}</div>")
+        H.append("<div class='kv'>"
+                 f"<div><div class='k'>成本</div><div class='v num'>@{esc(r['avg'])} ≈${r['cost']:,.0f}</div></div>"
+                 f"<div><div class='k'>现价</div><div class='v num'>{mark_s}</div></div>"
+                 f"<div><div class='k'>止盈/止损</div><div class='v num'>{esc(r['pend'].replace('止盈无挂单(轮询) ','止盈 ').replace('止损无挂单(轮询) ','止损 ').replace('止盈挂单中 ','止盈✓ ').replace('止损挂单中 ','止损✓ '))}</div></div>"
+                 f"<div><div class='k'>状态</div><div class='v'><span class='tag t-open'>{esc(r['status'])}</span></div></div>"
+                 "</div>")
+        H.append(f"<div class='osi' style='margin-top:6px'>{esc(r['osi'])} · 信号日 {esc(r['opened'])}</div>")
+        H.append("</div>")
 
-    # 已平仓回合
-    H.append("<h2>enrich 已平仓回合</h2>")
+    # ── 已平仓回合 ──
+    H.append("<h2>✅ 已平仓回合</h2>")
     if not closed:
-        H.append("<div class='empty'>暂无已平仓回合</div>")
-    total_pnl, pnl_ok = 0.0, True
+        H.append("<div class='empty'>暂无 (第一笔平仓后自动出现)</div>")
+    pnl_ok = True
     for i, r in enumerate(closed, 1):
         pnl = r["proceeds"] - r["cost"]
-        total_pnl += pnl
         pct = (pnl / r["cost"] * 100) if r["cost"] else None
-        cls = "pos" if pnl >= 0 else "neg"
-        pct_s = f"{pct:+.1f}%" if pct is not None else "?"
+        unit_cost = (r["cost"] / r["filled"] / MULT) if r["filled"] else None
         flag = ""
         if r["px_unknown"]:
-            flag = " <span class='note'>[部分卖价未知, 盈亏不完整]</span>"
+            flag = " <span class='note'>[部分卖价未知]</span>"
             pnl_ok = False
         elif r["est"]:
-            flag = " <span class='note'>[含估算价≈]</span>"
-        H.append(f"<div class='card'><b>#{i} {esc(r['ticker'])}</b> "
-                 f"<span class='dim'>{esc(r['osi'])}</span> — "
-                 f"<span class='{cls}'>${money(pnl)} ({pct_s})</span>{flag}")
-        H.append("<div class='wrap'><table><tr><th>时间 (SGT)</th><th>ET</th>"
-                 "<th>动作</th><th>张数</th><th>价格</th><th>价格来源</th></tr>")
+            flag = " <span class='note'>[含估算≈]</span>"
+        H.append(f"<div class='card'><div class='head'>"
+                 f"<span class='title'>#{i} {esc(r['ticker'])}</span>"
+                 f"{pnl_html(pnl, pct, big=True)}{flag}</div>")
+        H.append("<div class='wrap'><table><tr><th>时间 SGT</th><th>动作</th>"
+                 "<th class='r'>张</th><th class='r'>价格</th><th class='r'>本笔盈亏</th></tr>")
         for en in r["entries"]:
-            px = f"@{en['px']:g}" if en["px"] is not None else ""
-            H.append(f"<tr><td>{esc(fmt_sgt(en['dt']))}</td>"
-                     f"<td class='dim'>{esc(fmt_et(en['dt']))}</td>"
-                     f"<td>入场{esc(en['kind'])}</td><td>{en['qty']:g}</td>"
-                     f"<td>{esc(px)}</td><td class='dim'>—</td></tr>")
+            px = f"{en['px']:g}" if en["px"] is not None else ""
+            H.append(f"<tr><td class='num'>{esc(fmt_sgt(en['dt']))}</td>"
+                     f"<td>🟦 入场{esc(en['kind'])}</td><td class='r num'>{en['qty']:g}</td>"
+                     f"<td class='r num'>{esc(px)}</td><td class='r dim'>—</td></tr>")
         for s in r["sells"]:
-            px = f"@{s['px']:g}" if s["px"] is not None else "@?"
+            px = f"{s['px']:g}" if s["px"] is not None else "?"
             rsn = f" ({s['reason']})" if s["reason"] else ""
-            H.append(f"<tr><td>{esc(fmt_sgt(s['dt']))}</td>"
-                     f"<td class='dim'>{esc(fmt_et(s['dt']))}</td>"
-                     f"<td>{esc(s['label'] + rsn)}</td><td>{s['qty']:g}</td>"
-                     f"<td>{esc(px)}</td><td class='dim'>{esc(s['src'])}</td></tr>")
+            leg = ((s["px"] - unit_cost) * MULT * s["qty"]
+                   if (s["px"] is not None and unit_cost is not None) else None)
+            H.append(f"<tr><td class='num'>{esc(fmt_sgt(s['dt']))}</td>"
+                     f"<td>{esc(s['label'] + rsn)}</td><td class='r num'>{s['qty']:g}</td>"
+                     f"<td class='r num'>{esc(px)}</td><td class='r'>{pnl_html(leg)}</td></tr>")
         H.append("</table></div></div>")
     if closed:
-        cls = "pos" if total_pnl >= 0 else "neg"
-        note = "" if pnl_ok else " <span class='note'>(含卖价未知回合, 仅供参考)</span>"
-        H.append(f"<div>合计盈亏: <b class='{cls}'>${money(total_pnl)}</b>{note}</div>")
+        note = "" if pnl_ok else " <span class='note'>(含卖价未知回合)</span>"
+        H.append(f"<div style='margin:4px 0 2px'>合计已实现: {pnl_html(realized, big=True)}{note}</div>")
     if open_rounds:
-        osis = ", ".join(f"{esc(r['osi'])} (成交{r['filled']:g}/卖{r['sold']:g})"
-                         for r in open_rounds)
-        H.append(f"<div class='note'>进行中/未闭合回合 {len(open_rounds)} 个: {osis} — "
-                 f"以〈当前持仓〉为准</div>")
+        osis = ", ".join(f"{esc(r['osi'])}" for r in open_rounds)
+        H.append(f"<div class='note'>进行中回合 {len(open_rounds)} 个 ({osis}) — 见〈当前持仓〉</div>")
 
-    # 事件流
-    H.append("<h2>enrich 事件流 (最近 30 条)</h2>")
-    if not journal:
-        H.append("<div class='empty'>journal 为空</div>")
-    else:
-        H.append("<div class='wrap'><table><tr><th>时间 (SGT)</th><th>事件</th><th>ET</th></tr>")
-        for e in journal[-30:]:
-            desc, key = describe_event(e)
-            et = fmt_et(e.get("_dt")) if key else ""
-            H.append(f"<tr><td>{esc(fmt_sgt(e.get('_dt')))}</td>"
-                     f"<td class='wrapcell'>{esc(desc)}</td>"
-                     f"<td class='dim'>{esc(et)}</td></tr>")
-        H.append("</table></div>")
-
-    # andy 观察账本
-    H.append("<h2>andy 观察账本 (subset 单)</h2>")
+    # ── andy 观察账本 ──
+    H.append("<h2>📒 andy 观察账本 <small>波段+止损子集 · 只记录不下单</small></h2>")
     if not andy_rows:
-        H.append("<div class='empty'>暂无观察记录</div>")
+        H.append("<div class='empty'>等他下一条合格信号 (波段+带止损), 自动出现在这里</div>")
     else:
-        H.append("<div class='wrap'><table><tr><th>票</th><th>合约</th><th>入场时间 (SGT)</th>"
-                 "<th>权利金</th><th>止损</th><th>出场</th><th>状态</th></tr>")
+        H.append("<div class='wrap'><table><tr><th>票</th><th>入场 SGT</th>"
+                 "<th class='r'>喊单价</th><th class='r'>他的止损</th><th class='r'>现价</th>"
+                 "<th class='r'>若跟涨跌</th><th>他的出场</th><th>状态</th></tr>")
         for r in andy_rows:
-            exs = "; ".join(f"{fmt_sgt(x.get('_dt'))} [{x.get('level')}]"
+            exs = "; ".join(f"{fmt_sgt(x.get('_dt'), with_date=False)}[{x.get('level')}]"
                             for x in r["exits"]) or "—"
             tag = "t-watch" if r["state"] == "观察中" else "t-done"
-            H.append(f"<tr><td><b>{esc(r['ticker'])}</b></td><td>{esc(r['osi'])}</td>"
-                     f"<td>{esc(fmt_sgt(r['dt']))} <span class='dim'>{esc(fmt_et(r['dt']))}</span></td>"
-                     f"<td>{esc(r['prem'])}</td><td>{esc(r['stop'])}</td>"
+            m = marks.get(r["osi"])
+            prem = _f(r.get("prem"))
+            mark_s, move = "<span class='dim'>—</span>", "<span class='dim'>—</span>"
+            if m and prem:
+                mark_s = f"{m[0]:g}"
+                mv = (m[0] / prem - 1) * 100
+                cls = "up" if mv >= 0 else "dn"
+                move = f"<span class='{cls} num'>{mv:+.0f}%</span>"
+            H.append(f"<tr><td><b>{esc(r['ticker'])}</b></td>"
+                     f"<td class='num'>{esc(fmt_sgt(r['dt']))}</td>"
+                     f"<td class='r num'>{esc(r['prem'])}</td><td class='r num'>{esc(r['stop'])}</td>"
+                     f"<td class='r num'>{mark_s}</td><td class='r'>{move}</td>"
                      f"<td class='wrapcell'>{esc(exs)}</td>"
                      f"<td><span class='tag {tag}'>{esc(r['state'])}</span></td></tr>")
         H.append("</table></div>")
 
-    # 数据文件索引
-    H.append("<h2>数据文件索引</h2>")
-    H.append("<div class='wrap'><table><tr><th>文件</th><th>规模</th><th>说明</th></tr>")
-    for r in file_rows:
-        H.append(f"<tr><td>{esc(r['path'])}</td><td>{esc(r['count'])}</td>"
-                 f"<td class='wrapcell'>{esc(r['desc'])}</td></tr>")
-    H.append("</table></div>")
+    # ── 事件流 ──
+    H.append("<h2>🕒 事件流 <small>最近 30 条 · SGT</small></h2>")
+    if not journal:
+        H.append("<div class='empty'>journal 为空</div>")
+    else:
+        H.append("<div class='card'><div class='wrap'><table>")
+        ICON = {"entry_submit": "🟦", "entry_fill": "🟦", "tp_place": "🎯", "tp_fill": "💰",
+                "tp_poll_sell": "💰", "stop_place": "🛡️", "stop_fill": "🛑", "stop_trigger": "🛑",
+                "mirror_sell": "🪞", "close_sell": "🔻", "exit_signal": "🟠", "disambig": "🔍",
+                "andy_entry": "📒", "andy_exit": "📒"}
+        for e in reversed(journal[-30:]):
+            desc, key = describe_event(e)
+            ic = ICON.get(e.get("ev", ""), "·")
+            et = f" <span class='dim'>{esc(fmt_et(e.get('_dt')))}</span>" if key else ""
+            H.append(f"<tr><td class='num' style='width:110px'>{esc(fmt_sgt(e.get('_dt')))}</td>"
+                     f"<td class='wrapcell'>{ic} {esc(desc)}{et}</td></tr>")
+        H.append("</table></div></div>")
 
-    H.append("<div class='foot'>时区说明: 报告统一 SGT (Asia/Singapore); ET 为美东时间 "
-             "(America/New_York, zoneinfo 换算, 自动处理夏令时)。<br>"
-             "卖出成交价优先取 enrich_orders.csv 的 executed_price 真值; journal 缺价时回退, "
-             "估算价以 ≈ 标注。所有交易均为 LongPort 模拟盘。</div>")
+    # ── 数据文件索引 (折叠) ──
+    H.append("<details style='margin-top:18px'><summary class='dim' style='cursor:pointer'>"
+             "📁 数据文件索引 (点开)</summary><div class='wrap' style='margin-top:8px'><table>")
+    for r in file_rows:
+        H.append(f"<tr><td>{esc(r['path'])}</td><td class='num'>{esc(r['count'])}</td>"
+                 f"<td class='wrapcell dim'>{esc(r['desc'])}</td></tr>")
+    H.append("</table></div></details>")
+
+    H.append("<div class='foot'>配色遵循长桥习惯: 红=盈利/上涨, 绿=亏损/下跌, 且数字均带±号与▲▼。"
+             "时间统一 SGT, (ET ...) 为美东, zoneinfo 换算含夏令时。<br>"
+             "卖出价优先取券商 executed_price 真值; 现价来源标注: 实时=OPRA / K线收盘=归档数据。"
+             "所有交易均为 LongPort 模拟盘。</div>")
     H.append("</body></html>")
     return "\n".join(H)
 
@@ -679,9 +795,13 @@ def main():
     andy_rows = section_andy(journal, tracked)
     file_rows = section_files()
 
+    # 实时行情: 持仓 + andy观察合约 (失败回退K线收盘, 再失败显示无行情)
+    marks = fetch_marks([r["osi"] for r in pos_rows] + [r["osi"] for r in andy_rows])
+    attach_marks(pos_rows, marks)
+
     print(render_terminal(pos_rows, closed, open_rounds, journal, andy_rows, file_rows))
 
-    html_doc = render_html(pos_rows, closed, open_rounds, journal, andy_rows, file_rows)
+    html_doc = render_html(pos_rows, closed, open_rounds, journal, andy_rows, file_rows, marks)
     try:
         OUT.mkdir(exist_ok=True)
         HTML_PATH.write_text(html_doc, encoding="utf-8")
