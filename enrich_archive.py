@@ -30,31 +30,43 @@ def refresh_history():
         print("⚠️ 无DISCORD_BOT_TOKEN, 跳过消息存档"); return
     intents = discord.Intents.default(); intents.message_content = True
     client = discord.Client(intents=intents)
-    AUTHOR_ID, TARGET = 1392020997393088542, "期权-波段-enrich"
+    AUTHOR_ID = 1392020997393088542
+    CHANS = {"期权-波段-enrich": HIST, "andy-option": ROOT/"output"/"andy_history.json",
+             "股票赵哥-日内": ROOT/"output"/"zhaoge_history.json"}
 
     @client.event
     async def on_ready():
-        ch = None
         for g in client.guilds:
             for c in g.text_channels:
-                if TARGET in c.name: ch = c; break
-        msgs = []
-        async for m in ch.history(limit=2000):
-            if m.author.id == AUTHOR_ID and m.content:
-                msgs.append(dict(id=m.id, ts=m.created_at.isoformat(), text=m.content))
-        msgs.reverse()
-        HIST.write_text(json.dumps(msgs, ensure_ascii=False))
-        print(f"① 消息存档: {len(msgs)} 条")
+                for key, path in CHANS.items():
+                    if key in c.name:
+                        msgs = []
+                        async for m in c.history(limit=3000):
+                            if m.author.id == AUTHOR_ID and m.content:
+                                msgs.append(dict(id=m.id, ts=m.created_at.isoformat(), text=m.content))
+                        msgs.reverse()
+                        path.write_text(json.dumps(msgs, ensure_ascii=False))
+                        print(f"① 消息存档 {key}: {len(msgs)} 条")
         await client.close()
 
     client.run(token, log_handler=None)
 
 
 def wanted_contracts():
-    """要归档K线的合约: 近35天信号里 BUY 的合约 + BUY_AMBIG 的 C/P 两腿。"""
+    """要归档K线的合约: enrich 近35天 BUY/BUY_AMBIG两腿 + andy 近35天入场合约。"""
     from enrich_parser import parse_signal, to_longport_symbol
     out = set()
     cutoff = date.today() - timedelta(days=35)
+    # andy 频道
+    try:
+        from backtest_andy import parse_entry, osi as andy_osi
+        for m in json.load(open(ROOT/"output"/"andy_history.json")):
+            d = datetime.fromisoformat(m["ts"]).date()
+            if d < cutoff: continue
+            e = parse_entry(m["text"], d)
+            if e: out.add(andy_osi(e))
+    except Exception as ex:
+        print(f"⚠️ andy合约收集失败: {ex}")
     for m in json.load(open(HIST)):
         ts = datetime.fromisoformat(m["ts"])
         d = ts.date()
@@ -133,7 +145,8 @@ def git_commit_push():
     def run(*a):
         return subprocess.run(a, cwd=ROOT, capture_output=True, text=True)
     run("git", "add", "-f", "output/enrich_history.json", "output/enrich_journal.jsonl",
-        "output/enrich_positions.json", "output/enrich_orders.csv")
+        "output/enrich_positions.json", "output/enrich_orders.csv",
+        "output/andy_history.json", "output/zhaoge_history.json")
     run("git", "add", "data/enrich_bars")
     if not run("git", "diff", "--cached", "--quiet").returncode:
         print("④ 无变化, 不提交"); return
