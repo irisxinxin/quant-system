@@ -194,8 +194,9 @@ def verify_paper_trading() -> bool:
 
 # ── 下单原语 (全部模拟盘) ──
 
-def _submit(osi: str, side_buy: bool, qty: int, price: float | None, tif_gtc=False, remark="enrich"):
-    """限价(有price)/市价(None)。返回 (ok, order_id或错误)。"""
+def _submit(osi: str, side_buy: bool, qty: int, price: float | None, tif_gtc=False,
+            remark="enrich", trigger: float | None = None):
+    """trigger→MIT触价市价 / price→LO限价 / 都无→MO市价。返回 (ok, order_id或错误)。"""
     from longport.openapi import OrderType, OrderSide, TimeInForceType
     try:
         kw = dict(symbol=osi,
@@ -203,7 +204,9 @@ def _submit(osi: str, side_buy: bool, qty: int, price: float | None, tif_gtc=Fal
                   submitted_quantity=Decimal(str(qty)),
                   time_in_force=TimeInForceType.GoodTilCanceled if tif_gtc else TimeInForceType.Day,
                   remark=remark)
-        if price is not None:
+        if trigger is not None:
+            kw.update(order_type=OrderType.MIT, trigger_price=Decimal(f"{trigger:.2f}"))
+        elif price is not None:
             kw.update(order_type=OrderType.LO, submitted_price=Decimal(f"{price:.2f}"))
         else:
             kw.update(order_type=OrderType.MO)
@@ -211,6 +214,51 @@ def _submit(osi: str, side_buy: bool, qty: int, price: float | None, tif_gtc=Fal
         return True, resp.order_id
     except Exception as e:
         return False, str(e)
+
+
+_MIT_OK = None   # None=未探测 / True=真实账户支持触价单 / False=模拟盘604050不支持
+
+
+def ensure_protection(positions: dict, osi: str, p: dict):
+    """给剩仓配保护腿(自适应):
+       ① 优先挂券商侧MIT止损(bot死了也在) — 真实账户支持
+       ② 模拟盘不支持MIT → 止盈挂券商侧限价(抓尖峰) + 止损靠轮询兜底"""
+    global _MIT_OK
+    remain = p.get("filled", 0) - p.get("sold", 0)
+    if remain <= 0 or p.get("avg", 0) <= 0:
+        return
+    if STOP_MULT > 0 and not p.get("stop_order_id") and _MIT_OK is not False:
+        trig = round(p["avg"] * STOP_MULT, 2)
+        ok, r = _submit(osi, side_buy=False, qty=remain, price=None, tif_gtc=True,
+                        remark="stop", trigger=trig)
+        if ok:
+            _MIT_OK = True
+            p["stop_order_id"], p["stop_qty"] = r, remain
+            log(f"🛡️ {osi} 券商侧止损已挂: {remain}张 触发${trig} (-{(1-STOP_MULT)*100:.0f}%)")
+            journal(ev="stop_place", osi=osi, trigger=trig, qty=remain, order_id=r)
+        elif "604050" in str(r) or "not supported" in str(r).lower():
+            _MIT_OK = False
+            log("ℹ️ 模拟盘不支持触价单 → 止损轮询兜底, 止盈挂券商侧限价 (真实账户会自动切回止损常驻)")
+        else:
+            log(f"⚠️ {osi} 止损挂单失败: {r}")
+    # 回退模式: 无券商侧止损 且 尚未减过仓 且 没挂止盈 → 挂止盈限价单(老架构, 抓尖峰)
+    if not p.get("stop_order_id") and not p.get("tp_order_id") and not p.get("reduced"):
+        tp_qty = max(1, remain // 2)
+        tp_px = round(p["avg"] * TP_MULT, 2)
+        ok, r = _submit(osi, side_buy=False, qty=tp_qty, price=tp_px, tif_gtc=True, remark="tp")
+        if ok:
+            p["tp_order_id"], p["tp_qty"] = r, tp_qty
+            log(f"🎯 {osi} 挂止盈: 卖{tp_qty}张 @ ${tp_px} (+{(TP_MULT-1)*100:.0f}%)")
+            journal(ev="tp_place", osi=osi, px=tp_px, qty=tp_qty, order_id=r)
+        else:
+            log(f"⚠️ {osi} 止盈挂单失败: {r} (靠轮询/出场跟随/到期强平)")
+    _save(POS_JSON, positions)
+
+
+def cancel_stop(p: dict):
+    if p.get("stop_order_id"):
+        _cancel(p["stop_order_id"])
+        p["stop_order_id"] = None
 
 
 def _cancel(order_id: str):
@@ -246,6 +294,7 @@ def close_position(positions: dict, osi: str, reason: str):
     if p.get("tp_order_id"):
         _cancel(p["tp_order_id"])
         p["tp_order_id"] = None
+    cancel_stop(p)                         # 撤券商侧止损, 防双卖
     if p["status"] == "pending" and p.get("entry_order_id"):
         _cancel(p["entry_order_id"])   # 未成交部分撤掉
     remain = p.get("filled", 0) - p.get("sold", 0)
@@ -272,15 +321,17 @@ def mirror_reduce(positions: dict, osi: str, level: str):
     if not p.get("reduced"):
         if remain >= 2:
             half = max(1, remain // 2)
+            cancel_stop(p)                 # 先撤止损防双卖, 卖完给剩仓重挂
             ok, r = _submit(osi, side_buy=False, qty=half, price=None, remark="mirror-scale")
             if ok:
                 p["sold"] = p.get("sold", 0) + half
                 p["reduced"] = True
-                log(f"🪞 {osi} 镜像减仓: 市价卖{half}张 (单{r}), 剩{remain-half}张挂止盈跑趋势")
+                log(f"🪞 {osi} 镜像减仓: 市价卖{half}张 (单{r}), 剩{remain-half}张继续跑")
                 journal(ev="mirror_sell", osi=osi, qty=half, order_id=r)
                 push_discord(f"🪞 enrich镜像减仓 {osi} 卖{half}张, 剩{remain-half}张跑趋势")
             else:
                 log(f"⚠️ {osi} 镜像减仓下单失败: {r}")
+            ensure_protection(positions, osi, p)  # 剩仓重配保护腿
             _save(POS_JSON, positions)
         else:                               # 只剩1张, 部分减也=全出
             close_position(positions, osi, "站长减仓(仅剩1张)")
@@ -310,39 +361,65 @@ def manage_positions(positions: dict):
                 push_discord(f"📥 enrich成交 {osi} ×{exq}张 @ ${exp} (成本${exp*100*exq:.0f})")
             if st == "Filled" or (st in ("Canceled", "Expired", "Rejected") and exq > 0):
                 p["status"] = "open"
-                tp_qty = max(1, p["filled"] // 2)
-                tp_px = round(p["avg"] * TP_MULT, 2)
-                ok, r = _submit(osi, side_buy=False, qty=tp_qty, price=tp_px, tif_gtc=True, remark="tp")
-                if ok:
-                    p["tp_order_id"], p["tp_qty"] = r, tp_qty
-                    log(f"🎯 {osi} 挂止盈: 卖{tp_qty}张 @ ${tp_px} (+{(TP_MULT-1)*100:.0f}%)")
-                    journal(ev="tp_place", osi=osi, px=tp_px, qty=tp_qty, order_id=r)
-                    push_discord(f"🎯 enrich止盈单已挂 {osi} 卖{tp_qty}张 @ ${tp_px}")
-                else:
-                    log(f"⚠️ {osi} 止盈挂单失败: {r} (剩靠出场跟随+到期强平)")
+                ensure_protection(positions, osi, p)   # 🛡️ MIT止损(真实账户)或止盈限价(模拟盘)
             elif st in ("Canceled", "Expired", "Rejected"):
                 log(f"🗑️ {osi} 入场未成交已失效 ({st})")
                 p["status"] = "closed"
             _save(POS_JSON, positions)
-        # ② 止盈单状态
+        # ② 券商侧止损单状态 (真实账户模式)
+        if p["status"] == "open" and p.get("stop_order_id"):
+            st, exq, exp = _order_state(p["stop_order_id"])
+            if st == "Filled":
+                p["sold"] = p.get("sold", 0) + p.get("stop_qty", 0)
+                p["stop_order_id"] = None
+                p["status"] = "closed"
+                log(f"🛑 {osi} 券商侧止损成交 {p.get('stop_qty')}张 @ ${exp}")
+                journal(ev="stop_fill", osi=osi, px=exp, qty=p.get("stop_qty"))
+                push_discord(f"🛑 enrich止损成交 {osi} ×{p.get('stop_qty')}张 @ ${exp}")
+                _save(POS_JSON, positions)
+                continue
+        # ③ 券商侧止盈单状态 (模拟盘回退模式)
         if p["status"] == "open" and p.get("tp_order_id"):
             st, exq, exp = _order_state(p["tp_order_id"])
             if st == "Filled":
                 p["sold"] = p.get("sold", 0) + p.get("tp_qty", 0)
                 p["tp_order_id"] = None
-                p["reduced"] = True          # 止盈成交=已完成首次减仓(先到先卖), 站长再喊部分减不重复卖
+                p["reduced"] = True          # 止盈成交=完成首次减仓(先到先卖)
                 log(f"💰 {osi} 止盈成交 {p.get('tp_qty')}张 @ ${exp}")
                 journal(ev="tp_fill", osi=osi, px=exp, qty=p.get("tp_qty"))
                 push_discord(f"💰 enrich止盈成交 {osi} ×{p.get('tp_qty')}张 @ ${exp} — 剩{p['filled']-p['sold']}张跑趋势")
                 if p["filled"] - p["sold"] <= 0:
                     p["status"] = "closed"
                 _save(POS_JSON, positions)
-        # ③ 权利金-50%止损 (轮询OPRA最新价; 回测: HOOD -41%→-17%, LLY +10%→+34%)
-        if STOP_MULT > 0 and p["status"] == "open" and p.get("avg", 0) > 0 \
-                and p.get("filled", 0) - p.get("sold", 0) > 0:
+            elif st in ("Canceled", "Expired", "Rejected"):
+                p["tp_order_id"] = None      # 挂单失效(人工撤/系统) → 重配保护
+                ensure_protection(positions, osi, p)
+        # ③b 轮询止盈 (真实账户模式: 无止盈挂单时)
+        remain = p.get("filled", 0) - p.get("sold", 0)
+        if p["status"] == "open" and not p.get("reduced") and not p.get("tp_order_id") \
+                and remain > 0 and p.get("avg", 0) > 0:
+            last = _option_last(osi)
+            if last is not None and last >= p["avg"] * TP_MULT:
+                half = max(1, remain // 2) if remain >= 2 else remain
+                cancel_stop(p)
+                ok, r = _submit(osi, side_buy=False, qty=half, price=None, remark="tp-poll")
+                if ok:
+                    p["sold"] = p.get("sold", 0) + half
+                    p["reduced"] = True
+                    log(f"💰 {osi} 轮询止盈: 最新${last}≥成本×{TP_MULT}, 市价卖{half}张")
+                    journal(ev="tp_poll_sell", osi=osi, last=last, qty=half, order_id=r)
+                    push_discord(f"💰 enrich止盈 {osi} ×{half}张 @≈${last} — 剩{remain-half}张跑趋势")
+                if remain - half <= 0:
+                    p["status"] = "closed"
+                else:
+                    ensure_protection(positions, osi, p)
+                _save(POS_JSON, positions)
+        # ④ 轮询止损 (模拟盘唯一止损通道; 真实账户仅当MIT挂失败时兜底)
+        if STOP_MULT > 0 and p["status"] == "open" and not p.get("stop_order_id") \
+                and p.get("avg", 0) > 0 and p.get("filled", 0) - p.get("sold", 0) > 0:
             last = _option_last(osi)
             if last is not None and last <= p["avg"] * STOP_MULT:
-                log(f"🛑 {osi} 权利金止损: 最新${last} ≤ 成本${p['avg']}×{STOP_MULT}")
+                log(f"🛑 {osi} 轮询止损: 最新${last} ≤ 成本${p['avg']}×{STOP_MULT}")
                 journal(ev="stop_trigger", osi=osi, last=last, avg=p["avg"], mult=STOP_MULT)
                 close_position(positions, osi, f"止损-{(1-STOP_MULT)*100:.0f}%")
                 continue
