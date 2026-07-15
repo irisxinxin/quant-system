@@ -19,7 +19,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>source /Users/xin/.longport_creds.env &amp;&amp; export ENRICH_LIVE=true OPTION_CONTRACTS=2 &amp;&amp; exec /usr/bin/caffeinate -s /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/discord_enrich_bot.py</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; export ENRICH_LIVE=true POSITION_USD=50000 &amp;&amp; exec /usr/bin/caffeinate -s /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/discord_enrich_bot.py</string>
     </array>
 
     <key>WorkingDirectory</key>

@@ -24,8 +24,8 @@ discord_enrich_bot.py — 监听 Discord #期权-波段-enrich 信号 → 解析
 环境: DISCORD_BOT_TOKEN(必须) / OPTION_CONTRACTS(默认1) / MAX_PREMIUM(默认5.0) / TP_MULT(默认2.0)
       / DISCORD_WEBHOOK_URL(可选回报推送)
 """
-import os, sys, json, base64
-from datetime import datetime, date
+import os, sys, json, base64, time
+from datetime import datetime, date, time as dtime
 from decimal import Decimal
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -46,7 +46,10 @@ CONTRACTS = int(os.environ.get("OPTION_CONTRACTS", "1"))
 MAX_PREMIUM = float(os.environ.get("MAX_PREMIUM", "5.0"))
 TP_MULT = float(os.environ.get("TP_MULT", "2.0"))     # 止盈倍数 (2.0 = +100%)
 STOP_MULT = float(os.environ.get("STOP_MULT", "0.7")) # 权利金止损 (0.7=-30%; 回测: -30%档唯一转正+躲跳空)
-LOTTO_CONTRACTS = int(os.environ.get("LOTTO_CONTRACTS", "1"))  # 歧义/lotto单张数(他都喊small, 减半)
+LOTTO_CONTRACTS = int(os.environ.get("LOTTO_CONTRACTS", "1"))  # 歧义/lotto单张数(POSITION_USD=0时用)
+POSITION_USD = float(os.environ.get("POSITION_USD", "0"))   # >0: 按金额定张数(张=预算//权利金/100), 替代固定张数
+LOTTO_USD = float(os.environ.get("LOTTO_USD", "0")) or (POSITION_USD / 5)  # lotto/歧义单预算(默认1/5)
+OI_CAP_PCT = 0.10   # 流动性帽: 张数≤未平仓量10% (防模拟盘假成交失真)
 ET = ZoneInfo("America/New_York")
 
 OUT = Path(__file__).parent / "output"
@@ -113,6 +116,35 @@ def resolve_direction(s):
         return inwin[0], f"C={pc} P={pp} vs 信号${s.limit_price} → {inwin[0]}"
     except Exception as e:
         return None, f"报价异常: {e}"
+
+
+def size_qty(premium: float, budget: float, osi: str, fallback: int) -> tuple:
+    """按预算算张数(带OI流动性帽)。返回 (张数, 说明)。budget<=0 → 固定张数fallback。"""
+    if budget <= 0:
+        return fallback, "固定张数"
+    qty = max(1, int(budget // (premium * 100)))
+    note = f"${budget:.0f}预算"
+    try:
+        global _quote_ctx
+        if _quote_ctx is None:
+            from longport.openapi import Config, QuoteContext
+            _quote_ctx = QuoteContext(Config.from_env())
+        o = _quote_ctx.option_quote([osi])
+        oi = int(o[0].open_interest or 0) if o else 0
+        if oi > 0:
+            cap = max(1, int(oi * OI_CAP_PCT))
+            if qty > cap:
+                note += f", OI帽{oi}×{OI_CAP_PCT:.0%}={cap}张(原{qty})"
+                qty = cap
+    except Exception:
+        note += ", OI未知"
+    return qty, note
+
+
+def us_rth_now() -> bool:
+    """美股常规时段(期权只在RTH交易): 周一-五 9:15-16:20 ET (留边)。"""
+    now = datetime.now(ET)
+    return now.weekday() < 5 and dtime(9, 15) <= now.time() <= dtime(16, 20)
 
 
 def log(msg: str):
@@ -239,13 +271,14 @@ def mirror_reduce(positions: dict, osi: str, level: str):
         p["status"] = "closed"; _save(POS_JSON, positions); return
     if not p.get("reduced"):
         if remain >= 2:
-            ok, r = _submit(osi, side_buy=False, qty=1, price=None, remark="mirror-scale")
+            half = max(1, remain // 2)
+            ok, r = _submit(osi, side_buy=False, qty=half, price=None, remark="mirror-scale")
             if ok:
-                p["sold"] = p.get("sold", 0) + 1
+                p["sold"] = p.get("sold", 0) + half
                 p["reduced"] = True
-                log(f"🪞 {osi} 镜像减仓: 市价卖1张 (单{r}), 剩{remain-1}张挂止盈跑趋势")
-                journal(ev="mirror_sell", osi=osi, qty=1, order_id=r)
-                push_discord(f"🪞 enrich镜像减仓 {osi} 卖1张, 剩{remain-1}张跑趋势")
+                log(f"🪞 {osi} 镜像减仓: 市价卖{half}张 (单{r}), 剩{remain-half}张挂止盈跑趋势")
+                journal(ev="mirror_sell", osi=osi, qty=half, order_id=r)
+                push_discord(f"🪞 enrich镜像减仓 {osi} 卖{half}张, 剩{remain-half}张跑趋势")
             else:
                 log(f"⚠️ {osi} 镜像减仓下单失败: {r}")
             _save(POS_JSON, positions)
@@ -264,6 +297,7 @@ def manage_positions(positions: dict):
     for osi, p in list(positions.items()):
         if p["status"] == "closed":
             continue
+        time.sleep(0.4)   # API限速保护 (429防护, 昨夜网络抖动后重试风暴教训)
         # ① 入场单状态
         if p["status"] == "pending":
             st, exq, exp = _order_state(p["entry_order_id"])
@@ -360,8 +394,8 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
             log(note); push_discord(note)
             return
         s.right, s.kind = side, "BUY"
-        qty = LOTTO_CONTRACTS               # lotto/歧义单: 减半仓位 (他自己都喊small)
-        log(f"🔍 报价消歧: {info} (按{qty}张跟)")
+        qty = LOTTO_CONTRACTS               # lotto/歧义单: 小仓 (他自己都喊small)
+        log(f"🔍 报价消歧: {info}")
         journal(ev="disambig", ticker=s.ticker, strike=s.strike, expiry=str(s.expiry), info=info, sig=one)
 
     # BUY
@@ -376,6 +410,12 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
     if s.limit_price > MAX_PREMIUM:
         log(f"🚫 权利金${s.limit_price}>上限${MAX_PREMIUM}, 拒绝: {one}")
         return
+
+    # 按金额定张数 (POSITION_USD>0时; lotto/歧义单用LOTTO_USD)
+    is_lotto = (qty == LOTTO_CONTRACTS and qty != CONTRACTS) or "lotto" in (s.size_tag or "").lower()
+    budget = LOTTO_USD if is_lotto else POSITION_USD
+    qty, size_note = size_qty(s.limit_price, budget, osi, fallback=qty)
+    log(f"📐 仓位: {qty}张 ({size_note})")
 
     plan = (f"{'🚀模拟盘' if LIVE else '🧪DRY-RUN'} enrich买入\n"
             f"  {s.ticker} {s.expiry} ${s.strike} {'CALL' if s.right=='C' else 'PUT'}  ({osi})\n"
@@ -427,7 +467,7 @@ def main():
 
     @tasks.loop(seconds=60)
     async def manager():
-        if LIVE:
+        if LIVE and us_rth_now():   # 期权只在美股RTH交易, 盘外不轮询(省API防429)
             try:
                 manage_positions(positions)
             except Exception as e:
