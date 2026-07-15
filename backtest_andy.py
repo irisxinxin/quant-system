@@ -259,8 +259,12 @@ def simulate(q, buy, all_exits, use_his_stop):
 
 
 def run(use_his_stop):
+    import os as _os
     q = QuoteContext(Config.from_env())
     buys, exits = load_events()
+    if _os.environ.get("SUBSET") == "1":   # 观察子集: 波段+明确止损
+        buys = [b for b in buys if not b["e"]["lotto"] and b["e"]["expiry"] > b["ts"].date() and b["e"]["stop"]]
+        print(f"(SUBSET=波段+明确止损: {len(buys)} 笔)")
     rows, skipped, nofill = [], [], 0
     for b in buys:
         r = simulate(q, b, exits, use_his_stop)

@@ -40,6 +40,7 @@ from notify import push_discord
 # ── 白名单 (2026-07-14 实测抓取, 锁ID) ──
 CHANNEL_ID = 1392361900217602108          # #期权-波段-enrich
 AUTHOR_ID  = 1392020997393088542          # 站长转发 (bot)
+ANDY_CHANNEL_ID = 1523725658935656448     # #andy-option — 仅观察记录, 绝不下单
 
 LIVE = os.environ.get("ENRICH_LIVE", "").lower() == "true"
 CONTRACTS = int(os.environ.get("OPTION_CONTRACTS", "1"))
@@ -433,6 +434,60 @@ def manage_positions(positions: dict):
                 pass
 
 
+# ── andy 前向观察 (只记录不下单; 子集=波段+明确止损, 回测PF1.28待前向验证) ──
+ANDY_TRACK = OUT / "andy_tracked.json"
+_andy_last_tk, _andy_last_ts = None, None
+
+
+def handle_andy(text: str, msg_ts, msg_id: int):
+    global _andy_last_tk, _andy_last_ts, _quote_ctx
+    from backtest_andy import parse_entry, osi as andy_osi, EXIT_FULL_RE, EXIT_PART_RE, BE_RE, TICKER_RE
+    tracked = _load(ANDY_TRACK)
+    up = " ".join(text.split())
+    e = parse_entry(text, msg_ts.date()) if "RedAlert" in text else None
+    if e:
+        sym = andy_osi(e)
+        subset = (not e["lotto"]) and e["expiry"] > msg_ts.date() and bool(e["stop"])
+        snap = {}
+        try:
+            if _quote_ctx is None:
+                from longport.openapi import Config, QuoteContext
+                _quote_ctx = QuoteContext(Config.from_env())
+            o = _quote_ctx.option_quote([sym])
+            if o:
+                snap = dict(bid=float(o[0].bid or 0), ask=float(o[0].ask or 0),
+                            last=float(o[0].last_done or 0), oi=int(o[0].open_interest or 0))
+        except Exception:
+            pass
+        journal(ev="andy_entry", osi=sym, ticker=e["ticker"], prem=e["prem"], stop=e["stop"],
+                expiry=str(e["expiry"]), lotto=e["lotto"], subset=subset, quote=snap, sig=up[:130])
+        _andy_last_tk, _andy_last_ts = e["ticker"], msg_ts
+        if subset:
+            tracked[e["ticker"]] = dict(osi=sym, ts=str(msg_ts), prem=e["prem"], stop=e["stop"])
+            _save(ANDY_TRACK, tracked)
+            log(f"📒 andy观察(不下单): {sym} @${e['prem']} SL${e['stop']} | 实时{snap}")
+            push_discord(f"📒 andy观察单 {e['ticker']} {e['expiry']} ${e['strike']}{'C' if e['right']=='C' else 'P'} "
+                         f"@${e['prem']} SL${e['stop']} (仅记录)")
+        else:
+            log(f"📒 andy跳过(lotto/0DTE/无止损): {up[:70]}")
+        return
+    # 出场/BE: 票名∩已跟踪票; 无票名→30分钟内最近提及票 (与回测同规则)
+    lv = "full" if EXIT_FULL_RE.search(up) else ("partial" if EXIT_PART_RE.search(up) else None)
+    be = bool(BE_RE.search(up))
+    mention = [x for x in TICKER_RE.findall(up) if x in tracked]
+    uniq = list(dict.fromkeys(mention))
+    if len(uniq) == 1:
+        _andy_last_tk, _andy_last_ts = uniq[0], msg_ts
+    if not lv and not be:
+        return
+    tk = uniq[0] if len(uniq) == 1 else (
+        _andy_last_tk if not uniq and _andy_last_tk and _andy_last_ts
+        and (msg_ts - _andy_last_ts).total_seconds() <= 1800 else None)
+    if tk:
+        journal(ev="andy_exit", ticker=tk, level=("be" if be else lv), sig=up[:130])
+        log(f"📒 andy出场[{'be' if be else lv}] {tk}: {up[:60]}")
+
+
 # ── 信号处理 ──
 
 def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
@@ -560,7 +615,15 @@ def main():
 
     @client.event
     async def on_message(msg):
-        if msg.channel.id != CHANNEL_ID or msg.author.id != AUTHOR_ID or not msg.content:
+        if msg.author.id != AUTHOR_ID or not msg.content:
+            return
+        if msg.channel.id == ANDY_CHANNEL_ID:      # andy: 只观察记录, 永不下单
+            try:
+                handle_andy(msg.content, msg.created_at, msg.id)
+            except Exception as e:
+                log(f"andy处理异常: {e}")
+            return
+        if msg.channel.id != CHANNEL_ID:
             return
         try:
             handle(msg.content, msg.created_at.date(), msg.id, seen, positions)
