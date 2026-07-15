@@ -51,7 +51,8 @@ LOTTO_CONTRACTS = int(os.environ.get("LOTTO_CONTRACTS", "1"))  # 歧义/lotto单
 POSITION_USD = float(os.environ.get("POSITION_USD", "0"))   # >0: 固定金额模式(旧)
 LOTTO_USD = float(os.environ.get("LOTTO_USD", "0")) or (POSITION_USD / 5)
 POSITION_FRAC = float(os.environ.get("POSITION_FRAC", "0"))  # >0: 按账户净值比例, 常规单=净值×此值
-LOTTO_FRAC = float(os.environ.get("LOTTO_FRAC", "0.3333"))   # lotto/歧义/0DTE=净值×此值
+LOTTO_FRAC = float(os.environ.get("LOTTO_FRAC", "0.3333"))   # lotto/歧义=净值×此值
+ZERO_DTE_FRAC = float(os.environ.get("ZERO_DTE_FRAC", "0.10"))  # 0DTE更小: 净值×1/10 (归零常态,限损)
 OI_CAP_PCT = 0.10   # 流动性帽: 张数≤未平仓量10% (防模拟盘假成交失真)
 ET = ZoneInfo("America/New_York")
 
@@ -564,11 +565,13 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
 
     # 按金额定张数 (POSITION_USD>0时; lotto/歧义单用LOTTO_USD)
     is_lotto = is_ambig or "lotto" in (s.size_tag or "").lower() or "scalp" in one.lower() or s.expiry == msg_date
+    is_0dte = s.expiry == msg_date
     if POSITION_FRAC > 0:
         eq = account_equity_usd()
         if eq:
-            budget = eq * (LOTTO_FRAC if is_lotto else POSITION_FRAC)
-            size_src = f"净值${eq:,.0f}×{LOTTO_FRAC if is_lotto else POSITION_FRAC:.2f}"
+            frac = ZERO_DTE_FRAC if is_0dte else (LOTTO_FRAC if is_lotto else POSITION_FRAC)
+            budget = eq * frac
+            size_src = f"净值${eq:,.0f}×{frac:.2f}" + ("(0DTE档)" if is_0dte else "")
         else:
             budget = LOTTO_USD if is_lotto else POSITION_USD
             size_src = "净值获取失败,退回固定额"
@@ -619,7 +622,8 @@ def main():
         if not verify_paper_trading():
             print("❌ 模拟盘三重校验不通过, 拒绝启动 LIVE"); sys.exit(1)
         if POSITION_FRAC > 0:
-            size_s = f"动态仓位: 常规=净值×{POSITION_FRAC:.2f} / lotto=净值×{LOTTO_FRAC:.2f} (OI帽{OI_CAP_PCT:.0%})"
+            size_s = (f"动态仓位: 常规=净值×{POSITION_FRAC:.2f} / lotto=×{LOTTO_FRAC:.2f} "
+                      f"/ 0DTE=×{ZERO_DTE_FRAC:.2f} (OI帽{OI_CAP_PCT:.0%})")
         elif POSITION_USD > 0:
             size_s = f"每信号${POSITION_USD:,.0f}/lotto${LOTTO_USD:,.0f} (OI帽{OI_CAP_PCT:.0%})"
         else:
