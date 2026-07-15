@@ -29,7 +29,8 @@ START, END = date(2026, 4, 15), date(2026, 7, 15)
 
 BUY_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:附近)?\s*(买了|买入|买|加了|加仓|加回了|加回|加|接了|接)")
 SELL_RE = re.compile(r"(出掉|出一半|平出|卖出|[^买]出|^出|平|清)")
-SELL_PX_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:附近)?\s*(?:出掉|出一半|平出|出|卖出|卖|平|清)")
+SELL_PX_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:附近)?\s*(?:再|也|先|在|把|都|全|继续)?\s*(?:出掉|出一半|出了|出点|平出|出|卖出|卖|平|清)")
+SELL_TAIL_RE = re.compile(r"^(\d+(?:\.\d+)?)\s*(?:附近)?\D{0,22}?(?:也|都|全)?出(?:了|掉)?\s*$")  # 动词后置: 91附近把...观察仓也出了
 TK_RE = re.compile(r"[A-Za-z]{2,6}")
 STOP = {"spx", "spy", "qqq", "ndx", "vix", "cpi", "ppi", "fomc", "gdp", "ipo", "etf", "ath",
         "ceo", "gtc", "ai", "cpu", "gpu", "nbsp", "amp", "http", "https", "png", "jpg", "com",
@@ -64,7 +65,7 @@ def parse_stream():
         tks = list(dict.fromkeys(tks))
         line = " ".join(raw.split())
         mb = BUY_RE.search(line)
-        is_sell = bool(SELL_PX_RE.search(line)) or bool(re.search(r"出掉|出一半|平出|清", line))
+        is_sell = bool(SELL_PX_RE.search(line)) or bool(SELL_TAIL_RE.search(line)) or bool(re.search(r"出掉|出一半|平出|清", line))
         if len(tks) != 1:
             if (mb or is_sell) and tks:
                 n_skip_multi += 1
@@ -73,9 +74,13 @@ def parse_stream():
             continue
         tk = tks[0]
         if is_sell and (not mb or line.index(SELL_PX_RE.search(line).group(0) if SELL_PX_RE.search(line) else "出") < (mb.start() if mb else 9999)):
-            if "三分之二" in line: frac = 2/3
+            vpos = line.find("出")
+            if "剩" in line and 0 <= line.find("剩") < vpos:
+                frac = 1.0                       # "剩下一半也出" = 清掉剩仓
+            elif "三分之二" in line: frac = 2/3
             elif "三分之一" in line: frac = 1/3
             elif "一半" in line: frac = 0.5
+            elif "出点" in line: frac = 1/3       # "出点" = 小幅减仓
             else: frac = 1.0
             ms = SELL_PX_RE.search(line)
             px = float(ms.group(1)) if ms else None
