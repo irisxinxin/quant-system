@@ -155,6 +155,24 @@ def load_events():
     return buys, exits
 
 
+
+def _bars_from_csv(sym):
+    import csv as _csv
+    from pathlib import Path as _P
+    f = _P(__file__).parent / "data" / "enrich_bars" / f"{sym}.csv"
+    if not f.exists():
+        return []
+    out = []
+    try:
+        with open(f, encoding="utf-8") as fh:
+            for r in _csv.DictReader(fh):
+                out.append(dict(ts=datetime.fromisoformat(r["ts"]), o=float(r["o"]),
+                                h=float(r["h"]), l=float(r["l"]), c=float(r["c"])))
+    except Exception:
+        return []
+    return sorted(out, key=lambda x: x["ts"])
+
+
 _cache = {}
 def bars(q, sym):
     if sym not in _cache:
@@ -165,6 +183,8 @@ def bars(q, sym):
                                  key=lambda r: r["ts"])
         except Exception:
             _cache[sym] = []
+        if not _cache[sym]:
+            _cache[sym] = _bars_from_csv(sym)   # 归档K线回退
     return _cache[sym]
 
 

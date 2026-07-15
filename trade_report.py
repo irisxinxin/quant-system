@@ -721,6 +721,55 @@ def render_html(pos_rows, closed, open_rounds, journal, andy_rows, file_rows, ma
         osis = ", ".join(f"{esc(r['osi'])}" for r in open_rounds)
         H.append(f"<div class='note'>进行中回合 {len(open_rounds)} 个 ({osis}) — 见〈当前持仓〉</div>")
 
+    # ── 信号源历史成绩 (逐笔回测) ──
+    hist = load_json(OUT / "signal_history.json", {})
+    H.append("<h2>📜 信号源历史成绩 <small>按跟单规则逐笔模拟 · 真实K线</small></h2>")
+    if not hist:
+        H.append("<div class='empty'>暂无 (跑一次 python3 signal_history.py 生成)</div>")
+    for src_key, src_name, rule in (
+            ("enrich", "enrich (实盘同款规则: 2张·止盈2x·镜像·止损-30%)", ""),
+            ("andy", "andy 波段+止损子集 (他的止损+BE·$1万/笔)", "")):
+        rows_h = hist.get(src_key) or []
+        if not rows_h:
+            continue
+        done = [r for r in rows_h if r.get("status") in ("closed", "open")]
+        skipped_n = len(rows_h) - len(done)
+        tot = sum(r.get("pnl", 0) for r in done)
+        cost_sum = sum(r.get("cost", 0) for r in done) or 1
+        wins = sum(1 for r in done if r.get("pnl", 0) > 0)
+        H.append(f"<div class='card'><div class='head'><span class='title'>{esc(src_name)}</span>"
+                 f"{pnl_html(tot, tot / cost_sum * 100, big=True)}</div>")
+        H.append(f"<div class='sub'>可测 {len(done)} 笔 (胜 {wins} / 负 {len(done)-wins})"
+                 f" · 无数据/未成交 {skipped_n} 笔 (详见折叠)"
+                 f" · 数据截至 {esc(str(hist.get('generated', ''))[:16])}</div>")
+        if done:
+            H.append("<div class='wrap'><table><tr><th>日期 SGT</th><th>合约</th>"
+                     "<th class='r'>入场</th><th>出场路径</th><th class='r'>盈亏</th></tr>")
+            for r in sorted(done, key=lambda x: x.get("ts", "")):
+                dt = parse_ts_any(r.get("ts"), "UTC")
+                sells = r.get("sells") or []
+                path = "; ".join(f"{s['qty']:g}@{s['px']:g}·{str(s['why'])[:6]}" for s in sells[:3])
+                openmark = " <span class='tag t-watch'>持仓中</span>" if r["status"] == "open" else ""
+                H.append(f"<tr><td class='num'>{esc(fmt_sgt(dt))}</td>"
+                         f"<td><b>{esc(r.get('label', ''))}</b>{openmark}</td>"
+                         f"<td class='r num'>{esc(r.get('entry', r.get('signal_px', '')))}</td>"
+                         f"<td class='wrapcell dim'>{esc(path)}</td>"
+                         f"<td class='r'>{pnl_html(r.get('pnl'), r.get('pct'))}</td></tr>")
+            H.append("</table></div>")
+        sk = [r for r in rows_h if r.get("status") not in ("closed", "open")]
+        if sk:
+            H.append("<details><summary class='dim' style='cursor:pointer;font-size:12px'>"
+                     f"未成交/撤单/无K线数据 {len(sk)} 笔 (点开)</summary>"
+                     "<div class='wrap' style='margin-top:6px'><table>")
+            ST = {"no_fill": "限价未触及", "cancelled": "先出场撤单", "no_data": "K线已被长桥清除"}
+            for r in sorted(sk, key=lambda x: x.get("ts", "")):
+                dt = parse_ts_any(r.get("ts"), "UTC")
+                H.append(f"<tr><td class='num'>{esc(fmt_sgt(dt))}</td>"
+                         f"<td class='dim'>{esc(r.get('label', ''))}</td>"
+                         f"<td class='dim'>{esc(ST.get(r.get('status'), r.get('status')))}</td></tr>")
+            H.append("</table></div></details>")
+        H.append("</div>")
+
     # ── andy 观察账本 ──
     H.append("<h2>📒 andy 观察账本 <small>波段+止损子集 · 只记录不下单</small></h2>")
     if not andy_rows:

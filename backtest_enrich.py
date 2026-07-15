@@ -56,6 +56,24 @@ def load_events():
     return buys, exits
 
 
+
+def _bars_from_csv(sym):
+    import csv as _csv
+    from pathlib import Path as _P
+    f = _P(__file__).parent / "data" / "enrich_bars" / f"{sym}.csv"
+    if not f.exists():
+        return []
+    out = []
+    try:
+        with open(f, encoding="utf-8") as fh:
+            for r in _csv.DictReader(fh):
+                out.append(dict(ts=datetime.fromisoformat(r["ts"]), o=float(r["o"]),
+                                h=float(r["h"]), l=float(r["l"]), c=float(r["c"])))
+    except Exception:
+        return []
+    return sorted(out, key=lambda x: x["ts"])
+
+
 _bars_cache = {}
 def bars(q, osi):
     if osi in _bars_cache:
@@ -67,6 +85,8 @@ def bars(q, osi):
         out.sort(key=lambda x: x["ts"])
     except Exception:
         out = []
+    if not out:
+        out = _bars_from_csv(osi)   # 长桥清库后用归档K线
     _bars_cache[osi] = out
     return out
 
