@@ -40,8 +40,22 @@ def _pack(row, r, qty):
     return row
 
 
+def _resolve_ambig_hist(q, E, s, ts):
+    """歧义单历史消歧: 信号后第一根bar开盘价, C/P谁落在信号价0.4~2.2x窗口(唯一)→方向。"""
+    cand = {}
+    for r in ("C", "P"):
+        osi = f"{s.ticker}{s.expiry:%y%m%d}{r}{int(round(s.strike * 1000)):06d}.US"
+        B = E.bars(q, osi)
+        nxt = next((b for b in B if b["ts"] > ts), None)
+        if nxt and nxt["o"] > 0:
+            cand[r] = (osi, nxt["o"])
+    inwin = [r for r, (_, p) in cand.items() if 0.4 <= p / s.limit_price <= 2.2]
+    return inwin[0] if len(inwin) == 1 else None
+
+
 def enrich_rows(q):
     import backtest_enrich as E
+    from enrich_parser import parse_signal
     buys, exits = E.load_events()
     rows = []
     for b in buys:
@@ -50,6 +64,38 @@ def enrich_rows(q):
                    label=f"{s.ticker} {s.expiry:%m/%d} ${s.strike:g}{s.right}",
                    signal_px=s.limit_price, expiry=str(s.expiry))
         rows.append(_pack(row, E.simulate(q, b, exits), E.CONTRACTS))
+    # ── 歧义单(BUY_AMBIG): 与实盘同款消歧后纳入, lotto口径1张 (漏掉=美化历史, IBM 7/13教训) ──
+    msgs = json.load(open(OUT / "enrich_history.json"))
+    seen = set()
+    from datetime import datetime as _dt, timezone as _tz
+    for m in msgs:
+        ts = _dt.fromisoformat(m["ts"])
+        ts = ts.replace(tzinfo=_tz.utc) if ts.tzinfo is None else ts
+        s = parse_signal(m["text"], ts.date())
+        if s.kind != "BUY_AMBIG" or s.limit_price > 5.0:
+            continue
+        key = f"{s.ticker}{s.expiry}{s.strike}:{ts.date()}"
+        if key in seen:
+            continue
+        seen.add(key)
+        row = dict(src="enrich", ts=ts.isoformat(), ticker=s.ticker,
+                   label=f"{s.ticker} {s.expiry:%m/%d} ${s.strike:g}?(歧义)",
+                   signal_px=s.limit_price, expiry=str(s.expiry))
+        side = _resolve_ambig_hist(q, E, s, ts)
+        if side is None:
+            row.update(status="no_data", note="歧义无法消歧/无K线")
+            rows.append(row); continue
+        s.kind, s.right = "BUY", side
+        row["label"] = f"{s.ticker} {s.expiry:%m/%d} ${s.strike:g}{side}·歧义"
+        import backtest_enrich as E2
+        old_n = E2.CONTRACTS
+        E2.CONTRACTS = 1                    # lotto口径1张
+        try:
+            from enrich_parser import to_longport_symbol
+            r = E2.simulate(q, dict(ts=ts, osi=to_longport_symbol(s), sig=s), E.load_events()[1])
+        finally:
+            E2.CONTRACTS = old_n
+        rows.append(_pack(row, r, 1))
     return rows
 
 
