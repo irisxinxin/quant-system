@@ -89,6 +89,12 @@ def parse_signal(text: str, msg_date: date) -> Signal:
 
     tickers = [x for x in TICKER_RE.findall(t) if x not in NOT_TICKER]
     if not tickers:
+        # 无票名的全局出场令: "All cash now" / "Down to runners on all" / "Closing everything"
+        if not EXIT_EXEMPT_RE.search(t):
+            if re.search(r"\ball\s+cash\b|\ball\s+out\b|\bclos(?:e|ing)\s+everything\b|\bflat\s+now\b", t, re.I):
+                return Signal(kind="EXIT", ticker="*", exit_level="full", reason="全局清仓令(无票名)", raw=raw)
+            if re.search(r"down\s+to\s+runners\s+on\s+all|trimm?(?:ing)?\s+(?:all|everything)", t, re.I):
+                return Signal(kind="EXIT", ticker="*", exit_level="partial", reason="全局减仓令(无票名)", raw=raw)
         return Signal(kind="NOISE", reason="无ticker", raw=raw)
 
     cp = CALLPUT_RE.search(t)

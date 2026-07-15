@@ -560,7 +560,10 @@ def bump_last(ch_id, msg_id):
 
 # ── 信号处理 ──
 
-def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
+STALE_BUY_SEC = int(os.environ.get("STALE_BUY_SEC", "180"))   # 买入信号迟到>此秒数→只提醒(scalp几分钟就死)
+
+
+def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict, msg_dt=None):
     s = parse_signal(text, msg_date)
     if s.kind == "NOISE":
         return
@@ -568,7 +571,8 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
 
     if s.kind == "EXIT":
         held = [osi for osi, p in positions.items()
-                if p["status"] in ("pending", "open") and p.get("ticker") == s.ticker]
+                if p["status"] in ("pending", "open")
+                and (s.ticker == "*" or p.get("ticker") == s.ticker)]
         if not held or not LIVE:
             note = f"🟠 enrich出场提醒 [{s.ticker}·{s.exit_level}] (无持仓/DRY_RUN): {one}"
             log(note); push_discord(note)
@@ -586,6 +590,16 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict):
             else:                           # partial / vague → 镜像
                 mirror_reduce(positions, osi, s.exit_level)
         return
+
+    # 🚫 迟到闸门: 信号已过时效的买入绝不进场 (用户铁律; MSFT -42%教训)
+    if msg_dt is not None:
+        from datetime import timezone as _tz
+        age = (datetime.now(_tz.utc) - msg_dt).total_seconds()
+        if age > STALE_BUY_SEC:
+            note = f"🚫 信号已过时效 {age/60:.0f}分钟, 按规则不进场(仅提醒): {one}"
+            log(note); push_discord(note)
+            journal(ev="stale_buy_skipped", age_sec=int(age), sig=one)
+            return
 
     # BUY_AMBIG: 缺方向 → 实时报价消歧 (call/put价差大, 信号权利金只会匹配一边)
     qty = CONTRACTS
@@ -723,7 +737,7 @@ def main():
         if msg.channel.id != CHANNEL_ID:
             return
         try:
-            handle(msg.content, msg.created_at.date(), msg.id, seen, positions)
+            handle(msg.content, msg.created_at.date(), msg.id, seen, positions, msg_dt=msg.created_at)
         except Exception as e:
             log(f"处理消息异常: {e}")
 
