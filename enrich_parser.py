@@ -60,7 +60,7 @@ EXIT_FULL_RE = re.compile(
 EXIT_PARTIAL_RE = re.compile(
     r"scal(?:e|ing)\s+(?:out|down)|\btrim\w*\b|\b1/[234]\b|\bhalf\b|"
     r"selling\s+\d{1,2}%|\bdown\s+to\b|taking\s+(?:1/[234]|some|partial)", re.I)
-EXIT_EXEMPT_RE = re.compile(r"\boutside\s+of\b|\bexcept\b|\bother\s+than\b", re.I)
+EXIT_EXEMPT_RE = re.compile(r"\boutside\s+of\b|\bexcept\b|\bother\s+than\b|\bbesides\b", re.I)
 
 
 def _exit_level(t: str, tickers: list) -> str:
