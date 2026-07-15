@@ -170,8 +170,8 @@ def simulate(q, buy, all_exits):
             elif b["h"] >= tp:
                 sells.append((tp, 1, "止盈+100%")); remain -= 1; reduced = True
     if remain > 0:
-        from datetime import date as _date
-        if expiry >= _date(2026, 7, 15):    # 还没到期 → 持仓中, 按最后bar收盘mark(未实现)
+        # 到期与否按【美东日期】判 (Mac在SGT, 到期日ET下午盘=SGT翌日凌晨, 用本地日期会把仍在交易的持仓假归零)
+        if expiry >= datetime.now(ET).date():    # 还没到期 → 持仓中, 按最后bar收盘mark(未实现)
             sells.append((B[-1]["c"], remain, "持仓中(市价mark)"))
         else:
             sells.append((0.0, remain, "到期归零兜底"))

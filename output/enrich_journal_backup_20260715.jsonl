@@ -1,0 +1,21 @@
+{"ev": "entry_submit", "osi": "HOOD260724C125000.US", "ticker": "HOOD", "right": "C", "strike": 125.0, "expiry": "2026-07-24", "limit": 1.5, "qty": 2, "order_id": "1261773012991016960", "sig": "$HOOD - 7/24 $125 calls $1.50 2% position @everyone $alert", "ts": "2026-07-15T03:55:29"}
+{"ev": "entry_fill", "osi": "HOOD260724C125000.US", "qty": 2, "avg": 1.5, "ts": "2026-07-15T03:55:32"}
+{"ev": "tp_place", "osi": "HOOD260724C125000.US", "px": 3.0, "qty": 1, "order_id": "1261773027582996480", "ts": "2026-07-15T03:55:32"}
+{"ev": "entry_submit", "osi": "HOOD260724C125000.US", "ticker": "HOOD", "right": "C", "strike": 125.0, "expiry": "2026-07-24", "limit": 1.5, "qty": 200, "order_id": "1", "sig": "$HOOD - 7/24 $125 calls $1.50 2% position", "ts": "2026-07-15T10:12:39"}
+{"ev": "exit_signal", "ticker": "HOOD", "level": "partial", "held": 1, "sig": "$HOOD - Scaling out 1/2 here!", "ts": "2026-07-15T10:12:39"}
+{"ev": "mirror_sell", "osi": "HOOD260724C125000.US", "qty": 100, "order_id": "2", "ts": "2026-07-15T10:12:39"}
+{"ev": "entry_submit", "osi": "HOOD260724C125000.US", "ticker": "HOOD", "right": "C", "strike": 125.0, "expiry": "2026-07-24", "limit": 1.5, "qty": 200, "order_id": "1", "sig": "$HOOD - 7/24 $125 calls $1.50 2% position", "ts": "2026-07-15T10:29:54"}
+{"ev": "entry_fill", "osi": "HOOD260724C125000.US", "qty": 200, "avg": 1.5, "ts": "2026-07-15T10:29:55"}
+{"ev": "stop_place", "osi": "HOOD260724C125000.US", "trigger": 1.05, "qty": 200, "order_id": "2", "ts": "2026-07-15T10:29:55"}
+{"ev": "tp_poll_sell", "osi": "HOOD260724C125000.US", "last": 3.1, "qty": 100, "order_id": "3", "ts": "2026-07-15T10:29:55"}
+{"ev": "stop_place", "osi": "HOOD260724C125000.US", "trigger": 1.05, "qty": 100, "order_id": "4", "ts": "2026-07-15T10:29:55"}
+{"ev": "stop_fill", "osi": "HOOD260724C125000.US", "px": 1.05, "qty": 100, "ts": "2026-07-15T10:29:56"}
+{"ev": "stop_place", "osi": "IBM260717C310000.US", "trigger": 0.93, "qty": 2, "order_id": "5", "ts": "2026-07-15T10:29:56"}
+{"ev": "exit_signal", "ticker": "IBM", "level": "partial", "held": 1, "sig": "$IBM - Scaling out 1/2 here!", "ts": "2026-07-15T10:29:56"}
+{"ev": "mirror_sell", "osi": "IBM260717C310000.US", "qty": 1, "order_id": "6", "ts": "2026-07-15T10:29:56"}
+{"ev": "stop_place", "osi": "IBM260717C310000.US", "trigger": 0.93, "qty": 1, "order_id": "7", "ts": "2026-07-15T10:29:56"}
+{"ev": "entry_submit", "osi": "HOOD260724C125000.US", "ticker": "HOOD", "right": "C", "strike": 125.0, "expiry": "2026-07-24", "limit": 1.5, "qty": 200, "order_id": "1", "sig": "$HOOD - 7/24 $125 calls $1.50 2% position", "ts": "2026-07-15T10:33:06"}
+{"ev": "entry_fill", "osi": "HOOD260724C125000.US", "qty": 200, "avg": 1.5, "ts": "2026-07-15T10:33:06"}
+{"ev": "tp_place", "osi": "HOOD260724C125000.US", "px": 3.0, "qty": 100, "order_id": "2", "ts": "2026-07-15T10:33:06"}
+{"ev": "stop_trigger", "osi": "HOOD260724C125000.US", "last": 1.0, "avg": 1.5, "mult": 0.7, "ts": "2026-07-15T10:33:07"}
+{"ev": "close_sell", "osi": "HOOD260724C125000.US", "qty": 200, "reason": "止损-30%", "order_id": "3", "ok": true, "ts": "2026-07-15T10:33:07"}

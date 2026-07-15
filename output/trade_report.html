@@ -1,0 +1,59 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>enrich 交易记录报告</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+           background: #0f1419; color: #d8dee5; padding: 14px; font-size: 14px; }
+    h1 { font-size: 18px; margin: 6px 0 2px; color: #fff; }
+    .sub { color: #7d8590; font-size: 12px; margin-bottom: 14px; }
+    h2 { font-size: 15px; margin: 20px 0 8px; color: #79b8ff;
+         border-left: 3px solid #79b8ff; padding-left: 8px; }
+    .wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { border-collapse: collapse; width: 100%; min-width: 480px; font-size: 13px; }
+    th, td { border-bottom: 1px solid #263040; padding: 6px 8px; text-align: left;
+             white-space: nowrap; }
+    th { color: #7d8590; font-weight: 600; background: #161c26; position: sticky; top: 0; }
+    td.wrapcell { white-space: normal; min-width: 160px; }
+    .pos { color: #56d364; } .neg { color: #f85149; } .dim { color: #7d8590; }
+    .tag { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 11px; }
+    .t-open { background: #1b3a2a; color: #56d364; }
+    .t-watch { background: #3a2f1b; color: #e3b341; }
+    .t-done { background: #26303c; color: #9aa7b5; }
+    .card { background: #161c26; border: 1px solid #263040; border-radius: 8px;
+            padding: 10px 12px; margin-bottom: 10px; }
+    .note { color: #e3b341; font-size: 12px; margin: 6px 0; }
+    .empty { color: #7d8590; padding: 8px 2px; }
+    .foot { color: #566270; font-size: 11px; margin-top: 22px; line-height: 1.6; }
+    @media (max-width: 480px) { body { padding: 8px; } table { font-size: 12px; } }
+    </style></head><body>
+<h1>enrich 交易记录报告</h1>
+<div class='sub'>生成于 2026-07-15 15:40:20 SGT (ET 07-15 03:40) · LongPort 模拟盘</div>
+<h2>enrich 当前持仓</h2>
+<div class='wrap'><table><tr><th>票</th><th>合约</th><th>状态</th><th>持有</th><th>成本</th><th>市值成本</th><th>到期</th><th>挂单状态</th></tr>
+<tr><td><b>HOOD</b></td><td>HOOD260724C125000.US</td><td><span class='tag t-open'>持仓中</span></td><td>2 张</td><td>@1.5</td><td>$300</td><td>2026-07-24</td><td class='wrapcell'>止盈无挂单(轮询) @3 / 止损无挂单(轮询) @≈1.05(理论)</td></tr>
+</table></div>
+<h2>enrich 已平仓回合</h2>
+<div class='empty'>暂无已平仓回合</div>
+<div class='note'>进行中/未闭合回合 1 个: HOOD260724C125000.US (成交2/卖0) — 以〈当前持仓〉为准</div>
+<h2>enrich 事件流 (最近 30 条)</h2>
+<div class='wrap'><table><tr><th>时间 (SGT)</th><th>事件</th><th>ET</th></tr>
+<tr><td>07-15 03:55:29</td><td class='wrapcell'>入场挂单 HOOD260724C125000.US 2张 @限价1.5</td><td class='dim'>(ET 07-14 15:55)</td></tr>
+<tr><td>07-15 03:55:32</td><td class='wrapcell'>入场成交 HOOD260724C125000.US 2张 @均价1.5</td><td class='dim'>(ET 07-14 15:55)</td></tr>
+<tr><td>07-15 03:55:32</td><td class='wrapcell'>挂止盈单 HOOD260724C125000.US 1张 @3.0</td><td class='dim'></td></tr>
+</table></div>
+<h2>andy 观察账本 (subset 单)</h2>
+<div class='empty'>暂无观察记录</div>
+<h2>数据文件索引</h2>
+<div class='wrap'><table><tr><th>文件</th><th>规模</th><th>说明</th></tr>
+<tr><td>output/enrich_journal.jsonl</td><td>3 行</td><td class='wrapcell'>enrich bot 结构化事件流 (JSONL, 回合重建原料)</td></tr>
+<tr><td>output/enrich_positions.json</td><td>1 个合约</td><td class='wrapcell'>当前持仓状态快照 (bot 自维护)</td></tr>
+<tr><td>output/enrich_orders.csv</td><td>174 笔</td><td class='wrapcell'>LongPort 券商订单流水 (成交价真值来源)</td></tr>
+<tr><td>output/andy_tracked.json</td><td>文件不存在</td><td class='wrapcell'>andy 观察中合约 (subset 单)</td></tr>
+<tr><td>output/enrich_history.json</td><td>1479 条</td><td class='wrapcell'>enrich 频道 Discord 消息存档 (UTC)</td></tr>
+<tr><td>output/andy_history.json</td><td>477 条</td><td class='wrapcell'>andy 频道 Discord 消息存档 (UTC)</td></tr>
+<tr><td>output/zhaoge_history.json</td><td>2034 条</td><td class='wrapcell'>zhaoge 频道 Discord 消息存档 (UTC)</td></tr>
+<tr><td>data/enrich_bars/</td><td>64 个合约</td><td class='wrapcell'>期权 1m K线缓存 (每合约一个 csv, ts=UTC)</td></tr>
+</table></div>
+<div class='foot'>时区说明: 报告统一 SGT (Asia/Singapore); ET 为美东时间 (America/New_York, zoneinfo 换算, 自动处理夏令时)。<br>卖出成交价优先取 enrich_orders.csv 的 executed_price 真值; journal 缺价时回退, 估算价以 ≈ 标注。所有交易均为 LongPort 模拟盘。</div>
+</body></html>

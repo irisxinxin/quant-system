@@ -62,7 +62,7 @@ JOURNAL = OUT / "enrich_journal.jsonl"   # 结构化交易日志 (回测原料, 
 
 def journal(**kv):
     """追加一行结构化事件 (JSONL)。永不抛错。"""
-    kv["ts"] = datetime.now().isoformat(timespec="seconds")
+    kv["ts"] = datetime.now(ZoneInfo("Asia/Singapore")).isoformat(timespec="seconds")
     try:
         OUT.mkdir(exist_ok=True)
         with open(JOURNAL, "a") as f:
