@@ -51,7 +51,8 @@ LIVE = os.environ.get("ENRICH_LIVE", "").lower() == "true"
 CONTRACTS = int(os.environ.get("OPTION_CONTRACTS", "1"))
 MAX_PREMIUM = float(os.environ.get("MAX_PREMIUM", "5.0"))
 TP_MULT = float(os.environ.get("TP_MULT", "2.0"))     # 止盈倍数 (2.0 = +100%)
-STOP_MULT = float(os.environ.get("STOP_MULT", "0.7")) # 权利金止损 (0.7=-30%; 回测: -30%档唯一转正+躲跳空)
+STOP_MULT = float(os.environ.get("STOP_MULT", "0.7")) # lotto止损 (0.7=-30%; lotto会归零必须止损)
+SWING_STOP_MULT = float(os.environ.get("SWING_STOP_MULT", "0.5"))  # 波段单兜底 (-50%; 抗回撤跟他出场, 网格+30.3%)
 LOTTO_CONTRACTS = int(os.environ.get("LOTTO_CONTRACTS", "1"))  # 歧义/lotto单张数(POSITION_USD=0时用)
 POSITION_USD = float(os.environ.get("POSITION_USD", "0"))   # >0: 固定金额模式(旧)
 LOTTO_USD = float(os.environ.get("LOTTO_USD", "0")) or (POSITION_USD / 5)
@@ -251,14 +252,15 @@ def ensure_protection(positions: dict, osi: str, p: dict):
     remain = p.get("filled", 0) - p.get("sold", 0)
     if remain <= 0 or p.get("avg", 0) <= 0:
         return
-    if STOP_MULT > 0 and not p.get("stop_order_id") and _MIT_OK is not False:
-        trig = round(p["avg"] * STOP_MULT, 2)
+    _sm = p.get("stop_mult", STOP_MULT)
+    if _sm > 0 and not p.get("stop_order_id") and _MIT_OK is not False:
+        trig = round(p["avg"] * _sm, 2)
         ok, r = _submit(osi, side_buy=False, qty=remain, price=None, tif_gtc=True,
                         remark="stop", trigger=trig)
         if ok:
             _MIT_OK = True
             p["stop_order_id"], p["stop_qty"] = r, remain
-            log(f"🛡️ {osi} 券商侧止损已挂: {remain}张 触发${trig} (-{(1-STOP_MULT)*100:.0f}%)")
+            log(f"🛡️ {osi} 券商侧止损已挂: {remain}张 触发${trig} (-{(1-_sm)*100:.0f}%)")
             journal(ev="stop_place", osi=osi, trigger=trig, qty=remain, order_id=r)
         elif "604050" in str(r) or "not supported" in str(r).lower():
             _MIT_OK = False
@@ -439,13 +441,14 @@ def manage_positions(positions: dict):
                     ensure_protection(positions, osi, p)
                 _save(POS_JSON, positions)
         # ④ 轮询止损 (模拟盘唯一止损通道; 真实账户仅当MIT挂失败时兜底)
-        if STOP_MULT > 0 and p["status"] == "open" and not p.get("stop_order_id") \
+        _sm = p.get("stop_mult", STOP_MULT)
+        if _sm > 0 and p["status"] == "open" and not p.get("stop_order_id") \
                 and p.get("avg", 0) > 0 and p.get("filled", 0) - p.get("sold", 0) > 0:
             last = _option_last(osi)
-            if last is not None and last <= p["avg"] * STOP_MULT:
-                log(f"🛑 {osi} 轮询止损: 最新${last} ≤ 成本${p['avg']}×{STOP_MULT}")
-                journal(ev="stop_trigger", osi=osi, last=last, avg=p["avg"], mult=STOP_MULT)
-                close_position(positions, osi, f"止损-{(1-STOP_MULT)*100:.0f}%")
+            if last is not None and last <= p["avg"] * _sm:
+                log(f"🛑 {osi} 轮询止损: 最新${last} ≤ 成本${p['avg']}×{_sm}")
+                journal(ev="stop_trigger", osi=osi, last=last, avg=p["avg"], mult=_sm)
+                close_position(positions, osi, f"止损-{(1-_sm)*100:.0f}%")
                 continue
         # ④ 到期日强平 (15:40 ET 后)
         if p["status"] in ("pending", "open"):
@@ -721,6 +724,7 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
             positions[osi] = dict(ticker=s.ticker, entry_order_id=r, qty=qty,
                                   limit=s.limit_price, expiry=s.expiry.isoformat(),
                                   filled=0, sold=0, avg=0.0, tp_order_id=None, tp_qty=0,
+                                  stop_mult=(STOP_MULT if is_lotto else SWING_STOP_MULT),
                                   status="pending", opened=str(msg_date))
             _save(POS_JSON, positions)
             plan += f"\n  ✅已提交 order_id={r} (成交后自动挂+{(TP_MULT-1)*100:.0f}%止盈)"
@@ -754,7 +758,7 @@ def main():
             size_s = f"每信号${POSITION_USD:,.0f}/lotto${LOTTO_USD:,.0f} (OI帽{OI_CAP_PCT:.0%})"
         else:
             size_s = f"每信号{CONTRACTS}张"
-        log(f"🚀 LIVE(模拟盘): {size_s} | 权利金上限${MAX_PREMIUM} | 止盈+{(TP_MULT-1)*100:.0f}%卖半仓 | 镜像出场+止损-{(1-STOP_MULT)*100:.0f}% | 到期强平")
+        log(f"🚀 LIVE(模拟盘): {size_s} | 权利金上限${MAX_PREMIUM} | 止盈+{(TP_MULT-1)*100:.0f}%卖半仓 | 镜像出场 | 止损: lotto-{(1-STOP_MULT)*100:.0f}%/波段-{(1-SWING_STOP_MULT)*100:.0f}%兜底 | 到期强平")
     else:
         log("🧪 DRY_RUN: 只解析播报, 不下单")
 

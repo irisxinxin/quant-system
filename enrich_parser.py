@@ -45,7 +45,7 @@ CALLPUT_RE = re.compile(r"\b(calls?|puts?)\b", re.I)
 EXIT_RE = re.compile(
     r"\b(scal(?:e|ing)\s+(?:out|down)|all\s+out|closing|close\s+out|trim|"
     r"sell(?:ing)?|sold|secure\s+profits?|lock(?:ing)?\s+(?:in\s+)?(?:those\s+)?gains|"
-    r"take\s+(?:the\s+)?(?:profits?|gains)|stopped\s+out|cutting)\b", re.I)
+    r"take\s+(?:the\s+)?(?:profits?|gains)|stopped\s+out|cutting|lock\s+(?:them|it|em)\s+all)\b", re.I)
 # 噪音标志 (整条丢弃, 优先级最高)
 NOISE_RE = re.compile(r"\b(watchlist|recap|levels\s+for\s+the\s+day|mentorship)\b", re.I)
 SIZE_RE = re.compile(r"\b(lotto|small|starter|light)\b|(\d{1,2})%\s*(?:position|starter)?", re.I)
@@ -56,7 +56,7 @@ NOT_TICKER = {"DTE", "EMA", "ITM", "OTM", "ATM", "PDH", "PMH", "PWH", "EOD", "HT
 # 出场分级 (镜像跟单用)
 EXIT_FULL_RE = re.compile(
     r"\ball\s+out\b|\bclos(?:e|ing|ed)\b|\bcutting\b|\bstopped(?:\s+out)?\b|\bflat\b|"
-    r"\bsold\s+(?:the\s+)?rest\b|\bselling\s+everything\b", re.I)
+    r"\bsold\s+(?:the\s+)?rest\b|\bselling\s+everything\b|\block\s+(?:them|it|em)\s+all\b", re.I)
 EXIT_PARTIAL_RE = re.compile(
     r"scal(?:e|ing)\s+(?:out|down)|\btrim\w*\b|\b1/[234]\b|\bhalf\b|"
     r"selling\s+\d{1,2}%|\bdown\s+to\b|taking\s+(?:1/[234]|some|partial)", re.I)
