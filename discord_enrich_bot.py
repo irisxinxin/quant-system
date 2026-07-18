@@ -36,6 +36,11 @@ import discord
 from discord.ext import tasks
 from enrich_parser import parse_signal, to_longport_symbol
 from notify import push_discord
+from llm_classifier import classify as llm_classify
+
+LLM_ON = os.environ.get("LLM_CLASSIFY", "on").lower() != "off"   # LLM语义层(claude CLI); off退纯规则
+import threading
+_handle_lock = threading.Lock()   # LLM调用期间串行处理消息, 防持仓并发写
 
 # ── 白名单 (2026-07-14 实测抓取, 锁ID) ──
 CHANNEL_ID = 1392361900217602108          # #期权-波段-enrich
@@ -564,10 +569,45 @@ STALE_BUY_SEC = int(os.environ.get("STALE_BUY_SEC", "180"))   # 买入信号迟�
 
 
 def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict, msg_dt=None):
+    with _handle_lock:
+        return _handle(text, msg_date, msg_id, seen, positions, msg_dt)
+
+
+def _llm_exit_targets(positions, v):
+    """LLM出场判定 → 目标持仓列表 (scope/ticker/except)。"""
+    out = []
+    for osi, p in positions.items():
+        if p["status"] not in ("pending", "open"):
+            continue
+        if v.get("except") and p.get("ticker") == v["except"]:
+            continue
+        if v.get("scope") == "ticker" and v.get("ticker") and p.get("ticker") != v["ticker"]:
+            continue
+        out.append(osi)
+    return out
+
+
+def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict, msg_dt=None):
     s = parse_signal(text, msg_date)
-    if s.kind == "NOISE":
-        return
     one = " ".join(text.split())[:100]
+    if s.kind == "NOISE":
+        held_any = any(p["status"] in ("pending", "open") for p in positions.values())
+        if LLM_ON and LIVE and held_any and len(one) > 15 and "http" not in text:
+            held_tks = [p["ticker"] for p in positions.values() if p["status"] in ("pending", "open")]
+            v = llm_classify(text, held_tks)
+            if v:
+                journal(ev="llm_classify", rule="NOISE", verdict=v, sig=one)
+            if v and v["action"] in ("exit_full", "exit_partial") and v["confidence"] >= 0.75:
+                targets = _llm_exit_targets(positions, v)
+                if targets:
+                    log(f"🤖 LLM捞漏出场[{v['action']}] conf={v['confidence']} ({v.get('why','')}): {one}")
+                    push_discord(f"🤖 LLM识别出场(规则未识别) [{v['action']}]: {one}")
+                    for osi in targets:
+                        if v["action"] == "exit_full":
+                            close_position(positions, osi, "LLM出场判定")
+                        else:
+                            mirror_reduce(positions, osi, "partial")
+        return
 
     if s.kind == "EXIT":
         held = [osi for osi, p in positions.items()
@@ -622,6 +662,19 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict, 
         qty = LOTTO_CONTRACTS               # lotto/歧义单: 小仓 (他自己都喊small)
         log(f"🔍 报价消歧: {info}")
         journal(ev="disambig", ticker=s.ticker, strike=s.strike, expiry=str(s.expiry), info=info, sig=one)
+
+    # 🤖 LLM否决闸: 规则说买, LLM说不是买(对冲/评论/出场) → 保守不下单
+    if LLM_ON and LIVE:
+        held_tks = [p["ticker"] for p in positions.values() if p["status"] in ("pending", "open")]
+        v = llm_classify(text, held_tks)
+        if v:
+            journal(ev="llm_classify", rule=s.kind, verdict=v, sig=one)
+        if v and v["action"] != "buy" and v["confidence"] >= 0.7:
+            note = (f"🤖 LLM否决买入: 规则判BUY但LLM判[{v['action']}] conf={v['confidence']} "
+                    f"({v.get('why','')}), 保守不下单: {one}")
+            log(note); push_discord(note)
+            journal(ev="llm_veto", verdict=v, sig=one)
+            return
 
     # BUY
     osi = to_longport_symbol(s)
@@ -744,7 +797,9 @@ def main():
         if msg.channel.id != CHANNEL_ID:
             return
         try:
-            handle(msg.content, msg.created_at.date(), msg.id, seen, positions, msg_dt=msg.created_at)
+            import asyncio
+            await asyncio.to_thread(handle, msg.content, msg.created_at.date(), msg.id,
+                                    seen, positions, msg.created_at)
         except Exception as e:
             log(f"处理消息异常: {e}")
 
