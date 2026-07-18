@@ -24,7 +24,7 @@ discord_enrich_bot.py — 监听 Discord #期权-波段-enrich 信号 → 解析
 环境: DISCORD_BOT_TOKEN(必须) / OPTION_CONTRACTS(默认1) / MAX_PREMIUM(默认5.0) / TP_MULT(默认2.0)
       / DISCORD_WEBHOOK_URL(可选回报推送)
 """
-import os, sys, json, base64, time
+import os, re, sys, json, base64, time
 from datetime import datetime, date, time as dtime
 from decimal import Decimal
 from pathlib import Path
@@ -589,6 +589,13 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict, 
                 close_position(positions, osi, "站长清仓")
             else:                           # partial / vague → 镜像
                 mirror_reduce(positions, osi, s.exit_level)
+        return
+
+    # 🚫 Hedge单不跟: 他的对冲是给他自己组合买保险, 我们没有他的组合, 单独复制=纯赌方向 (XOM -30%教训)
+    if re.search(r"\bhedge\b", one, re.IGNORECASE):
+        note = f"🛡️ enrich对冲单, 按规则不跟(仅提醒): {one}"
+        log(note); push_discord(note)
+        journal(ev="hedge_skipped", sig=one)
         return
 
     # 🚫 迟到闸门: 信号已过时效的买入绝不进场 (用户铁律; MSFT -42%教训)
