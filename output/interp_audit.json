@@ -1,0 +1,7335 @@
+[
+ {
+  "idx": 0,
+  "id": 1510819715902341233,
+  "ts": "2026-06-01T01:38:09.944000+00:00",
+  "text": "Watchlist for this week, 6/1: Previous week's recap posted in <#1310382263514431520> Coming off an extremely strong week. The biggest lesson continues to be the same: sell into strength. We will alway",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist recap and trading advice, no actionable entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 1,
+  "id": 1510999247271628971,
+  "ts": "2026-06-01T13:31:33.558000+00:00",
+  "text": "$SPY levels for the day 6/1/2026: Blue zone= $754.66, $759.31 Green targets = $760.75, $762.34, $763.55 Red targets = $753.48, $752.13, $750.87 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Price levels, not entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 2,
+  "id": 1511002120235520133,
+  "ts": "2026-06-01T13:42:58.526000+00:00",
+  "text": "Tailed the weekly $170 calls $PLTR @everyone $alert <@1304584870600638487>",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "PLTR",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Entry PLTR weekly $170 calls"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 3,
+  "id": 1511017689018138725,
+  "ts": "2026-06-01T14:44:50.413000+00:00",
+  "text": "$IREN weekly $67 calls $1.66 @everyone",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "IREN",
+   "right": "C",
+   "strike": 67.0,
+   "expiry": "2026-06-05",
+   "premium": 1.66,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "IREN",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New options entry alert with strike and premium"
+  },
+  "final_action": "下单: 买 IREN 2026-06-05 $67C 限价1.66 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 4,
+  "id": 1511020889867813005,
+  "ts": "2026-06-01T14:57:33.555000+00:00",
+  "text": "$IREN - Happy Monday everyone! I’m scaling some out here into strength. Holding 2/3 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "IREN",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Scaling out 1/3 into strength, holding 2/3"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] IREN (有持仓才执行)"
+ },
+ {
+  "idx": 5,
+  "id": 1511022396889501728,
+  "ts": "2026-06-01T15:03:32.857000+00:00",
+  "text": "$IREN - Nice. Down to 1/2. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "IREN",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Scaling out to 1/2 position"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] IREN (有持仓才执行)"
+ },
+ {
+  "idx": 6,
+  "id": 1511023169706790993,
+  "ts": "2026-06-01T15:06:37.111000+00:00",
+  "text": "$IREN $PLTR - Here’s what I have. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Position update; no entry details or clear signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 7,
+  "id": 1511032963842838551,
+  "ts": "2026-06-01T15:45:32.215000+00:00",
+  "text": "$IREN $PLTR - MORE @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "IREN",
+   "except": null,
+   "confidence": 0.8,
+   "why": "MORE signals new entry; PLTR also mentioned"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 8,
+  "id": 1511062805439189042,
+  "ts": "2026-06-01T17:44:07.006000+00:00",
+  "text": "$PLTR - Congrats team! Scaling down to 2/3 @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "PLTR",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] PLTR"
+ },
+ {
+  "idx": 9,
+  "id": 1511072910809497790,
+  "ts": "2026-06-01T18:24:16.314000+00:00",
+  "text": "$APLD weekly $52 calls $1.50 1% position @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "APLD",
+   "right": "C",
+   "strike": 52.0,
+   "expiry": "2026-06-05",
+   "premium": 1.5,
+   "size_tag": "1% position"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "APLD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "APLD weekly $52 calls $1.50 entry alert"
+  },
+  "final_action": "下单: 买 APLD 2026-06-05 $52C 限价1.5 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 10,
+  "id": 1511091754382659738,
+  "ts": "2026-06-01T19:39:08.972000+00:00",
+  "text": "My plan into tomorrow: Holding the following remaining positions… $APLD - Just entered so holding my 1% $IREN 30% $PLTR 30% Scaling out into strength wins again. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "APLD",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Position status update; no actionable entry or exit signal"
+  },
+  "final_action": "仅提醒(多票/豁免词) [APLD]"
+ },
+ {
+  "idx": 11,
+  "id": 1511199207719964682,
+  "ts": "2026-06-02T02:46:07.844000+00:00",
+  "text": "Watchlist for tomorrow, 6/2: Another solid day. $IREN & $PLTR both pushed 100%+ at peak. If you were scaling out into strength, you got paid. This is a momentum market. The goal is not to sell the exa",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist & market commentary, no options entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 12,
+  "id": 1511219107456880745,
+  "ts": "2026-06-02T04:05:12.311000+00:00",
+  "text": "You win some and you lose some…tough $MRVL @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on trade difficulty, no action directive"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 13,
+  "id": 1511366530653491353,
+  "ts": "2026-06-02T13:51:00.740000+00:00",
+  "text": "$IREN - Beautiful chart - I’m holding. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IREN",
+   "except": null,
+   "confidence": 0.85,
+   "why": "Chart commentary without entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 14,
+  "id": 1511381129536602334,
+  "ts": "2026-06-02T14:49:01.385000+00:00",
+  "text": "$NNE - Weekly $32 calls $1.05 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "NNE",
+   "right": "C",
+   "strike": 32.0,
+   "expiry": "2026-06-05",
+   "premium": 1.05,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "NNE",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekly $32 call entry $1.05 premium"
+  },
+  "final_action": "下单: 买 NNE 2026-06-05 $32C 限价1.05 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 15,
+  "id": 1511381324726927431,
+  "ts": "2026-06-02T14:49:47.922000+00:00",
+  "text": "Fill just jumped like crazy… that 5 min candle @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Market commentary, no entry or exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 16,
+  "id": 1511403783345930311,
+  "ts": "2026-06-02T16:19:02.474000+00:00",
+  "text": "Position updates: Down to runners, my original investment is out with no risk from our 100% profit locks yesterday: $PLTR $IREN Holding 1% positions: $APLD $NNE Next chart I am interested in: $QCOM @e",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Position management commentary + watchlist, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 17,
+  "id": 1511418056671367221,
+  "ts": "2026-06-02T17:15:45.500000+00:00",
+  "text": "$OUST - Now over 50% in about month! @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "OUST",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Win celebration, no actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 18,
+  "id": 1511440589143408731,
+  "ts": "2026-06-02T18:45:17.660000+00:00",
+  "text": "Charts have been slow and choppy all day with momentum dying. I’m going to be cautious into the end of the day here and protect my capital. Closing $IREN $PLTR runners Holding lottos on $APLD $NNE - 1",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "IREN",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.75,
+   "why": "Trader exiting runners, 98% cash on choppy market"
+  },
+  "final_action": "仅提醒(多票/豁免词) [IREN]"
+ },
+ {
+  "idx": 19,
+  "id": 1511724817106206970,
+  "ts": "2026-06-03T13:34:42.887000+00:00",
+  "text": "$SPY levels for the day 6/3/2026: Blue zone= $757.78, $760.19 Green targets = $761.64, $762.80, $764.29 Red targets = $755.97, $754.63, $752.96 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Technical levels commentary, not entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 20,
+  "id": 1511727460163522621,
+  "ts": "2026-06-03T13:45:13.041000+00:00",
+  "text": "Back to 100% cash in my options portfolio from 98% cash. Charting for the next trade now. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "98% to 100% cash, closing all positions"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_full] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 21,
+  "id": 1511733290237825224,
+  "ts": "2026-06-03T14:08:23.039000+00:00",
+  "text": "$QCOM weekly $265 calls $2.77 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "QCOM",
+   "right": "C",
+   "strike": 265.0,
+   "expiry": "2026-06-05",
+   "premium": 2.77,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "QCOM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New options entry alert: QCOM weekly $265 calls"
+  },
+  "final_action": "下单: 买 QCOM 2026-06-05 $265C 限价2.77 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 22,
+  "id": 1511734784475402511,
+  "ts": "2026-06-03T14:14:19.293000+00:00",
+  "text": "$QCOM - Can’t control the stock - alerted right on the retest & took off immediately. Pick a higher contract if this happens. I told you guys to scale in also - buy some & wait for the 9EMA retest on ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "QCOM",
+   "except": null,
+   "confidence": 0.65,
+   "why": "Scale in QCOM on 9EMA retest, alerts missed"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 23,
+  "id": 1511735932271853738,
+  "ts": "2026-06-03T14:18:52.949000+00:00",
+  "text": "$QCOM - Any fill paying. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "QCOM",
+   "except": null,
+   "confidence": 0.5,
+   "why": "New ticker alert but missing strike/premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 24,
+  "id": 1511771912383107162,
+  "ts": "2026-06-03T16:41:51.276000+00:00",
+  "text": "$SPY 0DTE $752 puts for $.55 Lotto size - nice hedge into EOD @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "SPY",
+   "right": "P",
+   "strike": 752.0,
+   "expiry": "2026-06-03",
+   "premium": 0.55,
+   "size_tag": "Lotto"
+  },
+  "llm": {
+   "action": "hedge",
+   "scope": "all",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Explicitly stated hedge for portfolio protection"
+  },
+  "final_action": "🛡️hedge跳过, 仅提醒"
+ },
+ {
+  "idx": 25,
+  "id": 1511795128463917267,
+  "ts": "2026-06-03T18:14:06.421000+00:00",
+  "text": "$QCOM - I love this daily chart and relative strength. Going to hold into tomorrow most likely. I did trim some at 70% but holding the rest. $SPY hedge isn’t working out - I hope everyone sized accord",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "QCOM",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Position commentary + trim non-held QCOM, SPY hedge internal"
+  },
+  "final_action": "仅提醒(多票/豁免词) [QCOM]"
+ },
+ {
+  "idx": 26,
+  "id": 1511801139543150602,
+  "ts": "2026-06-03T18:37:59.574000+00:00",
+  "text": "Scalp - if you guys know how to do so - $META $625 lottos 0DTE $.80 @everyone $alert",
+  "rule": {
+   "kind": "BUY_AMBIG",
+   "ticker": "META",
+   "right": "?",
+   "strike": 625.0,
+   "expiry": "2026-06-03",
+   "premium": 0.8,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "META",
+   "except": null,
+   "confidence": 0.9,
+   "why": "0DTE META $625 calls at $.80 scalp"
+  },
+  "final_action": "歧义无法消歧, 仅提醒"
+ },
+ {
+  "idx": 27,
+  "id": 1511807984643080254,
+  "ts": "2026-06-03T19:05:11.573000+00:00",
+  "text": "Only position into tomorrow will be $QCOM @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "QCOM",
+   "except": null,
+   "confidence": 0.8,
+   "why": "Trading plan statement, no strike/premium details"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 28,
+  "id": 1511828000008835105,
+  "ts": "2026-06-03T20:24:43.608000+00:00",
+  "text": "Tougher day, trust me I know. Pretty much flat on the day. Managed to catch $QCOM - one of the strongest names of the day. Wanted to see a push back to $260 on the PDH breakout, momentum died like eve",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary and recap, no strike or entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 29,
+  "id": 1511937235493326908,
+  "ts": "2026-06-04T03:38:47.377000+00:00",
+  "text": "Watchlist for tomorrow, 6/4: Slower and choppier session today. Recap posted in #enrich-profit-updates. Today was one of the first days in a while where many of the strongest names failed to see follo",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist recap, market commentary, no specific entry"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 30,
+  "id": 1512085250648576110,
+  "ts": "2026-06-04T13:26:56.940000+00:00",
+  "text": "$SPY levels for the day 6/4/2026: Blue zone= $750.00, $752.76 Green targets = $754.78, $756.76, $758.81 Red targets = $748.77, $746.75, $744.94 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "SPY daily levels/targets; no entry or exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 31,
+  "id": 1512088976184442921,
+  "ts": "2026-06-04T13:41:45.177000+00:00",
+  "text": "$HOOD weekly $86 calls $1.25 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HOOD",
+   "right": "C",
+   "strike": 86.0,
+   "expiry": "2026-06-05",
+   "premium": 1.25,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New HOOD weekly $86 calls entry at $1.25"
+  },
+  "final_action": "下单: 买 HOOD 2026-06-05 $86C 限价1.25 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 32,
+  "id": 1512094820712189954,
+  "ts": "2026-06-04T14:04:58.621000+00:00",
+  "text": "$PLTR weekly $149 calls $1.20 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "PLTR",
+   "right": "C",
+   "strike": 149.0,
+   "expiry": "2026-06-05",
+   "premium": 1.2,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "PLTR",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New entry: PLTR weekly $149 calls $1.20"
+  },
+  "final_action": "下单: 买 PLTR 2026-06-05 $149C 限价1.2 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 33,
+  "id": 1512106583654531153,
+  "ts": "2026-06-04T14:51:43.125000+00:00",
+  "text": "$NBIS weekly $265 calls $1.88 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "NBIS",
+   "right": "C",
+   "strike": 265.0,
+   "expiry": "2026-06-05",
+   "premium": 1.88,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "NBIS",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekly call entry NBIS $265 @ $1.88"
+  },
+  "final_action": "下单: 买 NBIS 2026-06-05 $265C 限价1.88 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 34,
+  "id": 1512107410045538465,
+  "ts": "2026-06-04T14:55:00.152000+00:00",
+  "text": "I have about 5% of my total cash out in my options portfolio. Still not ideal price action, clearly. Do not oversize in this current environment. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "市场评论与风险管理建议,无具体标的"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 35,
+  "id": 1512111958768353380,
+  "ts": "2026-06-04T15:13:04.652000+00:00",
+  "text": "$HOOD - I love this daily chart. Needed this one today. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on chart, no entry parameters"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 36,
+  "id": 1512112836741169294,
+  "ts": "2026-06-04T15:16:33.977000+00:00",
+  "text": "Here’s what I have. $PLTR weighing me down big time. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "ticker",
+   "ticker": "PLTR",
+   "except": null,
+   "confidence": 0.65,
+   "why": "Distressed position alert, implicit exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 37,
+  "id": 1512121049876271204,
+  "ts": "2026-06-04T15:49:12.141000+00:00",
+  "text": "FYI - $HOOD test PDH & is rejecting now. $85 is the level to hold. Make sure you are still scaling out into strength. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HOOD",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] HOOD"
+ },
+ {
+  "idx": 38,
+  "id": 1512132513718603927,
+  "ts": "2026-06-04T16:34:45.334000+00:00",
+  "text": "$NBIS - Starting to pay Two winners today @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.7,
+   "why": "No strike/premium; seems commentary not execution"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 39,
+  "id": 1512132940379979836,
+  "ts": "2026-06-04T16:36:27.058000+00:00",
+  "text": "$PLTR - I’m out. Officially on the banned list for the time being. Terrible price action. Letting our runners work $NBIS $HOOD. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "ticker",
+   "ticker": "PLTR",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Exiting PLTR, banned list, terrible price"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_full] PLTR (有持仓才执行)"
+ },
+ {
+  "idx": 40,
+  "id": 1512135320584323083,
+  "ts": "2026-06-04T16:45:54.543000+00:00",
+  "text": "$HOOD - Back to 60% @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.8,
+   "why": "Scaling HOOD position to 60%"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] HOOD (有持仓才执行)"
+ },
+ {
+  "idx": 41,
+  "id": 1512143538945790192,
+  "ts": "2026-06-04T17:18:33.953000+00:00",
+  "text": "$HOOD $NBIS - Ok now I’m very green. Patience pays. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Status update & encouragement, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 42,
+  "id": 1512146166383378616,
+  "ts": "2026-06-04T17:29:00.383000+00:00",
+  "text": "$NBIS - BANG - LETS GO PATIENCE PAYS @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "NBIS",
+   "except": null,
+   "confidence": 0.65,
+   "why": "Ticker + alert tag + enthusiasm, missing strike/premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 43,
+  "id": 1512146399225970728,
+  "ts": "2026-06-04T17:29:55.897000+00:00",
+  "text": "$HOOD - 2 TWO BAGGERS @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary celebrating HOOD wins, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 44,
+  "id": 1512148051899449557,
+  "ts": "2026-06-04T17:36:29.925000+00:00",
+  "text": ":emoji_136:",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": null,
+  "final_action": "忽略"
+ },
+ {
+  "idx": 45,
+  "id": 1512149828363354132,
+  "ts": "2026-06-04T17:43:33.467000+00:00",
+  "text": ":printingmoney: @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "emoji reaction, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 46,
+  "id": 1512151929084706829,
+  "ts": "2026-06-04T17:51:54.318000+00:00",
+  "text": "Oh hello $NBIS Multi-bagger @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "NBIS",
+   "except": null,
+   "confidence": 0.95,
+   "why": "No strike/premium, commentary only"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 47,
+  "id": 1512155632508076078,
+  "ts": "2026-06-04T18:06:37.283000+00:00",
+  "text": "Read the last sentence again. Follow through returned today. Took some patience. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "motivational commentary, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 48,
+  "id": 1512160053204090942,
+  "ts": "2026-06-04T18:24:11.259000+00:00",
+  "text": "$HOOD - ITM & trims. Average got a bit messed up. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.88,
+   "why": "HOOD trims ITM position, scaling out"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] HOOD (有持仓才执行)"
+ },
+ {
+  "idx": 49,
+  "id": 1512163793227087882,
+  "ts": "2026-06-04T18:39:02.950000+00:00",
+  "text": "Guys we are paid @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Celebratory status update no actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 50,
+  "id": 1512168899976761445,
+  "ts": "2026-06-04T18:59:20.494000+00:00",
+  "text": "Holding 30% of my $NBIS & $HOOD cons into tomorrow. Both have zero risk with my original investment. Runners. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.82,
+   "why": "Scale to 30% runners, lock profits"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] HOOD (有持仓才执行)"
+ },
+ {
+  "idx": 51,
+  "id": 1512174473170915510,
+  "ts": "2026-06-04T19:21:29.247000+00:00",
+  "text": "$HOOD - congrats all @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Congratulations commentary, no trade action"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 52,
+  "id": 1512175102261723324,
+  "ts": "2026-06-04T19:23:59.234000+00:00",
+  "text": "$NBIS - We may go ITM. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on existing position, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 53,
+  "id": 1512178864380444784,
+  "ts": "2026-06-04T19:38:56.193000+00:00",
+  "text": "Speechless. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Vague alert, no ticker or strike"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 54,
+  "id": 1512179529567961120,
+  "ts": "2026-06-04T19:41:34.786000+00:00",
+  "text": "I keep preaching to trust the process and the charts. We have developed a strategy that puts profitability in our favor. Especially in a bull market. All I ask is that you guys remain patient during d",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "NBIS",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Performance recap + encouragement, no entry/exit signal"
+  },
+  "final_action": "仅提醒(多票/豁免词) [NBIS]"
+ },
+ {
+  "idx": 55,
+  "id": 1512298547007979644,
+  "ts": "2026-06-05T03:34:30.755000+00:00",
+  "text": "Watchlist for tomorrow, 6/5: What a day. I keep saying the same thing because it works: trust the charts and trust the process. This morning felt ugly if you were watching every candle. The timeline w",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.98,
+   "why": "Daily recap & philosophy, no actionable entry/exit"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 56,
+  "id": 1512457302928527532,
+  "ts": "2026-06-05T14:05:21.116000+00:00",
+  "text": "Scalp - lotto $TSLA 0DTE $405 PUTS $1.17 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "TSLA",
+   "right": "P",
+   "strike": 405.0,
+   "expiry": "2026-06-05",
+   "premium": 1.17,
+   "size_tag": "lotto"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "TSLA 0DTE $405 puts scalp entry"
+  },
+  "final_action": "下单: 买 TSLA 2026-06-05 $405P 限价1.17 [0DTE档⅒, 止盈+60%, -30%止损]"
+ },
+ {
+  "idx": 57,
+  "id": 1512459154554622194,
+  "ts": "2026-06-05T14:12:42.578000+00:00",
+  "text": "$TSLA - Hard to alert exits for a scalp. You guys have to lock gains on your own when you’re green. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "TSLA",
+   "level": "vague"
+  },
+  "llm": null,
+  "final_action": "出场指令[vague] TSLA"
+ },
+ {
+  "idx": 58,
+  "id": 1512462709369733293,
+  "ts": "2026-06-05T14:26:50.112000+00:00",
+  "text": "$TSLA - HAPPY FRIDAY - LOCK THOSE GAINS! @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "TSLA",
+   "level": "vague"
+  },
+  "llm": null,
+  "final_action": "出场指令[vague] TSLA"
+ },
+ {
+  "idx": 59,
+  "id": 1512472875649728602,
+  "ts": "2026-06-05T15:07:13.942000+00:00",
+  "text": "$TSLA - Patience. I preach it everyday. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Motivational commentary, not a trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 60,
+  "id": 1512481694358310982,
+  "ts": "2026-06-05T15:42:16.486000+00:00",
+  "text": "$TSLA - Oh my. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Vague reaction, no entry/exit specifics"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 61,
+  "id": 1512487817480245388,
+  "ts": "2026-06-05T16:06:36.352000+00:00",
+  "text": "$TSLA - Turned out to be one of my better weeks of the year. All plays given in here. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Week recap, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 62,
+  "id": 1512495468800643212,
+  "ts": "2026-06-05T16:37:00.569000+00:00",
+  "text": "$TSLA - What a great way to end the week. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary/encouragement, no trade action"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 63,
+  "id": 1512498988731858954,
+  "ts": "2026-06-05T16:50:59.786000+00:00",
+  "text": "$TSLA - Only updating every 100% now @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Update frequency commentary, not a trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 64,
+  "id": 1512507046270996724,
+  "ts": "2026-06-05T17:23:00.853000+00:00",
+  "text": "$TSLA :classy: @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "emoji reaction, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 65,
+  "id": 1512518444002574436,
+  "ts": "2026-06-05T18:08:18.284000+00:00",
+  "text": "$TSLA - SHOW US 1,000%:pepeez: @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Encouragement/hype without strike or premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 66,
+  "id": 1512522225486659614,
+  "ts": "2026-06-05T18:23:19.860000+00:00",
+  "text": "$TSLA - 🙏🙏 @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.85,
+   "why": "No strike/premium, just sentiment/prayer"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 67,
+  "id": 1512524784011841697,
+  "ts": "2026-06-05T18:33:29.860000+00:00",
+  "text": "Very curious if anyone would be interested in 1:1 mentorship from me. It wouldn’t be cheap but it would entail: - One, 30-minute call a week - Path to profitability - One time or monthly payment It wo",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.99,
+   "why": "Mentorship offer, not a trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 68,
+  "id": 1512536965629874218,
+  "ts": "2026-06-05T19:21:54.184000+00:00",
+  "text": "$TSLA - Runners are paying a bit. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on runner profitability, no entry/exit action"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 69,
+  "id": 1512546497697419518,
+  "ts": "2026-06-05T19:59:46.806000+00:00",
+  "text": "Weekly recap, 6/1: $TSLA 1300%+ $NBIS 270%+ $HOOD 175%+ $IREN 150% $PLTR 100% $QCOM 70% $PLTR - Loss Turned out to be one of my best weeks of the year in the hardest environment in months. Locked in. ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 1.0,
+   "why": "Weekly recap with commentary, no actionable signals"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 70,
+  "id": 1513350030843576481,
+  "ts": "2026-06-08T01:12:44.037000+00:00",
+  "text": "Watchlist for this week, 6/8: Coming off a massive $TSLA trade on Friday that pushed 1,000%+ at peak. Futures are higher as markets react positively to easing geopolitical tensions and continued AI in",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.98,
+   "why": "Watchlist commentary, no entry signals"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 71,
+  "id": 1513533609376743606,
+  "ts": "2026-06-08T13:22:12.570000+00:00",
+  "text": "$SPY levels for the day 6/8/2026: Blue zone= $738.51, $744.30 Green targets = $746.62, $748.84, $752.15 Red targets = $735.51, $733.39, $731.38 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Price levels/technical commentary, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 72,
+  "id": 1513542335135355104,
+  "ts": "2026-06-08T13:56:52.953000+00:00",
+  "text": "Weekly $HOOD $90 calls $1.20",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HOOD",
+   "right": "C",
+   "strike": 90.0,
+   "expiry": "2026-06-12",
+   "premium": 1.2,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New weekly call entry"
+  },
+  "final_action": "下单: 买 HOOD 2026-06-12 $90C 限价1.2 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 73,
+  "id": 1513542362465304576,
+  "ts": "2026-06-08T13:56:59.469000+00:00",
+  "text": "Weekly $HOOD $90 calls $1.20 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HOOD",
+   "right": "C",
+   "strike": 90.0,
+   "expiry": "2026-06-12",
+   "premium": 1.2,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekly HOOD $90 calls entry at $1.20"
+  },
+  "final_action": "重复信号跳过"
+ },
+ {
+  "idx": 74,
+  "id": 1513598656681349172,
+  "ts": "2026-06-08T17:40:41.056000+00:00",
+  "text": "$HOOD daily is still very much intact. I have a 2% position with a 1.12 avg. Rest of my options port is cash at 98%. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Position commentary, no entry/exit signal given"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 75,
+  "id": 1513632852514701544,
+  "ts": "2026-06-08T19:56:33.978000+00:00",
+  "text": "Holding $HOOD 2% position! Holding up well into close here. Rest of my options account is cash - 98%! @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "持仓状态评论，无交易指令"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 76,
+  "id": 1513690496369823794,
+  "ts": "2026-06-08T23:45:37.344000+00:00",
+  "text": "Alright team — rolling out a private mentorship. The first members will be a direct testimonial to the process, edge, and path to profitability we’ve built here. Spots are extremely limited — thinking",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": null,
+  "final_action": "忽略"
+ },
+ {
+  "idx": 77,
+  "id": 1513732485735780513,
+  "ts": "2026-06-09T02:32:28.389000+00:00",
+  "text": "Watchlist for tomorrow, 6/9: Slow, choppy session today. A lot of names moved, but follow-through was limited and price action remained messy. <@1304584870600638487> alerted the trade of the day at op",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "watchlist recap, HOOD trade already closed breakeven"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 78,
+  "id": 1513897326261829843,
+  "ts": "2026-06-09T13:27:29.433000+00:00",
+  "text": "$SPY levels for the day 6/9/2026: Blue zone= $738.19, $743.60 Green targets = $745.36, $748.08, $751.35 Red targets = $735.47, $733.42, $731.47 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Technical levels commentary, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 79,
+  "id": 1513897396718010388,
+  "ts": "2026-06-09T13:27:46.231000+00:00",
+  "text": "$SPY levels for the day 6/9/2026: Blue zone= $738.19, $743.60 Green targets = $745.36, $748.08, $751.35 Red targets = $735.47, $733.42, $731.47 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Price levels and target commentary"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 80,
+  "id": 1513904895890296953,
+  "ts": "2026-06-09T13:57:34.173000+00:00",
+  "text": "I told you guys - patience. $HOOD @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Commentary, no strike/premium details"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 81,
+  "id": 1513926423411294431,
+  "ts": "2026-06-09T15:23:06.734000+00:00",
+  "text": "$PLTR weekly $128 puts for $1.25 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "PLTR",
+   "right": "P",
+   "strike": 128.0,
+   "expiry": "2026-06-12",
+   "premium": 1.25,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "PLTR",
+   "except": null,
+   "confidence": 0.92,
+   "why": "Weekly $128 puts $1.25 entry alert"
+  },
+  "final_action": "下单: 买 PLTR 2026-06-12 $128P 限价1.25 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 82,
+  "id": 1513926689518911538,
+  "ts": "2026-06-09T15:24:10.179000+00:00",
+  "text": "$HOOD - Closing out the rest here. Not fighting this trend. Another example of why scaling out into strength is so important. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HOOD",
+   "level": "full"
+  },
+  "llm": null,
+  "final_action": "出场指令[full] HOOD"
+ },
+ {
+  "idx": 83,
+  "id": 1513928116454559795,
+  "ts": "2026-06-09T15:29:50.387000+00:00",
+  "text": "$PLTR - Any fill is paying. Manage these. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Commentary on position management, no entry specs"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 84,
+  "id": 1513935304170668162,
+  "ts": "2026-06-09T15:58:24.072000+00:00",
+  "text": "$PLTR - I’m down to 1/2 size! @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "PLTR",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Scaled down to half position"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] PLTR (有持仓才执行)"
+ },
+ {
+  "idx": 85,
+  "id": 1513938671932276817,
+  "ts": "2026-06-09T16:11:47.009000+00:00",
+  "text": "$PLTR - BAGGER @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "BAGGER celebration, no entry/exit details"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 86,
+  "id": 1513940959753408707,
+  "ts": "2026-06-09T16:20:52.468000+00:00",
+  "text": "$PLTR - PAY DAY I told you guys last night, we will catch out multi bagger @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.88,
+   "why": "No strike/premium, just multi-bagger commentary"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 87,
+  "id": 1513947111601733702,
+  "ts": "2026-06-09T16:45:19.183000+00:00",
+  "text": "$PLTR - more. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "PLTR",
+   "except": null,
+   "confidence": 0.85,
+   "why": "Add position signal for PLTR"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 88,
+  "id": 1513952016966090935,
+  "ts": "2026-06-09T17:04:48.713000+00:00",
+  "text": "Lock in your gains for all of our shorts! @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Lock in gains across all short positions"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_full] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 89,
+  "id": 1513961114663256117,
+  "ts": "2026-06-09T17:40:57.773000+00:00",
+  "text": "Back to mostly cash! A few $PLTR runners but that’s it! @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": "PLTR",
+   "confidence": 0.95,
+   "why": "Exiting to mostly cash, keeping PLTR runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_full] ALL 豁免PLTR (有持仓才执行)"
+ },
+ {
+  "idx": 90,
+  "id": 1513967338553348126,
+  "ts": "2026-06-09T18:05:41.664000+00:00",
+  "text": "$HIMS - Light position - lotto Weekly $29 calls $.71 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HIMS",
+   "right": "C",
+   "strike": 29.0,
+   "expiry": "2026-06-12",
+   "premium": 0.71,
+   "size_tag": "Light"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HIMS",
+   "except": null,
+   "confidence": 0.96,
+   "why": "HIMS weekly $29 calls $.71 entry alert"
+  },
+  "final_action": "下单: 买 HIMS 2026-06-12 $29C 限价0.71 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 91,
+  "id": 1513972646851645491,
+  "ts": "2026-06-09T18:26:47.261000+00:00",
+  "text": "$HIMS - Starting to pay. Not letting this go red. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Position commentary, not actionable trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 92,
+  "id": 1513974731898880251,
+  "ts": "2026-06-09T18:35:04.375000+00:00",
+  "text": "$HIMS - more @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HIMS",
+   "except": null,
+   "confidence": 0.8,
+   "why": "Entry alert HIMS broadcast"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 93,
+  "id": 1513992413872394351,
+  "ts": "2026-06-09T19:45:20.086000+00:00",
+  "text": "$HIMS - Boom. Holding runners into tomorrow - about 1/4 size. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.75,
+   "why": "Position update, no entry details provided"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 94,
+  "id": 1514040367815852164,
+  "ts": "2026-06-09T22:55:53.197000+00:00",
+  "text": "Submissions close tonight for the mentorship🤝 @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 1.0,
+   "why": "mentorship announcement, not trading signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 95,
+  "id": 1514072105614970971,
+  "ts": "2026-06-10T01:02:00.078000+00:00",
+  "text": "Today’s recap (at the peak): $PLTR 175%+ $HIMS 75% $HOOD 50% Tomorrow, we run it back. Remember - always sell into strength. Protect your capital & positions. Your portfolio should run like an automat",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily recap & trading philosophy, no actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 96,
+  "id": 1514083392252149791,
+  "ts": "2026-06-10T01:46:51.022000+00:00",
+  "text": "Watchlist for tomorrow, 6/10: Very strong day overall. Stayed patient and flipped to the downside when the setup presented itself. $PLTR had multiple confluences aligning for further downside and push",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist for tomorrow, market recap, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 97,
+  "id": 1514257418648031343,
+  "ts": "2026-06-10T13:18:22.148000+00:00",
+  "text": "$SPY levels for the day 6/10/2026: Blue zone= $728.83, $736.81 Green targets = $739.71, $743.11, $745.34 Red targets = $727.16, $724.31, $721.80 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily price levels commentary, not a trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 98,
+  "id": 1514262611280269434,
+  "ts": "2026-06-10T13:39:00.168000+00:00",
+  "text": "$HIMS back to +70% - in runners @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HIMS",
+   "confidence": 0.92,
+   "why": "Trader position update commentary, not entry/exit signal",
+   "except": null
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 99,
+  "id": 1514265637546098698,
+  "ts": "2026-06-10T13:51:01.686000+00:00",
+  "text": "$HIMS +90% - make sure to manage these @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "HIMS",
+   "except": null,
+   "confidence": 0.5,
+   "why": "Large gain triggers position management"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 100,
+  "id": 1514270278044094575,
+  "ts": "2026-06-10T14:09:28.067000+00:00",
+  "text": "$HIMS - Bagger. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HIMS",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Celebrating past win, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 101,
+  "id": 1514272339091783690,
+  "ts": "2026-06-10T14:17:39.459000+00:00",
+  "text": "$HIMS - Have an exit plan. Calls still 60%+. I’ll be cutting most of the rest here. Happy with the outcome, no need to be greedy. Preparing for the next trade. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HIMS",
+   "level": "full"
+  },
+  "llm": null,
+  "final_action": "出场指令[full] HIMS"
+ },
+ {
+  "idx": 102,
+  "id": 1514275494605094994,
+  "ts": "2026-06-10T14:30:11.792000+00:00",
+  "text": "$NBIS - Something is brewing - I want exposure Weekly $260 calls $1.90 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "NBIS",
+   "right": "C",
+   "strike": 260.0,
+   "expiry": "2026-06-12",
+   "premium": 1.9,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "NBIS",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New entry NBIS weekly $260 calls $1.90"
+  },
+  "final_action": "下单: 买 NBIS 2026-06-12 $260C 限价1.9 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 103,
+  "id": 1514285956763619439,
+  "ts": "2026-06-10T15:11:46.165000+00:00",
+  "text": "$TSLA $380 puts $1.30 - scale in - take profit quick - lotto @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "TSLA",
+   "level": "vague"
+  },
+  "llm": null,
+  "final_action": "出场指令[vague] TSLA"
+ },
+ {
+  "idx": 104,
+  "id": 1514286162297098350,
+  "ts": "2026-06-10T15:12:35.168000+00:00",
+  "text": "$NBIS broke down. Loved the chart is overall market held. I’m out. I’M OUT ALL LONGS @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "ALL LONGS全部平仓，NBIS破位确认出场"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_full] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 105,
+  "id": 1514294893168824340,
+  "ts": "2026-06-10T15:47:16.770000+00:00",
+  "text": "Gave back all my $HIMS gains from this morning. Slightly red on the day. Took two setups that had enough of my confluences. All you can do in this game. Holding rest of my $TSLA puts as lotto. 99% cas",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily commentary, risk management reflection, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 106,
+  "id": 1514310403251765442,
+  "ts": "2026-06-10T16:48:54.662000+00:00",
+  "text": "$TSLA green. 30%-150%+ depending on entry. I recommend not letting this go red. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Position commentary, not entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 107,
+  "id": 1514328150304362538,
+  "ts": "2026-06-10T17:59:25.889000+00:00",
+  "text": "Market is giving us mixed signals. Tricky price action today across the board. It’s super important to protect your capital on days like today. That starts with sizing accordingly & managing your posi",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily recap & risk commentary, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 108,
+  "id": 1514329046090256384,
+  "ts": "2026-06-10T18:02:59.461000+00:00",
+  "text": "$HOOD - weekly $95 calls for $.68 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HOOD",
+   "right": "C",
+   "strike": 95.0,
+   "expiry": "2026-06-12",
+   "premium": 0.68,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 1.0,
+   "why": "HOOD weekly $95 calls entry alert"
+  },
+  "final_action": "下单: 买 HOOD 2026-06-12 $95C 限价0.68 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 109,
+  "id": 1514330201050316801,
+  "ts": "2026-06-10T18:07:34.825000+00:00",
+  "text": "$HOOD - First greens. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Commentary on existing position, no strike/action"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 110,
+  "id": 1514341243373748275,
+  "ts": "2026-06-10T18:51:27.520000+00:00",
+  "text": "$HOOD - can’t catch a break today. Need a close over $88 on the daily. I’ll keep you posted @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Technical commentary + watchlist level, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 111,
+  "id": 1514358263649402920,
+  "ts": "2026-06-10T19:59:05.470000+00:00",
+  "text": "In order to protect my capital - I am going all cash into tomorrow All longs closed. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "*",
+   "level": "full"
+  },
+  "llm": null,
+  "final_action": "出场指令[full] *(全仓位)"
+ },
+ {
+  "idx": 112,
+  "id": 1514454368953434303,
+  "ts": "2026-06-11T02:20:58.760000+00:00",
+  "text": "Watchlist for tomorrow, 6/11: Tough day all around. We need to adjust a bit. The leaders simply aren't seeing the same follow-through we've been used to. $NBIS was a perfect example today. The setup w",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Market recap and watchlist commentary, no trade instructions"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 113,
+  "id": 1514479185857613907,
+  "ts": "2026-06-11T03:59:35.571000+00:00",
+  "text": "***Please read: When I tell you guys, \"I'm 98% cash,\" \"it's not the time to go heavy,\" or \"make sure your losses are paper cuts right now,\" I mean every word of it. Please use that advice to your adva",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.98,
+   "why": "Risk philosophy & encouragement, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 114,
+  "id": 1514619716952653905,
+  "ts": "2026-06-11T13:18:00.795000+00:00",
+  "text": "$SPY levels for the day 6/11/2026: Blue zone= $720.84, $732.02 Green targets = $738.25, $744.53, $747.08 Red targets = $716.35, $712.74, $708.06 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily technical levels and support-resistance targets"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 115,
+  "id": 1514631578603618455,
+  "ts": "2026-06-11T14:05:08.833000+00:00",
+  "text": "$META $550 puts weekly $1.45 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "META",
+   "right": "P",
+   "strike": 550.0,
+   "expiry": "2026-06-12",
+   "premium": 1.45,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "META",
+   "except": null,
+   "confidence": 0.95,
+   "why": "META weekly $550 puts entry at $1.45"
+  },
+  "final_action": "下单: 买 META 2026-06-12 $550P 限价1.45 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 116,
+  "id": 1514633299358908467,
+  "ts": "2026-06-11T14:11:59.093000+00:00",
+  "text": "$META - Start scaling out and locking in gains. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "META",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] META"
+ },
+ {
+  "idx": 117,
+  "id": 1514635485673295922,
+  "ts": "2026-06-11T14:20:40.351000+00:00",
+  "text": "$META - More. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.8,
+   "why": "Vague; lacks strike and premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 118,
+  "id": 1514643341130858678,
+  "ts": "2026-06-11T14:51:53.238000+00:00",
+  "text": "$META +70% - please take profits and manage these if you haven’t already. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "META",
+   "level": "vague"
+  },
+  "llm": null,
+  "final_action": "出场指令[vague] META"
+ },
+ {
+  "idx": 119,
+  "id": 1514645719384850552,
+  "ts": "2026-06-11T15:01:20.258000+00:00",
+  "text": "$META - I don’t want to hear that anyone was red on this trade @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "META",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on trade outcome, no actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 120,
+  "id": 1514655181734678558,
+  "ts": "2026-06-11T15:38:56.258000+00:00",
+  "text": "$HOOD weekly $93 calls $1.00 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HOOD",
+   "right": "C",
+   "strike": 93.0,
+   "expiry": "2026-06-12",
+   "premium": 1.0,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New HOOD weekly $93c $1.00 entry"
+  },
+  "final_action": "下单: 买 HOOD 2026-06-12 $93C 限价1.0 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 121,
+  "id": 1514680336397635698,
+  "ts": "2026-06-11T17:18:53.597000+00:00",
+  "text": "$HOOD - I sized small on this lotto. It will not affect my day at all. I’m 99% cash HTFs still ok but price action has been awful @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Personal position commentary, lacks strike/premium/expiration"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 122,
+  "id": 1514684663669456987,
+  "ts": "2026-06-11T17:36:05.299000+00:00",
+  "text": "$HOOD - GREEEN - secure @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.55,
+   "why": "Vague commentary on position, no explicit trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 123,
+  "id": 1514690543894925423,
+  "ts": "2026-06-11T17:59:27.254000+00:00",
+  "text": "$HOOD - Back in business. Breaking HOD. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.85,
+   "why": "Price action commentary, no strike or entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 124,
+  "id": 1514692496121270454,
+  "ts": "2026-06-11T18:07:12.701000+00:00",
+  "text": "Back to all cash - not messing around with these headlines. Preserving my capital. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "*",
+   "level": "full"
+  },
+  "llm": null,
+  "final_action": "出场指令[full] *(全仓位)"
+ },
+ {
+  "idx": 125,
+  "id": 1514695357014212649,
+  "ts": "2026-06-11T18:18:34.791000+00:00",
+  "text": "I’m gonna be hanging onto about 1/4 of these runners into tomorrow. Rest is cash. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Scaling out 3/4, keeping 1/4 runners tomorrow"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 126,
+  "id": 1514703451903234049,
+  "ts": "2026-06-11T18:50:44.763000+00:00",
+  "text": "$HOOD +50% if you haven’t secured any gains. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.8,
+   "why": "Take gains at +50%"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] HOOD (有持仓才执行)"
+ },
+ {
+  "idx": 127,
+  "id": 1514709145671176365,
+  "ts": "2026-06-11T19:13:22.263000+00:00",
+  "text": "$HOOD - Nice. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary without trade instruction"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 128,
+  "id": 1514710177494859988,
+  "ts": "2026-06-11T19:17:28.269000+00:00",
+  "text": "$HOOD - Rocket ship. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Bullish commentary without entry details"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 129,
+  "id": 1514710234696912907,
+  "ts": "2026-06-11T19:17:41.907000+00:00",
+  "text": "$HOOD - Take off. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Take off exit signal for HOOD"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_full] HOOD (有持仓才执行)"
+ },
+ {
+  "idx": 130,
+  "id": 1514714714217906347,
+  "ts": "2026-06-11T19:35:29.908000+00:00",
+  "text": "Wow - all longs paid @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "celebratory comment no trade action"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 131,
+  "id": 1514799433248804914,
+  "ts": "2026-06-12T01:12:08.499000+00:00",
+  "text": "Watchlist for tomorrow, 6/12: Friday lotto time after one of the most bullish closes we’ve seen in weeks. Lock in. Today’s recap: $META — Clean short at the open for 100%+. Charted it the night before",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Market recap and watchlist, no entry alert"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 132,
+  "id": 1514984581424746577,
+  "ts": "2026-06-12T13:27:51.264000+00:00",
+  "text": "$SPY levels for the day 6/12/2026: Blue zone= $737.23, $743.45 Green targets = $747.01, $751.25, $754.22 Red targets = $732.83, $728.66, $725.40 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.98,
+   "why": "intraday levels, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 133,
+  "id": 1514988195098529903,
+  "ts": "2026-06-12T13:42:12.831000+00:00",
+  "text": "Lotto $IREN 0DTE $60 calls $.68 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "IREN",
+   "right": "C",
+   "strike": 60.0,
+   "expiry": "2026-06-12",
+   "premium": 0.68,
+   "size_tag": "Lotto"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "IREN",
+   "except": null,
+   "confidence": 0.9,
+   "why": "0DTE call entry with strike and premium specified"
+  },
+  "final_action": "下单: 买 IREN 2026-06-12 $60C 限价0.68 [0DTE档⅒, 止盈+60%, -30%止损]"
+ },
+ {
+  "idx": 134,
+  "id": 1514990586636140614,
+  "ts": "2026-06-12T13:51:43.018000+00:00",
+  "text": "$IREN - What a fill opportunity for everyone. Upwards of 90% if you caught the bottom. Manage your positions, secure your gains. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Commentary on IREN move, no entry specs, general advice"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 135,
+  "id": 1514993408291110952,
+  "ts": "2026-06-12T14:02:55.753000+00:00",
+  "text": "$IREN - Secure yours gain. Set your stops. Don’t let this go red. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Risk management advice, no entry/exit order"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 136,
+  "id": 1514994895373209840,
+  "ts": "2026-06-12T14:08:50.301000+00:00",
+  "text": "$IREN - That’s how we do it. Happy Friday. I’m down to 20% of my position. All runners. Original investment out. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "IREN",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Scaled to 20%, runners remain"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] IREN (有持仓才执行)"
+ },
+ {
+  "idx": 137,
+  "id": 1515001829614682203,
+  "ts": "2026-06-12T14:36:23.553000+00:00",
+  "text": "$IREN +125% here. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IREN",
+   "except": null,
+   "confidence": 0.8,
+   "why": "Profit announcement without explicit exit instruction"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 138,
+  "id": 1515008159440175165,
+  "ts": "2026-06-12T15:01:32.701000+00:00",
+  "text": "$IREN 170% here. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IREN",
+   "except": null,
+   "confidence": 0.65,
+   "why": "Ambiguous profit commentary, IREN not held, no exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 139,
+  "id": 1515010187289952436,
+  "ts": "2026-06-12T15:09:36.178000+00:00",
+  "text": "$IREN HAPPY FRIDAY. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "greeting + alert tag, no trade details"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 140,
+  "id": 1515019129080254545,
+  "ts": "2026-06-12T15:45:08.067000+00:00",
+  "text": "Back to all cash! What a morning. Volatility will continue. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "*",
+   "level": "full"
+  },
+  "llm": null,
+  "final_action": "出场指令[full] *(全仓位)"
+ },
+ {
+  "idx": 141,
+  "id": 1515025660253569064,
+  "ts": "2026-06-12T16:11:05.220000+00:00",
+  "text": "Reminder - cash is position. Happy with my $IREN play. Might not open any new positions today. Three, 100% trades in a row. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Philosophy/commentary, no new entry or exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 142,
+  "id": 1515071479388311657,
+  "ts": "2026-06-12T19:13:09.353000+00:00",
+  "text": "Weekly recap: $IREN 200% (6/12) $PLTR 170% (6/8) $HOOD 115% (6/11) $META 100% (6/11) $HIMS 80% (6/9) $HOOD 60% (6/8) $TSLA 30%+ (6/10) $NBIS x (6/10) $HOOD x (6/10) Turned out to be a very green week ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekly recap of closed trades; no current action"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 143,
+  "id": 1515909536207208470,
+  "ts": "2026-06-15T02:43:17.669000+00:00",
+  "text": "Watchlist for tomorrow, 6/15: Despite difficult price action and plenty of chop, we still managed to put together a very green week. The trading environment finally looks like it’s starting to ease up",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist + weekly recap + market commentary"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 144,
+  "id": 1516069572359229521,
+  "ts": "2026-06-15T13:19:13.261000+00:00",
+  "text": "$SPY levels for the day 6/15/2026: Blue zone= $747.88, $752.13 Green targets = $754.38, $757.37, $760.36 Red targets = $744.60, $742.40, $739.83 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Levels and technical analysis, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 145,
+  "id": 1516084029311418559,
+  "ts": "2026-06-15T14:16:40.067000+00:00",
+  "text": "$AAOI weekly $220 calls for $2.05 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "AAOI",
+   "right": "C",
+   "strike": 220.0,
+   "expiry": "2026-06-19",
+   "premium": 2.05,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "AAOI",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New weekly call entry, strike + premium given"
+  },
+  "final_action": "下单: 买 AAOI 2026-06-19 $220C 限价2.05 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 146,
+  "id": 1516085459212566571,
+  "ts": "2026-06-15T14:22:20.982000+00:00",
+  "text": "$AAOI - Quick mover. I’m setting my stop to break even on this one. Will be trimming along the way as always. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "AAOI",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Trimming position, stop moved to break-even"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] AAOI (有持仓才执行)"
+ },
+ {
+  "idx": 147,
+  "id": 1516103159829893190,
+  "ts": "2026-06-15T15:32:41.138000+00:00",
+  "text": "$CRWV weekly $115 calls $1.45 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "CRWV",
+   "right": "C",
+   "strike": 115.0,
+   "expiry": "2026-06-19",
+   "premium": 1.45,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "CRWV",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekly calls entry with strike and premium specified"
+  },
+  "final_action": "下单: 买 CRWV 2026-06-19 $115C 限价1.45 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 148,
+  "id": 1516106976407322756,
+  "ts": "2026-06-15T15:47:51.081000+00:00",
+  "text": "$NVDA $212.50s over this previous week high break is a great scalp opportunity. If you understand this concept - you know what to do. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Opinion on strike, missing premium price"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 149,
+  "id": 1516107917713998035,
+  "ts": "2026-06-15T15:51:35.506000+00:00",
+  "text": "$NVDA - Scalp working. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on existing scalp, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 150,
+  "id": 1516120912745726185,
+  "ts": "2026-06-15T16:43:13.763000+00:00",
+  "text": "Here’s what I’m rocking with. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 1.0,
+   "why": "Announcement/teaser, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 151,
+  "id": 1516169602671837405,
+  "ts": "2026-06-15T19:56:42.346000+00:00",
+  "text": "Here’s what I’m holding into tomorrow. 96% cash besides these two. Took some $AAOI off the table at 40% @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Portfolio commentary, AAOI not held, no specific action"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 152,
+  "id": 1516269556941717646,
+  "ts": "2026-06-16T02:33:53.301000+00:00",
+  "text": "Watchlist for tomorrow, 6/16: Decent day overall. $AAOI gave us a few opportunities to enter near the alert and scale out into strength for 40%+. The goal is always to lower capital at risk as the tra",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist commentary, market analysis, FOMC outlook"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 153,
+  "id": 1516434670982529134,
+  "ts": "2026-06-16T13:29:59.556000+00:00",
+  "text": "$SPY levels for the day 6/16/2026: Blue zone= $753.03, $755.39 Green targets = $756.61, $758.83, $760.51 Red targets = $751.66, $748.05, $746.36 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily price levels, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 154,
+  "id": 1516435691612012565,
+  "ts": "2026-06-16T13:34:02.893000+00:00",
+  "text": "$CRWV - Boom. All it takes is patience. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary/encouragement, no specific entry details"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 155,
+  "id": 1516436262612111593,
+  "ts": "2026-06-16T13:36:19.030000+00:00",
+  "text": "$CRWV - congrats!! scale out into strength. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "CRWV",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] CRWV"
+ },
+ {
+  "idx": 156,
+  "id": 1516436974100156426,
+  "ts": "2026-06-16T13:39:08.662000+00:00",
+  "text": "$CRWV - This chart can make our week. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Commentary on chart, no strike/premium/entry"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 157,
+  "id": 1516437651564003338,
+  "ts": "2026-06-16T13:41:50.182000+00:00",
+  "text": "I tailed these btw @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.98,
+   "why": "Commentary only, no actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 158,
+  "id": 1516438129660264589,
+  "ts": "2026-06-16T13:43:44.169000+00:00",
+  "text": "$CRWV - Here’s your multi-bagger. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "CRWV",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Bullish opinion without strike/premium/expiration"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 159,
+  "id": 1516441990357582097,
+  "ts": "2026-06-16T13:59:04.631000+00:00",
+  "text": "$QCOM - weekly $245 calls $2.25 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "QCOM",
+   "right": "C",
+   "strike": 245.0,
+   "expiry": "2026-06-19",
+   "premium": 2.25,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "QCOM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "QCOM weekly $245 calls entry signal"
+  },
+  "final_action": "下单: 买 QCOM 2026-06-19 $245C 限价2.25 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 160,
+  "id": 1516443828070912182,
+  "ts": "2026-06-16T14:06:22.776000+00:00",
+  "text": "Here’s the update: Starting to scale out on $APLD $CRWV @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "APLD",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.8,
+   "why": "Scale-out signal not in follower's holdings"
+  },
+  "final_action": "仅提醒(多票/豁免词) [APLD]"
+ },
+ {
+  "idx": 161,
+  "id": 1516450894974156821,
+  "ts": "2026-06-16T14:34:27.657000+00:00",
+  "text": "Here’s my plan: 1. Make sure you are constantly selling into strength Trimmed the following: $APLD holding 10% (runners) $CRWV holding 10% (runners) $QCOM holding for now - LOD $223 is a good risk sto",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "APLD",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "ticker",
+   "ticker": "AAOI",
+   "except": null,
+   "confidence": 0.9,
+   "why": "cutting in full"
+  },
+  "final_action": "仅提醒(多票/豁免词) [APLD]"
+ },
+ {
+  "idx": 162,
+  "id": 1516478313328021689,
+  "ts": "2026-06-16T16:23:24.702000+00:00",
+  "text": "$CRWV - Let your winners go to work. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Motivational commentary, not actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 163,
+  "id": 1516495568015196242,
+  "ts": "2026-06-16T17:31:58.540000+00:00",
+  "text": "Potential run into EOD - $IREN weekly $65 calls for $.93 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "IREN",
+   "right": "C",
+   "strike": 65.0,
+   "expiry": "2026-06-19",
+   "premium": 0.93,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "IREN",
+   "except": null,
+   "confidence": 0.85,
+   "why": "IREN weekly $65 calls entry $.93"
+  },
+  "final_action": "下单: 买 IREN 2026-06-19 $65C 限价0.93 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 164,
+  "id": 1516524800913309809,
+  "ts": "2026-06-16T19:28:08.206000+00:00",
+  "text": "Did some math for you guys on why we size appropriately & lock in gains. Using a $100,000 hypothetical account in this context: Trade 1: $CRWV • 300% on $2,000 = $6,000 profit • Locked in 90% = $5,400",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "CRWV",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Trading strategy commentary, not actionable signal"
+  },
+  "final_action": "仅提醒(多票/豁免词) [CRWV]"
+ },
+ {
+  "idx": 165,
+  "id": 1516529665756368899,
+  "ts": "2026-06-16T19:47:28.075000+00:00",
+  "text": "Alright team here’s my plan: Cutting $QCOM Holding 1% lotto on $IREN Holding small runners on $APLD $CRWV Onto tomorrow, tougher follow through today. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "QCOM",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Trader managing own positions, no follower signal"
+  },
+  "final_action": "仅提醒(多票/豁免词) [QCOM]"
+ },
+ {
+  "idx": 166,
+  "id": 1516550870643376160,
+  "ts": "2026-06-16T21:11:43.714000+00:00",
+  "text": "You can’t be profitable if you don’t scale out into strength… $CRWV 300% $APLD 50%-100%+( <@1304584870600638487> ) $IREN - holding 1% of position $AAOI - scaled some at 40% yesterday - dumped the rest",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "CRWV",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Trader's own position exits/scaling and daily commentary"
+  },
+  "final_action": "仅提醒(多票/豁免词) [CRWV]"
+ },
+ {
+  "idx": 167,
+  "id": 1516636305637900288,
+  "ts": "2026-06-17T02:51:13.004000+00:00",
+  "text": "Watchlist for tomorrow, 6/17: Mixed bag today. Update posted in #enrich-profit-updates. ⏳ This is exactly why I constantly preach capital preservation and not oversizing. We always catch our multi-bag",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist/philosophy/recap, no trade instruction"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 168,
+  "id": 1516797451774857420,
+  "ts": "2026-06-17T13:31:33.237000+00:00",
+  "text": "$SPY levels for the day 6/17/2026: Blue zone= $749.11, $752.58 Green targets = $754.90, $756.89, $759.67 Red targets = $746.93, $744.75, $742.10 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily SPY support/resistance levels, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 169,
+  "id": 1516798092735807669,
+  "ts": "2026-06-17T13:34:06.054000+00:00",
+  "text": "$CRWV - Power of runners. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "CRWV",
+   "except": null,
+   "confidence": 0.88,
+   "why": "Commentary on holding winners, no entry specs"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 170,
+  "id": 1516805517098614877,
+  "ts": "2026-06-17T14:03:36.160000+00:00",
+  "text": "$HOOD weekly $102 calls $1.10 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HOOD",
+   "right": "C",
+   "strike": 102.0,
+   "expiry": "2026-06-19",
+   "premium": 1.1,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New weekly call entry: $102 strike, $1.10 premium"
+  },
+  "final_action": "下单: 买 HOOD 2026-06-19 $102C 限价1.1 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 171,
+  "id": 1516807138721398815,
+  "ts": "2026-06-17T14:10:02.785000+00:00",
+  "text": "$HOOD - Nobody let these go red. Selling 25% here. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HOOD",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] HOOD"
+ },
+ {
+  "idx": 172,
+  "id": 1516811945250914434,
+  "ts": "2026-06-17T14:29:08.751000+00:00",
+  "text": "$HOOD - Selling another 25% @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HOOD",
+   "level": "vague"
+  },
+  "llm": null,
+  "final_action": "出场指令[vague] HOOD"
+ },
+ {
+  "idx": 173,
+  "id": 1516812488040251413,
+  "ts": "2026-06-17T14:31:18.162000+00:00",
+  "text": "$HOOD - CALLS ARE NOW ITM - SELLING 20% MORE - DOWN TO RUNNERS - 30% LEFT @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HOOD",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] HOOD"
+ },
+ {
+  "idx": 174,
+  "id": 1516817160503169178,
+  "ts": "2026-06-17T14:49:52.164000+00:00",
+  "text": "$HOOD - BANG. Now I let my runners work. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.85,
+   "why": "Commentary on existing position, no entry details"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 175,
+  "id": 1516817899405447249,
+  "ts": "2026-06-17T14:52:48.332000+00:00",
+  "text": "$HOOD - Congrats all. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Congratulatory comment, no entry or exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 176,
+  "id": 1516818482967085207,
+  "ts": "2026-06-17T14:55:07.464000+00:00",
+  "text": "$HOOD - multi-bagger. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Opinion/alert only, no strike/premium/entry"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 177,
+  "id": 1516820173196103841,
+  "ts": "2026-06-17T15:01:50.446000+00:00",
+  "text": "$HOOD - Enjoy the gains. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Celebratory commentary, no actionable trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 178,
+  "id": 1516827276275093554,
+  "ts": "2026-06-17T15:30:03.952000+00:00",
+  "text": "$HOOD - Approaching two, 400% plays this week. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on HOOD opportunity, no specific entry"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 179,
+  "id": 1516829940379684874,
+  "ts": "2026-06-17T15:40:39.124000+00:00",
+  "text": "$HOOD - Bang. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.85,
+   "why": "HOOD execution confirmation signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 180,
+  "id": 1516834599765020723,
+  "ts": "2026-06-17T15:59:10.008000+00:00",
+  "text": "$HOOD - 4 bagger. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on winning position, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 181,
+  "id": 1516836994133528807,
+  "ts": "2026-06-17T16:08:40.870000+00:00",
+  "text": "$HOOD - Wow. I’m so paid. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Celebration commentary, no actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 182,
+  "id": 1516838543446507712,
+  "ts": "2026-06-17T16:14:50.255000+00:00",
+  "text": "$HOOD - Down to last 10% of contracts. 10/10 execution. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Scaling out 90%, keeping 10% runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] HOOD (有持仓才执行)"
+ },
+ {
+  "idx": 183,
+  "id": 1516870761468399757,
+  "ts": "2026-06-17T18:22:51.630000+00:00",
+  "text": "Be careful of the volatility for the rest of the day. I’m not giving back my $HOOD gains. If you banked on that, just enjoy the rest of your day and come back in the morning. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Market commentary & hold encouragement, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 184,
+  "id": 1516884020255002905,
+  "ts": "2026-06-17T19:15:32.771000+00:00",
+  "text": "Needed a nice calm day. Great trade on $HOOD. Not swinging anything overnight. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.75,
+   "why": "Not swinging anything overnight"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_full] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 185,
+  "id": 1516966854495567984,
+  "ts": "2026-06-18T00:44:41.993000+00:00",
+  "text": "Levels worked extremely well today FYI. Use these to your advantage @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "General commentary and encouragement, not actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 186,
+  "id": 1516989376155091158,
+  "ts": "2026-06-18T02:14:11.575000+00:00",
+  "text": "Watchlist for tomorrow, 6/18: Today reminded me why I love trading so much. Took one A+ trade, followed my risk management rules, and capitalized. Turned my week very green. Decided to sit FOMC out. A",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekly recap, market commentary, no signals"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 187,
+  "id": 1517157720292065483,
+  "ts": "2026-06-18T13:23:07.945000+00:00",
+  "text": "$SPY levels for the day 6/18/2026: Blue zone= $740.55, $747.07 Green targets = $750.36, $753.52, $756.88 Red targets = $737.73, $734.91, $731.48 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily price levels and targets, not trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 188,
+  "id": 1517226994436276417,
+  "ts": "2026-06-18T17:58:24.188000+00:00",
+  "text": "$SPY $746 scalp puts can work here $.40 - in and out @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.72,
+   "why": "Entry with strike premium, scalp description tentative"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 189,
+  "id": 1517227693727289354,
+  "ts": "2026-06-18T18:01:10.912000+00:00",
+  "text": "30% lock em. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.68,
+   "why": "30% lock gains across holdings"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 190,
+  "id": 1517228415676317869,
+  "ts": "2026-06-18T18:04:03.038000+00:00",
+  "text": "50% lock more @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "50% position trim, profit-lock signal"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 191,
+  "id": 1517243319086747659,
+  "ts": "2026-06-18T19:03:16.288000+00:00",
+  "text": "50% again if you didn’t lock them in @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Post-trade commentary on profit-taking, not actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 192,
+  "id": 1517243483906117693,
+  "ts": "2026-06-18T19:03:55.584000+00:00",
+  "text": "@everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": null,
+  "final_action": "忽略"
+ },
+ {
+  "idx": 193,
+  "id": 1517245657037930667,
+  "ts": "2026-06-18T19:12:33.699000+00:00",
+  "text": "$SPY walk off multi-bagger @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "SPY performance commentary, no entry/exit instruction"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 194,
+  "id": 1517266486404583455,
+  "ts": "2026-06-18T20:35:19.807000+00:00",
+  "text": "Short week recap, 6/15: $HOOD 500% (banger & so clean) $CRWV 400%+ $SPY 150%+ $APLD 50%+ $AAOI +40% twice & then dumped in the morning. Depends when you locked in gains. $IREN x $QCOM x <@130458487060",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekly recap and market commentary, no new entry"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 195,
+  "id": 1518094925240078518,
+  "ts": "2026-06-21T03:27:15.017000+00:00",
+  "text": "Glad we caught the initial push on $CRWV last week for 400%. There is more juice left in this chart. Higher low printed on the weekly, expansion should now bring us to $140+. We played this same setup",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "CRWV",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist + conditional alert, retrospective trade commentary"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 196,
+  "id": 1518095803367948398,
+  "ts": "2026-06-21T03:30:44.379000+00:00",
+  "text": "If you guys want to do some scanning tomorrow, here is the initial watchlist. More details to come: $CRWV $HIMS $ALAB $CRDO $CIFR $IREN $OSCR $HOOD $BE @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist announcement; more details TBC"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 197,
+  "id": 1518442606927810623,
+  "ts": "2026-06-22T02:28:48.791000+00:00",
+  "text": "Watchlist for tomorrow, 6/21: These are all high-quality setups that have been acting like leaders over the past few weeks. Strong relative strength continues to show up in these names, and until that",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist commentary, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 198,
+  "id": 1518607785858830589,
+  "ts": "2026-06-22T13:25:10.517000+00:00",
+  "text": "$SPY levels for the day 6/22/2026: Blue zone= $745.61, $748.65 Green targets = $750.62, $752.64, $755.00 Red targets = $743.40, $739.69, $737.14 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Price levels & targets, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 199,
+  "id": 1518611054848905236,
+  "ts": "2026-06-22T13:38:09.905000+00:00",
+  "text": "$HOOD weekly $120 calls $1.00 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HOOD",
+   "right": "C",
+   "strike": 120.0,
+   "expiry": "2026-06-26",
+   "premium": 1.0,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New HOOD weekly $120 calls entry signal"
+  },
+  "final_action": "下单: 买 HOOD 2026-06-26 $120C 限价1.0 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 200,
+  "id": 1518614955522261043,
+  "ts": "2026-06-22T13:53:39.898000+00:00",
+  "text": "$HOOD - Happy Monday! I love a good profit cushion. Scaling out 1/2 of the position here! I see some of you caught that $.8 fill👊 @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HOOD",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] HOOD"
+ },
+ {
+  "idx": 201,
+  "id": 1518615008747982969,
+  "ts": "2026-06-22T13:53:52.588000+00:00",
+  "text": "$HOOD - Happy Monday! I love a good profit cushion. Scaling out 1/2 of the position here! I see some of you caught that $.8 fill👊 @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HOOD",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] HOOD"
+ },
+ {
+  "idx": 202,
+  "id": 1518615331642544148,
+  "ts": "2026-06-22T13:55:09.572000+00:00",
+  "text": "I tailed these @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Incomplete message, no trade signal or ticker"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 203,
+  "id": 1518617189228347423,
+  "ts": "2026-06-22T14:02:32.455000+00:00",
+  "text": "Here’s what I have. Scaling down to 30% of contracts remaining on $HOOD. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HOOD",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] HOOD"
+ },
+ {
+  "idx": 204,
+  "id": 1518664052493127720,
+  "ts": "2026-06-22T17:08:45.528000+00:00",
+  "text": "$SNOW $215 puts weekly $1.90 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "SNOW",
+   "right": "P",
+   "strike": 215.0,
+   "expiry": "2026-06-26",
+   "premium": 1.9,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "SNOW",
+   "except": null,
+   "confidence": 0.95,
+   "why": "SNOW weekly $215 put entry $1.90"
+  },
+  "final_action": "下单: 买 SNOW 2026-06-26 $215P 限价1.9 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 205,
+  "id": 1518664194809925652,
+  "ts": "2026-06-22T17:09:19.459000+00:00",
+  "text": "The power of selling into strength. That’s why I reiterate it so much. Closing out the remaining 30% here. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.82,
+   "why": "Closing 30%, selling into strength"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 206,
+  "id": 1518665473242304682,
+  "ts": "2026-06-22T17:14:24.261000+00:00",
+  "text": "Another example of why selling into strength is so important: $10,000 position - hypothetical • 50% sold at +40% = +$2,000 • 20% sold at +52% = +$1,040 • 30% cut at -50% = -$1,500 Net P&L: +$1,540 Eve",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "APLD",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] APLD"
+ },
+ {
+  "idx": 207,
+  "id": 1518675097081086083,
+  "ts": "2026-06-22T17:52:38.763000+00:00",
+  "text": "$SPY - we were dealt a tough hand today. This chop is insane. Levels working at least. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 1.0,
+   "why": "Market commentary on $SPY chop, no entry/exit"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 208,
+  "id": 1518684065664995442,
+  "ts": "2026-06-22T18:28:17.040000+00:00",
+  "text": "Updated watchlist: $APLD $AAOI $GLW $RGTI @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "watchlist update, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 209,
+  "id": 1518692768921157682,
+  "ts": "2026-06-22T19:02:52.058000+00:00",
+  "text": "$SNOW - Starting to pay here. I’m trimming 1/2 of my contracts. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "SNOW",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Trimming half, locking profits"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] SNOW (有持仓才执行)"
+ },
+ {
+  "idx": 210,
+  "id": 1518699424765710538,
+  "ts": "2026-06-22T19:29:18.935000+00:00",
+  "text": "Holding my other half of $SNOW cons into tomorrow. This is my only open position. Currently +30%. Keep in mind - I am 99% cash in my options portfolio. We will keep playing the highest quality setups ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Portfolio status update, risk management commentary, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 211,
+  "id": 1518700429809025084,
+  "ts": "2026-06-22T19:33:18.556000+00:00",
+  "text": "$SPY - Levels are on point today. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Market commentary on SPY levels, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 212,
+  "id": 1518706411641635088,
+  "ts": "2026-06-22T19:57:04.736000+00:00",
+  "text": "$IBM 7/10 $270 calls - I will scale in $2.40-$2.70 Trump has chosen his next ticker. Worth some risk. @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "IBM",
+   "right": "C",
+   "strike": 270.0,
+   "expiry": "2026-07-10",
+   "premium": 2.7,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.92,
+   "why": "IBM 7/10 $270 calls, scale-in $2.40-$2.70"
+  },
+  "final_action": "下单: 买 IBM 2026-07-10 $270C 限价2.7 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 213,
+  "id": 1518706920108851420,
+  "ts": "2026-06-22T19:59:05.964000+00:00",
+  "text": "7/2 folks! @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.98,
+   "why": "Greeting announcement, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 214,
+  "id": 1518825095244550175,
+  "ts": "2026-06-23T03:48:41.112000+00:00",
+  "text": "Watchlist for 6/23: I know some of my entries can be difficult to match exactly. I try to alert as quickly as possible once a setup confirms. More often than not, you'll get a second chance to enter. ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.98,
+   "why": "Watchlist commentary & trading advice, no signals"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 215,
+  "id": 1518972578520109278,
+  "ts": "2026-06-23T13:34:43.865000+00:00",
+  "text": "$SNOW x $IBM - Secure your gains. Down to runners on both. Multi-bagger almost secured, as I said. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.82,
+   "why": "Trim position, down to runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] IBM (有持仓才执行)"
+ },
+ {
+  "idx": 216,
+  "id": 1518979867373207572,
+  "ts": "2026-06-23T14:03:41.663000+00:00",
+  "text": "Updated watchlist: $NBIS $CIFR $APLD $IREN $RGTI $OUST $IBM @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist update, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 217,
+  "id": 1518980136693661796,
+  "ts": "2026-06-23T14:04:45.874000+00:00",
+  "text": "$IBM - As-promised. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.45,
+   "why": "Vague promise without entry/exit parameters"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 218,
+  "id": 1519010314794827888,
+  "ts": "2026-06-23T16:04:40.894000+00:00",
+  "text": "Using some $IBM gains - lotto sized (1%) $APLD weekly $50 calls $.66 Risky business - holding up well though @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "APLD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New APLD weekly $50c @$.66 entry, lotto 1%"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 219,
+  "id": 1519012736946802828,
+  "ts": "2026-06-23T16:14:18.380000+00:00",
+  "text": "$APLD - First greens. @every",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Price action commentary, no entry strike/premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 220,
+  "id": 1519063964875620453,
+  "ts": "2026-06-23T19:37:52.070000+00:00",
+  "text": "Another 1% position $OSCR weekly $30 calls $.70 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "OSCR",
+   "right": "C",
+   "strike": 30.0,
+   "expiry": "2026-06-26",
+   "premium": 0.7,
+   "size_tag": "1% position"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "OSCR",
+   "except": null,
+   "confidence": 0.95,
+   "why": "NEW weekly call entry $30 strike $.70 premium"
+  },
+  "final_action": "下单: 买 OSCR 2026-06-26 $30C 限价0.7 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 221,
+  "id": 1519067721705455788,
+  "ts": "2026-06-23T19:52:47.768000+00:00",
+  "text": "$OSCR - Take the gains if you want. I’m letting it ride. Same with $APLD lotto. Remember - both of these positions are paid for with $IBM gains. Not a heavy risk on environment. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "OSCR",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Portfolio commentary, optional exit, follower doesn't hold OSCR/APLD"
+  },
+  "final_action": "仅提醒(多票/豁免词) [OSCR]"
+ },
+ {
+  "idx": 222,
+  "id": 1519171541227802755,
+  "ts": "2026-06-24T02:45:20.271000+00:00",
+  "text": "Watchlist for tomorrow, 6/24: Clean swings into today: $IBM 200% (trades like this can make your week - not much room for error) $SNOW 80%+ I hope you guys locked in gains on the alert <#1310382263514",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist + commentary; no strikes/premiums"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 223,
+  "id": 1519332274347184310,
+  "ts": "2026-06-24T13:24:02.033000+00:00",
+  "text": "$SPY levels for the day 6/23/2026: Blue zone= $732.52, $737.17 Green targets = $739.72, $743.07, $747.72 Red targets = $740.19, $725.77, $723.11 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.98,
+   "why": "Price levels and targets, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 224,
+  "id": 1519334768918134904,
+  "ts": "2026-06-24T13:33:56.785000+00:00",
+  "text": "$RKLB weekly $85 puts $.80 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "RKLB",
+   "right": "P",
+   "strike": 85.0,
+   "expiry": "2026-06-26",
+   "premium": 0.8,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "RKLB",
+   "except": null,
+   "confidence": 0.95,
+   "why": "RKLB weekly $85 puts entry alert"
+  },
+  "final_action": "下单: 买 RKLB 2026-06-26 $85P 限价0.8 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 225,
+  "id": 1519337256563900512,
+  "ts": "2026-06-24T13:43:49.886000+00:00",
+  "text": "$RKLB - Wow, great start to the day. All fills paying. Manage these. Taking my risk out now. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "RKLB",
+   "except": null,
+   "confidence": 0.8,
+   "why": "Taking risk off RKLB, scaling/trimming profitable position"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] RKLB (有持仓才执行)"
+ },
+ {
+  "idx": 226,
+  "id": 1519342299040055492,
+  "ts": "2026-06-24T14:03:52.106000+00:00",
+  "text": "$RKLB - Boom. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "RKLB",
+   "except": null,
+   "confidence": 0.75,
+   "why": "No strike/premium specified, commentary only"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 227,
+  "id": 1519346020671033344,
+  "ts": "2026-06-24T14:18:39.412000+00:00",
+  "text": "$RKLB - Second multi-bagger of the week coming? @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "RKLB",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Speculation/commentary without entry params"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 228,
+  "id": 1519350565908254752,
+  "ts": "2026-06-24T14:36:43.081000+00:00",
+  "text": "Back to 100% cash, great trade! @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Closed all positions, 100% cash"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_full] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 229,
+  "id": 1519387905192230913,
+  "ts": "2026-06-24T17:05:05.460000+00:00",
+  "text": "$RKLB - 180% if anyone has runners. Make sure you are taking these gains and building your LT portfolio <#1322352981428932618> - latest buys posted here. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Existing position gain-taking commentary, no new entry"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 230,
+  "id": 1519396093303984251,
+  "ts": "2026-06-24T17:37:37.658000+00:00",
+  "text": "Runners for you bag holders. Almost ITM @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Position status commentary, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 231,
+  "id": 1519429773540200518,
+  "ts": "2026-06-24T19:51:27.652000+00:00",
+  "text": "I’m going all cash into tomorrow @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "*",
+   "level": "full"
+  },
+  "llm": null,
+  "final_action": "出场指令[full] *(全仓位)"
+ },
+ {
+  "idx": 232,
+  "id": 1519559106715979797,
+  "ts": "2026-06-25T04:25:23.084000+00:00",
+  "text": "Watchlist for tomorrow, 6/25: $RKLB was an extremely clean short today. When you have a trade like that, it is in your best interest to take the rest of the day off. 0 drawdown, A+ short opportunity, ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist preview with commentary, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 233,
+  "id": 1519695883976048812,
+  "ts": "2026-06-25T13:28:53.324000+00:00",
+  "text": "$SPY levels for the day 6/25/2026: Blue zone= $736.52, $739.29 Green targets = $743.16, $745.87, $747.72 Red targets = $734.22, $731.30, $728.84 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily SPY levels/targets, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 234,
+  "id": 1519699574330228787,
+  "ts": "2026-06-25T13:43:33.173000+00:00",
+  "text": "$RKLB - These are now 550% if anyone is in runners @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "RKLB",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on profitable position, no entry/exit instruction"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 235,
+  "id": 1519751953041719296,
+  "ts": "2026-06-25T17:11:41.231000+00:00",
+  "text": "Lotto - $COIN $142 puts weekly for $1.43 Lost $148, targeting $138 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "COIN",
+   "right": "P",
+   "strike": 142.0,
+   "expiry": "2026-06-26",
+   "premium": 1.43,
+   "size_tag": "Lotto"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "COIN",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New $COIN put entry $142/$1.43"
+  },
+  "final_action": "下单: 买 COIN 2026-06-26 $142P 限价1.43 [lotto档⅓, 止盈+60%, -30%止损]"
+ },
+ {
+  "idx": 236,
+  "id": 1519775069209890957,
+  "ts": "2026-06-25T18:43:32.555000+00:00",
+  "text": "$COIN - Happy with this win! Taking most of my gains here. Good extension to lock em in. I’ll leave a few. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "COIN",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Scaling out most gains, keeping runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] COIN (有持仓才执行)"
+ },
+ {
+  "idx": 237,
+  "id": 1519782522509332620,
+  "ts": "2026-06-25T19:13:09.560000+00:00",
+  "text": "$COIN - Nice win. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "COIN",
+   "except": null,
+   "confidence": 0.2,
+   "why": "Past win celebration; no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 238,
+  "id": 1519782868648329418,
+  "ts": "2026-06-25T19:14:32.086000+00:00",
+  "text": "$COIN 70% here. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.6,
+   "why": "Ambiguous price commentary, no strike/premium details"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 239,
+  "id": 1519936498697506887,
+  "ts": "2026-06-26T05:25:00.344000+00:00",
+  "text": "Watchlist for tomorrow, 6/26: We are stacking out winners. Another clean play on the LOD break from $COIN today. Ran 75%+ with multiple entries. Downside plays are working right now, looking for anoth",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist update with no strike/premium/entry directive"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 240,
+  "id": 1520056154237964339,
+  "ts": "2026-06-26T13:20:28.448000+00:00",
+  "text": "$SPY levels for the day 6/26/2026: Blue zone= $727.57, $731.27 Green targets = $734.02, $736.57, $739.39 Red targets = $725.26, $723.31, $721.41 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Price levels and targets, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 241,
+  "id": 1520068662495674549,
+  "ts": "2026-06-26T14:10:10.649000+00:00",
+  "text": "$LLY is going to offer a good scalp opportunity. Watching for a tap of the 9EMA on 5min $1220 weekly calls @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "LLY",
+   "except": null,
+   "confidence": 0.85,
+   "why": "Conditional setup alert, watching for entry, no premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 242,
+  "id": 1520071736488497288,
+  "ts": "2026-06-26T14:22:23.546000+00:00",
+  "text": "Good fill here $1.40 $LLY @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.8,
+   "why": "Past fill commentary, no entry directive"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 243,
+  "id": 1520089011689881762,
+  "ts": "2026-06-26T15:31:02.275000+00:00",
+  "text": "$IBM - Next week - 7/2 $285 calls for $1.65 Scalp for those interested - $272.50s today @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "IBM",
+   "right": "C",
+   "strike": 285.0,
+   "expiry": "2026-07-02",
+   "premium": 1.65,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.9,
+   "why": "IBM weekly $285 calls $1.65 scalp entry"
+  },
+  "final_action": "下单: 买 IBM 2026-07-02 $285C 限价1.65 [lotto档⅓, 止盈+60%, -30%止损]"
+ },
+ {
+  "idx": 244,
+  "id": 1520094825083310120,
+  "ts": "2026-06-26T15:54:08.296000+00:00",
+  "text": "Here’s what I got. I hope you guys trusted the process. This was a few minutes ago. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Vague encouragement without specific ticker or action"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 245,
+  "id": 1520106432400331045,
+  "ts": "2026-06-26T16:40:15.696000+00:00",
+  "text": "Plan is to swing the $IBM 7/2 calls. Everything else I will take profits on. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "IBM",
+   "level": "vague"
+  },
+  "llm": null,
+  "final_action": "出场指令[vague] IBM"
+ },
+ {
+  "idx": 246,
+  "id": 1520148308528730333,
+  "ts": "2026-06-26T19:26:39.743000+00:00",
+  "text": "Holding $IBM into next week @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.85,
+   "why": "Holding conviction/position management, no entry strike"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 247,
+  "id": 1520156532858421408,
+  "ts": "2026-06-26T19:59:20.576000+00:00",
+  "text": "$IBM - Closing +5% see you guys Monday I have a $1.65 avg. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "IBM",
+   "level": "full"
+  },
+  "llm": null,
+  "final_action": "出场指令[full] IBM"
+ },
+ {
+  "idx": 248,
+  "id": 1520157758136254547,
+  "ts": "2026-06-26T20:04:12.705000+00:00",
+  "text": "Weekly recap, 6/22: $RKLB 250%+ $IBM 200%+ (Monday swing) $LLY 50-100% scalp $SNOW 80%+ $COIN 70% $HOOD 50% $APLD 40% Two tougher lottos (green before close - depends where you locked in gains): $APLD",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekly recap of past results, not entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 249,
+  "id": 1520854012134555878,
+  "ts": "2026-06-28T18:10:52.594000+00:00",
+  "text": "My initial watchlist of you guys want to chart today: $HOOD $IBM $OSCR $TEM $LLY $MRNA Full write-up coming tonight🤝 @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist announcement, full write-up pending"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 250,
+  "id": 1520975997124739182,
+  "ts": "2026-06-29T02:15:36.082000+00:00",
+  "text": "Watchlist for Tomorrow, 6/29 Coming off a very strong week. You guys know I like to create a profit cushion on Mondays, I will be very patient in the morning & lock in gains quickly. We are swinging $",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist commentary, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 251,
+  "id": 1521145609023914064,
+  "ts": "2026-06-29T13:29:34.710000+00:00",
+  "text": "$SPY levels for the day 6/29/2026: Blue zone= $735.07, $737.98 Green targets = $739.90, $741.91, $743.70 Red targets = $732.92, $731.36, $729.61 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Technical levels commentary, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 252,
+  "id": 1521167150180466819,
+  "ts": "2026-06-29T14:55:10.522000+00:00",
+  "text": "$IBM - Locking in half. Told you guys we would be paid. Patience. Trust the charts. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Locking in half IBM position"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] IBM (有持仓才执行)"
+ },
+ {
+  "idx": 253,
+  "id": 1521200037495963689,
+  "ts": "2026-06-29T17:05:51.469000+00:00",
+  "text": "$HOOD $108 weekly calls for $1.05 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HOOD",
+   "right": "C",
+   "strike": 108.0,
+   "expiry": "2026-07-03",
+   "premium": 1.05,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "HOOD weekly $108 calls entry at $1.05"
+  },
+  "final_action": "下单: 买 HOOD 2026-07-03 $108C 限价1.05 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 254,
+  "id": 1521200155658027161,
+  "ts": "2026-06-29T17:06:19.641000+00:00",
+  "text": "$IBM sitting at +30% - I’m holding my remaining half, love the setup. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.72,
+   "why": "commentary on existing profitable position, no trade instruction"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 255,
+  "id": 1521200981684256920,
+  "ts": "2026-06-29T17:09:36.581000+00:00",
+  "text": "Swinging $TEM 7/17 $65 calls $1.53 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "TEM",
+   "right": "C",
+   "strike": 65.0,
+   "expiry": "2026-07-17",
+   "premium": 1.53,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "TEM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Swing entry: $TEM 7/17 $65c @ $1.53"
+  },
+  "final_action": "下单: 买 TEM 2026-07-17 $65C 限价1.53 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 256,
+  "id": 1521204756239089724,
+  "ts": "2026-06-29T17:24:36.505000+00:00",
+  "text": "$SPY - Textbook scalp here today. - Broke PMH at $738 (orange circle) - that is when I texted in the chat - PMH retest - great place to add more contracts (blue circle) - Profit take at the high of da",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.88,
+   "why": "Scalp entry at PMH retest, 300% profit target"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 257,
+  "id": 1521212921613652199,
+  "ts": "2026-06-29T17:57:03.282000+00:00",
+  "text": "$TEM - Paying. We have so much time. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Commentary on existing position, no strike/premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 258,
+  "id": 1521231339276468286,
+  "ts": "2026-06-29T19:10:14.395000+00:00",
+  "text": "Here’s what I have. Great way to start the week. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary only, no entry details or ticker"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 259,
+  "id": 1521247307801038888,
+  "ts": "2026-06-29T20:13:41.588000+00:00",
+  "text": "Held all three. Sold half of $IBM earlier at 70%. Great start to the week. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "IBM",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] IBM"
+ },
+ {
+  "idx": 260,
+  "id": 1521347134815993896,
+  "ts": "2026-06-30T02:50:22.203000+00:00",
+  "text": "Watchlist for tomorrow, 6/30: Great start to the week. Clean 70% on $IBM & 45% on $TEM with three weeks left. Excited for these swings into tomorrow. Setups are looking extremely good, we just need fo",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "watchlist recap encouragement no actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 261,
+  "id": 1521350293756055592,
+  "ts": "2026-06-30T03:02:55.353000+00:00",
+  "text": "$OUST - Almost 100% on shares in two months. Make sure you guys are consistently building your long-term portfolio. It creates a mental backstop to help with psychology. Trust me, you’ll thank yoursel",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Past trade commentary, portfolio advice, refers to previous message"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 262,
+  "id": 1521506183213613078,
+  "ts": "2026-06-30T13:22:22.296000+00:00",
+  "text": "$SPY levels for the day 6/30/2026: Blue zone= $740.46, $743.06 Green targets = $744.54, $746.67, $748.18 Red targets = $738.87, $736.53, $735.01 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily technical levels, support/resistance zones, no entry or exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 263,
+  "id": 1521516983072592006,
+  "ts": "2026-06-30T14:05:17.183000+00:00",
+  "text": "$TSLA 7/1 $425 calls for $1.55 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "TSLA",
+   "right": "C",
+   "strike": 425.0,
+   "expiry": "2026-07-01",
+   "premium": 1.55,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New TSLA 7/1 $425 calls entry $1.55"
+  },
+  "final_action": "下单: 买 TSLA 2026-07-01 $425C 限价1.55 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 264,
+  "id": 1521518964616990820,
+  "ts": "2026-06-30T14:13:09.620000+00:00",
+  "text": "Patience - the retest just gave you a $1.45 entry. Set a fill if you have to. $TSLA @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.85,
+   "why": "Retest gave $1.45 entry point on TSLA"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 265,
+  "id": 1521519473788583968,
+  "ts": "2026-06-30T14:15:11.016000+00:00",
+  "text": "$TSLA - I filled around $1.60 @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.85,
+   "why": "Filled TSLA options entry at $1.60 premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 266,
+  "id": 1521524245530935327,
+  "ts": "2026-06-30T14:34:08.688000+00:00",
+  "text": "$IBM - Takeoff. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Technical commentary on price action, no entry signal or strike"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 267,
+  "id": 1521582159427801118,
+  "ts": "2026-06-30T18:24:16.437000+00:00",
+  "text": "My plan & update: Taking 1/2 profits on $TSLA $IBM. That leaves me with the following: $IBM 25% left $TSLA 50% left $HOOD 50% left - turned into a lotto $TEM holding in full - we have time I would rec",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.88,
+   "why": "Scaling 1/2 profits TSLA IBM"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 268,
+  "id": 1521583232888340723,
+  "ts": "2026-06-30T18:28:32.370000+00:00",
+  "text": "$IBM can take off here. I still have close to a 2% position. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on IBM outlook; no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 269,
+  "id": 1521591614970134608,
+  "ts": "2026-06-30T19:01:50.814000+00:00",
+  "text": "Enjoy the gains. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Encouragement with no actionable entry/exit"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 270,
+  "id": 1521592291754774698,
+  "ts": "2026-06-30T19:04:32.172000+00:00",
+  "text": "$IBM PAYING. PATIENCE. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary without actionable entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 271,
+  "id": 1521594106982174811,
+  "ts": "2026-06-30T19:11:44.956000+00:00",
+  "text": "$TSLA - Everyone paid? Manage your positions. I’m down to runners. Our weekly multi-bagger coming. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.8,
+   "why": "Trader scaling to runners on TSLA"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] TSLA (有持仓才执行)"
+ },
+ {
+  "idx": 272,
+  "id": 1521594305763086538,
+  "ts": "2026-06-30T19:12:32.349000+00:00",
+  "text": "WATCH $IBM HERE IM TELLING YOU GUYS - ALL DAY LONG @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist commentary, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 273,
+  "id": 1521595854039810048,
+  "ts": "2026-06-30T19:18:41.487000+00:00",
+  "text": "J and I winners today - so much money to be made. Please continue to be patience & let the setups play out!! $TSLA 150% $TSLA 150% $IBM 75% $RKLB 60% $TEM +5% $HOOD - holding $RDW @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Position recap with gains; holding existing HOOD; no new entry signals"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 274,
+  "id": 1521605392050819073,
+  "ts": "2026-06-30T19:56:35.526000+00:00",
+  "text": "Down to runners on $TSLA. Plan remains the same as above otherwise. Another great day in the books. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Scaling out of TSLA position to runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] TSLA (有持仓才执行)"
+ },
+ {
+  "idx": 275,
+  "id": 1521705091147497552,
+  "ts": "2026-07-01T02:32:45.643000+00:00",
+  "text": "Watchlist for tomorrow, 7/1: Strong day today. We've been extremely consistent. $TSLA 160%+ $IBM 80%+ $TEM continues to be one of my favorite swing setups with a few weeks left. Looking forward to see",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist commentary; no strikes/premiums"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 276,
+  "id": 1521870104604836012,
+  "ts": "2026-07-01T13:28:27.917000+00:00",
+  "text": "$SPY levels for the day 7/1/2026: Blue zone= $743.69, $747.77 Green targets = $749.70, $751.59, $743.57 Red targets = $741.72, $738.92, $736.53 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily SPY levels and technical zones - commentary, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 277,
+  "id": 1521872916872953956,
+  "ts": "2026-07-01T13:39:38.414000+00:00",
+  "text": "$IBM - Nice win. Down to runners. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.85,
+   "why": "Scaling out position, keeping runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] IBM (有持仓才执行)"
+ },
+ {
+  "idx": 278,
+  "id": 1521874186396504325,
+  "ts": "2026-07-01T13:44:41.092000+00:00",
+  "text": "$IBM - I’ve wanted you guys 20+ times. Chart still looks great. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Commentary without strike/premium/entry specs"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 279,
+  "id": 1521874466672480326,
+  "ts": "2026-07-01T13:45:47.915000+00:00",
+  "text": "$TEM - Paying. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Status update on existing position, not actionable entry/exit"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 280,
+  "id": 1521878634434920528,
+  "ts": "2026-07-01T14:02:21.587000+00:00",
+  "text": "$IBM - MULTI BAGGER @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary hype without entry strike/premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 281,
+  "id": 1521880107059380375,
+  "ts": "2026-07-01T14:08:12.688000+00:00",
+  "text": "Patience, consistency, trust. We do this every damn week. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 1.0,
+   "why": "motivational commentary, no trade signal present"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 282,
+  "id": 1521881870344650834,
+  "ts": "2026-07-01T14:15:13.088000+00:00",
+  "text": "3-bagger. One of my greenest days of the year. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Performance recap, no actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 283,
+  "id": 1521886108579790948,
+  "ts": "2026-07-01T14:32:03.562000+00:00",
+  "text": "REMINDER: I WILL NEVER DM YOU - BE AWARE OF SCAMMERS Turn your DMs to friends only. Especially if they start talking about crypto. The best place to reach me is by opening a ticket. <#1326585243368423",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.98,
+   "why": "Security reminder, not a trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 284,
+  "id": 1521888673698943006,
+  "ts": "2026-07-01T14:42:15.134000+00:00",
+  "text": "Lock your gains in @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.75,
+   "why": "Lock gains = exit all positions, @everyone scope"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_full] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 285,
+  "id": 1521894113295728813,
+  "ts": "2026-07-01T15:03:52.035000+00:00",
+  "text": "$HOOD - Patience pays. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary/encouragement without entry or exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 286,
+  "id": 1521896008190136383,
+  "ts": "2026-07-01T15:11:23.813000+00:00",
+  "text": "Cheers @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 1.0,
+   "why": "Generic greeting, no trading signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 287,
+  "id": 1521898700992151745,
+  "ts": "2026-07-01T15:22:05.827000+00:00",
+  "text": "Two, 3-baggers + $HOOD + $TEM Congrats all!!! @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Celebratory recap of prior wins, no actionable entry or exit"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 288,
+  "id": 1521907383750627450,
+  "ts": "2026-07-01T15:56:35.958000+00:00",
+  "text": "$IBM - Banger. I only talked about this for 4 days straight! @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Recap celebration of past IBM trade, no new signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 289,
+  "id": 1521915438093701161,
+  "ts": "2026-07-01T16:28:36.263000+00:00",
+  "text": "$HOOD - pay day @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on existing position, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 290,
+  "id": 1521930663551303753,
+  "ts": "2026-07-01T17:29:06.295000+00:00",
+  "text": "$TEM - We still have two weeks left. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "TEM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Time commentary, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 291,
+  "id": 1522073964917031015,
+  "ts": "2026-07-02T02:58:32.003000+00:00",
+  "text": "Watchlist for tomorrow, 7/2: Massive day. My month is made one trading day in. Remained patient & trusted the charts. I’ve been telling you guys about $IBM at least 10 times a day. Let the setups play",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist commentary, no entry/exit signals"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 292,
+  "id": 1522232847979773964,
+  "ts": "2026-07-02T13:29:52.677000+00:00",
+  "text": "$SPY levels for the day 7/2/2026: Blue zone= $743.19, $749.43 Green targets = $751.60, $754.02, $756.48 Red targets = $742.36, $740.78, $738.87 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.98,
+   "why": "Technical levels commentary, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 293,
+  "id": 1522234638637203597,
+  "ts": "2026-07-02T13:36:59.603000+00:00",
+  "text": "$HOOD - Cheers if anyone held runners. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Commentary celebrating past HOOD winners, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 294,
+  "id": 1522235839705382975,
+  "ts": "2026-07-02T13:41:45.960000+00:00",
+  "text": "$TEM - Nice push today. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.98,
+   "why": "Market commentary, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 295,
+  "id": 1522236985711001720,
+  "ts": "2026-07-02T13:46:19.189000+00:00",
+  "text": "Lotto - $RKLB - $108 calls - $.68 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "RKLB",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New $RKLB $108 call entry, $.68 premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 296,
+  "id": 1522237693726031922,
+  "ts": "2026-07-02T13:49:07.993000+00:00",
+  "text": "$RKLB - I think this was the fastest 100% trade I’ve ever had. 2 minutes later. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "ticker",
+   "ticker": "RKLB",
+   "except": null,
+   "confidence": 0.65,
+   "why": "100% profit taken, @alert broadcast, phrased as personal closure"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 297,
+  "id": 1522244454914986094,
+  "ts": "2026-07-02T14:15:59.986000+00:00",
+  "text": "$HOOD - cons now over 1,000% @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Commentary on $HOOD metric, not actionable entry/exit"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 298,
+  "id": 1522254618434867231,
+  "ts": "2026-07-02T14:56:23.158000+00:00",
+  "text": "I’m all cash now! What a week. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "*",
+   "level": "full"
+  },
+  "llm": null,
+  "final_action": "出场指令[full] *(全仓位)"
+ },
+ {
+  "idx": 299,
+  "id": 1522334512711729166,
+  "ts": "2026-07-02T20:13:51.438000+00:00",
+  "text": "Weekly recap, 6/29: Moral of the story yet again, sell into strength. $HOOD 1,000%+ $IBM 500%+ $TSLA 300%+ $RKLB 100% $TEM 90% Ready to run it back next week. Enjoy the long week. Americas 250th & <@1",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "weekly recap and performance summary"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 300,
+  "id": 1523458578382590154,
+  "ts": "2026-07-05T22:40:29.578000+00:00",
+  "text": "Watchlist for this week, 7/6: Coming off of a very profitable week. We will continue to play the leaders / relative strength. I wanted to get you guys the list ASAP to do some charting before the week",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist for charting, no entry signals or strikes"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 301,
+  "id": 1523492966616793089,
+  "ts": "2026-07-06T00:57:08.372000+00:00",
+  "text": "Narrowing down this week’s watchlist, 7/6: $IBM $HIMS $TEM $RKLB $ASTS $RDDT $LLY High quality charts across the board on this list. We will let price action confirm the move. I am looking for a break",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist with chart commentary, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 302,
+  "id": 1523679242871771267,
+  "ts": "2026-07-06T13:17:20.092000+00:00",
+  "text": "$SPY levels for the day 7/6/2026: Blue zone= $744.11, $748.83 Green targets = $751.17, $753.93, $756.54 Red targets = $742.42, $740.42, $738.93 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Technical levels only, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 303,
+  "id": 1523683364622565496,
+  "ts": "2026-07-06T13:33:42.794000+00:00",
+  "text": "$IBM weekly $305 calls for $1.95 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "IBM",
+   "right": "C",
+   "strike": 305.0,
+   "expiry": "2026-07-10",
+   "premium": 1.95,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 1.0,
+   "why": "IBM weekly $305 calls entry alert"
+  },
+  "final_action": "下单: 买 IBM 2026-07-10 $305C 限价1.95 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 304,
+  "id": 1523688368368783434,
+  "ts": "2026-07-06T13:53:35.780000+00:00",
+  "text": "$IBM - Nice profit cushion to start the week. I’m scaling out 1/3 here. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "IBM",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] IBM"
+ },
+ {
+  "idx": 305,
+  "id": 1523689650978426921,
+  "ts": "2026-07-06T13:58:41.578000+00:00",
+  "text": "$IBM - Scaling down to 1/2 position sizing. HAPPY MONDAY🤝👊 @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "IBM",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] IBM"
+ },
+ {
+  "idx": 306,
+  "id": 1523699069707489411,
+  "ts": "2026-07-06T14:36:07.178000+00:00",
+  "text": "$IBM - Scaling out more. Down to 1/3 of my position. Almost runners. What a way to start the week. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "IBM",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] IBM"
+ },
+ {
+  "idx": 307,
+  "id": 1523712987763052615,
+  "ts": "2026-07-06T15:31:25.501000+00:00",
+  "text": "$IBM - Boom. Down to runners. 2-bagger. 1/4 left, I’m holding them. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Scaling out 3/4, keeping 1/4 runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] IBM (有持仓才执行)"
+ },
+ {
+  "idx": 308,
+  "id": 1523747385589629119,
+  "ts": "2026-07-06T17:48:06.582000+00:00",
+  "text": "$LLY weekly $1300 calls for $1.70 I’m starting light - 1% @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "LLY",
+   "right": "C",
+   "strike": 1300.0,
+   "expiry": "2026-07-10",
+   "premium": 1.7,
+   "size_tag": "light"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "LLY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "LLY $1300 weekly call entry at $1.70"
+  },
+  "final_action": "下单: 买 LLY 2026-07-10 $1300C 限价1.7 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 309,
+  "id": 1523768522067542149,
+  "ts": "2026-07-06T19:12:05.911000+00:00",
+  "text": "Watching into close for a position: $HOOD $RDDT @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist alert monitoring, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 310,
+  "id": 1523777476210327613,
+  "ts": "2026-07-06T19:47:40.745000+00:00",
+  "text": "My plan into tomorrow: $LLY - I am holding a 1% position. Daily chart is primed. $IBM - I have 20% of my position left. I am down to runners. My original investment is out. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": null,
+  "final_action": "忽略"
+ },
+ {
+  "idx": 311,
+  "id": 1523867567456915501,
+  "ts": "2026-07-07T01:45:40.172000+00:00",
+  "text": "Watchlist for tomorrow, 7/7: Such a clean trade to start the week with $IBM. Peaked at 130%. Broke PDH & continued the trend higher. I still think it’s ready to print a much larger daily candle. 5%-8%",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Watchlist + chart commentary; no new entry or exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 312,
+  "id": 1524041252671328447,
+  "ts": "2026-07-07T13:15:49.954000+00:00",
+  "text": "$SPY levels for the day 7/7/2026: Blue zone= $749.35, $752.22 Green targets = $753.85, $756.10, $758.21 Red targets = $747.33, $745.57, $742.83 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Technical levels and price targets, no trade entry"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 313,
+  "id": 1524045840505901096,
+  "ts": "2026-07-07T13:34:03.779000+00:00",
+  "text": "$IBM x $LLY - Down to runners on both Lock those gains in. Cheers all. What a move. 2/2 to start the week. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "IBM",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "IBM,LLY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Down to runners, lock gains both"
+  },
+  "final_action": "仅提醒(多票/豁免词) [IBM]"
+ },
+ {
+  "idx": 314,
+  "id": 1524049703912869908,
+  "ts": "2026-07-07T13:49:24.887000+00:00",
+  "text": "$LLY - More. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "LLY",
+   "except": null,
+   "confidence": 0.8,
+   "why": "Add to LLY position"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 315,
+  "id": 1524049919676256307,
+  "ts": "2026-07-07T13:50:16.329000+00:00",
+  "text": "$LLY - Two, multi-baggers to start the week. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "LLY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Celebratory commentary on existing multi-bagger winners, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 316,
+  "id": 1524070019577807039,
+  "ts": "2026-07-07T15:10:08.519000+00:00",
+  "text": "$IBM x $LLY want more. I still have runners. I’d recommend some exposure. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary without strike/premium; opinion only"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 317,
+  "id": 1524076103327678676,
+  "ts": "2026-07-07T15:34:18.998000+00:00",
+  "text": "$IBM $325 weeklies are not a bad lotto here with profits. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Opinion about option without entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 318,
+  "id": 1524088237268926604,
+  "ts": "2026-07-07T16:22:31.955000+00:00",
+  "text": "If you guys have a few minutes today, it would be greatly appreciate if you could drop me a review on Whop. 🤝 In return, next banger coming soon. https://whop.com/enrichtrades/ @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": null,
+  "final_action": "忽略"
+ },
+ {
+  "idx": 319,
+  "id": 1524139136460656732,
+  "ts": "2026-07-07T19:44:47.268000+00:00",
+  "text": "My plan into tomorrow - continue playing what works: Holding runners (about 10% of the original position on the following): $IBM $305 calls - currently 290% $IBM $325 calls - currently 15% $LLY $1300 ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Status update on holdings, watching DELL - no new signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 320,
+  "id": 1524141276289569078,
+  "ts": "2026-07-07T19:53:17.443000+00:00",
+  "text": "Adding $DELL weekly $465 calls for $2.60 Chart is too good to not have exposure - 2% position @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "DELL",
+   "right": "C",
+   "strike": 465.0,
+   "expiry": "2026-07-10",
+   "premium": 2.6,
+   "size_tag": "2% position"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "DELL",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New DELL weekly $465 calls entry"
+  },
+  "final_action": "下单: 买 DELL 2026-07-10 $465C 限价2.6 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 321,
+  "id": 1524142957618401360,
+  "ts": "2026-07-07T19:59:58.303000+00:00",
+  "text": "LOCK IN THOSE GAINS @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.75,
+   "why": "General profit-taking signal, all positions"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 322,
+  "id": 1524409262229557379,
+  "ts": "2026-07-08T13:38:10.270000+00:00",
+  "text": "$DELL - Congrats all. Start trimming. Down to 1/2. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "DELL",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Trimming position down to 1/2"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] DELL (有持仓才执行)"
+ },
+ {
+  "idx": 323,
+  "id": 1524409974850322583,
+  "ts": "2026-07-08T13:41:00.172000+00:00",
+  "text": "$DELL - More. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.65,
+   "why": "No strike/premium details provided"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 324,
+  "id": 1524410589441556591,
+  "ts": "2026-07-08T13:43:26.702000+00:00",
+  "text": "$DELL :598118f30dce52a6e017c08c0e90f2dd: @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "DELL",
+   "except": null,
+   "confidence": 0.6,
+   "why": "Ticker mention only, no strike/premium/direction"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 325,
+  "id": 1524410762624368681,
+  "ts": "2026-07-08T13:44:07.992000+00:00",
+  "text": "$DELL :9561peperich: @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "DELL",
+   "except": null,
+   "confidence": 0.95,
+   "why": "No strike/premium details, unclear intent"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 326,
+  "id": 1524411269988487188,
+  "ts": "2026-07-08T13:46:08.957000+00:00",
+  "text": "$DELL - Speechless. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "DELL",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Commentary reaction, no actionable trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 327,
+  "id": 1524412030986227752,
+  "ts": "2026-07-08T13:49:10.393000+00:00",
+  "text": "$DELL - I am down to runners! 15% of my original position left, what a trade🤝 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "DELL",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Scaling out to 15% runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] DELL (有持仓才执行)"
+ },
+ {
+  "idx": 328,
+  "id": 1524418320206528652,
+  "ts": "2026-07-08T14:14:09.860000+00:00",
+  "text": "AND THATS WHY WE SCALE OUT INTO STRENGTH✍️ Perfect timing on the sells. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Retrospective commentary on scaling strategy, no ticker or exit instruction"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 329,
+  "id": 1524420992833814670,
+  "ts": "2026-07-08T14:24:47.064000+00:00",
+  "text": "To be clear - I am down to very minimal runners on all positions. Zero risk, consider me out. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Minimal runners, zero risk, explicitly out"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_full] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 330,
+  "id": 1524421121963982990,
+  "ts": "2026-07-08T14:25:17.851000+00:00",
+  "text": "$IBM - Lotto $310 calls weekly $2.10 @everyone",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "IBM",
+   "right": "C",
+   "strike": 310.0,
+   "expiry": "2026-07-10",
+   "premium": 2.1,
+   "size_tag": "Lotto"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.9,
+   "why": "IBM weekly $310 call entry, lotto-style"
+  },
+  "final_action": "下单: 买 IBM 2026-07-10 $310C 限价2.1 [lotto档⅓, 止盈+60%, -30%止损]"
+ },
+ {
+  "idx": 331,
+  "id": 1524421145560875141,
+  "ts": "2026-07-08T14:25:23.477000+00:00",
+  "text": "$IBM - Lotto $310 calls weekly $2.10 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "IBM",
+   "right": "C",
+   "strike": 310.0,
+   "expiry": "2026-07-10",
+   "premium": 2.1,
+   "size_tag": "Lotto"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.9,
+   "why": "IBM $310 weekly calls entry alert"
+  },
+  "final_action": "重复信号跳过"
+ },
+ {
+  "idx": 332,
+  "id": 1524490271570788462,
+  "ts": "2026-07-08T19:00:04.402000+00:00",
+  "text": "What a week so far…remember to lock those gains in, especially when I alert in here. $IBM 370% $DELL 250% $LLY 200% $IBM lotto TBD Patience, trust the charts, AND SELL INTO STRENGTH Plan into tomorrow",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "IBM",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.1,
+   "why": "Weekly recap and commentary, actual plan tomorrow"
+  },
+  "final_action": "仅提醒(多票/豁免词) [IBM]"
+ },
+ {
+  "idx": 333,
+  "id": 1524504023674257599,
+  "ts": "2026-07-08T19:54:43.159000+00:00",
+  "text": "Alright - here’s what I’m doing: Closing all positions outside of the $IBM $310 lotto - this is a 1% position - I am 99% cash @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "IBM",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": "IBM",
+   "confidence": 0.95,
+   "why": "Closing all except IBM $310 lotto, 99% cash"
+  },
+  "final_action": "仅提醒(多票/豁免词) [IBM]"
+ },
+ {
+  "idx": 334,
+  "id": 1524603639942086820,
+  "ts": "2026-07-09T02:30:33.528000+00:00",
+  "text": "Watchlist for tomorrow, 7/9: Another great day. We woke up to another 250%+ winner on $DELL. The chart was primed going into today and rewarded patience. I hope you guys are continuing to understand t",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist & recap; no specific entry/exit signals"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 335,
+  "id": 1524775588840214588,
+  "ts": "2026-07-09T13:53:49.340000+00:00",
+  "text": "$HOOD weekly $120 calls $.83 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HOOD",
+   "right": "C",
+   "strike": 120.0,
+   "expiry": "2026-07-10",
+   "premium": 0.83,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New HOOD weekly $120 calls entry $.83"
+  },
+  "final_action": "下单: 买 HOOD 2026-07-10 $120C 限价0.83 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 336,
+  "id": 1524777740715425893,
+  "ts": "2026-07-09T14:02:22.387000+00:00",
+  "text": "$HOOD - Manage you risk. I’m scaling out half. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HOOD",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] HOOD"
+ },
+ {
+  "idx": 337,
+  "id": 1524808539292565505,
+  "ts": "2026-07-09T16:04:45.340000+00:00",
+  "text": "Updated watchlist: $CIFR $DELL $ARM $UBER $ANET @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "watchlist update, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 338,
+  "id": 1524825181065842688,
+  "ts": "2026-07-09T17:10:53.048000+00:00",
+  "text": "$DELL - trying some off PWH retest - 1% starter - Weekly $480 calls for $1.75 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "DELL",
+   "right": "C",
+   "strike": 480.0,
+   "expiry": "2026-07-10",
+   "premium": 1.75,
+   "size_tag": "1% starter"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "DELL",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New DELL weekly $480 calls entry $1.75"
+  },
+  "final_action": "下单: 买 DELL 2026-07-10 $480C 限价1.75 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 339,
+  "id": 1524840231348469870,
+  "ts": "2026-07-09T18:10:41.315000+00:00",
+  "text": "$DELL - Scaling out 1/2 on this pump. Everyone paid? Manage these. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "DELL",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] DELL"
+ },
+ {
+  "idx": 340,
+  "id": 1524854509145166016,
+  "ts": "2026-07-09T19:07:25.407000+00:00",
+  "text": "Personally going back to all cash - I hope you guys all locked in gains. Another great example of why it’s so important. No swings as of now into tomorrow. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "*",
+   "level": "full"
+  },
+  "llm": null,
+  "final_action": "出场指令[full] *(全仓位)"
+ },
+ {
+  "idx": 341,
+  "id": 1524854854361813193,
+  "ts": "2026-07-09T19:08:47.713000+00:00",
+  "text": "Kept the same $SPY levels from yesterday & they were perfect. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Price levels commentary, no trade action"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 342,
+  "id": 1524869209736220772,
+  "ts": "2026-07-09T20:05:50.301000+00:00",
+  "text": "Reminder: Do not overstay your welcome in weeklies We can get you in the best setups of the day, but you need to secure gains along the way. Green is the goal. Initial scan into tomorrow: $TSLA $META ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "watchlist scan and trading discipline reminder"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 343,
+  "id": 1525130220393201744,
+  "ts": "2026-07-10T13:23:00.091000+00:00",
+  "text": "$SPY levels for the day 7/20/2026: Blue zone= $749.49, $752.44 Green targets = $753.73, $754.88, $756.57 Red targets = $747.33, $745.53, $743.45 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Technical levels and targets, not actionable entry or exit"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 344,
+  "id": 1525133894733664256,
+  "ts": "2026-07-10T13:37:36.122000+00:00",
+  "text": "Super lotto - $TSLA $420 0DTE for $.85 @everyone $alert",
+  "rule": {
+   "kind": "BUY_AMBIG",
+   "ticker": "TSLA",
+   "right": "?",
+   "strike": 420.0,
+   "expiry": "2026-07-10",
+   "premium": 0.85,
+   "size_tag": "lotto"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "TSLA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New 0DTE call entry $420 strike $.85 premium"
+  },
+  "final_action": "下单: 买 TSLA 2026-07-10 $420C(消歧) 限价0.85 [0DTE档⅒]"
+ },
+ {
+  "idx": 345,
+  "id": 1525138003939299478,
+  "ts": "2026-07-10T13:53:55.833000+00:00",
+  "text": "$NVDA 0DTE $.70 - $.80 $207.50 scale in Small position - I mean it!! @everyone $alert",
+  "rule": {
+   "kind": "BUY_AMBIG",
+   "ticker": "NVDA",
+   "right": "?",
+   "strike": 207.5,
+   "expiry": "2026-07-10",
+   "premium": 0.8,
+   "size_tag": "Small"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "NVDA",
+   "except": null,
+   "confidence": 0.9,
+   "why": "0DTE $207.50 calls $.70-.80 scale in"
+  },
+  "final_action": "下单: 买 NVDA 2026-07-10 $207.5C(消歧) 限价0.8 [0DTE档⅒]"
+ },
+ {
+  "idx": 346,
+  "id": 1525139758911586545,
+  "ts": "2026-07-10T14:00:54.251000+00:00",
+  "text": "$NVDA - Original investment out. Down to runners. MANAGE THESE @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "NVDA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Original investment closed, keep runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] NVDA (有持仓才执行)"
+ },
+ {
+  "idx": 347,
+  "id": 1525140492634030221,
+  "ts": "2026-07-10T14:03:49.184000+00:00",
+  "text": "$NVDA - Beautiful @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Vague alert, no strike or premium specified"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 348,
+  "id": 1525143457700643027,
+  "ts": "2026-07-10T14:15:36.111000+00:00",
+  "text": "$NVDA - I’m practically all out. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "NVDA",
+   "level": "full"
+  },
+  "llm": null,
+  "final_action": "出场指令[full] NVDA"
+ },
+ {
+  "idx": 349,
+  "id": 1525171882041802773,
+  "ts": "2026-07-10T16:08:33.002000+00:00",
+  "text": "$NVDA 250% - Cheers. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "NVDA",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Retrospective commentary on gains, no actionable signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 350,
+  "id": 1525196517575626853,
+  "ts": "2026-07-10T17:46:26.571000+00:00",
+  "text": "$NVDA 400%. Paid for $TSLA lotto 3x over. That’s what it’s all about👊 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Retrospective celebration of NVDA gains, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 351,
+  "id": 1525202836177027304,
+  "ts": "2026-07-10T18:11:33.043000+00:00",
+  "text": "MENTORSHIP WAITLIST COMES OUT IN THIS CHANNEL SUNDAY EVENING!! EVERYONE BETTER BE ON THE LOOKOUT IF THEY WANT A SPOT <@1304584870600638487> & I have been working on this for months. Long time coming. ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Mentorship waitlist announcement, no trade"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 352,
+  "id": 1525226728564461668,
+  "ts": "2026-07-10T19:46:29.432000+00:00",
+  "text": "$TSLA scalp was a bit trickier today but $NVDA held over 300% most of the day. Everyone rest up & enjoy the weekend. You guys deserve it, see so many of you crush it this week. That’s what it’s all ab",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekend recap, encouragement, no new signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 353,
+  "id": 1525228095572017172,
+  "ts": "2026-07-10T19:51:55.352000+00:00",
+  "text": "Weekly recap, 7/6: $NVDA 400% $IBM 370%+ $DELL 250% $LLY 200% $HOOD 60% $DELL 70% $TSLA - mixed results $IBM lotto - loss Went 5/5 on our normal sized swings and 2/3 on lottos… you guys know which one",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekly recap, no entry/exit orders"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 354,
+  "id": 1526013766653837382,
+  "ts": "2026-07-12T23:53:53.935000+00:00",
+  "text": "The waitlist is officially live. For the last few months, I’ve been building something I’ve wanted to create for years. Not just another trading course. A complete framework that teaches you how to ge",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": null,
+  "final_action": "忽略"
+ },
+ {
+  "idx": 355,
+  "id": 1526057244272234526,
+  "ts": "2026-07-13T02:46:39.807000+00:00",
+  "text": "Watchlist for this week, 7/13: Reminder: Nothing changes in here due to the mentorship program. Business as usual. We are actually turning it up a notch. A lot of things planned for the coming months.",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist recap & market commentary, no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 356,
+  "id": 1526221573273555028,
+  "ts": "2026-07-13T13:39:38.894000+00:00",
+  "text": "$SPY levels for the day 7/13/2026: Blue zone= $751.53, $753.85 Green targets = $754.88, $756.24, $757.51 Red targets = $750.37, $749.13, $746.99 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Technical levels, not a trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 357,
+  "id": 1526232337572954273,
+  "ts": "2026-07-13T14:22:25.303000+00:00",
+  "text": "$IBM weekly $310 $1.33 2% position @everyone $alert",
+  "rule": {
+   "kind": "BUY_AMBIG",
+   "ticker": "IBM",
+   "right": "?",
+   "strike": 310.0,
+   "expiry": "2026-07-17",
+   "premium": 1.33,
+   "size_tag": "2% position"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "IBM weekly $310 call entry 1.33 premium"
+  },
+  "final_action": "下单: 买 IBM 2026-07-17 $310C(消歧) 限价1.33 [lotto档⅓]"
+ },
+ {
+  "idx": 358,
+  "id": 1526263983580123310,
+  "ts": "2026-07-13T16:28:10.299000+00:00",
+  "text": "$IBM - Hourly wedge still looks A+ and intact. I’m in for now. Market dragging it - let’s see if we can get some relative strength here into close @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "IBM",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Chart pattern commentary, no entry/exit parameters"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 359,
+  "id": 1526311288005984286,
+  "ts": "2026-07-13T19:36:08.553000+00:00",
+  "text": "Cash is a position. Slow day today. The price action hasn’t been great, and that’s completely fine. Not every day is meant to be traded. IBM has continued to show relative strength, and I’m still hold",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Market commentary, patience advice, IBM hold status"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 360,
+  "id": 1526316296118075393,
+  "ts": "2026-07-13T19:56:02.580000+00:00",
+  "text": "$IBM - Holding my 2% position - rest of the portfolio is cash today. Rest day. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Position status update, rest day, no signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 361,
+  "id": 1526387228299759699,
+  "ts": "2026-07-14T00:37:54.130000+00:00",
+  "text": "Patience - remember this was just two weeks ago. Political sentiment will pass. Stay the course. Keep your cash safe. I promise you, we will catch our bangers. We always do. I have sent pretty much th",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.98,
+   "why": "Motivational commentary, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 362,
+  "id": 1526422898967974058,
+  "ts": "2026-07-14T02:59:38.680000+00:00",
+  "text": "Watchlist for tomorrow, 7/14: Price action remained slow and choppy today as the indices drifted lower. The biggest takeaway was the rotation into software, with relative strength standing out across ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": null,
+  "final_action": "忽略"
+ },
+ {
+  "idx": 363,
+  "id": 1526581708739182632,
+  "ts": "2026-07-14T13:30:41.880000+00:00",
+  "text": "$SPY levels for the day 7/14/2026: Blue zone= $747.50, $752.55 Green targets = $754.28, $756.20, $757.51 Red targets = $745.58, $743.45, $740.48 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Daily price levels only; no trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 364,
+  "id": 1526596966438666331,
+  "ts": "2026-07-14T14:31:19.599000+00:00",
+  "text": "$GOOGL 7/15 $362.50 calls - scaling in $.80 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "GOOGL",
+   "right": "C",
+   "strike": 362.5,
+   "expiry": "2026-07-15",
+   "premium": 0.8,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "GOOGL",
+   "except": null,
+   "confidence": 0.95,
+   "why": "GOOGL 7/15 $362.50 calls entry scaling in $.80"
+  },
+  "final_action": "下单: 买 GOOGL 2026-07-15 $362.5C 限价0.8 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 365,
+  "id": 1526597832419704883,
+  "ts": "2026-07-14T14:34:46.065000+00:00",
+  "text": "Updated watchlist: $GOOGL $PLTR $NVDA $MSFT $SNOW $DELL 🤝 @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist update, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 366,
+  "id": 1526609165794017361,
+  "ts": "2026-07-14T15:19:48.152000+00:00",
+  "text": "$GOOGL - Secure profits. Don’t let this go red. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "GOOGL",
+   "level": "vague"
+  },
+  "llm": null,
+  "final_action": "出场指令[vague] GOOGL"
+ },
+ {
+  "idx": 367,
+  "id": 1526642668795334897,
+  "ts": "2026-07-14T17:32:55.890000+00:00",
+  "text": "$GOOGL - Scaling out more here. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "GOOGL",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] GOOGL"
+ },
+ {
+  "idx": 368,
+  "id": 1526666811008090283,
+  "ts": "2026-07-14T19:08:51.842000+00:00",
+  "text": "$GOOGL - I hope this makes up for $IBM, atrocious news this morning. I’m holding runners into tomorrow. Original investment is out. I’m being extremely picky this week. <@1304584870600638487> and I wi",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "GOOGL",
+   "except": null,
+   "confidence": 0.8,
+   "why": "Original investment closed, holding runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] GOOGL (有持仓才执行)"
+ },
+ {
+  "idx": 369,
+  "id": 1526666838279458878,
+  "ts": "2026-07-14T19:08:58.344000+00:00",
+  "text": "$GOOGL - I hope this makes up for $IBM, atrocious news this morning. I’m holding runners into tomorrow. Original investment is out. I’m being extremely picky this week. <@1304584870600638487> and I wi",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "GOOGL",
+   "except": null,
+   "confidence": 0.4,
+   "why": "Original investment closed, holding runners"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 370,
+  "id": 1526678540437684306,
+  "ts": "2026-07-14T19:55:28.356000+00:00",
+  "text": "$HOOD - 7/24 $125 calls $1.50 2% position @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "HOOD",
+   "right": "C",
+   "strike": 125.0,
+   "expiry": "2026-07-24",
+   "premium": 1.5,
+   "size_tag": "2% position"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.98,
+   "why": "HOOD weekly $125 calls $1.50 entry signal"
+  },
+  "final_action": "下单: 买 HOOD 2026-07-24 $125C 限价1.5 [波段档½, 止盈+60%, -50%兜底]"
+ },
+ {
+  "idx": 371,
+  "id": 1526685701008134234,
+  "ts": "2026-07-14T20:23:55.569000+00:00",
+  "text": "At the bell today: $HOOD 5% $GOOGL 90% $IBM news hurt the morning - unfortunately we cannot control that. We will continue to trade the top setups & momentum on the market. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Market commentary & performance recap, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 372,
+  "id": 1526771086124122144,
+  "ts": "2026-07-15T02:03:12.967000+00:00",
+  "text": "Watchlist for tomorrow, 7/15: Rebounded from the atrocious $IBM news overnight with $GOOGL. <@1304584870600638487> nailed $PLTR & $IWM - per usual. Generational run out of him. Another relatively slow",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist commentary, no entry/exit alert"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 373,
+  "id": 1526953459419578378,
+  "ts": "2026-07-15T14:07:54.149000+00:00",
+  "text": "$GOOGL 300% @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.9,
+   "why": "Win posting, no entry/exit details"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 374,
+  "id": 1526954040175628438,
+  "ts": "2026-07-15T14:10:12.612000+00:00",
+  "text": "Updated watchlist: $GOOGL $META $TEAM $MSFT @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 1.0,
+   "why": "Watchlist update, no entry signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 375,
+  "id": 1526956369843060767,
+  "ts": "2026-07-15T14:19:28.048000+00:00",
+  "text": "$GOOGL 400% @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "GOOGL",
+   "except": null,
+   "confidence": 0.85,
+   "why": "No strike/premium stated, appears commentary only"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 376,
+  "id": 1526960635991163020,
+  "ts": "2026-07-15T14:36:25.177000+00:00",
+  "text": "$GOOGL - Cheers. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "vague commentary, no entry/exit details or strike"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 377,
+  "id": 1526969166370701335,
+  "ts": "2026-07-15T15:10:18.978000+00:00",
+  "text": "Scalp - $MSFT 0DTE $397.50 $.90 @everyone $alert",
+  "rule": {
+   "kind": "BUY_AMBIG",
+   "ticker": "MSFT",
+   "right": "?",
+   "strike": 397.5,
+   "expiry": "2026-07-15",
+   "premium": 0.9,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "MSFT",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New 0DTE scalp entry $397.50 calls $.90"
+  },
+  "final_action": "下单: 买 MSFT 2026-07-15 $397.5C(消歧) 限价0.9 [0DTE档⅒]"
+ },
+ {
+  "idx": 378,
+  "id": 1526971534076547236,
+  "ts": "2026-07-15T15:19:43.483000+00:00",
+  "text": "$MSFT - Start securing your lunch money. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "MSFT",
+   "except": null,
+   "confidence": 0.72,
+   "why": "'securing lunch money' = take profits, scaling out"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 379,
+  "id": 1526972022763159744,
+  "ts": "2026-07-15T15:21:39.995000+00:00",
+  "text": "$MSFT - Straight green. Now it’s lunch and dinner money. I’m getting down to runners. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "MSFT",
+   "except": null,
+   "confidence": 0.88,
+   "why": "Scaling out MSFT keeping runners"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] MSFT (有持仓才执行)"
+ },
+ {
+  "idx": 380,
+  "id": 1526973961764733068,
+  "ts": "2026-07-15T15:29:22.289000+00:00",
+  "text": "$MSFT - Quick and easy bagger in 20 minutes. 🫡 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on past trade, lacks strike/premium"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 381,
+  "id": 1526974208780009573,
+  "ts": "2026-07-15T15:30:21.182000+00:00",
+  "text": "$GOOGL $IBM revenge secured. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.6,
+   "why": "Vague status update, no explicit trade signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 382,
+  "id": 1526983068294975669,
+  "ts": "2026-07-15T16:05:33.455000+00:00",
+  "text": "Make sure you guys are selling into strength $MSFT $GOOGL $META $HOOD @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "MSFT",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "ticker",
+   "ticker": "MSFT",
+   "except": null,
+   "confidence": 0.8,
+   "why": "Scale out MSFT into strength"
+  },
+  "final_action": "仅提醒(多票/豁免词) [MSFT]"
+ },
+ {
+  "idx": 383,
+  "id": 1526983568381837372,
+  "ts": "2026-07-15T16:07:32.685000+00:00",
+  "text": "This watchlist hit today.",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist observation without trade action"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 384,
+  "id": 1526984197523247229,
+  "ts": "2026-07-15T16:10:02.684000+00:00",
+  "text": "Sitting at 200% - if you caught this in the chat - sell into strength @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "exit_partial",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.8,
+   "why": "Trim 200% winners into strength"
+  },
+  "final_action": "🤖LLM捞漏出场[exit_partial] ALL (有持仓才执行)"
+ },
+ {
+  "idx": 385,
+  "id": 1526984869714989196,
+  "ts": "2026-07-15T16:12:42.947000+00:00",
+  "text": "Down to runners on all. Not a bad day. @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "*",
+   "level": "partial"
+  },
+  "llm": null,
+  "final_action": "出场指令[partial] *(全仓位)"
+ },
+ {
+  "idx": 386,
+  "id": 1526994738774020157,
+  "ts": "2026-07-15T16:51:55.914000+00:00",
+  "text": "All cash now besides $HOOD 1.5% position. WHAT A DAY. Selling into strength is key, we timed that perfectly. @everyone",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "HOOD",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "all",
+   "ticker": null,
+   "except": "HOOD",
+   "confidence": 0.95,
+   "why": "All cash besides HOOD 1.5% position"
+  },
+  "final_action": "仅提醒(多票/豁免词) [HOOD]"
+ },
+ {
+  "idx": 387,
+  "id": 1527033318774800514,
+  "ts": "2026-07-15T19:25:14.103000+00:00",
+  "text": "Only holding my $HOOD 7/24 $125 calls - love the daily chart. 1.5% position. WHAT A DAY. @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.9,
+   "why": "Position commentary without entry or exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 388,
+  "id": 1527161123793539073,
+  "ts": "2026-07-16T03:53:05.194000+00:00",
+  "text": "Watchlist for tomorrow, 7/16: Recap from today is posted in #enrich-profit-updates ⏳ Hell of a performance. We simply followed the system: - High-quality setups - Relative strength - Key level breaks ",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": null,
+  "final_action": "忽略"
+ },
+ {
+  "idx": 389,
+  "id": 1527294107503038494,
+  "ts": "2026-07-16T12:41:30.981000+00:00",
+  "text": "$ATAI Acquisition discussions by $LLY - deal will be finalized this quarter. One of my first high conviction names posted. $1.25 -> $7.25 … over 500% @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.85,
+   "why": "Acquisition commentary, no options entry (strike/premium)"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 390,
+  "id": 1527308769896435854,
+  "ts": "2026-07-16T13:39:46.768000+00:00",
+  "text": "$SPY levels for the day 7/15/2026: Blue zone= $751.18, $755.14 Green targets = $756.57, $757.96, $759.36 Red targets = $750.12, $748.61, $747.11 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Technical levels only"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 391,
+  "id": 1527309444348772504,
+  "ts": "2026-07-16T13:42:27.570000+00:00",
+  "text": "Hedge - $XOM weekly $147 calls $.74 @everyone $alert",
+  "rule": {
+   "kind": "BUY",
+   "ticker": "XOM",
+   "right": "C",
+   "strike": 147.0,
+   "expiry": "2026-07-17",
+   "premium": 0.74,
+   "size_tag": ""
+  },
+  "llm": {
+   "action": "hedge",
+   "scope": "ticker",
+   "ticker": "XOM",
+   "except": null,
+   "confidence": 0.98,
+   "why": "Explicit hedge protection for trader's book"
+  },
+  "final_action": "🛡️hedge跳过, 仅提醒"
+ },
+ {
+  "idx": 392,
+  "id": 1527321251918643212,
+  "ts": "2026-07-16T14:29:22.714000+00:00",
+  "text": "Updated watchlist: $TSLA $LLY $META",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Watchlist update, no entry or exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 393,
+  "id": 1527349543715209317,
+  "ts": "2026-07-16T16:21:48.004000+00:00",
+  "text": "$XOM - Green here. @everyone",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Commentary on price movement, no entry/exit signal"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 394,
+  "id": 1527402262186426428,
+  "ts": "2026-07-16T19:51:17.067000+00:00",
+  "text": "Swinging $XOM Closing the rest of $HOOD @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "XOM",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "exit_full",
+   "scope": "ticker",
+   "ticker": "HOOD",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Closing rest of HOOD position"
+  },
+  "final_action": "仅提醒(多票/豁免词) [XOM]"
+ },
+ {
+  "idx": 395,
+  "id": 1527426893551374337,
+  "ts": "2026-07-16T21:29:09.642000+00:00",
+  "text": "Took a bit of a back seat today after one of my biggest days of the year yesterday. One of the most important skills in trading is knowing when to put your foot on the gas and when to ease off. Today’",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "XOM",
+   "level": "alert"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Past performance recap and hedge hold commentary"
+  },
+  "final_action": "仅提醒(多票/豁免词) [XOM]"
+ },
+ {
+  "idx": 396,
+  "id": 1527514502235689060,
+  "ts": "2026-07-17T03:17:17.180000+00:00",
+  "text": "Watchlist for tomorrow, 7/17: Today was another reminder that not every session deserves max exposure. The market stayed choppy with limited relative strength, so staying selective was the right appro",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": null,
+  "final_action": "忽略"
+ },
+ {
+  "idx": 397,
+  "id": 1527514548461113435,
+  "ts": "2026-07-17T03:17:28.201000+00:00",
+  "text": "Watchlist for tomorrow, 7/17: Today was another reminder that not every session deserves max exposure. The market stayed choppy with limited relative strength, so staying selective was the right appro",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": null,
+  "final_action": "忽略"
+ },
+ {
+  "idx": 398,
+  "id": 1527668122528645271,
+  "ts": "2026-07-17T13:27:43.112000+00:00",
+  "text": "$SPY levels for the day 7/17/2026: Blue zone= $742.20, $745.80 Green targets = $747.84, $750.23, $752.78 Red targets = $741.20, $739.99, $738.11 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "SPY",
+   "except": null,
+   "confidence": 0.95,
+   "why": "Technical levels and zones, not an entry or exit"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 399,
+  "id": 1527669123100704910,
+  "ts": "2026-07-17T13:31:41.667000+00:00",
+  "text": "$XOM LOCK THEM ALL ON @everyone $alert",
+  "rule": {
+   "kind": "EXIT",
+   "ticker": "XOM",
+   "level": "full"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "XOM",
+   "except": null,
+   "confidence": 0.7,
+   "why": "XOM entry alert, lacks strike and premium"
+  },
+  "final_action": "出场指令[full] XOM"
+ },
+ {
+  "idx": 400,
+  "id": 1527718253491654840,
+  "ts": "2026-07-17T16:46:55.265000+00:00",
+  "text": "Lotto scalp - $ARM $272.50 calls $1.30 @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "buy",
+   "scope": "ticker",
+   "ticker": "ARM",
+   "except": null,
+   "confidence": 0.95,
+   "why": "New options entry: ARM $272.50 calls $1.30"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 401,
+  "id": 1527724982174748843,
+  "ts": "2026-07-17T17:13:39.508000+00:00",
+  "text": "$ARM - Cheers, lock them in! @everyone $alert",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "ticker",
+   "ticker": "ARM",
+   "except": null,
+   "confidence": 0.6,
+   "why": "Trader closing own $ARM (not in follower holdings)"
+  },
+  "final_action": "忽略"
+ },
+ {
+  "idx": 402,
+  "id": 1527774408012202014,
+  "ts": "2026-07-17T20:30:03.546000+00:00",
+  "text": "Weekly recap, 7/13: $GOOGL 1,200%+ $XOM 265%+ $META 260%+ $MSFT 140% $ARM 100%+ $HOOD 50% $IBM x (terrible news overnight) Came out of the week with one loss. $HOOD was tricky for some but we had mult",
+  "rule": {
+   "kind": "NOISE"
+  },
+  "llm": {
+   "action": "ignore",
+   "scope": "all",
+   "ticker": null,
+   "except": null,
+   "confidence": 0.95,
+   "why": "Weekly performance recap, no trade signal"
+  },
+  "final_action": "忽略"
+ }
+]

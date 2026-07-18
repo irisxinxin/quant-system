@@ -569,6 +569,7 @@ def bump_last(ch_id, msg_id):
 # ── 信号处理 ──
 
 STALE_BUY_SEC = int(os.environ.get("STALE_BUY_SEC", "180"))   # 买入信号迟到>此秒数→只提醒(scalp几分钟就死)
+_recent_exits = {}   # 出场去重: {规范化文本: 时刻} — 站长13秒重发同文本曾致减仓执行两次
 
 
 def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict, msg_dt=None):
@@ -577,14 +578,16 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict, 
 
 
 def _llm_exit_targets(positions, v):
-    """LLM出场判定 → 目标持仓列表 (scope/ticker/except)。"""
+    """LLM出场判定 → 目标持仓列表 (tickers数组/scope/except数组)。"""
     out = []
+    excepts = set(v.get("except") or [])
+    tks = set(v.get("tickers") or [])
     for osi, p in positions.items():
         if p["status"] not in ("pending", "open"):
             continue
-        if v.get("except") and p.get("ticker") == v["except"]:
+        if p.get("ticker") in excepts:
             continue
-        if v.get("scope") == "ticker" and v.get("ticker") and p.get("ticker") != v["ticker"]:
+        if v.get("scope") == "ticker" and tks and p.get("ticker") not in tks:
             continue
         out.append(osi)
     return out
@@ -613,15 +616,41 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
         return
 
     if s.kind == "EXIT":
+        # 出场文本去重: 同文本10分钟内只执行一次 (站长爱重发)
+        _norm = one.lower().strip()
+        _now = time.time()
+        for k in [k for k, t0 in _recent_exits.items() if _now - t0 > 600]:
+            _recent_exits.pop(k, None)
+        if _norm in _recent_exits:
+            log(f"↩️ 重复出场消息跳过(10分钟内同文本): {one[:60]}")
+            return
+        _recent_exits[_norm] = _now
         held = [osi for osi, p in positions.items()
                 if p["status"] in ("pending", "open")
                 and (s.ticker == "*" or p.get("ticker") == s.ticker)]
-        if not held or not LIVE:
-            note = f"🟠 enrich出场提醒 [{s.ticker}·{s.exit_level}] (无持仓/DRY_RUN): {one}"
+        if s.exit_level == "alert" and LIVE:
+            # 多票/豁免词 → LLM仲裁: 能解析出明确tickers就按票执行 (审计漏洞#1: 多票出场瘫痪)
+            held_all = [p["ticker"] for p in positions.values() if p["status"] in ("pending", "open")]
+            v = llm_classify(text, held_all) if (LLM_ON and held_all) else None
+            if v:
+                journal(ev="llm_classify", rule="EXIT/alert", verdict=v, sig=one)
+            if v and v["action"] in ("exit_full", "exit_partial") and v["confidence"] >= 0.75                     and (v.get("tickers") or v.get("scope") == "all"):
+                targets = _llm_exit_targets(positions, v)
+                if targets:
+                    lvl = "full" if v["action"] == "exit_full" else "partial"
+                    log(f"🤖 LLM仲裁多票出场[{lvl}] {v.get('tickers') or 'ALL'} 豁免{v.get('except')}: {one}")
+                    push_discord(f"🤖 多票出场(LLM仲裁)[{lvl}]: {one}")
+                    for osi in targets:
+                        if lvl == "full":
+                            close_position(positions, osi, "多票出场(LLM仲裁)")
+                        else:
+                            mirror_reduce(positions, osi, "partial")
+                    return
+            note = f"⚠️ enrich出场信号含多票/豁免词, LLM未能明确, 仅提醒 [{s.ticker}]: {one}"
             log(note); push_discord(note)
             return
-        if s.exit_level == "alert":         # 多票复盘/有豁免词 → 不敢动手, 人工核对
-            note = f"⚠️ enrich出场信号含多票/豁免词, 仅提醒请手动核对 [{s.ticker}]: {one}"
+        if not held or not LIVE:
+            note = f"🟠 enrich出场提醒 [{s.ticker}·{s.exit_level}] (无持仓/DRY_RUN): {one}"
             log(note); push_discord(note)
             return
         log(f"🟠 站长出场[{s.exit_level}] [{s.ticker}] → 处理 {len(held)} 个持仓: {one}")
@@ -651,9 +680,25 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
             journal(ev="stale_buy_skipped", age_sec=int(age), sig=one)
             return
 
-    # BUY_AMBIG: 缺方向 → 实时报价消歧 (call/put价差大, 信号权利金只会匹配一边)
+    # BUY_NOEXPIRY: 四要素齐缺到期(已推断周五/0DTE) → LLM buy≥0.85佐证才下, lotto档 (审计漏洞#2)
     qty = CONTRACTS
     is_ambig = False
+    if s.kind == "BUY_NOEXPIRY":
+        if not (LLM_ON and LIVE):
+            note = f"❓ 缺到期信号(LLM关闭无法佐证), 仅提醒: {one}"
+            log(note); push_discord(note)
+            return
+        held_tks = [p["ticker"] for p in positions.values() if p["status"] in ("pending", "open")]
+        v = llm_classify(text, held_tks)
+        if v:
+            journal(ev="llm_classify", rule="BUY_NOEXPIRY", verdict=v, sig=one)
+        if not v or v["action"] != "buy" or v["confidence"] < 0.85:
+            note = f"❓ 缺到期信号LLM佐证不足({v['action'] if v else 'fail'}), 仅提醒: {one}"
+            log(note); push_discord(note)
+            return
+        s.kind = "BUY"
+        is_ambig = True     # 走lotto仓位档 (到期是推断的, 小仓)
+        log(f"🔍 缺到期信号LLM佐证buy({v['confidence']}), 推断到期{s.expiry}, lotto档跟进")
     if s.kind == "BUY_AMBIG":
         is_ambig = True
         side, info = resolve_direction(s)

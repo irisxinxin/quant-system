@@ -45,9 +45,10 @@ CALLPUT_RE = re.compile(r"\b(calls?|puts?)\b", re.I)
 EXIT_RE = re.compile(
     r"\b(scal(?:e|ing)\s+(?:out|down)|all\s+out|closing|close\s+out|trim|"
     r"sell(?:ing)?|sold|secure\s+profits?|lock(?:ing)?\s+(?:in\s+)?(?:those\s+)?gains|"
-    r"take\s+(?:the\s+)?(?:profits?|gains)|stopped\s+out|cutting|lock\s+(?:them|it|em)\s+all)\b", re.I)
+    r"take\s+(?:the\s+)?(?:profits?|gains)|stopped\s+out|cutting|lock\s+(?:them|it|em)\s+all|"
+    r"holding\s+runners|down\s+to\s+1/[234]|down\s+to\s+runners|secure\s+your\s+gains)\b", re.I)
 # 噪音标志 (整条丢弃, 优先级最高)
-NOISE_RE = re.compile(r"\b(watchlist|recap|levels\s+for\s+the\s+day|mentorship)\b", re.I)
+NOISE_RE = re.compile(r"\b(watchlist|recap|levels\s+for\s+the\s+day|mentorship|hypothetical|another\s+example\s+of)\b", re.I)
 SIZE_RE = re.compile(r"\b(lotto|small|starter|light)\b|(\d{1,2})%\s*(?:position|starter)?", re.I)
 
 # $TICKER 误匹配保护: 常见非票词
@@ -59,7 +60,8 @@ EXIT_FULL_RE = re.compile(
     r"\bsold\s+(?:the\s+)?rest\b|\bselling\s+everything\b|\block\s+(?:them|it|em)\s+all\b", re.I)
 EXIT_PARTIAL_RE = re.compile(
     r"scal(?:e|ing)\s+(?:out|down)|\btrim\w*\b|\b1/[234]\b|\bhalf\b|"
-    r"selling\s+\d{1,2}%|\bdown\s+to\b|taking\s+(?:1/[234]|some|partial)", re.I)
+    r"selling\s+\d{1,2}%|\bdown\s+to\b|taking\s+(?:1/[234]|some|partial)|"
+    r"\bholding\s+runners\b|\babout\s+1/[234]\s+size\b", re.I)
 EXIT_EXEMPT_RE = re.compile(r"\boutside\s+of\b|\bexcept\b|\bother\s+than\b|\bbesides\b", re.I)
 
 
@@ -74,10 +76,17 @@ def _exit_level(t: str, tickers: list) -> str:
     return "vague"
 
 
+US_MARKET_HOLIDAYS_2026 = {date(2026,1,1), date(2026,1,19), date(2026,2,16), date(2026,4,3),
+                           date(2026,5,25), date(2026,6,19), date(2026,7,3), date(2026,9,7),
+                           date(2026,11,26), date(2026,12,25)}
+
 def _next_friday(d: date) -> date:
-    """本周五; 若 d 已过周五(周六/日), 下周五。周五当天算当周。"""
+    """本周五(已过周五则下周五); 周五休市(如7/3独立日)则回退到周四 — weekly期权随交易日."""
     off = (4 - d.weekday()) % 7
-    return d + timedelta(days=off)
+    f = d + timedelta(days=off)
+    while f in US_MARKET_HOLIDAYS_2026:
+        f -= timedelta(days=1)
+    return f
 
 
 def parse_signal(text: str, msg_date: date) -> Signal:
@@ -86,6 +95,8 @@ def parse_signal(text: str, msg_date: date) -> Signal:
 
     if NOISE_RE.search(t):
         return Signal(kind="NOISE", reason="watchlist/recap/levels", raw=raw)
+    if re.search(r"clos(?:e|ing)\s+[+\-]?\d+(?:\.\d+)?%", t, re.I):
+        return Signal(kind="NOISE", reason="收盘涨跌播报(closing +X%), 非清仓", raw=raw)
 
     tickers = [x for x in TICKER_RE.findall(t) if x not in NOT_TICKER]
     if not tickers:
@@ -143,15 +154,25 @@ def parse_signal(text: str, msg_date: date) -> Signal:
                 b_all = [float(x) for x in b_prices[:-1]]
                 if b_all:
                     prem = min(b_all)
+        # 票 = calls/puts前最近的$TICKER (多票消息如"$IBM gains... $APLD weekly $50 calls"取APLD)
+        tks_before = [x for x in TICKER_RE.findall(before) if x not in NOT_TICKER]
+        buy_ticker = tks_before[-1] if tks_before else tickers[0]
         # 合理性: 权利金应远小于行权价; 权利金>0; strike>0
-        five_ok = (strike > 0 and prem > 0 and expiry is not None
-                   and prem < strike * 0.5 and len(set(tickers)) == 1)
+        five_ok = (strike > 0 and prem > 0 and expiry is not None and prem < strike * 0.5)
         if five_ok:
             sz = SIZE_RE.search(t)
             size_tag = (sz.group(0).strip() if sz else "")
-            return Signal(kind="BUY", ticker=tickers[0], right=right, strike=strike,
+            return Signal(kind="BUY", ticker=buy_ticker, right=right, strike=strike,
                           expiry=expiry, limit_price=prem, size_tag=size_tag,
                           reason=f"五要素齐: 到期={exp_src}", raw=raw)
+        # 缺到期但其余四要素齐 → BUY_NOEXPIRY (到期推断, 需LLM高置信buy佐证才下单)
+        if strike > 0 and prem > 0 and expiry is None and prem < strike * 0.5:
+            inferred = _next_friday(msg_date)
+            sz = SIZE_RE.search(t)
+            return Signal(kind="BUY_NOEXPIRY", ticker=buy_ticker, right=right, strike=strike,
+                          expiry=inferred, limit_price=prem,
+                          size_tag=(sz.group(0).strip() if sz else ""),
+                          reason="四要素齐缺到期, 推断=最近周五(需LLM buy≥0.85佐证)", raw=raw)
         # 要素不齐 → 落到出场/噪音判定
         missing = []
         if strike <= 0: missing.append("行权价")
