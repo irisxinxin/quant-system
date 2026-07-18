@@ -160,6 +160,7 @@ def simulate(stream):
     pos = {}          # tk -> list[dict(shares, cost_px)]
     trades = []       # realized
     n_nofill = 0
+    deploy = peak = 0.0   # 占用资金跟踪 (峰值作收益率分母)
     for ts, side, tk, px, frac in stream:
         B = bars.get(tk)
         if not B:
@@ -185,6 +186,7 @@ def simulate(stream):
                 continue
             fill *= (1 + COST)
             pos.setdefault(tk, []).append(dict(shares=LOT_USD / fill, cost=fill, ts=ts))
+            deploy += LOT_USD; peak = max(peak, deploy)
         else:
             lots = pos.get(tk) or []
             if not lots:
@@ -202,6 +204,7 @@ def simulate(stream):
                                shares=round(sh), pnl=round(pnl),
                                pct=round((sell_px / avg_cost - 1) * 100, 2)))
             remain = tot_sh - sh
+            deploy = max(0.0, deploy - sh * avg_cost)
             if remain < 1e-6:
                 pos[tk] = []
             else:
@@ -219,6 +222,7 @@ def simulate(stream):
                             usd=round(l["shares"] * l["cost"]),
                             upnl=round(upnl) if upnl is not None else None,
                             upct=round((last / l["cost"] - 1) * 100, 1) if last else None))
+    globals()["_PEAK"] = peak
     return trades, inv, n_nofill
 
 
