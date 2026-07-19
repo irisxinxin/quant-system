@@ -40,16 +40,21 @@ def ema(vals, period=9):
     return out
 
 
-# ema_tf: 'daily' | 'i15'(15分) | 'none'
+# ema_tf: 'daily' | 'i15'(15分) | 'none'。全部首档后保本+15分9ema×2 runner, 只变 档数×止损宽度
 CONFIGS = {
-    "用户提案 20/40/60 -30硬止损全程 日线9ema×2": dict(ladder=[(.2,.2),(.4,.2),(.6,.2)], stop=0.7, be=False, ema_n=2, ema_tf="daily"),
-    "用户提案 20/40/60 -30硬止损全程 15分9ema×2": dict(ladder=[(.2,.2),(.4,.2),(.6,.2)], stop=0.7, be=False, ema_n=2, ema_tf="i15"),
-    "阶梯20/40/60 +首档保本 15分9ema×2":         dict(ladder=[(.2,.2),(.4,.2),(.6,.2)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
-    "手册忠实 50%@30+25%@60 首档保本 15分9ema×2": dict(ladder=[(.3,.5),(.6,.25)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
-    "手册忠实 首档保本 日线9ema×2":                dict(ladder=[(.3,.5),(.6,.25)], stop=0.7, be=True, ema_n=2, ema_tf="daily"),
-    "手册忠实 首档保本 无9ema(对照)":              dict(ladder=[(.3,.5),(.6,.25)], stop=0.7, be=True, ema_n=0, ema_tf="none"),
-    "末期 +60半仓 首档保本 15分9ema×2":           dict(ladder=[(.6,.5)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
+    # ── 2档(30/60) 不同止损宽度 (用户问: -30太窄? 大单吃不到?) ──
+    "2档 50@30+25@60 保本 15m9ema -30": dict(ladder=[(.3,.5),(.6,.25)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
+    "2档 50@30+25@60 保本 15m9ema -40": dict(ladder=[(.3,.5),(.6,.25)], stop=0.6, be=True, ema_n=2, ema_tf="i15"),
+    "2档 50@30+25@60 保本 15m9ema -50": dict(ladder=[(.3,.5),(.6,.25)], stop=0.5, be=True, ema_n=2, ema_tf="i15"),
+    "2档 33@30+33@60 保本 15m9ema -40": dict(ladder=[(.3,.333),(.6,.333)], stop=0.6, be=True, ema_n=2, ema_tf="i15"),
+    # ── 3档(20/40/60) 对照 (用户问: 3档太多?) ──
+    "3档 20/40/60各20% 保本 15m9ema -30": dict(ladder=[(.2,.2),(.4,.2),(.6,.2)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
+    "3档 20/40/60各20% 保本 15m9ema -40": dict(ladder=[(.2,.2),(.4,.2),(.6,.2)], stop=0.6, be=True, ema_n=2, ema_tf="i15"),
+    # ── 最简: 只30%止盈半仓+保本+runner (用户问胜率的那个) ──
+    "简 50@30+runner50 保本 15m9ema -30": dict(ladder=[(.3,.5)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
+    "简 50@30+runner50 保本 15m9ema -40": dict(ladder=[(.3,.5)], stop=0.6, be=True, ema_n=2, ema_tf="i15"),
 }
+HEADLINE = "2档 50@30+25@60 保本 15m9ema -40"   # 按月拆胜率的主配置
 
 
 def main():
@@ -188,25 +193,40 @@ def main():
     print(f"{'出场配置':46}{'加权':>7}{'真实K':>7}{'等额':>7}{'中位':>7}{'胜率':>6}{'归零':>6}{'未成交':>7}")
     print("-" * 100)
     def wt(l): return 0.3333 if l else 0.5
-    results = {}
+    results = {}; rows_by_cfg = {}
     for name, cfg in CONFIGS.items():
         rows, nf = [], 0
         for (b, ob, real, lotto) in prepped:
             st_, r = simulate(b["sig"], b["ts"], cfg, ob)
             if st_ == "no_fill": nf += 1; continue
-            rows.append((r, lotto, real))
-        n = len(rows); W = sum(wt(l) for _, l, _ in rows) or 1
-        wavg = sum(wt(l) * r for r, l, _ in rows) / W * 100
-        rl = [(r, l) for r, l, real in rows if real]; Wr = sum(wt(l) for _, l in rl) or 1
+            rows.append((r, lotto, real, str(b["ts"])[:7]))
+        rows_by_cfg[name] = rows
+        n = len(rows); W = sum(wt(l) for _, l, _, _ in rows) or 1
+        wavg = sum(wt(l) * r for r, l, _, _ in rows) / W * 100
+        rl = [(r, l) for r, l, real, _ in rows if real]; Wr = sum(wt(l) for _, l in rl) or 1
         wreal = sum(wt(l) * r for r, l in rl) / Wr * 100 if rl else 0
-        med = st.median([r for r, _, _ in rows]) * 100
-        win = sum(1 for r, _, _ in rows if r > 0) / n * 100
-        zero = sum(1 for r, _, _ in rows if r <= -0.99) / n * 100
+        med = st.median([r for r, _, _, _ in rows]) * 100
+        win = sum(1 for r, _, _, _ in rows if r > 0) / n * 100
+        zero = sum(1 for r, _, _, _ in rows if r <= -0.99) / n * 100
         results[name] = dict(wavg=round(wavg), wreal=round(wreal), med=round(med), win=round(win), zero=round(zero), n=n, nf=nf)
-        print(f"{name:46}{wavg:>+6.0f}%{wreal:>+6.0f}%{sum(r for r,_,_ in rows)/n*100:>+6.0f}%{med:>+6.0f}%{win:>5.0f}%{zero:>5.0f}%{nf:>6}")
+        print(f"{name:46}{wavg:>+6.0f}%{wreal:>+6.0f}%{sum(r for r,_,_,_ in rows)/n*100:>+6.0f}%{med:>+6.0f}%{win:>5.0f}%{zero:>5.0f}%{nf:>6}")
     print("-" * 100)
-    print("对照 镜像跟他出场(真实K七月): 纯镜像+23% / 镜像+止损兜底+33%")
-    print("⚠️ n真实K=14, +幅度靠少数肥尾不稳健; 看相对排序(胜率/中位/归零)。BS列偏悲观~-20pp。")
+    # ── 按月胜率拆解 (用户问: 30%止盈+保本 五六七月胜率) ──
+    print(f"\n【按月胜率拆解】主配置 = {HEADLINE}")
+    print(f"{'月份':10}{'笔数':>5}{'胜率':>7}{'中位':>7}{'加权':>7}{'归零':>6}")
+    hr = rows_by_cfg[HEADLINE]
+    for mth in sorted({m for *_, m in hr}):
+        g = [(r, l) for r, l, _, m in hr if m == mth]
+        n = len(g); W = sum(wt(l) for _, l in g) or 1
+        print(f"{mth:10}{n:>5}{sum(1 for r,_ in g if r>0)/n*100:>6.0f}%"
+              f"{st.median([r for r,_ in g])*100:>+6.0f}%{sum(wt(l)*r for r,l in g)/W*100:>+6.0f}%"
+              f"{sum(1 for r,_ in g if r<=-0.99)/n*100:>5.0f}%")
+    n = len(hr); W = sum(wt(l) for _, l, _, _ in hr) or 1
+    print(f"{'合计':10}{n:>5}{sum(1 for r,_,_,_ in hr if r>0)/n*100:>6.0f}%"
+          f"{st.median([r for r,_,_,_ in hr])*100:>+6.0f}%{sum(wt(l)*r for r,l,_,_ in hr)/W*100:>+6.0f}%"
+          f"{sum(1 for r,_,_,_ in hr if r<=-0.99)/n*100:>5.0f}%")
+    print("\n对照 镜像跟他出场(真实K七月): 纯镜像+23% / 镜像+止损兜底+33%")
+    print("⚠️ 5-6月用盘中股价BS重建(样本量足但对幅度低估~20pp); 胜率对BS较稳健。7月含真实期权K。")
     json.dump(results, open(OUT / "bt_mechanical_v2.json", "w"), ensure_ascii=False, indent=1)
     print("存 → output/bt_mechanical_v2.json")
 
