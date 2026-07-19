@@ -99,16 +99,31 @@ _trade_ctx = None
 _quote_ctx = None    # OPRA期权行情 (止损轮询用); 拿不到就自动关止损
 
 
+_rl_until = 0.0   # 429退避: 限流风暴期间暂停报价/查单30秒 (7/15八连429教训)
+
+
+def _rl_hit(e) -> bool:
+    global _rl_until
+    if "429" in str(e) or "limited" in str(e).lower():
+        _rl_until = time.time() + 30
+        log("⏳ API限流 → 退避30秒")
+        return True
+    return False
+
+
 def _option_last(osi: str):
     """期权最新价 (需OPRA权限)。失败返回 None。"""
     global _quote_ctx
+    if time.time() < _rl_until:
+        return None
     try:
         if _quote_ctx is None:
             from longport.openapi import Config, QuoteContext
             _quote_ctx = QuoteContext(Config.from_env())
         o = _quote_ctx.option_quote([osi])
         return float(o[0].last_done) if o else None
-    except Exception:
+    except Exception as e:
+        _rl_hit(e)
         return None
 
 
@@ -386,6 +401,8 @@ def _cancel(order_id: str):
 
 def _order_state(order_id: str):
     """(状态名, 已成交张数, 成交均价) — 只读轮询, 不需要行情权限。"""
+    if time.time() < _rl_until:
+        return None, 0, 0.0
     try:
         od = _trade_ctx.order_detail(order_id)
         st = str(od.status).split(".")[-1]        # Filled/New/PartialFilled/Canceled/Expired/Rejected
@@ -393,7 +410,8 @@ def _order_state(order_id: str):
         exp = float(od.executed_price) if od.executed_price else 0.0
         return st, exq, exp
     except Exception as e:
-        log(f"   查单失败 {order_id}: {e}")
+        if not _rl_hit(e):
+            log(f"   查单失败 {order_id}: {e}")
         return None, 0, 0.0
 
 
@@ -420,6 +438,8 @@ def close_position(positions: dict, osi: str, reason: str):
         log(f"   市价卖 {remain} 张: {'✅' + str(r) if ok else '❌' + str(r)}")
         journal(ev="close_sell", osi=osi, qty=remain, reason=reason, order_id=(r if ok else None), ok=ok)
         push_discord(f"🔻 enrich平仓 {osi} ×{remain}张 ({reason}) {'✅' if ok else '❌' + str(r)}")
+        if ok:
+            p["sold"] = p.get("sold", 0) + remain   # 记账防positions.json账实不符(审计)
     p["status"] = "closed"
     _save(POS_JSON, positions)
 
@@ -483,6 +503,9 @@ def manage_positions(positions: dict):
                 log(f"🗑️ {osi} 入场未成交已失效 ({st})")
                 p["status"] = "closed"
             _save(POS_JSON, positions)
+        # ①b 保护腿对账 (审计bug#1: 纯事件驱动下ID丢失/挂单失效=永久裸奔; ensure_protection幂等, 每轮补齐缺失的腿)
+        if p["status"] == "open" and p.get("filled", 0) - p.get("sold", 0) > 0 and p.get("avg", 0) > 0:
+            ensure_protection(positions, osi, p)
         # ② 券商侧止损单状态 (真实账户模式)
         if p["status"] == "open" and p.get("stop_order_id"):
             st, exq, exp = _order_state(p["stop_order_id"])
@@ -495,6 +518,15 @@ def manage_positions(positions: dict):
                 push_discord(f"🛑 enrich止损成交 {osi} ×{p.get('stop_qty')}张 @ ${exp}")
                 _save(POS_JSON, positions)
                 continue
+            elif st in ("Canceled", "Expired", "Rejected"):
+                # 审计bug#2: 止损被外部撤销若不清ID, 轮询止损被stop_order_id条件跳过=止损通道全灭
+                if exq > 0:
+                    p["sold"] = p.get("sold", 0) + exq
+                p["stop_order_id"] = None
+                log(f"⚠️ {osi} 券商侧止损单失效({st}) → 清ID, 轮询止损接管+重挂")
+                journal(ev="stop_order_lost", osi=osi, state=st)
+                ensure_protection(positions, osi, p)
+                _save(POS_JSON, positions)
         # ③ 券商侧一档止盈状态
         if p["status"] == "open" and p.get("tp_order_id"):
             st, exq, exp = _order_state(p["tp_order_id"])
@@ -947,7 +979,19 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
     _save(SEEN_JSON, seen)
 
 
+_lockf = None   # 单实例锁句柄 (须常驻引用)
+
+
 def main():
+    global _lockf
+    # 单实例锁 (审计bug#5: dev/mock实例与launchd并发写同一状态曾致真实止盈单变孤儿)
+    import fcntl
+    _lockf = open(OUT / "enrich_bot.lock", "w")
+    try:
+        fcntl.flock(_lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _lockf.write(str(os.getpid())); _lockf.flush()
+    except OSError:
+        print("另一实例已持锁运行, 本实例退出 (output/enrich_bot.lock)"); sys.exit(1)
     token = os.environ.get("DISCORD_BOT_TOKEN")
     if not token:
         print("缺 DISCORD_BOT_TOKEN"); sys.exit(1)
