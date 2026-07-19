@@ -747,12 +747,13 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
                 mirror_reduce(positions, osi, s.exit_level)
         return
 
-    # 🚫 Hedge单不跟: 他的对冲是给他自己组合买保险, 我们没有他的组合, 单独复制=纯赌方向 (XOM -30%教训)
-    if re.search(r"\bhedge\b", one, re.IGNORECASE):
-        note = f"🛡️ enrich对冲单, 按规则不跟(仅提醒): {one}"
-        log(note); push_discord(note)
-        journal(ev="hedge_skipped", sig=one)
-        return
+    # 🛡️ Hedge单: 不跳过, 按lotto小仓跟 (2026-07-19 用户改)
+    #   旧: 一刀切跳过(XOM -30%教训) → 但复盘发现该XOM hedge实为+265%波段, 跳过=错失大赢家。
+    #   机械出场的-50%止损已兜住"赌方向"下行, 小仓(净值×⅓)限损即可。标记→走lotto仓位档 + 免LLM否决。
+    is_hedge = bool(re.search(r"\bhedge\b", one, re.IGNORECASE))
+    if is_hedge:
+        log(f"🛡️ enrich对冲单 → 按lotto小仓跟 (机械止损兜底下行): {one}")
+        journal(ev="hedge_as_lotto", sig=one)
 
     # 🚫 迟到闸门: 信号已过时效的买入绝不进场 (用户铁律; MSFT -42%教训)
     if msg_dt is not None:
@@ -801,7 +802,7 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
         v = llm_classify(text, held_tks)
         if v:
             journal(ev="llm_classify", rule=s.kind, verdict=v, sig=one)
-        if v and v["action"] != "buy" and v["confidence"] >= 0.7:
+        if v and v["action"] != "buy" and v["confidence"] >= 0.7 and not is_hedge:
             note = (f"🤖 LLM否决买入: 规则判BUY但LLM判[{v['action']}] conf={v['confidence']} "
                     f"({v.get('why','')}), 保守不下单: {one}")
             log(note); push_discord(note)
@@ -822,7 +823,7 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
         return
 
     # 按金额定张数 (POSITION_USD>0时; lotto/歧义单用LOTTO_USD)
-    is_lotto = is_ambig or "lotto" in (s.size_tag or "").lower() or "scalp" in one.lower() or s.expiry == msg_date
+    is_lotto = is_hedge or is_ambig or "lotto" in (s.size_tag or "").lower() or "scalp" in one.lower() or s.expiry == msg_date
     is_0dte = s.expiry == msg_date
     if POSITION_FRAC > 0:
         eq = account_equity_usd()
