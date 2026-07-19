@@ -40,21 +40,17 @@ def ema(vals, period=9):
     return out
 
 
-# ema_tf: 'daily' | 'i15'(15分) | 'none'。全部首档后保本+15分9ema×2 runner, 只变 档数×止损宽度
+# ema_tf: 'daily' | 'i15'(15分) | 'none'。全部 2档30/60(50%@30+25%@60)+首档保本+15分9ema×2 runner
+# 止损宽度网格确认 -45 是否最优 + 3档对照
 CONFIGS = {
-    # ── 2档(30/60) 不同止损宽度 (用户问: -30太窄? 大单吃不到?) ──
-    "2档 50@30+25@60 保本 15m9ema -30": dict(ladder=[(.3,.5),(.6,.25)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
-    "2档 50@30+25@60 保本 15m9ema -40": dict(ladder=[(.3,.5),(.6,.25)], stop=0.6, be=True, ema_n=2, ema_tf="i15"),
-    "2档 50@30+25@60 保本 15m9ema -50": dict(ladder=[(.3,.5),(.6,.25)], stop=0.5, be=True, ema_n=2, ema_tf="i15"),
-    "2档 33@30+33@60 保本 15m9ema -40": dict(ladder=[(.3,.333),(.6,.333)], stop=0.6, be=True, ema_n=2, ema_tf="i15"),
-    # ── 3档(20/40/60) 对照 (用户问: 3档太多?) ──
-    "3档 20/40/60各20% 保本 15m9ema -30": dict(ladder=[(.2,.2),(.4,.2),(.6,.2)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
-    "3档 20/40/60各20% 保本 15m9ema -40": dict(ladder=[(.2,.2),(.4,.2),(.6,.2)], stop=0.6, be=True, ema_n=2, ema_tf="i15"),
-    # ── 最简: 只30%止盈半仓+保本+runner (用户问胜率的那个) ──
-    "简 50@30+runner50 保本 15m9ema -30": dict(ladder=[(.3,.5)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
-    "简 50@30+runner50 保本 15m9ema -40": dict(ladder=[(.3,.5)], stop=0.6, be=True, ema_n=2, ema_tf="i15"),
+    "2档30/60 保本 15m9ema -30": dict(ladder=[(.3,.5),(.6,.25)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
+    "2档30/60 保本 15m9ema -40": dict(ladder=[(.3,.5),(.6,.25)], stop=0.6, be=True, ema_n=2, ema_tf="i15"),
+    "2档30/60 保本 15m9ema -45(推荐)": dict(ladder=[(.3,.5),(.6,.25)], stop=0.55, be=True, ema_n=2, ema_tf="i15"),
+    "2档30/60 保本 15m9ema -50": dict(ladder=[(.3,.5),(.6,.25)], stop=0.5, be=True, ema_n=2, ema_tf="i15"),
+    "2档30/60 保本 15m9ema -60": dict(ladder=[(.3,.5),(.6,.25)], stop=0.4, be=True, ema_n=2, ema_tf="i15"),
+    "3档20/40/60 保本 15m9ema -45": dict(ladder=[(.2,.2),(.4,.2),(.6,.2)], stop=0.55, be=True, ema_n=2, ema_tf="i15"),
 }
-HEADLINE = "2档 50@30+25@60 保本 15m9ema -40"   # 按月拆胜率的主配置
+HEADLINE = "2档30/60 保本 15m9ema -45(推荐)"   # 按月拆胜率的主配置
 
 
 def main():
@@ -72,7 +68,7 @@ def main():
             if side is None: continue
             s.kind, s.right = "BUY", side
         else: continue
-        if not (date(2026, 5, 1) <= s.expiry <= date(2026, 7, 17)): continue
+        if not (date(2026, 3, 1) <= s.expiry <= date(2026, 7, 17)): continue
         key = f"{s.ticker}{s.expiry}{s.strike}{s.right}:{ts.date()}"
         if key in seen: continue
         seen.add(key); buys.append(dict(ts=ts, sig=s))
