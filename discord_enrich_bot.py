@@ -834,21 +834,25 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
     qty = CONTRACTS
     is_ambig = False
     if s.kind == "BUY_NOEXPIRY":
-        if not (LLM_ON and LIVE):
-            note = f"❓ 缺到期信号(LLM关闭无法佐证), 仅提醒: {one}"
-            log(note); push_discord(note)
-            return
-        held_tks = [p["ticker"] for p in positions.values() if p["status"] in ("pending", "open")]
-        v = llm_classify(text, held_tks)
-        if v:
-            journal(ev="llm_classify", rule="BUY_NOEXPIRY", verdict=v, sig=one)
-        if not v or v["action"] != "buy" or v["confidence"] < 0.85:
-            note = f"❓ 缺到期信号LLM佐证不足({v['action'] if v else 'fail'}), 仅提醒: {one}"
-            log(note); push_discord(note)
-            return
+        if LLM_ON and LIVE:
+            held_tks = [p["ticker"] for p in positions.values() if p["status"] in ("pending", "open")]
+            v = llm_classify(text, held_tks)
+            if v:
+                journal(ev="llm_classify", rule="BUY_NOEXPIRY", verdict=v, sig=one)
+            if not v or v["action"] != "buy" or v["confidence"] < 0.85:
+                note = f"❓ 缺到期信号LLM佐证不足({v['action'] if v else 'fail'}), 仅提醒: {one}"
+                log(note); push_discord(note)
+                return
+            log(f"🔍 缺到期信号LLM佐证buy({v['confidence']}), 推断到期{s.expiry}, lotto档跟进")
+        else:
+            # 无LLM(机械模式): 直接按lotto档跟 (2026-07-19复盘: 历史11/11条BUY_NOEXPIRY全为
+            # 真实lotto/scalp入场, 零误报; ARM 7/17漏单教训。兜底: 权利金≤$5 + TTL20分 + -60%止损 + 小仓)
+            log(f"🎯 缺到期信号→推断到期{s.expiry}" + ("(0DTE档)" if s.expiry == msg_date else "")
+                + ", lotto档直接跟 (历史11/11真信号)")
+            journal(ev="noexpiry_accept", ticker=s.ticker, strike=s.strike,
+                    expiry=str(s.expiry), limit=s.limit_price, sig=one)
         s.kind = "BUY"
-        is_ambig = True     # 走lotto仓位档 (到期是推断的, 小仓)
-        log(f"🔍 缺到期信号LLM佐证buy({v['confidence']}), 推断到期{s.expiry}, lotto档跟进")
+        is_ambig = True     # 走lotto仓位档 (到期是推断的, 小仓; 0DTE自动再降到⅒档)
     if s.kind == "BUY_AMBIG":
         is_ambig = True
         side, info = resolve_direction(s)
