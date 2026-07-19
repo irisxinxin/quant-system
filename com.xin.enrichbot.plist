@@ -8,7 +8,8 @@
     launchctl load ~/Library/LaunchAgents/com.xin.enrichbot.plist
   日志: tail -f /Users/xin/Documents/Claude/Projects/money/quant_system/output/enrich_bot.log
   ⚠ 全程 LongPort 模拟盘 (启动三重校验 lb_papertrading, 不过即退; KeepAlive会重试)
-  规则: 每信号2张限价不追高 | 止盈+100%卖1张 | 镜像站长减仓 | 权利金-30%止损 | 到期强平
+  规则(2026-07-19 机械出场定案, 210配置网格): 进场跟站长限价不追高 |
+  +30%卖⅓→止损移保本 | runner守标的15分9ema连破2根 | 初始止损-50% | 到期强平 | 无LLM
 -->
 <plist version="1.0">
 <dict>
@@ -19,7 +20,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>source /Users/xin/.longport_creds.env &amp;&amp; export ENRICH_LIVE=true POSITION_FRAC=0.5 LOTTO_FRAC=0.3333 ZERO_DTE_FRAC=0.10 TP_MULT=1.6 &amp;&amp; exec /usr/bin/caffeinate -s /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/discord_enrich_bot.py</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; export ENRICH_LIVE=true POSITION_FRAC=0.5 LOTTO_FRAC=0.3333 ZERO_DTE_FRAC=0.10 EXIT_MODE=mechanical MECH_TP_MULT=1.3 MECH_STOP_MULT=0.5 MECH_EMA_MIN=15 MECH_EMA_N=2 &amp;&amp; exec /usr/bin/caffeinate -s /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/discord_enrich_bot.py</string>
     </array>
 
     <key>WorkingDirectory</key>
