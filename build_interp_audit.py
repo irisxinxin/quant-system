@@ -83,7 +83,15 @@ def main():
                 act = "忽略"
         elif s.kind == "EXIT":
             if s.exit_level == "alert":
-                act = f"仅提醒(多票/豁免词) [{s.ticker}]"
+                # 镜像实盘bot(_handle 631-651): alert多票→LLM仲裁, conf≥0.75且有tickers/scope→按票执行
+                if (v and v["action"] in ("exit_full", "exit_partial") and v["confidence"] >= 0.75
+                        and (v.get("tickers") or v.get("scope") == "all")):
+                    lvl = "full" if v["action"] == "exit_full" else "partial"
+                    tks = v.get("tickers") or ["ALL"]
+                    act = (f"🤖LLM仲裁多票出场[{lvl}] {tks}"
+                           + (f" 豁免{v['except']}" if v.get("except") else "") + " (有持仓才执行)")
+                else:
+                    act = f"仅提醒(多票, LLM未达阈值) [{s.ticker}]"
             else:
                 act = f"出场指令[{s.exit_level}] {s.ticker}" + ("(全仓位)" if s.ticker == "*" else "")
         else:  # BUY / BUY_AMBIG
