@@ -61,15 +61,19 @@ LOTTO_FRAC = float(os.environ.get("LOTTO_FRAC", "0.3333"))   # lotto/歧义=净�
 ZERO_DTE_FRAC = float(os.environ.get("ZERO_DTE_FRAC", "0.10"))  # 0DTE更小: 净值×1/10 (归零常态,限损)
 OI_CAP_PCT = 0.10   # 流动性帽: 张数≤未平仓量10% (防模拟盘假成交失真)
 
-# ── 出场模式 (2026-07-19 二~七月210配置网格定案, 用户拍板) ──
-# mechanical = 机械出场(无AI): +30%卖⅓ → 止损立移保本 → 剩⅔runner守【标的】15分9ema连破2根 → 初始止损-50%
-#              回测: +24%/笔加权 胜率66% 六个月全正 零归零 (bt_mechanical_grid.py)
+# ── 出场模式 (2026-07-19 最终定稿, 用户拍板; 复盘+网格+对抗审查三轮定案) ──
+# mechanical = 机械出场(无AI): +30%卖⅓ → +60%再卖⅓ → 剩⅓runner(-60%初始止损全程, 无保本)
+#              → runner摸到+60%(武装)后启动【标的】15分9ema连破2根拖尾 → 到期强平
+#              回测(2-7月n=127): 加权+16%/笔 真实K+30% 胜率52% 中位+10% 最差月-6% (bt_mechanical_v2)
 # mirror     = 跟站长出场(LLM语义层) — 旧模式, 保留可回切
 EXIT_MODE = os.environ.get("EXIT_MODE", "mirror").lower()
-MECH_TP_MULT = float(os.environ.get("MECH_TP_MULT", "1.3"))    # 首档止盈 +30%
-MECH_STOP_MULT = float(os.environ.get("MECH_STOP_MULT", "0.5"))  # 初始止损 -50% (首档成交后自动移保本)
-MECH_EMA_MIN = int(os.environ.get("MECH_EMA_MIN", "15"))       # 9ema时间框架(分钟) — 15分, 5分whipsaw已被网格否
-MECH_EMA_N = int(os.environ.get("MECH_EMA_N", "2"))            # 连破N根(已完成bar)出runner
+MECH_TP_MULT = float(os.environ.get("MECH_TP_MULT", "1.3"))     # 一档止盈 +30% 卖⅓
+MECH_TP2_MULT = float(os.environ.get("MECH_TP2_MULT", "1.6"))   # 二档止盈 +60% 卖⅓; 触及即武装9ema
+MECH_STOP_MULT = float(os.environ.get("MECH_STOP_MULT", "0.4")) # 初始止损 -60% 全程有效(无保本移动)
+MECH_EMA_MIN = int(os.environ.get("MECH_EMA_MIN", "15"))        # 9ema时间框架(分钟)
+MECH_EMA_N = int(os.environ.get("MECH_EMA_N", "2"))             # 连破N根(已完成bar)出runner
+ENTRY_TTL_SEC = int(os.environ.get("ENTRY_TTL_SEC", "1200"))    # 在途入场单TTL: 20分钟未成交撤单
+# (审计发现+MSFT复盘: 挂一天的限价单只会在期权崩盘穿价时成交=专门接刀; "不追高"的另一半是"不接刀")
 if EXIT_MODE == "mechanical":
     LLM_ON = False   # 机械模式全程无LLM: 进场纯规则解析, 出场纯技术, 站长出场消息仅提醒
 ET = ZoneInfo("America/New_York")
@@ -116,10 +120,17 @@ def _osi(ticker, expiry_iso_or_date, right, strike):
 
 
 def _tp_params(remain: int, avg: float):
-    """(止盈张数, 止盈价) — 按出场模式。mechanical: 卖⅓ @+30%; mirror: 卖半 @TP_MULT。"""
+    """(止盈张数, 止盈价) — 按出场模式。mechanical: 一档卖⅓ @+30%; mirror: 卖半 @TP_MULT。"""
     if EXIT_MODE == "mechanical":
         return max(1, round(remain / 3)), round(avg * MECH_TP_MULT, 2)
     return (max(1, remain // 2) if remain >= 2 else remain), round(avg * TP_MULT, 2)
+
+
+def _mech_split(filled: int):
+    """机械模式两档张数: (q1@+30%, q2@+60%)。q=1→(1,0); q=2→(1,1,无runner); q≥3→各⅓留runner。"""
+    q1 = max(1, round(filled / 3))
+    q2 = min(max(1, round(filled / 3)), filled - q1) if filled - q1 >= 1 else 0
+    return q1, q2
 
 
 _ema_cache = {}   # ticker -> (checked_at_epoch, break_count)
@@ -324,9 +335,29 @@ def ensure_protection(positions: dict, osi: str, p: dict):
             log("ℹ️ 模拟盘不支持触价单 → 止损轮询兜底, 止盈挂券商侧限价 (真实账户会自动切回止损常驻)")
         else:
             log(f"⚠️ {osi} 止损挂单失败: {r}")
-    # 回退模式: 无券商侧止损 且 尚未减过仓 且 没挂止盈 → 挂止盈限价单(抓尖峰)
-    # mechanical: 卖⅓ @+30%; mirror: 卖半 @TP_MULT
-    if not p.get("stop_order_id") and not p.get("tp_order_id") and not p.get("reduced"):
+    # 回退模式: 无券商侧止损 → 止盈限价挂券商侧(抓尖峰)
+    if EXIT_MODE == "mechanical" and not p.get("stop_order_id"):
+        # 两档GTC同时挂: ⅓@+30%, ⅓@+60% (二档成交=runner武装9ema)
+        q1, q2 = _mech_split(p.get("filled", 0))
+        if q1 >= 1 and not p.get("tp_order_id") and not p.get("tp1_done"):
+            px1 = round(p["avg"] * MECH_TP_MULT, 2)
+            ok, r = _submit(osi, side_buy=False, qty=q1, price=px1, tif_gtc=True, remark="tp1")
+            if ok:
+                p["tp_order_id"], p["tp_qty"] = r, q1
+                log(f"🎯 {osi} 挂一档止盈: 卖{q1}张 @ ${px1} (+30%)")
+                journal(ev="tp_place", osi=osi, px=px1, qty=q1, order_id=r)
+            else:
+                log(f"⚠️ {osi} 一档止盈挂单失败: {r}")
+        if q2 >= 1 and not p.get("tp2_order_id") and not p.get("tp2_done"):
+            px2 = round(p["avg"] * MECH_TP2_MULT, 2)
+            ok, r = _submit(osi, side_buy=False, qty=q2, price=px2, tif_gtc=True, remark="tp2")
+            if ok:
+                p["tp2_order_id"], p["tp2_qty"] = r, q2
+                log(f"🎯 {osi} 挂二档止盈: 卖{q2}张 @ ${px2} (+60%, 成交即武装9ema)")
+                journal(ev="tp2_place", osi=osi, px=px2, qty=q2, order_id=r)
+            else:
+                log(f"⚠️ {osi} 二档止盈挂单失败: {r}")
+    elif not p.get("stop_order_id") and not p.get("tp_order_id") and not p.get("reduced"):
         tp_qty, tp_px = _tp_params(remain, p["avg"])
         ok, r = _submit(osi, side_buy=False, qty=tp_qty, price=tp_px, tif_gtc=True, remark="tp")
         if ok:
@@ -377,6 +408,9 @@ def close_position(positions: dict, osi: str, reason: str):
     if p.get("tp_order_id"):
         _cancel(p["tp_order_id"])
         p["tp_order_id"] = None
+    if p.get("tp2_order_id"):
+        _cancel(p["tp2_order_id"])
+        p["tp2_order_id"] = None
     cancel_stop(p)                         # 撤券商侧止损, 防双卖
     if p["status"] == "pending" and p.get("entry_order_id"):
         _cancel(p["entry_order_id"])   # 未成交部分撤掉
@@ -461,33 +495,49 @@ def manage_positions(positions: dict):
                 push_discord(f"🛑 enrich止损成交 {osi} ×{p.get('stop_qty')}张 @ ${exp}")
                 _save(POS_JSON, positions)
                 continue
-        # ③ 券商侧止盈单状态 (模拟盘回退模式)
+        # ③ 券商侧一档止盈状态
         if p["status"] == "open" and p.get("tp_order_id"):
             st, exq, exp = _order_state(p["tp_order_id"])
             if st == "Filled":
                 p["sold"] = p.get("sold", 0) + p.get("tp_qty", 0)
                 p["tp_order_id"] = None
-                p["reduced"] = True          # 止盈成交=完成首次减仓(先到先卖)
-                log(f"💰 {osi} 止盈成交 {p.get('tp_qty')}张 @ ${exp}")
+                p["reduced"] = True          # 止盈成交=完成首次减仓
+                p["tp1_done"] = True
+                log(f"💰 {osi} 一档止盈成交 {p.get('tp_qty')}张 @ ${exp}")
                 journal(ev="tp_fill", osi=osi, px=exp, qty=p.get("tp_qty"))
-                push_discord(f"💰 enrich止盈成交 {osi} ×{p.get('tp_qty')}张 @ ${exp} — 剩{p['filled']-p['sold']}张跑趋势")
+                push_discord(f"💰 enrich止盈成交 {osi} ×{p.get('tp_qty')}张 @ ${exp} — 剩{p['filled']-p['sold']}张")
                 if p["filled"] - p["sold"] <= 0:
                     p["status"] = "closed"
-                elif EXIT_MODE == "mechanical":
-                    # 首档已锁 → 止损立移保本 (手册: never let a green trade go red)
-                    p["stop_mult"] = 1.0
-                    cancel_stop(p)                       # 真实账户MIT按新触发价重挂
-                    ensure_protection(positions, osi, p)
-                    log(f"🔒 {osi} 止损移保本 ${p['avg']} (剩{p['filled']-p['sold']}张runner守15m9ema)")
-                    journal(ev="be_move", osi=osi, be=p["avg"])
+                _save(POS_JSON, positions)   # 机械模式: 不移保本, -60%初始止损全程 (最终定稿)
+            elif st in ("Canceled", "Expired", "Rejected"):
+                if exq > 0:                  # 部分成交后被撤: 先记账防超卖 (审计bug#4)
+                    p["sold"] = p.get("sold", 0) + exq
+                p["tp_order_id"] = None      # 挂单失效 → 重配保护
+                ensure_protection(positions, osi, p)
+        # ③c 券商侧二档止盈状态 (机械模式; 成交=runner武装9ema)
+        if p["status"] == "open" and p.get("tp2_order_id"):
+            st, exq, exp = _order_state(p["tp2_order_id"])
+            if st == "Filled":
+                p["sold"] = p.get("sold", 0) + p.get("tp2_qty", 0)
+                p["tp2_order_id"] = None
+                p["tp2_done"] = True
+                p["reduced"] = True
+                p["armed"] = True            # 摸到+60% → runner进入9ema拖尾管理
+                log(f"💰 {osi} 二档止盈成交 {p.get('tp2_qty')}张 @ ${exp} — runner已武装15m9ema")
+                journal(ev="tp2_fill", osi=osi, px=exp, qty=p.get("tp2_qty"))
+                push_discord(f"💰 enrich二档止盈 {osi} ×{p.get('tp2_qty')}张 @ ${exp} — 剩{p['filled']-p['sold']}张runner(9ema拖尾)")
+                if p["filled"] - p["sold"] <= 0:
+                    p["status"] = "closed"
                 _save(POS_JSON, positions)
             elif st in ("Canceled", "Expired", "Rejected"):
-                p["tp_order_id"] = None      # 挂单失效(人工撤/系统) → 重配保护
+                if exq > 0:
+                    p["sold"] = p.get("sold", 0) + exq
+                p["tp2_order_id"] = None
                 ensure_protection(positions, osi, p)
-        # ③b 轮询止盈 (真实账户模式: 无止盈挂单时)
+        # ③b 轮询止盈 (真实账户模式: 无止盈挂单时; 只管一档)
         remain = p.get("filled", 0) - p.get("sold", 0)
         if p["status"] == "open" and not p.get("reduced") and not p.get("tp_order_id") \
-                and remain > 0 and p.get("avg", 0) > 0:
+                and not p.get("tp2_order_id") and remain > 0 and p.get("avg", 0) > 0:
             last = _option_last(osi)
             tp_qty, tp_px = _tp_params(remain, p["avg"])
             if last is not None and last >= tp_px:
@@ -496,38 +546,53 @@ def manage_positions(positions: dict):
                 if ok:
                     p["sold"] = p.get("sold", 0) + tp_qty
                     p["reduced"] = True
+                    p["tp1_done"] = True
                     log(f"💰 {osi} 轮询止盈: 最新${last}≥${tp_px}, 市价卖{tp_qty}张")
                     journal(ev="tp_poll_sell", osi=osi, last=last, qty=tp_qty, order_id=r)
                     push_discord(f"💰 enrich止盈 {osi} ×{tp_qty}张 @≈${last} — 剩{remain-tp_qty}张跑趋势")
                 if remain - tp_qty <= 0:
                     p["status"] = "closed"
                 else:
-                    if EXIT_MODE == "mechanical":
-                        p["stop_mult"] = 1.0     # 止损移保本
-                        log(f"🔒 {osi} 止损移保本 ${p['avg']}")
-                        journal(ev="be_move", osi=osi, be=p["avg"])
-                    ensure_protection(positions, osi, p)
+                    ensure_protection(positions, osi, p)   # 机械: 补挂二档; 不移保本(-60%全程)
                 _save(POS_JSON, positions)
         # ④ 轮询止损 (模拟盘唯一止损通道; 真实账户仅当MIT挂失败时兜底)
         _sm = p.get("stop_mult", STOP_MULT)
         if _sm > 0 and p["status"] == "open" and not p.get("stop_order_id") \
                 and p.get("avg", 0) > 0 and p.get("filled", 0) - p.get("sold", 0) > 0:
             last = _option_last(osi)
-            if last is not None and last <= p["avg"] * _sm:
-                lab = "保本止损" if _sm >= 0.999 else f"止损-{(1-_sm)*100:.0f}%"
-                log(f"🛑 {osi} 轮询止损: 最新${last} ≤ 成本${p['avg']}×{_sm}")
-                journal(ev="stop_trigger", osi=osi, last=last, avg=p["avg"], mult=_sm)
-                close_position(positions, osi, lab)
-                continue
-        # ④c 机械模式: runner守【标的】15分9ema, 连破N根(已完成bar)→全平 (随时生效, 不必等首档)
-        if EXIT_MODE == "mechanical" and p["status"] == "open" \
+            if last is not None:
+                # 报价顺带武装检查: 摸过+60%即武装9ema (TP2成交也会武装, 这里是兜底)
+                if EXIT_MODE == "mechanical" and not p.get("armed") and last >= p["avg"] * MECH_TP2_MULT:
+                    p["armed"] = True
+                    log(f"🎯 {osi} 报价${last}≥成本×{MECH_TP2_MULT} → runner武装15m9ema")
+                    journal(ev="runner_armed", osi=osi, last=last)
+                    _save(POS_JSON, positions)
+                if last <= p["avg"] * _sm:
+                    lab = "保本止损" if _sm >= 0.999 else f"止损-{(1-_sm)*100:.0f}%"
+                    log(f"🛑 {osi} 轮询止损: 最新${last} ≤ 成本${p['avg']}×{_sm}")
+                    journal(ev="stop_trigger", osi=osi, last=last, avg=p["avg"], mult=_sm)
+                    close_position(positions, osi, lab)
+                    continue
+        # ④c 机械模式: runner【武装后】守标的15分9ema, 连破N根(已完成bar)→全平
+        #    (最终定稿: 摸到+60%才武装; 未武装的runner只受-60%止损+到期强平管, 防早盘回踩误洗肥尾)
+        if EXIT_MODE == "mechanical" and p["status"] == "open" and p.get("armed") \
                 and p.get("filled", 0) - p.get("sold", 0) > 0 and us_rth_now():
             cnt = _ema15_break_count(p["ticker"])
             if cnt is not None and cnt >= MECH_EMA_N:
-                log(f"📉 {osi} 标的{p['ticker']} 15分9ema连破{cnt}根 → 趋势破位出场")
+                log(f"📉 {osi} 标的{p['ticker']} 15分9ema连破{cnt}根 → 趋势破位出场(runner已武装)")
                 journal(ev="ema_exit", osi=osi, ticker=p["ticker"], break_count=cnt)
                 close_position(positions, osi, f"15m9ema连破{cnt}")
                 continue
+        # ④d 在途入场单TTL: 挂20分钟未成交→撤(不接刀; MSFT接盘教训+审计bug)
+        if p["status"] == "pending" and p.get("entry_order_id") and p.get("submitted_ts") \
+                and time.time() - p["submitted_ts"] > ENTRY_TTL_SEC and p.get("filled", 0) == 0:
+            log(f"⏳ {osi} 入场单挂{ENTRY_TTL_SEC//60}分钟未成交 → 撤单(不接刀)")
+            journal(ev="entry_ttl_cancel", osi=osi, order_id=p["entry_order_id"], ttl=ENTRY_TTL_SEC)
+            push_discord(f"⏳ enrich入场单超时撤单 {osi} (挂{ENTRY_TTL_SEC//60}分钟未成交, 不接刀)")
+            _cancel(p["entry_order_id"])
+            p["status"] = "closed"
+            _save(POS_JSON, positions)
+            continue
         # ④ 到期日强平 (15:40 ET 后)
         if p["status"] in ("pending", "open"):
             try:
@@ -855,6 +920,8 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
             positions[osi] = dict(ticker=s.ticker, entry_order_id=r, qty=qty,
                                   limit=s.limit_price, expiry=s.expiry.isoformat(),
                                   filled=0, sold=0, avg=0.0, tp_order_id=None, tp_qty=0,
+                                  tp2_order_id=None, tp2_qty=0, tp1_done=False, tp2_done=False,
+                                  armed=False, submitted_ts=time.time(),
                                   stop_mult=_sm0,
                                   status="pending", opened=str(msg_date))
             _save(POS_JSON, positions)
@@ -892,9 +959,10 @@ def main():
         else:
             size_s = f"每信号{CONTRACTS}张"
         if EXIT_MODE == "mechanical":
-            log(f"🚀 LIVE(模拟盘)·机械出场: {size_s} | 权利金上限${MAX_PREMIUM} | "
-                f"+{(MECH_TP_MULT-1)*100:.0f}%卖⅓→止损移保本 | runner守标的{MECH_EMA_MIN}分9ema连破{MECH_EMA_N}根 | "
-                f"初始止损-{(1-MECH_STOP_MULT)*100:.0f}% | 到期强平 | 无LLM, 站长出场仅提醒")
+            log(f"🚀 LIVE(模拟盘)·机械出场(最终定稿): {size_s} | 权利金上限${MAX_PREMIUM} | "
+                f"+{(MECH_TP_MULT-1)*100:.0f}%卖⅓ → +{(MECH_TP2_MULT-1)*100:.0f}%卖⅓(武装) | "
+                f"runner武装后守{MECH_EMA_MIN}分9ema连破{MECH_EMA_N}根 | 止损-{(1-MECH_STOP_MULT)*100:.0f}%全程无保本 | "
+                f"入场TTL{ENTRY_TTL_SEC//60}分 | 到期强平 | 无LLM")
         else:
             log(f"🚀 LIVE(模拟盘): {size_s} | 权利金上限${MAX_PREMIUM} | 止盈+{(TP_MULT-1)*100:.0f}%卖半仓 | 镜像出场 | 止损: lotto-{(1-STOP_MULT)*100:.0f}%/波段-{(1-SWING_STOP_MULT)*100:.0f}%兜底 | 到期强平")
     else:
