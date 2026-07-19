@@ -111,7 +111,7 @@ def simulate(q, buy, all_exits):
         if b["ts"] > day_end:
             break                     # Day单作废
         # 出场信号先于成交 → 撤单放弃
-        pre_exit = [e for e in all_exits if e["ticker"] == sig.ticker
+        pre_exit = [e for e in all_exits if e["ticker"] in (sig.ticker, "*")
                     and t0 < e["ts"] < b["ts"] and e["level"] in ("partial", "vague", "full")]
         if pre_exit:
             return dict(status="cancelled", note="站长先出场,未成交撤单", sells=[], pnl=0.0)
@@ -127,7 +127,7 @@ def simulate(q, buy, all_exits):
     tp = round(entry_px * TP_MULT, 2)
     sells = []
     # 该票入场后的出场信号(时间序)
-    ex = sorted([e for e in all_exits if e["ticker"] == sig.ticker and e["ts"] > entry_ts],
+    ex = sorted([e for e in all_exits if e["ticker"] in (sig.ticker, "*") and e["ts"] > entry_ts],
                 key=lambda e: e["ts"])
     force_ts = et_dt(expiry, dtime(15, 40))
     post = [b for b in B if b["ts"] > entry_ts]

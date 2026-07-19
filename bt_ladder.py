@@ -56,7 +56,7 @@ def simulate(q, E, osi, sig, t0, all_exits, cfg):
             continue
         if b["ts"] > day_end:
             break
-        pre_exit = [e for e in all_exits if e["ticker"] == sig.ticker
+        pre_exit = [e for e in all_exits if e["ticker"] in (sig.ticker, "*")
                     and t0 < e["ts"] < b["ts"] and e["level"] in ("partial", "vague", "full")]
         if pre_exit:
             return dict(status="cancelled", sells=[], pnl=0.0, cost=0.0)
@@ -68,7 +68,6 @@ def simulate(q, E, osi, sig, t0, all_exits, cfg):
         return dict(status="no_fill", sells=[], pnl=0.0, cost=0.0)
 
     remain, reduced = C, False
-    peaks = 0.0
     sells = []
     peels = sorted(cfg["tp_peels"])          # 升序档价倍数
     peel_done = [False] * len(peels)
@@ -76,7 +75,9 @@ def simulate(q, E, osi, sig, t0, all_exits, cfg):
     expiry = sig.expiry
     force_ts = et_dt(expiry, dtime(15, 40))
     post = [b for b in B if b["ts"] > entry_ts]
-    ex = sorted([e for e in all_exits if e["ticker"] == sig.ticker and e["ts"] > entry_ts],
+    peaks = max((b["h"] for b in post), default=entry_px)   # 合约属性, 与出场配置无关
+    # 站长该票出场 + 全局清仓令(ticker="*")
+    ex = sorted([e for e in all_exits if e["ticker"] in (sig.ticker, "*") and e["ts"] > entry_ts],
                 key=lambda e: e["ts"])
     events = [(e["ts"], "exit", e) for e in ex] + [(force_ts, "force", None)]
     events.sort(key=lambda x: x[0])
@@ -93,7 +94,6 @@ def simulate(q, E, osi, sig, t0, all_exits, cfg):
     for b in post:
         if remain <= 0:
             break
-        peaks = max(peaks, b["h"])
         # 1) 站长出场事件 (含到期强平)
         while ei < len(events) and events[ei][0] <= b["ts"]:
             ts_, kind, e = events[ei]; ei += 1
@@ -143,7 +143,9 @@ def simulate(q, E, osi, sig, t0, all_exits, cfg):
         remain = 0
 
     gross = sum(px * 100 * q_ for px, q_, _ in sells) - entry_px * 100 * C
-    fees = FEE * C + FEE * sum(q_ for _, q_, _ in sells)
+    # 归零/持仓mark 不是真实成交, 不计卖出佣金 (否则系统性多扣持有更久的配置)
+    real_sold = sum(q_ for _, q_, why in sells if "归零" not in why and "mark" not in why)
+    fees = FEE * C + FEE * real_sold
     peak_mult = peaks / entry_px if entry_px else 0
     return dict(status="traded", entry=entry_px, sells=sells, pnl=gross - fees,
                 cost=entry_px * 100 * C, peak_mult=peak_mult)
@@ -178,6 +180,9 @@ def load_signals(q, E):
                 continue
             s.kind, s.right = "BUY", side
             buys.append(dict(ts=ts, osi=to_longport_symbol(s), sig=s))
+    today = datetime.now(ET).date()
+    # 只测已到期单 (未到期持仓按mark会混入未实现盈亏, 污染对比)
+    buys = [b for b in buys if b["sig"].expiry < today]
     testable = [b for b in buys if E.bars(q, b["osi"])]
     return testable, exits
 
@@ -199,7 +204,7 @@ def main():
     testable, exits = load_signals(q, E)
     print(f"可回测 {len(testable)} 笔 (真实期权5分K) | 出场事件 {len(exits)} 条 | 每笔3张 | 摩擦${FEE}/张/边")
     print("=" * 92)
-    print(f"{'配置':14}{'runner止损':>10}" + "".join(f"{s:>12}" for s in ["收益率", "胜率", "PF", "最差单笔", "均峰值x"]))
+    print(f"{'配置':14}{'runner止损':>10}" + "".join(f"{s:>12}" for s in ["收益率", "胜率", "PF", "最差单笔", "中位峰值x"]))
     print("-" * 92)
     results = {}
     for name, base in CONFIGS:
