@@ -183,29 +183,48 @@ def main():
     def wt(l): return 0.3333 if l else 0.5
 
     grid = []
+    def eval_cfg(name, tag, ladder, fracs, esk, en, sp):
+        rows = [(simulate(p, ladder, fracs, sp, esk, en), p["lotto"], p["m"]) for p in prepped]
+        n = len(rows); W = sum(wt(l) for _, l, _ in rows)
+        wavg = sum(wt(l) * r for r, l, _ in rows) / W * 100
+        win = sum(1 for r, _, _ in rows if r > 0) / n * 100
+        med = st.median([r for r, _, _ in rows]) * 100
+        monthly = {}
+        for mth in sorted({m for *_, m in rows}):
+            g = [(r, l) for r, l, m in rows if m == mth]
+            Wm = sum(wt(l) for _, l in g)
+            monthly[mth] = sum(wt(l) * r for r, l in g) / Wm * 100
+        grid.append(dict(name=name, tag=tag, wavg=wavg, win=win, med=med,
+                         min_m=min(monthly.values()), monthly=monthly))
+
     for (t1, t2) in TP_PAIRS:
         for (fr, frlab) in FRACS:
             for (esk, en, elab) in EMAS:
                 for (sp, slab) in STOPS:
-                    rows = [(simulate(p, [t1, t2], fr, sp, esk, en), p["lotto"], p["m"]) for p in prepped]
-                    n = len(rows); W = sum(wt(l) for _, l, _ in rows)
-                    wavg = sum(wt(l) * r for r, l, _ in rows) / W * 100
-                    win = sum(1 for r, _, _ in rows if r > 0) / n * 100
-                    med = st.median([r for r, _, _ in rows]) * 100
-                    monthly = {}
-                    for mth in sorted({m for *_, m in rows}):
-                        g = [(r, l) for r, l, m in rows if m == mth]
-                        Wm = sum(wt(l) for _, l in g)
-                        monthly[mth] = sum(wt(l) * r for r, l in g) / Wm * 100
-                    name = f"{int(t1*100)}/{int(t2*100)} {frlab} {elab} {slab}"
-                    grid.append(dict(name=name, wavg=wavg, win=win, med=med,
-                                     min_m=min(monthly.values()), monthly=monthly,
-                                     t1=t1, t2=t2, fr=frlab, ema=elab, stop=slab))
+                    eval_cfg(f"{int(t1*100)}/{int(t2*100)} {frlab} {elab} {slab}", "2档",
+                             [t1, t2], fr, esk, en, sp)
+    # 单档: 只止盈一次, 其余全跑runner (用户问)
+    for t in (.3, .4, .6):
+        for (f, flab) in ((1/3, "⅓"), (.5, "½"), (2/3, "⅔")):
+            for (sp, slab) in STOPS:
+                eval_cfg(f"单档{int(t*100)}卖{flab} 15m×2 {slab}", "1档", [t], [f], "e15", 2, sp)
+    # 纯runner对照 (无止盈无保本)
+    for (sp, slab) in STOPS:
+        eval_cfg(f"纯runner 15m×2 {slab}", "0档", [], [], "e15", 2, sp)
+
     grid.sort(key=lambda g: -g["wavg"])
     print(f"\n网格 {len(grid)} 配置 | 前15 (按加权收益):")
-    print(f"{'配置':30}{'加权':>7}{'胜率':>7}{'中位':>7}{'最差月':>8}")
+    print(f"{'配置':30}{'类':>4}{'加权':>7}{'胜率':>7}{'中位':>7}{'最差月':>8}")
     for g in grid[:15]:
-        print(f"{g['name']:30}{g['wavg']:>+6.0f}%{g['win']:>6.0f}%{g['med']:>+6.0f}%{g['min_m']:>+7.0f}%")
+        print(f"{g['name']:30}{g['tag']:>4}{g['wavg']:>+6.0f}%{g['win']:>6.0f}%{g['med']:>+6.0f}%{g['min_m']:>+7.0f}%")
+
+    # ── 单档 vs 2档冠军 ──
+    print(f"\n【单档/纯runner 全列, 按加权】(对照 2档冠军 30/60 33/33 15m×2 -50)")
+    print(f"{'配置':30}{'排名':>5}{'加权':>7}{'胜率':>7}{'中位':>7}{'最差月':>8}")
+    for g in [x for x in grid if x["tag"] in ("1档", "0档")]:
+        print(f"{g['name']:30}#{grid.index(g)+1:>4}{g['wavg']:>+6.0f}%{g['win']:>6.0f}%{g['med']:>+6.0f}%{g['min_m']:>+7.0f}%")
+    ref = next(x for x in grid if x["name"] == "30/60 33/33 15m×2 -50")
+    print(f"{'30/60 33/33 15m×2 -50(冠军)':30}#{grid.index(ref)+1:>4}{ref['wavg']:>+6.0f}%{ref['win']:>6.0f}%{ref['med']:>+6.0f}%{ref['min_m']:>+7.0f}%")
 
     # ── 甜点: wavg头部25%里选最差月最高 ──
     top = grid[:max(8, len(grid) // 4)]
@@ -213,14 +232,6 @@ def main():
     print(f"\n{'='*74}\n🎯 甜点(头部25%里最差月最高): 【{sweet['name']}】")
     print(f"   加权{sweet['wavg']:+.0f}% 胜率{sweet['win']:.0f}% 中位{sweet['med']:+.0f}% 最差月{sweet['min_m']:+.0f}%")
     print(f"   按月加权: " + "  ".join(f"{m[-2:]}月{v:+.0f}%" for m, v in sorted(sweet["monthly"].items())))
-    # 用户点名的配置
-    print(f"\n用户点名配置对照:")
-    for nm in ["30/60 50/25 15m×2 -45", "30/60 50/25 5m×2 -45", "30/60 50/25 15m×2 -50",
-               "30/60 50/25 5m×2 -50", "20/60 50/25 15m×2 -50"]:
-        g = next((g for g in grid if g["name"] == nm), None)
-        if g:
-            rank = grid.index(g) + 1
-            print(f"  #{rank:>3} {g['name']:28} 加权{g['wavg']:+.0f}% 胜率{g['win']:.0f}% 最差月{g['min_m']:+.0f}%")
     json.dump([{k: v for k, v in g.items() if k != 'monthly'} | {"monthly": g["monthly"]} for g in grid],
               open(OUT / "bt_mechanical_grid.json", "w"), ensure_ascii=False)
     print(f"\n⚠️ {len(grid)}配置×n={len(prepped)}同池=过拟合风险高; 甜点按稳健性(最差月)选, 前向验证为准。")
