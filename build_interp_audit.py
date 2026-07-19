@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 UTC = timezone.utc
 OUT = Path(__file__).parent / "output"
 CACHE = OUT / "llm_ab_cache.json"
-LO, HI = "2026-06-01", "2026-07-18"
+LO, HI = "2026-05-01", "2026-07-18"
 
 
 def main():
