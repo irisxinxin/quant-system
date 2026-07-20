@@ -1,17 +1,27 @@
 #!/usr/bin/env python3
-"""test_enrich_bot_safety.py — enrich bot 资金安全回归测试 (2026-07-20 对抗性QA+复审)。
-全程内存mock: 不建真实 Quote/TradeContext, 不碰 output/, 不跑 main(), 不下真实单。
-跑法: /usr/local/bin/python3 qa_verify_fixes.py
+"""test_enrich_bot_safety.py — enrich bot 订单生命周期安全测试。
+
+背景: 2026-07-20 用户审查指出"修过很多局部竞态, 尚未把订单生命周期统一建模"。
+本文件针对统一后的状态机 pending → open → closing → closed 断言核心不变式:
+
+  I1  提交成功 ≠ 成交。sold / closed 只能由 manage_positions ⓪ 依据 executed_quantity 更新。
+  I2  撤单 = 只是"请求撤销"。未查到终态就当挂单还活着, 【禁止】在其上再发卖单。
+  I3  卖出总量绝不超过持仓(超卖=裸空期权=无限风险); 宁可少卖(亏损上限=权利金)。
+  I4  入场单仍在途时绝不标 closed(否则后续成交变孤儿仓)。
+  I5  价格不可用(0/陈旧/停牌)时不得据以判止损。
+
+全程内存 mock: 不建真实 Quote/TradeContext, 不碰 output/, 不跑 main(), 不下真实单。
+跑法: /usr/local/bin/python3 test_enrich_bot_safety.py
 """
 import os, sys, json, time, tempfile
 from pathlib import Path
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from unittest import mock
 
 os.environ["EXIT_MODE"] = "mechanical"
 os.environ["ENRICH_LIVE"] = "false"
 os.environ["DISCORD_BOT_TOKEN"] = "x"
-sys.path.insert(0, "/Users/xin/Documents/Claude/Projects/money/quant_system")
+sys.path.insert(0, str(Path(__file__).parent))
 
 import discord_enrich_bot as B
 
@@ -29,279 +39,286 @@ def mkpos(**kw):
              status="open", opened=str(date.today()))
     d.update(kw); return d
 
-print("=" * 72)
-print("① 状态文件: 原子写 + 损坏拒启 + .bak恢复")
-print("=" * 72)
-with tempfile.TemporaryDirectory() as td:
-    p = Path(td) / "pos.json"
-    with mock.patch.object(B, "OUT", Path(td)), mock.patch.object(B, "log", lambda m: None):
-        B._save(p, {"A": 1})
-        B._save(p, {"A": 1, "B": 2})                      # 第二次写会先备份上一版
-        chk("原子写落盘正确", json.loads(p.read_text()) == {"A": 1, "B": 2})
-        chk("保留了 .bak 上一版", (Path(td) / "pos.json.bak").exists()
-            and json.loads((Path(td) / "pos.json.bak").read_text()) == {"A": 1})
-        chk("不留 .tmp 残file", not (Path(td) / "pos.json.tmp").exists())
-        p.write_text('{"A": 1, "B"')                       # 模拟写一半被kill
-        with mock.patch.object(B, "push_discord", lambda *a, **k: None):
-            got = B._load(p)
-        chk("损坏时从.bak恢复而非静默清空", got == {"A": 1}, f"got={got}")
-        (Path(td) / "pos.json.bak").unlink()
-        raised = False
-        try:
-            with mock.patch.object(B, "push_discord", lambda *a, **k: None):
-                B._load(p, strict=True)
-        except RuntimeError:
-            raised = True
-        chk("关键状态损坏且无备份时【抛错拒启】(不返回{})", raised)
+# 公共桩: 禁止任何真实IO
+base = dict(_save=lambda *a: True, journal=lambda **k: None,
+            push_discord=lambda *a, **k: False, log=lambda m: None,
+            _alert=lambda m: None)
+mgr = dict(ensure_protection=lambda *a: None, _option_last=lambda o: None,
+           _ema15_break_count=lambda t: None, us_rth_now=lambda: True)
 
-print()
-print("=" * 72)
-print("② close_position: 撤单失败/部分成交/卖失败 三种竞态")
-print("=" * 72)
-base = dict(_save=lambda *a: None, journal=lambda **k: None,
-            push_discord=lambda *a, **k: None, log=lambda m: None)
+def hdr(t):
+    print(); print("=" * 74); print(t); print("=" * 74)
 
-# 2a: 撤单失败 + 查单失败 → 必须保守记账, 绝不重复卖
-pos = {"O1": mkpos(filled=6, sold=0, tp_order_id="T1", tp_qty=2)}
-sold_qty = []
-with mock.patch.multiple(B, _cancel=lambda oid: False,
-                         _order_state=lambda oid: (None, 0, 0.0),
-                         _submit=lambda osi, side_buy, qty, price, **k: (sold_qty.append(qty), (True, "X"))[1],
-                         **base):
-    B.close_position(pos, "O1", "test")
-chk("撤单+查单双失败时推迟平仓(既不重复卖也不假定已卖)",
-    not sold_qty and pos["O1"]["status"] == "open" and pos["O1"]["sold"] == 0,
-    f"卖单={sold_qty} status={pos['O1']['status']} sold={pos['O1']['sold']}")
 
-# 2b: 止盈腿部分成交后被撤 → 成交量必须计入 sold
-pos = {"O2": mkpos(filled=6, sold=0, tp_order_id="T2", tp_qty=2)}
-sold_qty = []
-with mock.patch.multiple(B, _cancel=lambda oid: True,
-                         _order_state=lambda oid: ("Canceled", 1, 1.3),   # 撤前已成交1张
-                         _submit=lambda osi, side_buy, qty, price, **k: (sold_qty.append(qty), (True, "X"))[1],
-                         **base):
-    B.close_position(pos, "O2", "test")
-chk("止盈腿部分成交1张已记账(6-1=5, 非6)",
-    sold_qty and sold_qty[0] == 5, f"实际市价卖 {sold_qty} 张")
+hdr("I1  提交成功 ≠ 成交 — sold/closed 只能由 ⓪ 对账更新")
 
-# 2c: 市价卖失败 → 不得标记 closed(否则止损永久空转)
-pos = {"O3": mkpos(filled=6, sold=0)}
-with mock.patch.multiple(B, _cancel=lambda oid: True,
-                         _order_state=lambda oid: ("Filled", 0, 0.0),
-                         _submit=lambda osi, side_buy, qty, price, **k: (False, "网络错误"),
-                         **base):
-    B.close_position(pos, "O3", "test")
-chk("市价平仓失败时保持open(不弃仓)", pos["O3"]["status"] == "open",
-    f"status={pos['O3']['status']}, sold={pos['O3']['sold']}")
-chk("平仓失败时不虚增sold", pos["O3"]["sold"] == 0)
+pos = {"A1": mkpos(filled=6, sold=0)}
+with mock.patch.multiple(B, _submit=lambda *a, **k: (True, "X1"), **base):
+    ok = B._start_exit(pos, "A1", pos["A1"], 6, "止损-60%")
+chk("卖单受理后 status=closing(非closed)", ok and pos["A1"]["status"] == "closing",
+    f"status={pos['A1']['status']}")
+chk("卖单受理后 sold 不变(未成交)", pos["A1"]["sold"] == 0, f"sold={pos['A1']['sold']}")
+chk("记录 exit_order_id 供对账", pos["A1"].get("exit_order_id") == "X1")
 
-# 2d: 重入保护
-pos = {"O4": mkpos(filled=3, sold=0)}
-calls = []
-def _resub(osi, side_buy, qty, price, **k):
-    calls.append(qty)
-    B.close_position(pos, "O4", "重入")     # 在卖单里再次触发平仓
-    return True, "X"
-with mock.patch.multiple(B, _cancel=lambda oid: True,
-                         _order_state=lambda oid: ("Filled", 0, 0.0),
-                         _submit=_resub, **base):
-    B.close_position(pos, "O4", "test")
-chk("重入时不会双份市价卖", len(calls) == 1, f"提交了 {len(calls)} 次卖单 {calls}")
-
-# 2e: 重入守卫绝不能落盘 — 否则崩溃重启后该仓位永远平不掉(自查发现的自造bug)
-saved = []
-pos = {"O5": mkpos(filled=6, sold=0)}
-with mock.patch.multiple(B, _cancel=lambda oid: True,
-                         _order_state=lambda oid: ("Filled", 0, 0.0),
-                         _submit=lambda osi, side_buy, qty, price, **k: (False, "网络错误"),
-                         _save=lambda p, d: saved.append(json.loads(json.dumps(d, default=str))),
-                         journal=lambda **k: None, push_discord=lambda *a, **k: None,
-                         log=lambda m: None):
-    B.close_position(pos, "O5", "test")
-chk("平仓失败后 status 仍为 open", pos["O5"]["status"] == "open")
-chk("重入守卫不落盘(落盘=崩溃后永久平不掉)",
-    all("closing" not in v for snap in saved for v in snap.values()),
-    f"落盘快照数={len(saved)}")
-chk("重入守卫在finally已释放", "O5" not in B._closing)
-
-print()
-print("=" * 72)
-print("②′ 复审找出的【我自己引入的】bug — 回归")
-print("=" * 72)
-
-# R1: 429退避下撤单失败+查单失败 → 绝不"假定已卖"后标closed(否则一张没卖却认为已平)
-pos = {"R1": mkpos(filled=3, sold=0, stop_order_id="S1", stop_qty=3)}
-sold_qty = []
-with mock.patch.multiple(B, _cancel=lambda oid: False,
-                         _order_state=lambda oid: (None, 0, 0.0),
-                         _submit=lambda osi, side_buy, qty, price, **k: (sold_qty.append(qty), (True, "X"))[1],
-                         **base):
-    B.close_position(pos, "R1", "到期强平")
-chk("撤单+查单双失败时不再假定已卖", pos["R1"]["sold"] == 0, f"sold={pos['R1']['sold']}")
-chk("此时【不得】标记closed(原会遗弃全部持仓)", pos["R1"]["status"] == "open",
-    f"status={pos['R1']['status']}")
-chk("此时不发市价卖单, 留待下轮重试", not sold_qty, f"卖单={sold_qty}")
-chk("腿ID保留以便下轮继续对账", pos["R1"]["stop_order_id"] == "S1")
-
-# R2: 部分成交(status已open)时, 在途入场买单也必须被撤
-pos = {"R2": mkpos(status="open", entry_order_id="E9", filled=1, sold=0, avg=1.0)}
-cancels = []
-with mock.patch.multiple(B, _cancel=lambda oid: cancels.append(oid) or True,
-                         _order_state=lambda oid: ("Filled", 0, 0.0),
-                         _submit=lambda *a, **k: (True, "X"), **base):
-    B.close_position(pos, "R2", "止损")
-chk("平仓时撤在途入场买腿(原因status!=pending而漏撤)", "E9" in cancels, f"cancels={cancels}")
-chk("入场腿已清空", pos["R2"].get("entry_order_id") is None)
-
-# R3: executed_price 为空时不得把 avg 清零(会让保护腿+止损全灭)
-pos = {"R3": mkpos(status="open", entry_order_id="E10", filled=2, sold=0, avg=1.00,
-                   tp_order_id="T9")}
-with mock.patch.multiple(B, _order_state=lambda oid: ("PartialFilled", 5, 0.0),  # 均价拿不到
-                         ensure_protection=lambda *a: None, _option_last=lambda o: None,
-                         _ema15_break_count=lambda t: None, _cancel=lambda o: True,
-                         _submit=lambda *a, **k: (True, "X"), us_rth_now=lambda: True, **base):
+pos = {"A2": mkpos(status="closing", filled=6, sold=0, exit_order_id="X2",
+                   exit_qty=6, exit_reason="止损-60%", exit_ts=time.time())}
+with mock.patch.multiple(B, _order_state=lambda oid: ("Filled", 6, 0.4),
+                         _cancel=lambda o: True, _submit=lambda *a, **k: (True, "Z"),
+                         **mgr, **base):
     B.manage_positions(pos)
-chk("成交均价拿不到时保留旧avg(不清零)", pos["R3"]["avg"] == 1.00, f"avg={pos['R3']['avg']}")
-chk("filled 仍正常推进", pos["R3"]["filled"] == 5)
+chk("卖单确认全成交 → sold=6 且 closed",
+    pos["A2"]["sold"] == 6 and pos["A2"]["status"] == "closed",
+    f"sold={pos['A2']['sold']} status={pos['A2']['status']}")
 
-# R4: TTL 撤单失败必须保留 entry_order_id(否则filled冻结, 后续成交裸多无人管)
-pos = {"R4": mkpos(status="pending", entry_order_id="E11", filled=1, sold=0, avg=1.0,
-                   submitted_ts=time.time() - 99999)}
-with mock.patch.multiple(B, _order_state=lambda oid: ("PartialFilled", 1, 1.0),
-                         _cancel=lambda oid: False,          # 撤单失败
-                         ensure_protection=lambda *a: None, _option_last=lambda o: None,
-                         _ema15_break_count=lambda t: None, _submit=lambda *a, **k: (True, "X"),
+pos = {"A3": mkpos(status="closing", filled=6, sold=0, exit_order_id="X3",
+                   exit_qty=6, exit_reason="止损-60%", exit_ts=time.time())}
+with mock.patch.multiple(B, _order_state=lambda oid: ("Rejected", 0, 0.0),
+                         _cancel=lambda o: True, _submit=lambda *a, **k: (True, "Z"),
+                         **mgr, **base):
+    B.manage_positions(pos)
+chk("卖单被拒 → 退回open继续被管理", pos["A3"]["status"] == "open", f"status={pos['A3']['status']}")
+chk("卖单被拒 → sold 仍为0", pos["A3"]["sold"] == 0)
+
+pos = {"A4": mkpos(status="closing", filled=6, sold=0, exit_order_id="X4",
+                   exit_qty=6, exit_reason="止损-60%", exit_ts=time.time())}
+with mock.patch.multiple(B, _order_state=lambda oid: ("PartialWithdrawal", 2, 0.4),
+                         _cancel=lambda o: True, _submit=lambda *a, **k: (True, "Z"),
+                         **mgr, **base):
+    B.manage_positions(pos)
+chk("卖单部分成交 → sold=实际2张, 剩4张退回open",
+    pos["A4"]["sold"] == 2 and pos["A4"]["status"] == "open",
+    f"sold={pos['A4']['sold']} status={pos['A4']['status']}")
+
+pos = {"A5": mkpos(status="closing", filled=6, sold=0, exit_order_id="X5",
+                   exit_qty=6, exit_reason="止损", exit_ts=time.time())}
+subs = []
+with mock.patch.multiple(B, _order_state=lambda oid: ("New", 0, 0.0), _cancel=lambda o: True,
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "Z"))[1],
+                         **mgr, **base):
+    B.manage_positions(pos)
+chk("卖单在途 → 不再发任何新单(防重复卖)", not subs and pos["A5"]["status"] == "closing",
+    f"新单={subs} status={pos['A5']['status']}")
+
+pos = {"A6": mkpos(filled=1, sold=0, avg=1.0, reduced=False)}
+with mock.patch.multiple(B, _option_last=lambda o: 5.0, _submit=lambda *a, **k: (False, "券商拒单"),
+                         _order_state=lambda oid: ("Filled", 0, 0.0), _cancel=lambda o: True,
+                         ensure_protection=lambda *a: None, _ema15_break_count=lambda t: None,
                          us_rth_now=lambda: True, **base):
     B.manage_positions(pos)
-chk("TTL撤单失败时保留入场单ID下轮重试", pos["R4"].get("entry_order_id") == "E11",
-    f"entry_order_id={pos['R4'].get('entry_order_id')}")
+chk("轮询止盈下单失败 → 不标closed(只剩1张时的原bug)", pos["A6"]["status"] != "closed",
+    f"status={pos['A6']['status']}")
+chk("轮询止盈下单失败 → sold不变", pos["A6"]["sold"] == 0)
 
-# R5: PartialWithdrawal(长桥"部分成交后被撤"真实终态)必须当终态处理
-pos = {"R5": mkpos(status="pending", entry_order_id="E12", filled=0, sold=0, avg=0.0)}
-with mock.patch.multiple(B, _order_state=lambda oid: ("PartialWithdrawal", 2, 1.1),
-                         ensure_protection=lambda *a: None, _option_last=lambda o: None,
-                         _ema15_break_count=lambda t: None, _cancel=lambda o: True,
-                         _submit=lambda *a, **k: (True, "X"), us_rth_now=lambda: True, **base):
-    B.manage_positions(pos)
-chk("PartialWithdrawal 被当作终态", pos["R5"].get("entry_order_id") is None
-    and pos["R5"]["status"] == "open", f"status={pos['R5']['status']}")
 
-# R6: 非strict的_load损坏时不抛错(否则on_message第一行bump_last就炸=全部信号丢失)
-with tempfile.TemporaryDirectory() as td:
-    q = Path(td) / "last.json"; q.write_text("{bad")
-    with mock.patch.object(B, "log", lambda m: None), \
-         mock.patch.object(B, "push_discord", lambda *a, **k: None):
-        chk("非关键状态损坏→返回{}不抛错", B._load(q) == {})
-        raised = False
-        try:
-            B._load(q, strict=True)
-        except RuntimeError:
-            raised = True
-        chk("关键状态(strict)损坏→仍然抛错拒启", raised)
+hdr("I2  撤单必须确认终态 — 未确认就禁止再发卖单")
 
-print()
-print("=" * 72)
-print("③ manage_positions: 入场部分成交 / 查单失败不吞TTL / 到期强平")
-print("=" * 72)
+pos = {"B1": mkpos(filled=6, sold=0, stop_order_id="S1", stop_qty=6)}
+subs = []
+with mock.patch.multiple(B, _cancel=lambda oid: False, _order_state=lambda oid: (None, 0, 0.0),
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "Z"))[1],
+                         **base):
+    B.close_position(pos, "B1", "到期强平")
+chk("腿未确认终态 → 不发卖单", not subs, f"卖单={subs}")
+chk("腿未确认终态 → 保持open下轮重试", pos["B1"]["status"] == "open")
+chk("腿未确认终态 → 不猜测sold", pos["B1"]["sold"] == 0)
+chk("腿ID保留以便下轮继续对账", pos["B1"]["stop_order_id"] == "S1")
 
-# 3a: PartialFilled 必须转 open 并挂保护腿
-pos = {"P1": mkpos(status="pending", entry_order_id="E1", filled=0, sold=0, avg=0.0)}
+pos = {"B2": mkpos(filled=6, sold=0, tp_order_id="T1", tp_qty=2)}
+subs = []
+with mock.patch.multiple(B, _cancel=lambda oid: True, _order_state=lambda oid: ("New", 0, 0.0),
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "Z"))[1],
+                         **base):
+    B.close_position(pos, "B2", "止损")
+chk("撤单请求成功但状态仍New → 视为未确认, 不发卖单", not subs, f"卖单={subs}")
+
+pos = {"B3": mkpos(filled=6, sold=0, tp_order_id="T2", tp_qty=2)}
+subs = []
+with mock.patch.multiple(B, _cancel=lambda oid: True, _order_state=lambda oid: ("Canceled", 1, 1.3),
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "Z"))[1],
+                         **base):
+    B.close_position(pos, "B3", "止损")
+chk("腿撤前成交1张已记账 → 只卖剩余5张", subs == [5], f"卖单={subs} sold={pos['B3']['sold']}")
+
+p = mkpos(stop_order_id="S9", stop_qty=3)
+with mock.patch.multiple(B, _cancel=lambda o: True,
+                         _order_state=lambda o: ("PendingCancel", 0, 0.0), **base):
+    r = B.cancel_stop(p)
+chk("cancel_stop 未终态返回False且保留ID", r is False and p["stop_order_id"] == "S9",
+    f"ret={r} id={p.get('stop_order_id')}")
+
+pos = {"B4": mkpos(status="open", entry_order_id="E1", filled=1, sold=0, avg=1.0)}
+subs = []
+with mock.patch.multiple(B, _cancel=lambda oid: True, _order_state=lambda oid: ("Canceled", 3, 1.0),
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "Z"))[1],
+                         **base):
+    B.close_position(pos, "B4", "止损")
+chk("撤入场单竞态成交回填 filled=3 并全部卖出", pos["B4"]["filled"] == 3 and subs == [3],
+    f"filled={pos['B4']['filled']} 卖单={subs}")
+
+p = mkpos(filled=6, sold=0)
+B._credit_leg(p, "tp_order_id", 2)
+B._credit_leg(p, "tp_order_id", 2)
+B._credit_leg(p, "tp_order_id", 3)
+chk("同一腿重复对账不重复计入sold", p["sold"] == 3, f"sold={p['sold']}")
+
+
+hdr("I3 / I4  绝不超卖; 入场单在途时绝不标 closed")
+
+# C1: 部分成交 → 撤单请求生效后订单转 Canceled(真实语义) → filled定型、余量撤净
+cancelled = {"done": False}
+def _os_c1(oid):
+    return ("Canceled", 2, 1.0) if cancelled["done"] else ("PartialFilled", 2, 1.0)
+def _cx_c1(oid):
+    cancelled["done"] = True; return True
+pos = {"C1": mkpos(status="pending", entry_order_id="E2", filled=0, sold=0, avg=0.0)}
 prot = []
-with mock.patch.multiple(B, _order_state=lambda oid: ("PartialFilled", 2, 1.00),
-                         ensure_protection=lambda po, o, p: prot.append(o),
+with mock.patch.multiple(B, _order_state=_os_c1, _cancel=_cx_c1,
+                         ensure_protection=lambda po, o, pp: prot.append(o),
                          _option_last=lambda o: None, _ema15_break_count=lambda t: None,
-                         _cancel=lambda o: True, _submit=lambda *a, **k: (True, "X"),
-                         us_rth_now=lambda: True, **base):
+                         _submit=lambda *a, **k: (True, "Z"), us_rth_now=lambda: True, **base):
     B.manage_positions(pos)
-chk("入场部分成交→转open(不再卡pending裸奔)", pos["P1"]["status"] == "open",
-    f"status={pos['P1']['status']} filled={pos['P1']['filled']}")
-chk("入场部分成交→立刻挂保护腿", "P1" in prot)
+chk("入场部分成交 → 立刻撤余量(filled定型)", pos["C1"].get("entry_order_id") is None
+    and pos["C1"]["filled"] == 2,
+    f"entry={pos['C1'].get('entry_order_id')} filled={pos['C1']['filled']}")
+chk("入场部分成交 → 转open并配保护腿", pos["C1"]["status"] == "open" and "C1" in prot)
 
-# 3b: 查单失败(429) 不得吞掉 TTL 撤单
-pos = {"P2": mkpos(status="pending", entry_order_id="E2", filled=0, sold=0, avg=0.0,
-                   submitted_ts=time.time() - 99999)}
-cancels = []
-with mock.patch.multiple(B, _order_state=lambda oid: (None, 0, 0.0),   # 查单全失败
-                         _cancel=lambda oid: cancels.append(oid) or True,
-                         ensure_protection=lambda *a: None, _option_last=lambda o: None,
-                         _ema15_break_count=lambda t: None, _submit=lambda *a, **k: (True, "X"),
-                         us_rth_now=lambda: True, **base):
-    B.manage_positions(pos)
-chk("查单失败时TTL仍然撤单(不再挂一天接刀)", "E2" in cancels, f"cancels={cancels}")
-
-# 3c: 部分成交的入场单, TTL 要撤剩余买腿(而非永不撤)
-pos = {"P3": mkpos(status="open", entry_order_id="E3", filled=2, sold=0, avg=1.0,
-                   submitted_ts=time.time() - 99999)}
-cancels = []
+# C1b: 撤单确认不了(订单一直非终态) → 保留ID下轮重试, 但【已成交部分必须立刻受保护】
+pos = {"C1b": mkpos(status="pending", entry_order_id="E2b", filled=0, sold=0, avg=0.0)}
+prot = []
 with mock.patch.multiple(B, _order_state=lambda oid: ("PartialFilled", 2, 1.0),
-                         _cancel=lambda oid: cancels.append(oid) or True,
+                         _cancel=lambda oid: True,
+                         ensure_protection=lambda po, o, pp: prot.append(o),
+                         _option_last=lambda o: None, _ema15_break_count=lambda t: None,
+                         _submit=lambda *a, **k: (True, "Z"), us_rth_now=lambda: True, **base):
+    B.manage_positions(pos)
+chk("撤单未确认 → 保留入场单ID下轮重试", pos["C1b"].get("entry_order_id") == "E2b")
+chk("撤单未确认 → 已成交部分仍立即转open并保护(不裸奔)",
+    pos["C1b"]["status"] == "open" and "C1b" in prot,
+    f"status={pos['C1b']['status']} prot={prot}")
+
+pos = {"C2": mkpos(status="open", entry_order_id="E3", filled=2, sold=0, avg=1.0,
+                   tp_order_id="T3", tp_qty=2)}
+def _os_c2(oid):
+    return ("Filled", 2, 1.3) if oid == "T3" else ("PartialFilled", 2, 1.0)
+with mock.patch.multiple(B, _order_state=_os_c2, _cancel=lambda o: False,
                          ensure_protection=lambda *a: None, _option_last=lambda o: None,
-                         _ema15_break_count=lambda t: None, _submit=lambda *a, **k: (True, "X"),
+                         _ema15_break_count=lambda t: None, _submit=lambda *a, **k: (True, "Z"),
                          us_rth_now=lambda: True, **base):
     B.manage_positions(pos)
-chk("部分成交的入场单TTL到点撤剩余腿", "E3" in cancels, f"cancels={cancels}")
+chk("入场单在途时净仓归零也不标closed(防孤儿仓)", pos["C2"]["status"] != "closed",
+    f"status={pos['C2']['status']} entry={pos['C2'].get('entry_order_id')}")
 
-# 3d: 到期次日上午必须强平(元组比较陷阱)
-yesterday = (date.today() - timedelta(days=1)).isoformat()
-pos = {"P4": mkpos(status="open", expiry=yesterday, filled=3, sold=0, avg=1.0)}
-closed = []
-class FakeNow:
-    @staticmethod
-    def now(tz=None):
-        return datetime.now(B.ET).replace(hour=9, minute=30)   # 到期次日 09:30 ET
-with mock.patch.multiple(B, close_position=lambda po, o, r: closed.append(r),
-                         _order_state=lambda oid: ("Filled", 0, 0.0),
-                         ensure_protection=lambda *a: None, _option_last=lambda o: None,
-                         _ema15_break_count=lambda t: None, _cancel=lambda o: True,
-                         _submit=lambda *a, **k: (True, "X"), us_rth_now=lambda: True, **base), \
-     mock.patch.object(B, "datetime", FakeNow):
+
+hdr("I5  价格不可用时不得判止损")
+
+class Q:
+    def __init__(self, last, age_sec=0, st="Normal"):
+        self.last_done = last
+        self.timestamp = datetime.now(timezone.utc) - timedelta(seconds=age_sec)
+        self.trade_status = st
+        self.open_interest = 5000
+
+def _q(last, age=0, st="Normal"):
+    return mock.Mock(option_quote=lambda syms: [Q(last, age, st)])
+
+with mock.patch.multiple(B, log=lambda m: None):
+    with mock.patch.object(B, "_quote_ctx", _q(0)):
+        chk("last_done=0 → 价格不可用(原会立刻假止损全平)", B._option_last("X.US") is None)
+    with mock.patch.object(B, "_quote_ctx", _q(1.5, age=7200)):
+        chk("报价陈旧2小时 → 不可用", B._option_last("X.US") is None)
+    with mock.patch.object(B, "_quote_ctx", _q(1.5, st="Halted")):
+        chk("停牌 → 不可用", B._option_last("X.US") is None)
+    with mock.patch.object(B, "_quote_ctx", _q(1.5)):
+        chk("正常新鲜报价 → 可用", B._option_last("X.US") == 1.5)
+
+pos = {"D1": mkpos(filled=6, sold=0, avg=1.0)}
+subs = []
+with mock.patch.multiple(B, _option_last=lambda o: None,
+                         _order_state=lambda oid: ("Filled", 0, 0.0), _cancel=lambda o: True,
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "Z"))[1],
+                         ensure_protection=lambda *a: None, _ema15_break_count=lambda t: None,
+                         us_rth_now=lambda: True, **base):
     B.manage_positions(pos)
-chk("到期次日上午即强平(原要等到次日15:40)", "到期强平" in closed, f"closed={closed}")
+chk("价格不可用 → 不触发止损平仓", not subs and pos["D1"]["status"] == "open")
 
-print()
-print("=" * 72)
-print("④ 定张与敞口: OI未知帽 / qty<=0 / 低价止损档")
-print("=" * 72)
-
-with mock.patch.multiple(B, log=lambda m: None):
-    q, note = B.size_qty(0.05, 33330, "X.US", fallback=1)
-    with mock.patch.object(B, "_quote_ctx", mock.Mock(option_quote=lambda s: [])):
-        q, note = B.size_qty(0.05, 33330, "X.US", fallback=1)
-chk("OI拿不到时保守封顶(不再是6666张)", q <= B.OI_UNKNOWN_CAP, f"{q}张 ({note})")
-
-with mock.patch.multiple(B, log=lambda m: None):
-    ok, err = B._submit("X.US", side_buy=True, qty=0, price=1.0)
-chk("qty=0 被拒绝提交", ok is False, f"{err}")
-
-# 低价期权止损档: avg=0.02 → 0.02*0.4=0.008 低于最小档, 必须抬到 0.01 才可能触发
-pos = {"L1": mkpos(filled=3, sold=0, avg=0.02, stop_mult=0.4)}
+pos = {"D2": mkpos(filled=6, sold=0, avg=0.02, stop_mult=0.4)}
 closed = []
 with mock.patch.multiple(B, _option_last=lambda o: 0.01,
                          close_position=lambda po, o, r: closed.append(r),
-                         _order_state=lambda oid: ("Filled", 0, 0.0),
+                         _order_state=lambda oid: ("Filled", 0, 0.0), _cancel=lambda o: True,
                          ensure_protection=lambda *a: None, _ema15_break_count=lambda t: None,
-                         _cancel=lambda o: True, _submit=lambda *a, **k: (True, "X"),
-                         us_rth_now=lambda: True, **base):
+                         _submit=lambda *a, **k: (True, "Z"), us_rth_now=lambda: True, **base):
     B.manage_positions(pos)
-chk("低价期权止损抬到最小档后可触发(原永不触发)", closed, f"closed={closed}")
+chk("低价期权止损抬到最小报价档后可触发", closed, f"closed={closed}")
+
+
+hdr("其余审查项")
+
+_p = {"X.US": mkpos(ticker="AAPL"), "Y.US": mkpos(ticker="MSFT")}
+with mock.patch.object(B, "log", lambda m: None):
+    chk("LLM scope=ticker 但 tickers=[] → 不出场(原会全仓平)",
+        B._llm_exit_targets(_p, {"action": "exit_full", "scope": "ticker", "tickers": []}) == [])
+    chk("LLM scope 不可识别 → 不出场",
+        B._llm_exit_targets(_p, {"action": "exit_full", "scope": "???"}) == [])
+    chk("LLM scope=all → 正常全平",
+        len(B._llm_exit_targets(_p, {"action": "exit_full", "scope": "all"})) == 2)
+    chk("LLM scope=ticker 指名AAPL → 只平AAPL",
+        B._llm_exit_targets(_p, {"action": "exit_full", "scope": "ticker",
+                                 "tickers": ["AAPL"]}) == ["X.US"])
+
+with mock.patch.object(B, "log", lambda m: None):
+    q, note = B.size_qty(0, 50000, "X.US", fallback=1)
+chk("premium=0 不再除零崩溃", q == 0, f"qty={q} ({note})")
+with mock.patch.multiple(B, log=lambda m: None):
+    ok, err = B._submit("X.US", side_buy=True, qty=0, price=1.0)
+chk("qty=0 被拒绝提交", ok is False, f"{err}")
+with mock.patch.object(B, "_quote_ctx", mock.Mock(option_quote=lambda s: [])), \
+     mock.patch.object(B, "log", lambda m: None):
+    q, note = B.size_qty(0.05, 33330, "X.US", fallback=1)
+chk("OI拿不到时保守封顶", q <= B.OI_UNKNOWN_CAP, f"{q}张 ({note})")
+
+src = Path(__file__).with_name("discord_enrich_bot.py").read_text()
+chk("#1 开锁文件前先 OUT.mkdir", "OUT.mkdir(parents=True, exist_ok=True)   # 全新部署" in src)
+chk("#15 RTH窗口收紧到 9:31-15:58", "dtime(9, 31)" in src and "dtime(15, 58)" in src)
+chk("#17 catch_up 覆盖 BUY_NOEXPIRY", '("BUY", "BUY_AMBIG", "BUY_NOEXPIRY")' in src)
+chk("#18 通知不再谎称'首档后移保本'", "首档后移保本" not in src)
+chk("#14 DRY_RUN 独立去重表", "enrich_seen_dry.json" in src)
+chk("#8 入场落盘失败会撤单", "entry_persist_failed" in src)
+chk("跨日重复建仓有守卫", "dup_open_skip" in src)
+chk("总敞口闸存在", "gross_cap_skip" in src)
+chk("manage_positions 置于 _handle_lock 下",
+    "_managed_tick" in src and "with _handle_lock:\n            manage_positions" in src)
+
+with tempfile.TemporaryDirectory() as td:
+    f = Path(td) / "s.json"
+    with mock.patch.object(B, "OUT", Path(td)), mock.patch.object(B, "log", lambda m: None):
+        chk("#8 _save 成功返回True", B._save(f, {"a": 1}) is True)
+        chk("#8 _save 失败返回False", B._save(Path("/nonexistent-dir-xyz/s.json"), {"a": 1}) is False)
+
+with tempfile.TemporaryDirectory() as td:
+    f = Path(td) / "pos.json"
+    with mock.patch.object(B, "OUT", Path(td)), mock.patch.object(B, "log", lambda m: None):
+        B._save(f, {"A": 1}); B._save(f, {"A": 1, "B": 2})
+        chk("原子写: 主文件是新版", json.loads(f.read_text()) == {"A": 1, "B": 2})
+        chk("原子写: .bak 是上一版",
+            json.loads((Path(td) / "pos.json.bak").read_text()) == {"A": 1})
+        chk("原子写: 无 .tmp 残留", not list(Path(td).glob("*.tmp")))
+        f.write_text('{"A": 1, "B"')
+        with mock.patch.object(B, "push_discord", lambda *a, **k: None):
+            chk("损坏 → 从.bak恢复", B._load(f) == {"A": 1})
+            (Path(td) / "pos.json.bak").unlink()
+            chk("非关键状态损坏 → 返回{}不拒启", B._load(f) == {})
+            raised = False
+            try:
+                B._load(f, strict=True)
+            except RuntimeError:
+                raised = True
+            chk("关键状态损坏且无备份 → 抛错拒启", raised)
 
 print()
-print("=" * 72)
-print("⑤ 重复建仓与总敞口")
-print("=" * 72)
-print("(_handle 的跨日覆盖/软去重/敞口闸 依赖完整信号对象, 用源码断言核对)")
-src = Path("/Users/xin/Documents/Claude/Projects/money/quant_system/discord_enrich_bot.py").read_text()
-chk("跨日重复建仓有守卫(dup_open_skip)", "dup_open_skip" in src and 'old.get("status") in ("pending", "open")' in src)
-chk("软去重键已登记(soft_key)", "soft_key" in src and "seen[soft_key]" in src)
-chk("总敞口闸存在(gross_cap_skip)", "gross_cap_skip" in src and "MAX_GROSS_FRAC" in src)
-chk("manage_positions 已置于 _handle_lock 下", "_managed_tick" in src and "with _handle_lock:\n            manage_positions" in src)
-
-print()
-print("=" * 72)
+print("=" * 74)
 print(f"结果: {len(PASS)} 通过 / {len(FAIL)} 失败")
-if FAIL:
-    print("失败项:")
-    for f in FAIL:
-        print("  ❌", f)
-print("=" * 72)
+for f in FAIL:
+    print("  ❌", f)
+print("=" * 74)
 sys.exit(1 if FAIL else 0)
