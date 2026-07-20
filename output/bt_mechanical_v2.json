@@ -1,56 +1,42 @@
 {
- "2档30/60 保本 15m9ema -30": {
-  "wavg": 11,
-  "wreal": 6,
-  "med": 8,
-  "win": 64,
-  "zero": 0,
-  "n": 114,
+ "只30卖⅓, runner⅔ arm60+9ema (我推荐)": {
+  "wavg": 27,
+  "wreal": 48,
+  "med": -9,
+  "win": 44,
+  "zero": 2,
+  "worst_m": -12,
+  "n": 126,
   "nf": 1
  },
- "2档30/60 保本 15m9ema -40": {
-  "wavg": 13,
-  "wreal": 5,
-  "med": 9,
-  "win": 67,
-  "zero": 0,
-  "n": 114,
-  "nf": 1
- },
- "2档30/60 保本 15m9ema -45(推荐)": {
-  "wavg": 15,
-  "wreal": 5,
+ "30/60各卖⅓, runner⅓ arm60+9ema (用户)": {
+  "wavg": 16,
+  "wreal": 30,
   "med": 10,
-  "win": 71,
-  "zero": 0,
-  "n": 114,
+  "win": 52,
+  "zero": 2,
+  "worst_m": -6,
+  "n": 126,
   "nf": 1
  },
- "2档30/60 保本 15m9ema -50": {
-  "wavg": 17,
-  "wreal": 9,
-  "med": 11,
-  "win": 73,
-  "zero": 0,
-  "n": 114,
+ "30/100各卖⅓, runner⅓ arm60+9ema": {
+  "wavg": 18,
+  "wreal": 29,
+  "med": -3,
+  "win": 49,
+  "zero": 2,
+  "worst_m": -4,
+  "n": 126,
   "nf": 1
  },
- "2档30/60 保本 15m9ema -60": {
-  "wavg": 17,
-  "wreal": 8,
-  "med": 11,
-  "win": 73,
-  "zero": 0,
-  "n": 114,
-  "nf": 1
- },
- "3档20/40/60 保本 15m9ema -45": {
-  "wavg": 17,
-  "wreal": 8,
-  "med": 4,
-  "win": 72,
-  "zero": 0,
-  "n": 114,
+ "30卖⅓+60卖¼, runner约42% arm60+9ema": {
+  "wavg": 19,
+  "wreal": 34,
+  "med": 0,
+  "win": 52,
+  "zero": 2,
+  "worst_m": -7,
+  "n": 126,
   "nf": 1
  }
 }

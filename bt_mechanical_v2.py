@@ -40,17 +40,17 @@ def ema(vals, period=9):
     return out
 
 
-# ema_tf: 'daily' | 'i15'(15分) | 'none'。全部 2档30/60(50%@30+25%@60)+首档保本+15分9ema×2 runner
-# 止损宽度网格确认 -45 是否最优 + 3档对照
+# 核心对比: 保护runner(保本/9ema, 高胜率但砍肥尾) vs 扛runner到期(吃GOOGL型大鱼但亏损单多)
+# 卖⅓@30% 后剩⅔ runner, 变量=保本开关×9ema开关×止损宽度
+# 用户定稿方向: 卖⅓@30 → runner自由跑(不保本不早9ema) → 涨到+60%/+100%后【加保护】(enrich从不扛到期)
+# 保护三种: 15m9ema×2 / 追踪止损(峰值回撤X%) / 利润地板(止损抬到+X%锁死)。全配 -60%初始止损。
 CONFIGS = {
-    "2档30/60 保本 15m9ema -30": dict(ladder=[(.3,.5),(.6,.25)], stop=0.7, be=True, ema_n=2, ema_tf="i15"),
-    "2档30/60 保本 15m9ema -40": dict(ladder=[(.3,.5),(.6,.25)], stop=0.6, be=True, ema_n=2, ema_tf="i15"),
-    "2档30/60 保本 15m9ema -45(推荐)": dict(ladder=[(.3,.5),(.6,.25)], stop=0.55, be=True, ema_n=2, ema_tf="i15"),
-    "2档30/60 保本 15m9ema -50": dict(ladder=[(.3,.5),(.6,.25)], stop=0.5, be=True, ema_n=2, ema_tf="i15"),
-    "2档30/60 保本 15m9ema -60": dict(ladder=[(.3,.5),(.6,.25)], stop=0.4, be=True, ema_n=2, ema_tf="i15"),
-    "3档20/40/60 保本 15m9ema -45": dict(ladder=[(.2,.2),(.4,.2),(.6,.2)], stop=0.55, be=True, ema_n=2, ema_tf="i15"),
+    "只30卖⅓, runner⅔ arm60+9ema (我推荐)":   dict(ladder=[(.3,.334)], stop=0.4, be=False, ema_n=2, ema_tf="i15", arm_after=0.6),
+    "30/60各卖⅓, runner⅓ arm60+9ema (用户)":  dict(ladder=[(.3,.334),(.6,.333)], stop=0.4, be=False, ema_n=2, ema_tf="i15", arm_after=0.6),
+    "30/100各卖⅓, runner⅓ arm60+9ema":       dict(ladder=[(.3,.334),(1.0,.333)], stop=0.4, be=False, ema_n=2, ema_tf="i15", arm_after=0.6),
+    "30卖⅓+60卖¼, runner约42% arm60+9ema":    dict(ladder=[(.3,.334),(.6,.25)], stop=0.4, be=False, ema_n=2, ema_tf="i15", arm_after=0.6),
 }
-HEADLINE = "2档30/60 保本 15m9ema -45(推荐)"   # 按月拆胜率的主配置
+HEADLINE = "30/60各卖⅓, runner⅓ arm60+9ema (用户)"
 
 
 def main():
@@ -68,7 +68,7 @@ def main():
             if side is None: continue
             s.kind, s.right = "BUY", side
         else: continue
-        if not (date(2026, 3, 1) <= s.expiry <= date(2026, 7, 17)): continue
+        if not (date(2026, 2, 1) <= s.expiry <= date(2026, 7, 17)): continue
         key = f"{s.ticker}{s.expiry}{s.strike}{s.right}:{ts.date()}"
         if key in seen: continue
         seen.add(key); buys.append(dict(ts=ts, sig=s))
@@ -148,31 +148,48 @@ def main():
         pos, first_trim, val = 1.0, False, 0.0
         ladder = list(cfg["ladder"]); done = [False] * len(ladder)
         ebreak, last_day, i15p = 0, None, 0
+        arm_after = cfg.get("arm_after", 0.0)   # runner涨够 base*(1+arm_after) 才启动保护(9ema/trail/floor)
+        armed = arm_after <= 0
+        trail = cfg.get("trail", 0.0)           # armed后: 从峰值回撤trail比例→出 (0=off)
+        floor_ = cfg.get("floor", None)         # armed后: 止损抬到 base*(1+floor) 锁利润 (None=off)
+        peak_arm = 0.0
         for x in path:
             if pos <= 1e-9: break
             d = x["ts"].astimezone(UTC).date()
-            # ① 止损: 未减仓=stop; 已减仓 be→保本(base) 否则→仍是stop(硬止损全程)
+            # ① 止损: 未减仓=stop; 已减仓 be→保本; armed+floor→利润地板 (取最高线)
             sp = (base if (first_trim and cfg["be"]) else base * cfg["stop"]) if cfg["stop"] > 0 else 0
+            if armed and floor_ is not None:
+                sp = max(sp, base * (1 + floor_))
             if sp > 0:
                 if x["o"] <= sp: val += pos * x["o"]; pos = 0; break     # 跳空按开盘(滑点)
                 if x["l"] <= sp: val += pos * sp; pos = 0; break
+            # ①b 追踪止损 (armed后, 从armed期峰值回撤trail→出)
+            if armed and trail > 0 and peak_arm > 0:
+                tl = peak_arm * (1 - trail)
+                if tl > sp:
+                    if x["o"] <= tl: val += pos * x["o"]; pos = 0; break
+                    if x["l"] <= tl: val += pos * tl; pos = 0; break
             # ② 阶梯止盈 (相对实际成交价base)
             for j, (thr, frac) in enumerate(ladder):
                 if done[j] or pos <= 1e-9: continue
                 if x["h"] >= base * (1 + thr):
                     f = min(frac, pos); val += f * base * (1 + thr); pos -= f; done[j] = True; first_trim = True
             if pos <= 1e-9: break
-            # ③ 9ema拖尾
+            # ③ 9ema拖尾 (arm_after: runner涨够阈值才启动, 防早盘回踩把肥尾洗掉)
+            if not armed and x["h"] >= base * (1 + arm_after):
+                armed = True
+            if armed:
+                peak_arm = max(peak_arm, x["h"])   # armed期峰值(追踪止损锚)
             if cfg["ema_n"] > 0:
-                if cfg["ema_tf"] == "daily" and d != last_day and last_day is not None and last_day in ema_daily:
-                    c, e = ema_daily[last_day]
-                    ebreak = ebreak + 1 if c < e else 0
-                    if ebreak >= cfg["ema_n"]: val += pos * x["o"]; pos = 0; break
-                elif cfg["ema_tf"] == "i15":
+                if cfg["ema_tf"] == "i15":              # 每根bar推进指针+更新连破态(不论armed)
                     while i15p < len(i15) and i15[i15p][0] <= x["ts"]:
                         _, c, e = i15[i15p]; i15p += 1
                         ebreak = ebreak + 1 if c < e else 0
-                    if ebreak >= cfg["ema_n"]: val += pos * x["o"]; pos = 0; break
+                    if armed and ebreak >= cfg["ema_n"]: val += pos * x["o"]; pos = 0; break
+                elif cfg["ema_tf"] == "daily" and d != last_day and last_day is not None and last_day in ema_daily:
+                    c, e = ema_daily[last_day]
+                    ebreak = ebreak + 1 if c < e else 0
+                    if armed and ebreak >= cfg["ema_n"]: val += pos * x["o"]; pos = 0; break
             last_day = d
         if pos > 1e-9: val += pos * path[-1]["c"]
         return ("traded", val / base - 1)   # 收益相对实际成交价
@@ -186,7 +203,7 @@ def main():
     nreal = sum(1 for p in prepped if p[2])
     print(f"可测 {len(prepped)} 笔 (真实K {nreal} / BS {len(prepped)-nreal}) | 修: 硬止损全程+15分9ema+入场现实化")
     print("=" * 100)
-    print(f"{'出场配置':46}{'加权':>7}{'真实K':>7}{'等额':>7}{'中位':>7}{'胜率':>6}{'归零':>6}{'未成交':>7}")
+    print(f"{'出场配置':40}{'加权':>7}{'真实K':>7}{'中位':>7}{'胜率':>6}{'最差月':>7}{'归零':>6}")
     print("-" * 100)
     def wt(l): return 0.3333 if l else 0.5
     results = {}; rows_by_cfg = {}
@@ -204,23 +221,28 @@ def main():
         med = st.median([r for r, _, _, _ in rows]) * 100
         win = sum(1 for r, _, _, _ in rows if r > 0) / n * 100
         zero = sum(1 for r, _, _, _ in rows if r <= -0.99) / n * 100
-        results[name] = dict(wavg=round(wavg), wreal=round(wreal), med=round(med), win=round(win), zero=round(zero), n=n, nf=nf)
-        print(f"{name:46}{wavg:>+6.0f}%{wreal:>+6.0f}%{sum(r for r,_,_,_ in rows)/n*100:>+6.0f}%{med:>+6.0f}%{win:>5.0f}%{zero:>5.0f}%{nf:>6}")
+        mmin = 999
+        for mth in {m for *_, m in rows}:
+            g = [(r, l) for r, l, _, m in rows if m == mth]
+            Wm = sum(wt(l) for _, l in g) or 1
+            mmin = min(mmin, sum(wt(l) * r for r, l in g) / Wm * 100)
+        results[name] = dict(wavg=round(wavg), wreal=round(wreal), med=round(med), win=round(win), zero=round(zero), worst_m=round(mmin), n=n, nf=nf)
+        print(f"{name:40}{wavg:>+6.0f}%{wreal:>+6.0f}%{med:>+6.0f}%{win:>5.0f}%{mmin:>+6.0f}%{zero:>5.0f}%")
     print("-" * 100)
-    # ── 按月胜率拆解 (用户问: 30%止盈+保本 五六七月胜率) ──
-    print(f"\n【按月胜率拆解】主配置 = {HEADLINE}")
-    print(f"{'月份':10}{'笔数':>5}{'胜率':>7}{'中位':>7}{'加权':>7}{'归零':>6}")
-    hr = rows_by_cfg[HEADLINE]
-    for mth in sorted({m for *_, m in hr}):
-        g = [(r, l) for r, l, _, m in hr if m == mth]
-        n = len(g); W = sum(wt(l) for _, l in g) or 1
-        print(f"{mth:10}{n:>5}{sum(1 for r,_ in g if r>0)/n*100:>6.0f}%"
-              f"{st.median([r for r,_ in g])*100:>+6.0f}%{sum(wt(l)*r for r,l in g)/W*100:>+6.0f}%"
-              f"{sum(1 for r,_ in g if r<=-0.99)/n*100:>5.0f}%")
-    n = len(hr); W = sum(wt(l) for _, l, _, _ in hr) or 1
-    print(f"{'合计':10}{n:>5}{sum(1 for r,_,_,_ in hr if r>0)/n*100:>6.0f}%"
-          f"{st.median([r for r,_,_,_ in hr])*100:>+6.0f}%{sum(wt(l)*r for r,l,_,_ in hr)/W*100:>+6.0f}%"
-          f"{sum(1 for r,_,_,_ in hr if r<=-0.99)/n*100:>5.0f}%")
+    # ── 四五六月逐月 胜率+加权收益 (用户问) ──
+    print(f"\n【四/五/六月 逐月: 胜率 | 加权收益】")
+    print(f"{'配置':40}" + "".join(f"{m:>18}" for m in ["4月", "5月", "6月"]))
+    for name in CONFIGS:
+        hr = rows_by_cfg[name]
+        cells = []
+        for mm in ("2026-04", "2026-05", "2026-06"):
+            g = [(r, l) for r, l, _, m in hr if m == mm]
+            if g:
+                n = len(g); W = sum(wt(l) for _, l in g) or 1
+                cells.append(f"{sum(1 for r,_ in g if r>0)/n*100:>3.0f}%|{sum(wt(l)*r for r,l in g)/W*100:>+6.0f}%")
+            else:
+                cells.append("—")
+        print(f"{name:40}" + "".join(f"{c:>18}" for c in cells))
     print("\n对照 镜像跟他出场(真实K七月): 纯镜像+23% / 镜像+止损兜底+33%")
     print("⚠️ 5-6月用盘中股价BS重建(样本量足但对幅度低估~20pp); 胜率对BS较稳健。7月含真实期权K。")
     json.dump(results, open(OUT / "bt_mechanical_v2.json", "w"), ensure_ascii=False, indent=1)

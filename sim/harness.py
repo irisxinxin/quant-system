@@ -114,7 +114,11 @@ class Sim:
             LIVE=True,
         )
         p.start(); self._patches.append(p)
+        # 复位【全部】模块级可变全局。漏一个就会跨场景污染 —— 实测漏 _rl_until 时,
+        # 任一场景注入429后, 按字母序排在它后面的所有场景都会因退避而假失败(曾污染12个)。
         B._optfail.clear(); B._closing.clear(); B._ema_cache.clear()
+        B._recent_exits.clear()      # 出场文本10分钟去重表(按假时钟计时, 跨场景会静默吞消息)
+        B._rl_until = 0.0            # 429退避截止时刻
         B._MIT_OK = None
         B._last_equity[0] = None
         return self
