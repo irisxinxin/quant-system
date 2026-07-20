@@ -209,6 +209,70 @@ chk("入场单在途时净仓归零也不标closed(防孤儿仓)", pos["C2"]["st
     f"status={pos['C2']['status']} entry={pos['C2'].get('entry_order_id')}")
 
 
+hdr("I3 硬闸  卖单总量绝不超过剩仓 —— 用【真实】ensure_protection, 不 stub")
+# 上一版测试把 ensure_protection stub 成 no-op, 导致 54项全绿却漏掉了真正的裸空路径。
+
+B._MIT_OK = False           # 模拟盘: 不支持MIT, 走两档GTC止盈分支(即出问题的那条)
+for filled, sold in ((6, 4), (9, 6), (12, 8), (30, 20)):
+    p = mkpos(filled=filled, sold=sold, avg=1.0, tp_order_id=None, tp2_order_id=None,
+              tp1_done=False, tp2_done=False)
+    placed = []
+    def _sub(osi, side_buy, qty, price=None, **k):
+        placed.append(qty); return True, f"O{len(placed)}"
+    with mock.patch.multiple(B, _submit=_sub, **base):
+        B.ensure_protection({"N": p}, "N", p)
+    remain = filled - sold
+    chk(f"部分平仓后挂单总量≤剩仓 (filled={filled} sold={sold} remain={remain})",
+        sum(placed) <= remain, f"挂出{placed}=共{sum(placed)}张 vs 剩{remain}张")
+
+# 正常新建仓(sold=0)的档位必须与回测口径一致, 不被这次修复改变
+p = mkpos(filled=9, sold=0, avg=1.0)
+placed = []
+with mock.patch.multiple(B, _submit=lambda osi, side_buy, qty, price=None, **k:
+                         (placed.append(qty), (True, "O"))[1], **base):
+    B.ensure_protection({"N2": p}, "N2", p)
+chk("新建仓 sold=0 时档位不变(⅓+⅓, 与回测一致)", placed == [3, 3], f"挂出{placed}")
+
+# _sell_budget: 已挂未成交卖单要占额度
+p = mkpos(filled=9, sold=0, tp_order_id="T", tp_qty=3, tp2_order_id="T2", tp2_qty=3)
+chk("_sell_budget 扣除已挂未成交卖单", B._sell_budget(p) == 3, f"budget={B._sell_budget(p)}")
+p2 = mkpos(filled=9, sold=6, tp_order_id=None, tp2_order_id=None)
+chk("_sell_budget 扣除已卖出", B._sell_budget(p2) == 3, f"budget={B._sell_budget(p2)}")
+
+# tp1_done 只在全部成交时才落(部分成交置位会永久关闭该止盈通道)
+pos = {"E1": mkpos(status="closing", filled=9, sold=0, exit_order_id="X",
+                   exit_qty=3, exit_intent="tp1", exit_reason="轮询止盈", exit_ts=time.time())}
+with mock.patch.multiple(B, _order_state=lambda oid: ("PartialWithdrawal", 1, 1.3),
+                         _cancel=lambda o: True, _submit=lambda *a, **k: (True, "Z"),
+                         **mgr, **base):
+    B.manage_positions(pos)
+chk("止盈单只成交1/3张 → 不置tp1_done(通道不被永久关闭)",
+    not pos["E1"].get("tp1_done") and pos["E1"]["sold"] == 1,
+    f"tp1_done={pos['E1'].get('tp1_done')} sold={pos['E1']['sold']}")
+
+# closing 逃生舱: 卖单久挂不成 → 主动撤单对账退回 open, 不再永久卡死
+pos = {"E2": mkpos(status="closing", filled=6, sold=0, exit_order_id="X2", exit_qty=6,
+                   exit_reason="止损-60%", exit_ts=time.time() - 99999)}
+with mock.patch.multiple(B, _order_state=lambda oid: ("Canceled", 0, 0.0),
+                         _cancel=lambda o: True, _submit=lambda *a, **k: (True, "Z"),
+                         **mgr, **base):
+    B.manage_positions(pos)
+chk("卖单久挂 → 撤单对账后退回open(不再永久卡closing)", pos["E2"]["status"] == "open",
+    f"status={pos['E2']['status']}")
+
+# TTL 竞态: 撤单请求成功但订单其实已全部成交 → 绝不能标 closed
+pos = {"E3": mkpos(status="pending", entry_order_id="E9", filled=0, sold=0, avg=0.0,
+                   submitted_ts=time.time() - 99999)}
+with mock.patch.multiple(B, _order_state=lambda oid: ("Filled", 6, 0.83),
+                         _cancel=lambda o: True, ensure_protection=lambda *a: None,
+                         _option_last=lambda o: None, _ema15_break_count=lambda t: None,
+                         _submit=lambda *a, **k: (True, "Z"), us_rth_now=lambda: True, **base):
+    B.manage_positions(pos)
+chk("TTL撤单竞态期已全成交 → 转open而非closed(防仓位失联)",
+    pos["E3"]["status"] == "open" and pos["E3"]["filled"] == 6,
+    f"status={pos['E3']['status']} filled={pos['E3']['filled']}")
+
+
 hdr("I5  价格不可用时不得判止损")
 
 class Q:
@@ -226,6 +290,14 @@ with mock.patch.multiple(B, log=lambda m: None):
         chk("last_done=0 → 价格不可用(原会立刻假止损全平)", B._option_last("X.US") is None)
     with mock.patch.object(B, "_quote_ctx", _q(1.5, age=7200)):
         chk("报价陈旧2小时 → 不可用", B._option_last("X.US") is None)
+    with mock.patch.object(B, "_quote_ctx", _q(1.5, age=1200)):
+        chk("报价20分钟(低流动性常态) → 仍可用, 止损不失效", B._option_last("X.US") == 1.5)
+    class NaiveQ(Q):
+        def __init__(s2):
+            super().__init__(1.5); s2.timestamp = datetime.utcnow()   # naive UTC
+    with mock.patch.object(B, "_quote_ctx", mock.Mock(option_quote=lambda syms: [NaiveQ()])):
+        chk("naive时间戳按UTC解释(不被本机SGT当成8小时前致止损全灭)",
+            B._option_last("X.US") == 1.5)
     with mock.patch.object(B, "_quote_ctx", _q(1.5, st="Halted")):
         chk("停牌 → 不可用", B._option_last("X.US") is None)
     with mock.patch.object(B, "_quote_ctx", _q(1.5)):

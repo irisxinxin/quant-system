@@ -68,7 +68,9 @@ OI_UNKNOWN_CAP = int(os.environ.get("OI_UNKNOWN_CAP", "20"))     # OI拿不到=�
 MAX_GROSS_FRAC = float(os.environ.get("MAX_GROSS_FRAC", "1.0"))
 MIN_TICK = 0.01     # 期权最小报价档: 止损价低于此值则永不触发(低价期权-60%止损失效)
 OPT_FAIL_ALERT = int(os.environ.get("OPT_FAIL_ALERT", "5"))      # 期权报价连续失败N轮 → 告警(模拟盘止损唯一通道)
-QUOTE_MAX_AGE_SEC = int(os.environ.get("QUOTE_MAX_AGE_SEC", "900"))  # 报价超过此秒数视为陈旧, 不据以判止损
+# 报价陈旧阈值。900秒对低流动性期权过严: $0.05 的OTM周权盘中15分钟无成交是常态, 会导致
+# "唯一止损通道"整日不可用。放宽到1小时 —— -60%是很宽的止损, 1小时前的价格跌破它已是强信号。
+QUOTE_MAX_AGE_SEC = int(os.environ.get("QUOTE_MAX_AGE_SEC", "3600"))
 EXIT_STUCK_SEC = int(os.environ.get("EXIT_STUCK_SEC", "300"))    # 卖单在途超过此秒数仍未终态 → 告警
 
 # ── 出场模式 (2026-07-19 最终定稿, 用户拍板; 复盘+网格+对抗审查三轮定案) ──
@@ -148,6 +150,9 @@ def _option_last(osi: str):
         ts = getattr(q, "timestamp", None)
         if ts is not None:
             try:
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=_tzone.utc)   # naive 一律按UTC解释, 不能让
+                    # astimezone 用本机时区(SGT+8)去猜 → 会把所有报价算成8小时前=止损全灭
                 age = (datetime.now(_tzone.utc) - ts.astimezone(_tzone.utc)).total_seconds()
                 if age > QUOTE_MAX_AGE_SEC:
                     log(f"   ⏱️ {osi} 报价陈旧({age/60:.0f}分钟前), 本轮不据此判止损")
@@ -185,6 +190,25 @@ def cancel_and_reconcile(oid: str):
     _cancel(oid)                      # 撤单请求本身失败也继续确认(可能已成交/已在撤销中)
     ok, st, exq = _await_terminal(oid)
     return ok, exq, st
+
+
+def _outstanding_sells(p: dict) -> int:
+    """券商侧尚未成交的卖单总张数(已成交部分已进 sold, 这里只算未成交余量)。"""
+    n = 0
+    for id_key, qty_key in (("tp_order_id", "tp_qty"), ("tp2_order_id", "tp2_qty"),
+                            ("stop_order_id", "stop_qty"), ("exit_order_id", "exit_qty")):
+        if p.get(id_key):
+            n += max(0, int(p.get(qty_key, 0)) - int(p.get(id_key + "_counted", 0)))
+    return n
+
+
+def _sell_budget(p: dict) -> int:
+    """I3 硬闸: 还能再挂多少张卖单而不超卖 = 剩仓 − 已挂未成交卖单。
+
+    任何挂卖单的路径都必须先过这道闸。没有它就只能靠"每处都算对张数"这种脆弱约定 ——
+    实际上 ensure_protection 曾按 filled 而非 remain 定张, 部分平仓后 sold>0 时挂出
+    多于持仓的卖单 = 裸空期权(无限风险)。"""
+    return (p.get("filled", 0) - p.get("sold", 0)) - _outstanding_sells(p)
 
 
 def _credit_leg(p: dict, id_key: str, exq: int) -> int:
@@ -494,15 +518,16 @@ def ensure_protection(positions: dict, osi: str, p: dict):
     if remain <= 0 or p.get("avg", 0) <= 0:
         return
     _sm = p.get("stop_mult", STOP_MULT)
-    if _sm > 0 and not p.get("stop_order_id") and _MIT_OK is not False:
+    if _sm > 0 and not p.get("stop_order_id") and _MIT_OK is not False and _sell_budget(p) >= 1:
+        _sq = min(remain, _sell_budget(p))
         trig = round(p["avg"] * _sm, 2)
-        ok, r = _submit(osi, side_buy=False, qty=remain, price=None, tif_gtc=True,
+        ok, r = _submit(osi, side_buy=False, qty=_sq, price=None, tif_gtc=True,
                         remark="stop", trigger=trig)
         if ok:
             _MIT_OK = True
-            p["stop_order_id"], p["stop_qty"], p["stop_order_id_counted"] = r, remain, 0
-            log(f"🛡️ {osi} 券商侧止损已挂: {remain}张 触发${trig} (-{(1-_sm)*100:.0f}%)")
-            journal(ev="stop_place", osi=osi, trigger=trig, qty=remain, order_id=r)
+            p["stop_order_id"], p["stop_qty"], p["stop_order_id_counted"] = r, _sq, 0
+            log(f"🛡️ {osi} 券商侧止损已挂: {_sq}张 触发${trig} (-{(1-_sm)*100:.0f}%)")
+            journal(ev="stop_place", osi=osi, trigger=trig, qty=_sq, order_id=r)
         elif "604050" in str(r) or "not supported" in str(r).lower():
             _MIT_OK = False
             log("ℹ️ 模拟盘不支持触价单 → 止损轮询兜底, 止盈挂券商侧限价 (真实账户会自动切回止损常驻)")
@@ -511,8 +536,12 @@ def ensure_protection(positions: dict, osi: str, p: dict):
     # 回退模式: 无券商侧止损 → 止盈限价挂券商侧(抓尖峰)
     if EXIT_MODE == "mechanical" and not p.get("stop_order_id"):
         # 两档GTC同时挂: ⅓@+30%, ⅓@+60% (二档成交=runner武装9ema)
-        q1, q2 = _mech_split(p.get("filled", 0))
-        if q1 >= 1 and not p.get("tp_order_id") and not p.get("tp1_done"):
+        # 【按 remain 而非 filled 定张】: 部分平仓后 sold>0, 用 filled 会挂出多于持仓的卖单。
+        # 正常路径(新建仓 sold=0)下 remain==filled, 档位与回测口径完全一致, 不改变策略。
+        q1, q2 = _mech_split(remain)
+        _bud = _sell_budget(p)
+        if q1 >= 1 and not p.get("tp_order_id") and not p.get("tp1_done") and _bud >= 1:
+            q1 = min(q1, _bud)
             px1 = round(p["avg"] * MECH_TP_MULT, 2)
             ok, r = _submit(osi, side_buy=False, qty=q1, price=px1, tif_gtc=True, remark="tp1")
             if ok:
@@ -521,7 +550,9 @@ def ensure_protection(positions: dict, osi: str, p: dict):
                 journal(ev="tp_place", osi=osi, px=px1, qty=q1, order_id=r)
             else:
                 log(f"⚠️ {osi} 一档止盈挂单失败: {r}")
-        if q2 >= 1 and not p.get("tp2_order_id") and not p.get("tp2_done"):
+            _bud = _sell_budget(p)
+        if q2 >= 1 and not p.get("tp2_order_id") and not p.get("tp2_done") and _bud >= 1:
+            q2 = min(q2, _bud)
             px2 = round(p["avg"] * MECH_TP2_MULT, 2)
             ok, r = _submit(osi, side_buy=False, qty=q2, price=px2, tif_gtc=True, remark="tp2")
             if ok:
@@ -532,6 +563,9 @@ def ensure_protection(positions: dict, osi: str, p: dict):
                 log(f"⚠️ {osi} 二档止盈挂单失败: {r}")
     elif not p.get("stop_order_id") and not p.get("tp_order_id") and not p.get("reduced"):
         tp_qty, tp_px = _tp_params(remain, p["avg"])
+        tp_qty = min(tp_qty, _sell_budget(p))
+        if tp_qty < 1:
+            _save(POS_JSON, positions); return
         ok, r = _submit(osi, side_buy=False, qty=tp_qty, price=tp_px, tif_gtc=True, remark="tp")
         if ok:
             p["tp_order_id"], p["tp_qty"], p["tp_order_id_counted"] = r, tp_qty, 0
@@ -716,8 +750,10 @@ def manage_positions(positions: dict):
                 p["exit_order_id"] = None
                 journal(ev="exit_fill", osi=osi, qty=exq, want=want, state=st, px=exp,
                         reason=p.get("exit_reason"))
-                if exq > 0 and p.get("exit_intent") in ("tp1", "reduce"):
-                    p["reduced"] = True          # 减仓类意图: 成交确认后才落标志
+                # 只有【全部成交】才落标志: 部分成交也置位会让 ensure_protection 的
+                # not tp1_done / ③b 的 not reduced 守卫永久关闭该止盈通道, 剩余张数再无止盈出口
+                if exq >= want > 0 and p.get("exit_intent") in ("tp1", "reduce"):
+                    p["reduced"] = True
                     if p.get("exit_intent") == "tp1":
                         p["tp1_done"] = True
                 if exq >= want and want > 0:
@@ -734,10 +770,30 @@ def manage_positions(positions: dict):
                 # 还有剩仓(或入场单仍在途) → 回到 open 由后续分支重新配保护腿, 绝不提前 closed
                 p["status"] = "open"
                 _save(POS_JSON, positions)
+            elif time.time() - p.get("exit_ts", 0) > EXIT_STUCK_SEC:
+                # 逃生舱: 没有它, 一张永远查不到终态的卖单(如券商归档旧单致 order_detail 持续报错)
+                # 会让仓位永久卡在 closing —— ⓪ 的 continue 会跳过止损/9ema, 而到期强平的门是
+                # status in (pending,open) 也进不来 → runner 无止损裸奔至归零。
+                done_x, exq_x, st_x = cancel_and_reconcile(p["exit_order_id"])
+                if done_x:
+                    if exq_x > 0:
+                        p["sold"] = p.get("sold", 0) + exq_x
+                    p["exit_order_id"] = None
+                    p["status"] = "open" if (p.get("filled", 0) - p.get("sold", 0)) > 0 else "closed"
+                    _alert(f"⚠️ enrich {osi} 卖单久挂未成({p.get('exit_reason')}) → 已撤并对账"
+                           f"(成交{exq_x}张), 仓位交回正常管理")
+                    journal(ev="exit_stuck_recovered", osi=osi, exq=exq_x, state=st_x)
+                    _save(POS_JSON, positions)
+                    if p["status"] == "closed":
+                        continue
+                else:
+                    p["exit_stuck_alerts"] = p.get("exit_stuck_alerts", 0) + 1
+                    if p["exit_stuck_alerts"] % 10 == 1:      # 节流, 否则每60秒刷一条
+                        _alert(f"🚨 enrich {osi} 卖单卡死无法撤销({st_x}, {p.get('exit_reason')})"
+                               f" — 仓位当前无任何自动保护, 请人工处理券商挂单")
+                    _save(POS_JSON, positions)
+                    continue
             else:
-                if time.time() - p.get("exit_ts", 0) > EXIT_STUCK_SEC:
-                    _alert(f"⚠️ enrich {osi} 卖单在途已超{EXIT_STUCK_SEC//60}分钟仍未终态"
-                           f"(状态={st}, {p.get('exit_reason')}) — 请人工查券商挂单")
                 continue      # 卖单在途期间不做任何其它动作, 防重复卖
         # ① 入场单状态 (只要入场单还在途就持续对账, 不限于pending)
         # QA修①: 原 `if st is None: continue` — 查单失败(429退避/断网)会把本轮后面整段
@@ -913,11 +969,17 @@ def manage_positions(positions: dict):
                 and time.time() - p["submitted_ts"] > ENTRY_TTL_SEC:
             _f = p.get("filled", 0)
             _d = f"部分成交{_f}张" if _f else "未成交"
-            if not _cancel(p["entry_order_id"]):
-                # 撤单失败仍清ID的话, ①就不再轮询该单, filled 永远冻结在此刻的值, 而券商侧
-                # 可能继续成交 → 多出来的张数裸多无人管、无止损(复审实测: 账面1张 vs 实际3张)
-                log(f"   ⚠️ {osi} 入场单TTL撤单失败, 保留ID下轮重试")
-                journal(ev="entry_ttl_cancel_failed", osi=osi, order_id=p["entry_order_id"])
+            # 必须走 cancel_and_reconcile: 撤单只是"请求", 第20分钟这一刻订单可能正好成交,
+            # 撤单请求照样返回成功。原写法据此清ID并在 filled==0 时标closed →
+            # 券商侧真实多头永久失联(无止损/无强平/日志无痕), 是本次重构要根除的那类bug的残留。
+            done_t, exq_t, st_t = cancel_and_reconcile(p["entry_order_id"])
+            if exq_t > p.get("filled", 0):
+                p["filled"] = exq_t
+                _f = exq_t
+                _d = f"部分成交{_f}张"
+            if not done_t:
+                log(f"   ⚠️ {osi} 入场单TTL撤单未确认终态({st_t}), 保留ID下轮重试")
+                journal(ev="entry_ttl_cancel_unconfirmed", osi=osi, state=st_t)
                 _save(POS_JSON, positions)
                 continue
             log(f"⏳ {osi} 入场单挂{ENTRY_TTL_SEC//60}分钟{_d} → 已撤剩余(不接刀)")
@@ -1351,7 +1413,9 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
     #   · 消息级(msg_id): 同一条Discord消息不重复处理 —— 总是登记
     #   · 交易级(osi:date / soft_key): 只有券商真的接受了入场单才登记
     seen[str(msg_id)] = key
-    if osi in positions:
+    # 判据必须是"本次是否真的新建了仓", 不能用 `osi in positions` ——
+    # positions 从不删除已平仓记录, 同合约当日二次信号下单失败时会被误判成建仓成功
+    if positions.get(osi, {}).get("entry_order_id") and positions[osi].get("opened") == str(msg_date):
         seen[key] = str(msg_id)
         seen[soft_key] = osi
     else:
