@@ -105,3 +105,45 @@
 {"ev": "andy_exit", "ticker": "SPY", "level": "be", "sig": "TRIMMED LITTLE MORE, 740 NEXT PT, SET BREAKEVEN STOP ON REST @everyone 🚀", "ts": "2026-07-18T03:29:57+08:00"}
 {"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "TRIMMED MORE OF ROUND #2 @everyone", "ts": "2026-07-18T03:29:57+08:00"}
 {"ev": "andy_entry", "osi": "ORCL260724C128000.US", "ticker": "ORCL", "prem": 3.8, "stop": 3.2, "expiry": "2026-07-24", "lotto": false, "subset": true, "quote": {"last": 3.9, "oi": 850, "iv": 0.615}, "sig": ":RedAlert: ORCL - $128 CALLS EXPIRATION NEXT WEEK $3.80, SMALL POSITION ONLY @everyone (SWING PLAY, STOP LOSS AT $3.20)", "ts": "2026-07-18T03:59:37+08:00"}
+{"ev": "andy_entry", "osi": "IREN260724C038500.US", "ticker": "IREN", "prem": 2.5, "stop": 2.0, "expiry": "2026-07-24", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: IREN - $38.5 CALLS EXPIRATION THIS WEEK $2.50 STOP LOSS AT $2.00 @everyone", "ts": "2026-07-20T21:37:52+08:00"}
+{"ev": "andy_exit", "ticker": "IREN", "level": "partial", "sig": "IREN TRIMMED PARTIAL AT $2.85 @everyone", "ts": "2026-07-20T21:42:50+08:00"}
+{"ev": "andy_exit", "ticker": "IREN", "level": "partial", "sig": "IREN TRIMMED LITTLE MORE AGAIN AT HIGHS @everyone", "ts": "2026-07-20T21:44:14+08:00"}
+{"ev": "entry_submit", "osi": "PLTR260724C140000.US", "ticker": "PLTR", "right": "C", "strike": 140.0, "expiry": "2026-07-24", "limit": 1.36, "qty": 370, "order_id": "1263854871208017920", "sig": "$PLTR weekly $140 calls for $1.36 2% position @everyone $alert", "ts": "2026-07-20T21:48:02+08:00"}
+{"ev": "entry_fill", "osi": "PLTR260724C140000.US", "qty": 370, "avg": 1.36, "ts": "2026-07-20T21:48:59+08:00"}
+{"ev": "tp_place", "osi": "PLTR260724C140000.US", "px": 1.77, "qty": 123, "order_id": "1263855109171843072", "ts": "2026-07-20T21:48:59+08:00"}
+{"ev": "tp2_place", "osi": "PLTR260724C140000.US", "px": 2.18, "qty": 123, "order_id": "1263855109729681408", "ts": "2026-07-20T21:48:59+08:00"}
+{"ev": "andy_entry", "osi": "SKHY260724P145000.US", "ticker": "SKHY", "prem": 5.15, "stop": 4.5, "expiry": "2026-07-24", "lotto": false, "subset": true, "quote": {"last": 5.2, "oi": 729, "iv": 1.578}, "sig": ":RedAlert: SKHY - $145 PUTS EXPIRATION THIS WEEK $5.15 RISKY DAY TRADE, STOP LOSS AT $4.50 @everyone", "ts": "2026-07-20T21:55:57+08:00"}
+{"ev": "andy_entry", "osi": "SPY260720P744000.US", "ticker": "SPY", "prem": 0.96, "stop": null, "expiry": "2026-07-20", "lotto": true, "subset": false, "quote": {"last": 0.96, "oi": 9399, "iv": 0.144}, "sig": ":RedAlert: SPY - $744 PUTS 0DTE .96 @everyone SMALL LOTTOS", "ts": "2026-07-20T22:02:14+08:00"}
+{"ev": "andy_entry", "osi": "ASTS260724C057000.US", "ticker": "ASTS", "prem": 3.5, "stop": null, "expiry": "2026-07-24", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: ASTS - $57 ITM CALLS EXPIRATION THIS WEEK $3.50 ADDED SMALL WITH THIS WHALE @everyone", "ts": "2026-07-20T22:08:23+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "SKHY TRIMMED SOME AT $5.50 @everyone", "ts": "2026-07-20T22:09:17+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-07-20T22:10:28+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "SKHY TRIMMED MORE @everyone", "ts": "2026-07-20T22:11:07+08:00"}
+{"ev": "broker_reconcile_mismatch", "mismatch": [], "orphan_orders": ["1263855109729681408 PLTR260724C140000.US (New)", "1263855109171843072 PLTR260724C140000.US (New)"], "orphan_positions": [], "ts": "2026-07-20T22:11:22+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "SPY PUTS TRIMMING MORE PROFITS HERE @everyone", "ts": "2026-07-20T22:11:41+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "SKHY LOWS, TRIMMING MORE @everyone", "ts": "2026-07-20T22:13:47+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "be", "sig": "SKHY SET BREAKEVEN STOP ON REST @everyone", "ts": "2026-07-20T22:15:22+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "SPY LOWS TRIMMED MORE @everyone", "ts": "2026-07-20T22:17:11+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "SKHY LOWS, TRIMMING MORE @everyone", "ts": "2026-07-20T22:21:08+08:00"}
+{"ev": "andy_entry", "osi": "META260720C647500.US", "ticker": "META", "prem": 2.0, "stop": 1.6, "expiry": "2026-07-20", "lotto": true, "subset": false, "quote": {"last": 2.0, "oi": 738, "iv": 0.396}, "sig": ":RedAlert: META - $647.5 CALLS 0DTE $2.00 LOTTO SIZE, STOP LOSS AT $1.60 @everyone", "ts": "2026-07-20T22:35:40+08:00"}
+{"ev": "andy_exit", "ticker": "META", "level": "partial", "sig": "META CALLS FEEL FREE TO START TRIMMING @everyone", "ts": "2026-07-20T22:38:34+08:00"}
+{"ev": "andy_exit", "ticker": "META", "level": "partial", "sig": "META CALLS TRIMMING MORE AGAIN @everyone", "ts": "2026-07-20T22:40:24+08:00"}
+{"ev": "andy_entry", "osi": "V260724C360000.US", "ticker": "V", "prem": 4.6, "stop": 4.0, "expiry": "2026-07-24", "lotto": false, "subset": true, "quote": {"last": 4.6, "oi": 1210, "iv": 0.254}, "sig": ":RedAlert: V - $360 ITM CALLS EXPIRATION THIS WEEK $4.60 STOP LOSS AT $4.00 @everyone", "ts": "2026-07-20T22:47:13+08:00"}
+{"ev": "andy_exit", "ticker": "V", "level": "partial", "sig": "META MANAGE RISK IF YOU'RE STILL IN & KEEP TRIMMING @everyone", "ts": "2026-07-20T22:55:00+08:00"}
+{"ev": "andy_exit", "ticker": "V", "level": "partial", "sig": "META TRIMMED MOST @everyone", "ts": "2026-07-20T23:05:24+08:00"}
+{"ev": "andy_exit", "ticker": "V", "level": "partial", "sig": "META 2ND PT HIT @everyone", "ts": "2026-07-20T23:06:44+08:00"}
+{"ev": "andy_entry", "osi": "BABA260724C121000.US", "ticker": "BABA", "prem": 2.5, "stop": 2.05, "expiry": "2026-07-24", "lotto": false, "subset": true, "quote": {"last": 2.57, "oi": 3298, "iv": 0.553}, "sig": ":RedAlert: BABA - $121 CALLS EXPIRATION THIS WEEK $2.50 STOP LOSS AT $2.05 @everyone", "ts": "2026-07-20T23:30:29+08:00"}
+{"ev": "andy_exit", "ticker": "BABA", "level": "full", "sig": "META CALLS ALL OUT, CAN STILL HOLD RUNNERS WITH A TRAILING STOP IF YOU WANT TO @everyone 🚀 100% BANGER", "ts": "2026-07-20T23:42:47+08:00"}
+{"ev": "andy_exit", "ticker": "BABA", "level": "partial", "sig": "BABA PAYING, CAN TRIM SOMS IF YOU WANT TO @everyone :verifyblue:", "ts": "2026-07-20T23:45:29+08:00"}
+{"ev": "andy_exit", "ticker": "BABA", "level": "full", "sig": "BABA ITM, I'M OUT 30% HERE @everyone", "ts": "2026-07-20T23:50:49+08:00"}
+{"ev": "andy_exit", "ticker": "BABA", "level": "be", "sig": "ALL PLAYS GREEN & PAYING NICELY, DON'T FORGET TO SET BREAKEVEN STOPS ON ALL YOUR PLAYS @everyone :verifyblue: 🚀 ASTS ONLY RED PLAY", "ts": "2026-07-20T23:52:30+08:00"}
+{"ev": "andy_exit", "ticker": "IREN", "level": "partial", "sig": "THIS IS WHAT PATIENCE DOES, ASTS TRIMMED 30% NOW @everyone 🚀", "ts": "2026-07-21T00:09:13+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260724C100000.US", "ticker": "HOOD", "prem": 3.9, "stop": 3.5, "expiry": "2026-07-24", "lotto": false, "subset": true, "quote": {"last": 3.92, "oi": 1412, "iv": 0.722}, "sig": ":RedAlert: HOOD - $100 ITM CALLS EXPIRATION THIS WEEK $3.90 STOP LOSS AT $3.50, RISKY @everyone", "ts": "2026-07-21T00:10:30+08:00"}
+{"ev": "tp_fill", "osi": "PLTR260724C140000.US", "px": 1.77, "qty": 123, "ts": "2026-07-21T00:20:31+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "PLTR", "level": "partial", "sig": "$PLTR - Cheers. Nice cushion. Scaling out half. @everyone $alert", "ts": "2026-07-21T00:39:40+08:00"}
+{"ev": "andy_entry", "osi": "SPY260720P744000.US", "ticker": "SPY", "prem": 0.85, "stop": null, "expiry": "2026-07-20", "lotto": true, "subset": false, "quote": {"last": 0.86, "oi": 9399, "iv": 0.098}, "sig": ":RedAlert: SPY - $744 PUTS 0DTE .85, CHEAP LOTTO PLAY, ROLLING PROFITS, RISKY @everyone", "ts": "2026-07-21T01:11:22+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-07-21T01:14:28+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY PUTS TRIMMING MORE PROFITS HERE @everyone", "ts": "2026-07-21T01:15:26+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "TRIMMED LITTLE MORE @everyone", "ts": "2026-07-21T01:17:00+08:00"}
+{"ev": "andy_entry", "osi": "SPX260720P7450000.US", "ticker": "SPX", "prem": 4.0, "stop": 3.0, "expiry": "2026-07-20", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7450 PUTS 0DTE $4.00, STOP LOSS AT $3.00, LOTTO SIZE @everyone", "ts": "2026-07-21T01:28:11+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "SPX STOPPED OUT, FIRST SL OF THE DAY. WILL SLOW DOWN FROM HERE FOR TODAY @everyone", "ts": "2026-07-21T01:35:05+08:00"}
+{"ev": "andy_entry", "osi": "SPY260720P747000.US", "ticker": "SPY", "prem": 2.6, "stop": 2.2, "expiry": "2026-07-20", "lotto": false, "subset": false, "quote": {"last": 2.63, "oi": 5124, "iv": 0.089}, "sig": ":RedAlert: SPY - $747 PUTS 0DTE $2.60 STOP LOSS AT $2.20 @everyone", "ts": "2026-07-21T01:59:21+08:00"}

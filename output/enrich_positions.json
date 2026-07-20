@@ -41,5 +41,29 @@
   "tp_qty": 54,
   "status": "closed",
   "opened": "2026-07-16"
+ },
+ "PLTR260724C140000.US": {
+  "ticker": "PLTR",
+  "entry_order_id": null,
+  "qty": 370,
+  "limit": 1.36,
+  "expiry": "2026-07-24",
+  "filled": 370,
+  "sold": 123,
+  "avg": 1.36,
+  "tp_order_id": null,
+  "tp_qty": 123,
+  "tp2_order_id": "1263855109729681408",
+  "tp2_qty": 123,
+  "tp1_done": true,
+  "tp2_done": false,
+  "armed": false,
+  "submitted_ts": 1784555282.698914,
+  "stop_mult": 0.4,
+  "status": "open",
+  "opened": "2026-07-20",
+  "tp_order_id_counted": 123,
+  "tp2_order_id_counted": 0,
+  "reduced": true
  }
 }
