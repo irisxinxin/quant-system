@@ -36,11 +36,13 @@ import discord
 from discord.ext import tasks
 from enrich_parser import parse_signal, to_longport_symbol
 from notify import push_discord
-from llm_classifier import classify as llm_classify
-
-LLM_ON = os.environ.get("LLM_CLASSIFY", "on").lower() != "off"   # LLM语义层(claude CLI); off退纯规则
 import threading
-_handle_lock = threading.Lock()   # LLM调用期间串行处理消息, 防持仓并发写
+# 2026-07-20 用户令: 实盘bot移除全部LLM。理由 ——
+#   ① 进场95%+可纯规则解析, 出场按机械规则(+30%卖⅓/+60%卖⅓/15m9ema/-60%止损)不需要语义层
+#   ② claude CLI 冷启动数十秒且会握着 _handle_lock, 期间止损轮询/到期强平/EXIT全部排队(审查项#13)
+#   ③ 少一个不可靠的外部依赖 = 少一类静默失败
+# llm_classifier.py 保留在仓库里, 仍被 build_interp_audit.py / backtest_agent_ab.py 等研究脚本使用。
+_handle_lock = threading.Lock()   # 消息处理与仓位轮询串行, 防持仓并发写
 
 # ── 白名单 (2026-07-14 实测抓取, 锁ID) ──
 CHANNEL_ID = 1392361900217602108          # #期权-波段-enrich
@@ -77,7 +79,7 @@ EXIT_STUCK_SEC = int(os.environ.get("EXIT_STUCK_SEC", "300"))    # 卖单在途�
 # mechanical = 机械出场(无AI): +30%卖⅓ → +60%再卖⅓ → 剩⅓runner(-60%初始止损全程, 无保本)
 #              → runner摸到+60%(武装)后启动【标的】15分9ema连破2根拖尾 → 到期强平
 #              回测(2-7月n=127): 加权+16%/笔 真实K+30% 胜率52% 中位+10% 最差月-6% (bt_mechanical_v2)
-# mirror     = 跟站长出场(LLM语义层) — 旧模式, 保留可回切
+# mirror     = 跟站长出场(纯规则解析) — 旧模式, 保留可回切
 EXIT_MODE = os.environ.get("EXIT_MODE", "mirror").lower()
 MECH_TP_MULT = float(os.environ.get("MECH_TP_MULT", "1.3"))     # 一档止盈 +30% 卖⅓
 MECH_TP2_MULT = float(os.environ.get("MECH_TP2_MULT", "1.6"))   # 二档止盈 +60% 卖⅓; 触及即武装9ema
@@ -86,8 +88,6 @@ MECH_EMA_MIN = int(os.environ.get("MECH_EMA_MIN", "15"))        # 9ema时间框�
 MECH_EMA_N = int(os.environ.get("MECH_EMA_N", "2"))             # 连破N根(已完成bar)出runner
 ENTRY_TTL_SEC = int(os.environ.get("ENTRY_TTL_SEC", "1200"))    # 在途入场单TTL: 20分钟未成交撤单
 # (审计发现+MSFT复盘: 挂一天的限价单只会在期权崩盘穿价时成交=专门接刀; "不追高"的另一半是"不接刀")
-if EXIT_MODE == "mechanical":
-    LLM_ON = False   # 机械模式全程无LLM: 进场纯规则解析, 出场纯技术, 站长出场消息仅提醒
 ET = ZoneInfo("America/New_York")
 
 OUT = Path(__file__).parent / "output"
@@ -704,6 +704,25 @@ def _order_state(order_id: str):
 
 # ── 仓位管理 ──
 
+def _live_sell_order(osi: str):
+    """券商侧该合约当前是否已有【未终态的卖单】。返回 (order_id, 状态) 或 (None, None)。
+
+    应用层幂等: longport SDK 的 submit_order 没有 client_request_id(3.0.23 与最新 4.3.3 都没有,
+    幂等键只存在于 REST 层), 所以网络超时"券商已收单但客户端认为失败"这类重复提交只能靠提交前
+    查重来挡。查不到不代表没有(查询本身可能失败), 因此这只是减少重复, 不是保证。"""
+    try:
+        for od in _trade_ctx.today_orders(symbol=osi) or []:
+            if str(getattr(od, "side", "")).split(".")[-1] != "Sell":
+                continue
+            st = str(od.status).split(".")[-1]
+            if st not in _TERMINAL:
+                return str(od.order_id), st
+    except Exception as e:
+        if not _rl_hit(e):
+            log(f"   查在途卖单失败 {osi}: {e}")
+    return None, None
+
+
 def _start_exit(positions: dict, osi: str, p: dict, qty: int, reason: str,
                 intent: str = "full") -> bool:
     """提交市价卖 → 进入 closing 态等待【真实成交】。
@@ -711,6 +730,17 @@ def _start_exit(positions: dict, osi: str, p: dict, qty: int, reason: str,
     关键: 这里【绝不】更新 sold, 也【绝不】标 closed。
     submit_order 成功只代表拿到委托号, 不代表成交 —— 订单随后可能被拒绝、部分成交或长期挂起。
     sold 只在 manage_positions ⓪ 依据 order_detail 的 executed_quantity 更新。"""
+    # 提交前查重: 上一轮可能"券商已收单但我们以为失败"。认领它而不是再发一张。
+    dup_oid, dup_st = _live_sell_order(osi)
+    if dup_oid and dup_oid not in (p.get("tp_order_id"), p.get("tp2_order_id"),
+                                   p.get("stop_order_id")):
+        log(f"   ♻️ {osi} 券商侧已有在途卖单 {dup_oid}({dup_st}) → 认领它, 不重复提交")
+        journal(ev="exit_reclaim", osi=osi, order_id=dup_oid, state=dup_st, reason=reason)
+        p["exit_order_id"], p["exit_qty"], p["exit_reason"] = dup_oid, int(qty), reason
+        p["exit_intent"], p["exit_ts"] = intent, time.time()
+        p["status"] = "closing"
+        _save_critical(positions, osi, p, f"认领在途卖单{dup_oid}")
+        return True
     ok, r = _submit(osi, side_buy=False, qty=qty, price=None, remark=f"exit-{reason[:12]}")
     if not ok:
         log(f"   ⚠️ {osi} 卖单提交失败({reason}), 保持{p['status']}等下轮重试: {r}")
@@ -742,7 +772,7 @@ def close_position(positions: dict, osi: str, reason: str):
         return
     if p["status"] == "closing":
         # 已有卖单在途(可能只是部分减仓)。不能重复卖, 但也【绝不能静默丢弃】这次出场意图 ——
-        # 止损/到期强平因条件持续存在会自然重来, 而站长"all out"/LLM出场/9ema出场是【一次性】的。
+        # 止损/到期强平因条件持续存在会自然重来, 而站长"all out"/9ema出场是【一次性】的。
         # 记成待办, 等 ⓪ 把仓位收敛回 open 后由 ⓪b 立即执行(动作升级: 部分减仓 → 全平)。
         p["pending_action"] = "full_exit"
         p["pending_action_reason"] = reason
@@ -778,7 +808,7 @@ def close_position(positions: dict, osi: str, reason: str):
                     log(f"   ℹ️ {osi} {id_key} 撤单前已成交{exq}张(补记{d}), 防超卖")
             p[id_key] = None
         if unresolved:
-            # 必须持久化重试意图: 否则一次性出场信号(站长all out/LLM/9ema)就永久丢了
+            # 必须持久化重试意图: 否则一次性出场信号(站长all out/9ema出场)就永久丢了
             p["pending_action"] = "full_exit"
             p["pending_action_reason"] = reason
             p["pending_action_ts"] = time.time()
@@ -902,7 +932,7 @@ def manage_positions(positions: dict):
             else:
                 continue      # 卖单在途期间不做任何其它动作, 防重复卖
         # ⓪b 延迟动作重试 —— P0: 上轮因挂单未确认终态而推迟的平仓必须真的重来。
-        #     止损/到期强平会因条件持续而自然重触发, 但站长"all out"/LLM出场/9ema出场是
+        #     止损/到期强平会因条件持续而自然重触发, 但站长"all out"/9ema出场是
         #     【一次性】信号, 没有这个待办队列就永久丢失。
         if p.get("pending_action") == "full_exit" and p["status"] in ("pending", "open"):
             _rsn = p.get("pending_action_reason") or "延迟平仓重试"
@@ -1249,54 +1279,11 @@ def handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict, 
         return _handle(text, msg_date, msg_id, seen, positions, msg_dt)
 
 
-def _llm_exit_targets(positions, v):
-    """LLM出场判定 → 目标持仓列表 (tickers数组/scope/except数组)。"""
-    out = []
-    excepts = set(v.get("except") or [])
-    tks = set(v.get("tickers") or [])
-    scope = v.get("scope")
-    # fail-closed: 原写法是 `scope=="ticker" and tks and ...`, 当LLM返回 scope=ticker 但
-    # tickers=[] 时 `tks` 为假使整个过滤条件短路 → 所有持仓被加进出场目标 = 全仓误平。
-    # 输出不完整/不认识的 scope 一律返回空, 宁可不动也不要错平。
-    if scope == "ticker":
-        if not tks:
-            log("   ⚠️ LLM出场 scope=ticker 但 tickers 为空 → fail-closed, 不出场")
-            return []
-    elif scope != "all":
-        log(f"   ⚠️ LLM出场 scope 不可识别({scope!r}) → fail-closed, 不出场")
-        return []
-    for osi, p in positions.items():
-        if p["status"] not in ("pending", "open", "closing"):
-            continue
-        if p.get("ticker") in excepts:
-            continue
-        if scope == "ticker" and p.get("ticker") not in tks:
-            continue
-        out.append(osi)
-    return out
-
-
 def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict, msg_dt=None):
     s = parse_signal(text, msg_date)
     one = " ".join(text.split())[:100]
     if s.kind == "NOISE":
-        held_any = any(p["status"] in ACTIVE_STATUSES for p in positions.values())
-        if LLM_ON and LIVE and held_any and len(one) > 15 and "http" not in text:
-            held_tks = [p["ticker"] for p in positions.values() if p["status"] in ACTIVE_STATUSES]
-            v = llm_classify(text, held_tks)
-            if v:
-                journal(ev="llm_classify", rule="NOISE", verdict=v, sig=one)
-            if v and v["action"] in ("exit_full", "exit_partial") and v["confidence"] >= 0.75:
-                targets = _llm_exit_targets(positions, v)
-                if targets:
-                    log(f"🤖 LLM捞漏出场[{v['action']}] conf={v['confidence']} ({v.get('why','')}): {one}")
-                    push_discord(f"🤖 LLM识别出场(规则未识别) [{v['action']}]: {one}")
-                    for osi in targets:
-                        if v["action"] == "exit_full":
-                            close_position(positions, osi, "LLM出场判定")
-                        else:
-                            mirror_reduce(positions, osi, "partial")
-        return
+        return          # 规则未识别的消息一律忽略(原有LLM"捞漏出场"分支已随LLM移除)
 
     if s.kind == "EXIT":
         # 出场文本去重: 同文本10分钟内只执行一次 (站长爱重发)
@@ -1318,25 +1305,11 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
                 if p["status"] in ACTIVE_STATUSES
                 and (s.ticker == "*" or p.get("ticker") == s.ticker)]
         if s.exit_level == "alert" and LIVE:
-            # 多票/豁免词 → LLM仲裁: 能解析出明确tickers就按票执行 (审计漏洞#1: 多票出场瘫痪)
-            held_all = [p["ticker"] for p in positions.values() if p["status"] in ACTIVE_STATUSES]
-            v = llm_classify(text, held_all) if (LLM_ON and held_all) else None
-            if v:
-                journal(ev="llm_classify", rule="EXIT/alert", verdict=v, sig=one)
-            if v and v["action"] in ("exit_full", "exit_partial") and v["confidence"] >= 0.75                     and (v.get("tickers") or v.get("scope") == "all"):
-                targets = _llm_exit_targets(positions, v)
-                if targets:
-                    lvl = "full" if v["action"] == "exit_full" else "partial"
-                    log(f"🤖 LLM仲裁多票出场[{lvl}] {v.get('tickers') or 'ALL'} 豁免{v.get('except')}: {one}")
-                    push_discord(f"🤖 多票出场(LLM仲裁)[{lvl}]: {one}")
-                    for osi in targets:
-                        if lvl == "full":
-                            close_position(positions, osi, "多票出场(LLM仲裁)")
-                        else:
-                            mirror_reduce(positions, osi, "partial")
-                    return
-            note = f"⚠️ enrich出场信号含多票/豁免词, LLM未能明确, 仅提醒 [{s.ticker}]: {one}"
+            # 多票/豁免词的出场信号规则层无法可靠切分到具体标的 → 仅提醒, 由人判断。
+            # (原走LLM仲裁, 已随LLM移除; 宁可漏跟也不要按错误的标的集合平仓)
+            note = f"⚠️ enrich出场信号含多票/豁免词, 规则无法明确标的, 仅提醒 [{s.ticker}]: {one}"
             log(note); push_discord(note)
+            journal(ev="exit_alert_ambiguous", ticker=s.ticker, sig=one)
             return
         if not held or not LIVE:
             note = f"🟠 enrich出场提醒 [{s.ticker}·{s.exit_level}] (无持仓/DRY_RUN): {one}"
@@ -1354,7 +1327,7 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
 
     # 🛡️ Hedge单: 不跳过, 按lotto小仓跟 (2026-07-19 用户改)
     #   旧: 一刀切跳过(XOM -30%教训) → 但复盘发现该XOM hedge实为+265%波段, 跳过=错失大赢家。
-    #   机械出场的-50%止损已兜住"赌方向"下行, 小仓(净值×⅓)限损即可。标记→走lotto仓位档 + 免LLM否决。
+    #   机械出场的-50%止损已兜住"赌方向"下行, 小仓(净值×⅓)限损即可。标记→走lotto仓位档(小仓)。
     is_hedge = bool(re.search(r"\bhedge\b", one, re.IGNORECASE))
     if is_hedge:
         log(f"🛡️ enrich对冲单 → 按lotto小仓跟 (机械止损兜底下行): {one}")
@@ -1370,27 +1343,16 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
             journal(ev="stale_buy_skipped", age_sec=int(age), sig=one)
             return
 
-    # BUY_NOEXPIRY: 四要素齐缺到期(已推断周五/0DTE) → LLM buy≥0.85佐证才下, lotto档 (审计漏洞#2)
+    # BUY_NOEXPIRY: 四要素齐、仅缺到期(已推断周五/0DTE) → 直接按lotto档跟
+    # (2026-07-19复盘: 历史11/11条BUY_NOEXPIRY全为真实lotto/scalp入场, 零误报; ARM 7/17漏单教训。
+    #  兜底: 权利金≤$5 + TTL20分 + -60%止损 + 小仓。原有LLM佐证闸已随LLM移除)
     qty = CONTRACTS
     is_ambig = False
     if s.kind == "BUY_NOEXPIRY":
-        if LLM_ON and LIVE:
-            held_tks = [p["ticker"] for p in positions.values() if p["status"] in ACTIVE_STATUSES]
-            v = llm_classify(text, held_tks)
-            if v:
-                journal(ev="llm_classify", rule="BUY_NOEXPIRY", verdict=v, sig=one)
-            if not v or v["action"] != "buy" or v["confidence"] < 0.85:
-                note = f"❓ 缺到期信号LLM佐证不足({v['action'] if v else 'fail'}), 仅提醒: {one}"
-                log(note); push_discord(note)
-                return
-            log(f"🔍 缺到期信号LLM佐证buy({v['confidence']}), 推断到期{s.expiry}, lotto档跟进")
-        else:
-            # 无LLM(机械模式): 直接按lotto档跟 (2026-07-19复盘: 历史11/11条BUY_NOEXPIRY全为
-            # 真实lotto/scalp入场, 零误报; ARM 7/17漏单教训。兜底: 权利金≤$5 + TTL20分 + -60%止损 + 小仓)
-            log(f"🎯 缺到期信号→推断到期{s.expiry}" + ("(0DTE档)" if s.expiry == msg_date else "")
-                + ", lotto档直接跟 (历史11/11真信号)")
-            journal(ev="noexpiry_accept", ticker=s.ticker, strike=s.strike,
-                    expiry=str(s.expiry), limit=s.limit_price, sig=one)
+        log(f"🎯 缺到期信号→推断到期{s.expiry}" + ("(0DTE档)" if s.expiry == msg_date else "")
+            + ", lotto档直接跟 (历史11/11真信号)")
+        journal(ev="noexpiry_accept", ticker=s.ticker, strike=s.strike,
+                expiry=str(s.expiry), limit=s.limit_price, sig=one)
         s.kind = "BUY"
         is_ambig = True     # 走lotto仓位档 (到期是推断的, 小仓; 0DTE自动再降到⅒档)
     if s.kind == "BUY_AMBIG":
@@ -1404,19 +1366,6 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
         qty = LOTTO_CONTRACTS               # lotto/歧义单: 小仓 (他自己都喊small)
         log(f"🔍 报价消歧: {info}")
         journal(ev="disambig", ticker=s.ticker, strike=s.strike, expiry=str(s.expiry), info=info, sig=one)
-
-    # 🤖 LLM否决闸: 规则说买, LLM说不是买(对冲/评论/出场) → 保守不下单
-    if LLM_ON and LIVE:
-        held_tks = [p["ticker"] for p in positions.values() if p["status"] in ACTIVE_STATUSES]
-        v = llm_classify(text, held_tks)
-        if v:
-            journal(ev="llm_classify", rule=s.kind, verdict=v, sig=one)
-        if v and v["action"] != "buy" and v["confidence"] >= 0.7 and not is_hedge:
-            note = (f"🤖 LLM否决买入: 规则判BUY但LLM判[{v['action']}] conf={v['confidence']} "
-                    f"({v.get('why','')}), 保守不下单: {one}")
-            log(note); push_discord(note)
-            journal(ev="llm_veto", verdict=v, sig=one)
-            return
 
     # BUY
     osi = to_longport_symbol(s)

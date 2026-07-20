@@ -321,10 +321,12 @@ chk("fail_stop 仓位不再被自动交易(等人工)", not subs, f"卖单={subs
 
 # P0-3: closing 仓位不得被同合约新信号覆盖 / 必须计入敞口 / EXIT要能找到它
 chk("ACTIVE_STATUSES 含 closing", "closing" in B.ACTIVE_STATUSES)
-_pc = {"Z.US": mkpos(status="closing", ticker="AAPL")}
-with mock.patch.object(B, "log", lambda m: None):
-    chk("closing 仓位能被 EXIT(scope=all) 找到, 不会被当成无持仓",
-        B._llm_exit_targets(_pc, {"action": "exit_full", "scope": "all"}) == ["Z.US"])
+_srcA = Path(__file__).with_name("discord_enrich_bot.py").read_text()
+chk("EXIT持仓查找已改用 ACTIVE_STATUSES(closing不会被当成无持仓)",
+    'p["status"] in ACTIVE_STATUSES' in _srcA
+    and 'held = [osi for osi, p in positions.items()' in _srcA)
+chk("重复建仓守卫用 ACTIVE_STATUSES",
+    'if old and old.get("status") in ACTIVE_STATUSES:' in _srcA)
 
 # P0-4: 卖单卡死恢复时, 入场单仍在途则不得标 closed
 pos = {"F4": mkpos(status="closing", filled=1, sold=0, entry_order_id="E", exit_order_id="X",
@@ -398,17 +400,34 @@ chk("低价期权止损抬到最小报价档后可触发", closed, f"closed={clo
 
 hdr("其余审查项")
 
-_p = {"X.US": mkpos(ticker="AAPL"), "Y.US": mkpos(ticker="MSFT")}
-with mock.patch.object(B, "log", lambda m: None):
-    chk("LLM scope=ticker 但 tickers=[] → 不出场(原会全仓平)",
-        B._llm_exit_targets(_p, {"action": "exit_full", "scope": "ticker", "tickers": []}) == [])
-    chk("LLM scope 不可识别 → 不出场",
-        B._llm_exit_targets(_p, {"action": "exit_full", "scope": "???"}) == [])
-    chk("LLM scope=all → 正常全平",
-        len(B._llm_exit_targets(_p, {"action": "exit_full", "scope": "all"})) == 2)
-    chk("LLM scope=ticker 指名AAPL → 只平AAPL",
-        B._llm_exit_targets(_p, {"action": "exit_full", "scope": "ticker",
-                                 "tickers": ["AAPL"]}) == ["X.US"])
+# LLM 已从实盘bot移除(2026-07-20 用户令): 确认无残留调用路径
+chk("bot 不再 import llm_classifier", not hasattr(B, "llm_classify"))
+chk("LLM_ON 常量已移除", not hasattr(B, "LLM_ON"))
+chk("_llm_exit_targets 已移除", not hasattr(B, "_llm_exit_targets"))
+_srcL = Path(__file__).with_name("discord_enrich_bot.py").read_text()
+chk("源码无 llm_classify( 调用", "llm_classify(" not in _srcL)
+chk("llm_classifier.py 仍保留(研究脚本在用)",
+    Path(__file__).with_name("llm_classifier.py").exists())
+
+# 应用层幂等: 券商侧已有在途卖单时认领而非重复提交
+pos = {"G1": mkpos(filled=6, sold=0)}
+subs = []
+class _OD:
+    def __init__(s2): s2.order_id, s2.status, s2.side = "EXIST9", "OrderStatus.New", "OrderSide.Sell"
+with mock.patch.multiple(B, _trade_ctx=mock.Mock(today_orders=lambda symbol=None: [_OD()]),
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "NEW"))[1],
+                         **base):
+    B._start_exit(pos, "G1", pos["G1"], 6, "止损")
+chk("券商已有在途卖单 → 认领不重复提交", not subs and pos["G1"].get("exit_order_id") == "EXIST9",
+    f"新单={subs} exit_id={pos['G1'].get('exit_order_id')}")
+
+pos = {"G2": mkpos(filled=6, sold=0)}
+subs = []
+with mock.patch.multiple(B, _trade_ctx=mock.Mock(today_orders=lambda symbol=None: []),
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "NEW"))[1],
+                         **base):
+    B._start_exit(pos, "G2", pos["G2"], 6, "止损")
+chk("券商无在途卖单 → 正常提交", subs == [6], f"新单={subs}")
 
 with mock.patch.object(B, "log", lambda m: None):
     q, note = B.size_qty(0, 50000, "X.US", fallback=1)
