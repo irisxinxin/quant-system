@@ -12,14 +12,19 @@
 | 项 | 值 |
 |---|---|
 | 运行模式 | **DRY_RUN** (`ENRICH_LIVE=false`) — 只解析播报，不下单 |
-| 出场策略 | 纯机械，**无 LLM** |
-| 回归测试 | 82 仿真场景 / 18 变异 / 83 单元断言 — 全绿 |
+| 出场策略 | 纯机械，**无 LLM**；站长的出场消息只播报不执行 |
+| 回归测试 | 75 仿真场景 / 18 变异 / 83 单元断言 — 全绿 |
 | 归档 job | 每日 05:10 SGT，**一天都不能断**(长桥期权 K 线只留约 1 月) |
 
 **出场规则** (2026-07-19 定稿)：
 进场跟站长限价不追高 + TTL 20 分不接刀 → +30% 卖 ⅓ → +60% 卖 ⅓ (武装) →
 runner 武装后守 15 分 9ema 连破 2 根 → 止损 -60% 全程无保本 → 到期强平。
 hedge 当 lotto 跟 ⅓ 仓。站长出场消息仅提醒，不触发动作。
+
+**2026-07-20 删除了 mirror（跟站长出场）模式与 `EXIT_MODE` 开关。** 策略已定稿用机械出场，
+留一条不跑、没测透的路径本身就是风险源 —— 它的默认值曾是 fail-open（环境变量没到位就静默
+切成另一套策略），且仿真在它上面挖出过裸空和三处一次性信号丢弃。要回切请从 git 恢复
+（commit `e6a0041` 及之前），不要重新加开关。
 
 ---
 
@@ -39,7 +44,7 @@ bots/enrich/
     scenario_api.py              场景契约
     scenarios/normal.py          17 个正常链路场景
     scenarios/adversarial.py     27 个对抗场景
-    scenarios/reduce_ambig.py    16 个 — 镜像减仓 + 歧义单消歧
+    scenarios/ambig.py           8 个 — 歧义单(缺call/put)消歧
     scenarios/discord_layer.py   17 个 — catch_up / on_message / main 启动
     scenarios/regression_guards.py 6 个 — 专守各道防线(每条都配了变异)
     mutation_check.py            变异测试 — 看守"测试本身"
@@ -67,7 +72,7 @@ bots/enrich/
 
 ```bash
 cd /Users/xin/Documents/Claude/Projects/money/quant_system
-/usr/local/bin/python3 bots/enrich/run_sim.py                 # 82 端到端场景
+/usr/local/bin/python3 bots/enrich/run_sim.py                 # 75 端到端场景
 /usr/local/bin/python3 bots/enrich/sim/mutation_check.py      # 18 个人为缺陷
 /usr/local/bin/python3 bots/enrich/test_enrich_bot_safety.py  # 83 单元断言
 ```

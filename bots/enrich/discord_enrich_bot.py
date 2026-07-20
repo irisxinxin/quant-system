@@ -12,16 +12,18 @@ discord_enrich_bot.py — 监听 Discord #期权-波段-enrich 信号 → 解析
   4. 去重: 同一期权同一天只开一次; 消息ID去重
   5. 限价单 only, 单张权利金>MAX_PREMIUM 拒绝; 已到期信号跳过
 
-仓位管理 (无期权行情权限 → 全部不依赖盯价):
-  · 止盈: 入场成交 → 挂 GTC 限价卖 (TP_MULT×成本, 默认2.0=+100%), 卖出 半仓(2张卖1张; 1张全卖)
-  · 出场跟随: 站长 EXIT 信号 (scaling out/all out/stopped...) → 撤止盈单 + 剩仓市价全平
+仓位管理 (机械出场, 无AI; 站长的出场消息只播报不执行):
+  · 止盈: 入场成交 → 挂两档 GTC 限价卖, +30%卖⅓ / +60%卖⅓(二档成交=runner武装)
+  · 拖尾: runner 武装后守【标的】15分9ema, 连破2根 → 市价平
+  · 止损: -60% 全程有效, 不移保本 (模拟盘唯一通道是轮询, MIT挂单会被拒)
   · 到期强平: 到期日 15:40 ET 剩仓市价全平, 防归零/行权
   · 天然风控: 买期权最大亏=权利金 (每笔 ≤ MAX_PREMIUM×100×张数)
 
 用法:
   python3 discord_enrich_bot.py                                  # DRY_RUN
   ENRICH_LIVE=true OPTION_CONTRACTS=2 python3 discord_enrich_bot.py   # 模拟盘真下单
-环境: DISCORD_BOT_TOKEN(必须) / OPTION_CONTRACTS(默认1) / MAX_PREMIUM(默认5.0) / TP_MULT(默认2.0)
+环境: DISCORD_BOT_TOKEN(必须) / OPTION_CONTRACTS(默认1) / MAX_PREMIUM(默认5.0)
+      / MECH_TP_MULT(1.3) / MECH_TP2_MULT(1.6) / MECH_STOP_MULT(0.4)
       / DISCORD_WEBHOOK_URL(可选回报推送)
 """
 import os, re, sys, json, base64, time, math
@@ -55,10 +57,8 @@ ANDY_CHANNEL_ID = 1523725658935656448     # #andy-option — 仅观察记录, �
 LIVE = os.environ.get("ENRICH_LIVE", "").lower() == "true"
 CONTRACTS = int(os.environ.get("OPTION_CONTRACTS", "1"))
 MAX_PREMIUM = float(os.environ.get("MAX_PREMIUM", "5.0"))
-TP_MULT = float(os.environ.get("TP_MULT", "2.0"))     # 止盈倍数 (2.0 = +100%)
-STOP_MULT = float(os.environ.get("STOP_MULT", "0.7")) # lotto止损 (0.7=-30%; lotto会归零必须止损)
-SWING_STOP_MULT = float(os.environ.get("SWING_STOP_MULT", "0.5"))  # 波段单兜底 (-50%; 抗回撤跟他出场, 网格+30.3%)
 LOTTO_CONTRACTS = int(os.environ.get("LOTTO_CONTRACTS", "1"))  # 歧义/lotto单张数(POSITION_USD=0时用)
+# (TP_MULT / STOP_MULT / SWING_STOP_MULT 随 mirror 出场模式一并删除 —— 2026-07-20)
 POSITION_USD = float(os.environ.get("POSITION_USD", "0"))   # >0: 固定金额模式(旧)
 LOTTO_USD = float(os.environ.get("LOTTO_USD", "0")) or (POSITION_USD / 5)
 POSITION_FRAC = float(os.environ.get("POSITION_FRAC", "0"))  # >0: 按账户净值比例, 常规单=净值×此值
@@ -92,15 +92,17 @@ CATCHUP_MAX = int(os.environ.get("CATCHUP_MAX", "500"))
 # 出场侧放宽到 6 小时: 持仓晚跟好过不跟, 但隔夜/隔日的清仓令绝不能拿来平今天新建的仓。
 STALE_EXIT_SEC = int(os.environ.get("STALE_EXIT_SEC", "21600"))
 
-# ── 出场模式 (2026-07-19 最终定稿, 用户拍板; 复盘+网格+对抗审查三轮定案) ──
-# mechanical = 机械出场(无AI): +30%卖⅓ → +60%再卖⅓ → 剩⅓runner(-60%初始止损全程, 无保本)
-#              → runner摸到+60%(武装)后启动【标的】15分9ema连破2根拖尾 → 到期强平
-#              回测(2-7月n=127): 加权+16%/笔 真实K+30% 胜率52% 中位+10% 最差月-6% (bt_mechanical_v2)
-# mirror     = 跟站长出场(纯规则解析) — 旧模式, 保留可回切
-# ⚠ 默认必须是 mechanical(当前在跑的策略, 回测依据)。曾经默认 mirror = fail-open:
-#   环境变量没到位(手动跑/plist改坏/换调度器忘了export)就【静默】切成另一套出场策略,
-#   而且会一并激活 mirror 专属代码路径上的缺陷。默认值要指向"当前正确"而非"历史遗留"。
-EXIT_MODE = os.environ.get("EXIT_MODE", "mechanical").lower()
+# ── 出场规则 (2026-07-19 最终定稿, 用户拍板; 复盘+网格+对抗审查三轮定案) ──
+# 机械出场(无AI): +30%卖⅓ → +60%再卖⅓ → 剩⅓runner(-60%初始止损全程, 无保本)
+#                → runner摸到+60%(武装)后启动【标的】15分9ema连破2根拖尾 → 到期强平
+# 回测(2-7月n=127): 加权+16%/笔 真实K+30% 胜率52% 中位+10% 最差月-6% (bt_mechanical_v2)
+# 站长的出场消息【只播报不执行】。
+#
+# 2026-07-20 删除了 EXIT_MODE 开关与 mirror(跟站长出场)模式。理由:
+#   · 策略已定稿用机械出场, mirror 不再是候选
+#   · 留着一条不跑、没测透的路径本身就是风险源 —— 它的默认值曾经是 fail-open
+#     (环境变量没到位就静默切成另一套策略), 且仿真在它上面挖出过裸空和三处信号丢弃
+# 要回切请从 git 恢复(commit e6a0041 及之前), 别在这里加开关。
 MECH_TP_MULT = float(os.environ.get("MECH_TP_MULT", "1.3"))     # 一档止盈 +30% 卖⅓
 MECH_TP2_MULT = float(os.environ.get("MECH_TP2_MULT", "1.6"))   # 二档止盈 +60% 卖⅓; 触及即武装9ema
 MECH_STOP_MULT = float(os.environ.get("MECH_STOP_MULT", "0.4")) # 初始止损 -60% 全程有效(无保本移动)
@@ -278,10 +280,8 @@ def _osi(ticker, expiry_iso_or_date, right, strike):
 
 
 def _tp_params(remain: int, avg: float):
-    """(止盈张数, 止盈价) — 按出场模式。mechanical: 一档卖⅓ @+30%; mirror: 卖半 @TP_MULT。"""
-    if EXIT_MODE == "mechanical":
-        return max(1, round(remain / 3)), round(avg * MECH_TP_MULT, 2)
-    return (max(1, remain // 2) if remain >= 2 else remain), round(avg * TP_MULT, 2)
+    """(止盈张数, 止盈价) — 一档卖⅓ @+30%。"""
+    return max(1, round(remain / 3)), round(avg * MECH_TP_MULT, 2)
 
 
 def _mech_split(filled: int):
@@ -666,7 +666,7 @@ def ensure_protection(positions: dict, osi: str, p: dict):
     remain = p.get("filled", 0) - p.get("sold", 0)
     if remain <= 0 or p.get("avg", 0) <= 0:
         return
-    _sm = p.get("stop_mult", STOP_MULT)
+    _sm = p.get("stop_mult", MECH_STOP_MULT)
     if _sm > 0 and not p.get("stop_order_id") and _MIT_OK is not False and _sell_budget(p) >= 1:
         _sq = min(remain, _sell_budget(p))
         trig = round(p["avg"] * _sm, 2)
@@ -683,7 +683,7 @@ def ensure_protection(positions: dict, osi: str, p: dict):
         else:
             log(f"⚠️ {osi} 止损挂单失败: {r}")
     # 回退模式: 无券商侧止损 → 止盈限价挂券商侧(抓尖峰)
-    if EXIT_MODE == "mechanical" and not p.get("stop_order_id"):
+    if not p.get("stop_order_id"):
         # 两档GTC同时挂: ⅓@+30%, ⅓@+60% (二档成交=runner武装9ema)
         # 【按 remain 而非 filled 定张】: 部分平仓后 sold>0, 用 filled 会挂出多于持仓的卖单。
         # 正常路径(新建仓 sold=0)下 remain==filled, 档位与回测口径完全一致, 不改变策略。
@@ -847,7 +847,7 @@ def _start_exit(positions: dict, osi: str, p: dict, qty: int, reason: str,
         # _live_sell_order 两道防线一起失灵 → 再卖一次。仿真复现: 券商净持仓 -6 张裸空。
         # 取舍依 I3: 少卖亏损上限=权利金(有限), 多卖=裸空期权(无限风险)。
         n = p["broker_qty_fail"] = p.get("broker_qty_fail", 0) + 1
-        p["pending_action"] = "full_exit" if intent == "full" else "reduce"
+        p["pending_action"] = "full_exit"
         p["pending_action_reason"] = reason
         p["pending_action_ts"] = time.time()
         log(f"   ⏸️ {osi} 查不到券商持仓(第{n}次) → 本轮不卖, 记待办下轮重试 ({reason})")
@@ -1008,70 +1008,6 @@ def close_position(positions: dict, osi: str, reason: str):
             _optfail.pop(osi, None)
 
 
-def mirror_reduce(positions: dict, osi: str, level: str):
-    """镜像站长减仓 (2张粒度): 首次部分减→卖1张留跑; 已减过→partial忽略/vague全平。"""
-    p = positions.get(osi)
-    if not p or p["status"] == "closed":
-        return
-    if p["status"] == "closing":
-        # 已有卖单在途 → 不能叠加卖单(会重复卖), 但也【不能直接丢弃】这条信号:
-        # 站长的减仓/催促是一次性的, 丢了就没有第二次。close_position 对同样情形是记
-        # pending_action 等 ⓪ 收敛后由 ⓪b 执行, 这里过去只有一句 return。
-        # 语义按 mirror_reduce 自身的分级升级: 已减过的 partial/vague = 清 runner → 全平;
-        # 首次 partial → 记 reduce, 由 ⓪b 走减半逻辑。
-        act = "full_exit" if (p.get("reduced") or level == "vague") else "reduce"
-        p["pending_action"] = act
-        p["pending_action_reason"] = f"站长{level}(卖单在途时收到)"
-        p["pending_action_ts"] = time.time()
-        log(f"   ⏸️ {osi} 卖单在途, 站长{level}记为待办({act}), 待其终态后执行")
-        journal(ev="reduce_deferred_closing", osi=osi, level=level, action=act)
-        _save(POS_JSON, positions)
-        return
-    if p["status"] == "pending":            # 还没成交他就开始出 → 撤单/全清, 别再进
-        close_position(positions, osi, "站长已出(未完全入场)")
-        return
-    remain = p.get("filled", 0) - p.get("sold", 0)
-    if remain <= 0:
-        if not p.get("entry_order_id"):
-            p["status"] = "closed"
-        _save(POS_JSON, positions); return
-    # 用 reduced_any(有过任何减仓成交)而非 reduced(全部成交才置位): 减仓单部分成交时
-    # reduced 会保持 False(那是止盈通道的守卫, 必须留着), 拿它做分级会把站长的第二条
-    # partial 当成首次减仓再卖一半 —— 而第二条 partial 的语义是"他在连续撤退, 清 runner"。
-    if not (p.get("reduced") or p.get("reduced_any")):
-        if remain >= 2:
-            half = max(1, remain // 2)
-            # 必须撤净【全部在挂卖腿】再发新卖单, 不只是止损腿。原来只撤 stop, 止盈腿照挂:
-            # 持仓6 + 止盈腿挂3 + 再市价卖3 → 都成交就卖了7张 = 裸空(仿真实测净持仓-1)。
-            # close_position 撤的是 tp/tp2/stop/entry 四条腿, 这里对齐到同一纪律。
-            if not _cancel_sell_legs(p, osi):
-                log(f"   ⏸️ {osi} 镜像减仓暂缓: 在挂卖腿未确认撤净, 记待办下轮重试")
-                p["pending_action"] = "reduce"
-                p["pending_action_reason"] = f"站长{level}(卖腿未撤净)"
-                p["pending_action_ts"] = time.time()
-                journal(ev="reduce_deferred_legs", osi=osi, level=level)
-                _save(POS_JSON, positions); return
-            remain = p.get("filled", 0) - p.get("sold", 0)   # 撤腿时可能回填了成交量
-            if remain <= 0:
-                _save(POS_JSON, positions); return
-            half = max(1, remain // 2)
-            log(f"🪞 {osi} 镜像减仓: 市价卖{half}张, 剩{remain-half}张继续跑")
-            # sold 由 ⓪ 在确认成交后更新(原实现提交成功即 sold+=half, 订单被拒也算已卖)
-            if not _start_exit(positions, osi, p, half, "站长减仓", intent="reduce"):
-                # 提交失败/被闸门拦下 → 必须留待办。站长的减仓信号是一次性的, 丢了没有第二次
-                # (原实现直接丢弃返回值: 注入 fail_submit 后网络恢复, 减仓意图永远消失)
-                p["pending_action"] = "reduce"
-                p["pending_action_reason"] = f"站长{level}(提交未成)"
-                p["pending_action_ts"] = time.time()
-                journal(ev="reduce_deferred_submit", osi=osi, level=level)
-                _save(POS_JSON, positions)
-        else:                               # 只剩1张, 部分减也=全出
-            close_position(positions, osi, "站长减仓(仅剩1张)")
-    else:
-        if level == "vague":                # 已减过+模糊催促 → 保守全平
-            close_position(positions, osi, "站长模糊出场(已减过)")
-        else:                               # 已减过+再次partial → 他在连续撤退, 清runner
-            close_position(positions, osi, "站长二次减仓")   # 回测: IBM305 -26%→+56%
 
 
 def manage_positions(positions: dict):
@@ -1097,17 +1033,9 @@ def manage_positions(positions: dict):
                         reason=p.get("exit_reason"))
                 # 只有【全部成交】才落 reduced/tp1_done: 部分成交也置位会让 ensure_protection 的
                 # not tp1_done / ③b 的 not reduced 守卫永久关闭该止盈通道, 剩余张数再无止盈出口
-                if exq >= want > 0 and p.get("exit_intent") in ("tp1", "reduce"):
+                if exq >= want > 0 and p.get("exit_intent") == "tp1":
                     p["reduced"] = True
-                    if p.get("exit_intent") == "tp1":
-                        p["tp1_done"] = True
-                # reduced_any 是【是否真减过仓】, 只要有成交就置位, 供 mirror_reduce 分级用。
-                # 不能复用 reduced: 那个字段同时是止盈通道的守卫(上面的注释), 部分成交时必须保持
-                # False 好让剩余张数还有止盈出口。两个职责挤在一个字段上, 就会出现
-                # "减仓单只成交2/3 → reduced仍False → 站长第二条partial被当成首次 → 再卖一半"
-                # (本该走"二次减仓=他在连续撤退→清runner")。
-                if exq > 0 and p.get("exit_intent") in ("tp1", "reduce"):
-                    p["reduced_any"] = True
+                    p["tp1_done"] = True
                 if exq >= want and want > 0:
                     log(f"✅ {osi} 卖单全部成交 {exq}张 @ ${exp} ({p.get('exit_reason')})")
                     push_discord(f"🔻 enrich已成交 {osi} ×{exq}张 @ ${exp} ({p.get('exit_reason')})")
@@ -1151,18 +1079,15 @@ def manage_positions(positions: dict):
             else:
                 continue      # 卖单在途期间不做任何其它动作, 防重复卖
         # ⓪b 延迟动作重试 —— P0: 上轮因挂单未确认终态而推迟的平仓必须真的重来。
-        #     止损/到期强平会因条件持续而自然重触发, 但站长"all out"/9ema出场是
-        #     【一次性】信号, 没有这个待办队列就永久丢失。
-        _pa = p.get("pending_action")
-        if _pa in ("full_exit", "reduce") and p["status"] in ("pending", "open"):
+        #     止损/到期强平会因条件持续而自然重触发, 但 9ema 出场是【一次性】判定,
+        #     没有这个待办队列就永久丢失。
+        #     ("reduce" 意图随 mirror 出场模式一并删除; 旧状态文件里若残留也按全平处理 ——
+        #      宁可多平也不能让一个仓位卡在无人认领的待办上)
+        if p.get("pending_action") and p["status"] in ("pending", "open"):
             _rsn = p.get("pending_action_reason") or "延迟出场重试"
-            log(f"🔁 {osi} 重试待办{'平仓' if _pa == 'full_exit' else '减仓'} ({_rsn})")
+            log(f"🔁 {osi} 重试待办平仓 ({_rsn})")
             p.pop("pending_action", None)      # 先清再执行: 失败路径会自行重新记, 否则永久自触发
-            if _pa == "full_exit":
-                close_position(positions, osi, _rsn)
-            else:
-                # reduce 待办由 mirror_reduce 自己按当前分级重算(可能已从"首次减半"升级为"清runner")
-                mirror_reduce(positions, osi, "partial")
+            close_position(positions, osi, _rsn)
             if p.get("status") in ("closing", "closed") or p.get("pending_action"):
                 continue        # 已发出卖单 或 仍未成功 → 本轮到此为止
         # ① 入场单状态 (只要入场单还在途就持续对账, 不限于pending)
@@ -1295,7 +1220,7 @@ def manage_positions(positions: dict):
                 #  只剩1张时下单失败照样标closed, 真实仓位从此无人管理)
                 _start_exit(positions, osi, p, tp_qty, "轮询止盈", intent="tp1")
         # ④ 轮询止损 (模拟盘唯一止损通道; 真实账户仅当MIT挂失败时兜底)
-        _sm = p.get("stop_mult", STOP_MULT)
+        _sm = p.get("stop_mult", MECH_STOP_MULT)
         if _sm > 0 and p["status"] == "open" and not p.get("stop_order_id") \
                 and p.get("avg", 0) > 0 and p.get("filled", 0) - p.get("sold", 0) > 0:
             last = _option_last(osi)
@@ -1312,7 +1237,7 @@ def manage_positions(positions: dict):
             else:
                 _optfail.pop(osi, None)
                 # 报价顺带武装检查: 摸过+60%即武装9ema (TP2成交也会武装, 这里是兜底)
-                if EXIT_MODE == "mechanical" and not p.get("armed") and last >= p["avg"] * MECH_TP2_MULT:
+                if not p.get("armed") and last >= p["avg"] * MECH_TP2_MULT:
                     p["armed"] = True
                     log(f"🎯 {osi} 报价${last}≥成本×{MECH_TP2_MULT} → runner武装15m9ema")
                     journal(ev="runner_armed", osi=osi, last=last)
@@ -1327,7 +1252,7 @@ def manage_positions(positions: dict):
                     continue
         # ④c 机械模式: runner【武装后】守标的15分9ema, 连破N根(已完成bar)→全平
         #    (最终定稿: 摸到+60%才武装; 未武装的runner只受-60%止损+到期强平管, 防早盘回踩误洗肥尾)
-        if EXIT_MODE == "mechanical" and p["status"] == "open" and p.get("armed") \
+        if p["status"] == "open" and p.get("armed") \
                 and p.get("filled", 0) - p.get("sold", 0) > 0 and us_rth_now():
             cnt = _ema15_break_count(p["ticker"])
             if cnt is not None and cnt >= MECH_EMA_N:
@@ -1611,45 +1536,16 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
         if _norm in _recent_exits:
             log(f"↩️ 重复出场消息跳过(10分钟内同文本): {one[:60]}")
             return
-        # 去重表【只在处理成功走完后才写】—— 提成内部函数就是为了这个: 处理块有多个 return,
-        # 用标志位/finally 都容易写错(finally 在异常传播时照样执行, 会把失败也记进去)。
-        # 原实现在这里就无条件写死, 于是后面处理抛异常时:
-        # catch_up 的 except 保留锚点、声称"下次重连会重新回看这条", 可 10 分钟内的重试
-        # 一进来就撞上上面那个"重复出场消息跳过"被静默吞掉 —— 而且这次不抛异常,
-        # catch_up 认定成功、锚点照常前移 → 出场信号永久丢失。
-        # 实时路径同理: 站长 13 秒重发同文本(已知行为)也会被吞。
-        def _do_exit():
-            if EXIT_MODE == "mechanical":
-                # 机械模式: 出场全靠 +30%卖⅓/保本/15m9ema/-50止损, 站长出场只提醒不执行
-                note = f"🟠 站长出场[{s.exit_level}] [{s.ticker}] — 机械出场模式不跟(仅提醒): {one}"
-                log(note); push_discord(note)
-                journal(ev="exit_signal_mech_ignored", ticker=s.ticker, level=s.exit_level, sig=one)
-                return
-            held = [osi for osi, p in positions.items()
-                    if p["status"] in ACTIVE_STATUSES
-                    and (s.ticker == "*" or p.get("ticker") == s.ticker)]
-            if s.exit_level == "alert" and LIVE:
-                # 多票/豁免词的出场信号规则层无法可靠切分到具体标的 → 仅提醒, 由人判断。
-                # (原走LLM仲裁, 已随LLM移除; 宁可漏跟也不要按错误的标的集合平仓)
-                note = f"⚠️ enrich出场信号含多票/豁免词, 规则无法明确标的, 仅提醒 [{s.ticker}]: {one}"
-                log(note); push_discord(note)
-                journal(ev="exit_alert_ambiguous", ticker=s.ticker, sig=one)
-                return
-            if not held or not LIVE:
-                note = f"🟠 enrich出场提醒 [{s.ticker}·{s.exit_level}] (无持仓/DRY_RUN): {one}"
-                log(note); push_discord(note)
-                return
-            log(f"🟠 站长出场[{s.exit_level}] [{s.ticker}] → 处理 {len(held)} 个持仓: {one}")
-            journal(ev="exit_signal", ticker=s.ticker, level=s.exit_level, held=len(held), sig=one)
-            push_discord(f"🟠 enrich出场[{s.exit_level}] [{s.ticker}]: {one}")
-            for osi in held:
-                if s.exit_level == "full":
-                    close_position(positions, osi, "站长清仓")
-                else:                           # partial / vague → 镜像
-                    mirror_reduce(positions, osi, s.exit_level)
-
-        _do_exit()                       # 抛异常则下一行不执行 → 去重表不留痕 → 重试真能重来
-        _recent_exits[_norm] = _now      # 正常走完 = 已受理(执行了 / 明确判定不执行)
+        # 站长出场【一律只提醒不执行】。出场全部由机械规则接管:
+        #   +30%卖⅓ → +60%卖⅓(武装) → runner守15分9ema连破2根 → -60%止损 → 到期强平
+        # (2026-07-20 删除 mirror 跟单出场模式, 见文件头。历史实现见 git: e6a0041 之前)
+        note = f"🟠 站长出场[{s.exit_level}] [{s.ticker}] — 机械出场, 不跟(仅提醒): {one}"
+        log(note); push_discord(note)
+        journal(ev="exit_signal_mech_ignored", ticker=s.ticker, level=s.exit_level, sig=one)
+        # 去重表在【播报成功之后】才写: 上面若抛异常就不留痕, catch_up 重连回看 / 站长重发
+        # 时才能真的重来。原实现在函数开头就无条件写死, 于是重试撞上"重复出场消息跳过"被
+        # 静默吞掉, 而这次不抛异常 → 调用方认定成功 → 锚点前移 → 信号永久丢失。
+        _recent_exits[_norm] = _now
         return
 
     # 🛡️ Hedge单: 不跳过, 按lotto小仓跟 (2026-07-19 用户改)
@@ -1777,7 +1673,7 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
     if LIVE:
         ok, r = _submit(osi, side_buy=True, qty=qty, price=s.limit_price, remark="enrich-entry")
         if ok:
-            _sm0 = MECH_STOP_MULT if EXIT_MODE == "mechanical" else (STOP_MULT if is_lotto else SWING_STOP_MULT)
+            _sm0 = MECH_STOP_MULT
             positions[osi] = dict(ticker=s.ticker, entry_order_id=r, qty=qty,
                                   limit=s.limit_price, expiry=s.expiry.isoformat(),
                                   filled=0, sold=0, avg=0.0, tp_order_id=None, tp_qty=0,
@@ -1797,10 +1693,8 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
                     _alert(f"🚨 enrich {osi} 撤单未确认或已成交{exq_c}张({st_c}) — 请立即人工核对券商持仓!")
                 push_discord(plan)
                 return
-            _tpm = MECH_TP_MULT if EXIT_MODE == "mechanical" else TP_MULT
-            plan += (f"\n  ✅已提交 order_id={r} (成交后自动挂+{(_tpm-1)*100:.0f}%止盈"
-                     + (f", 二档后武装15m9ema管runner, -{(1-MECH_STOP_MULT)*100:.0f}%止损全程不移保本"
-                        if EXIT_MODE == "mechanical" else "") + ")")
+            plan += (f"\n  ✅已提交 order_id={r} (成交后自动挂+{(MECH_TP_MULT-1)*100:.0f}%止盈, "
+                     f"二档后武装15m9ema管runner, -{(1-MECH_STOP_MULT)*100:.0f}%止损全程不移保本)")
             log(f"  ✅已提交 {r}")
             journal(ev="entry_submit", osi=osi, ticker=s.ticker, right=s.right, strike=s.strike,
                     expiry=str(s.expiry), limit=s.limit_price, qty=qty, order_id=r, sig=one)
@@ -1853,13 +1747,10 @@ def main():
             size_s = f"每信号${POSITION_USD:,.0f}/lotto${LOTTO_USD:,.0f} (OI帽{OI_CAP_PCT:.0%})"
         else:
             size_s = f"每信号{CONTRACTS}张"
-        if EXIT_MODE == "mechanical":
-            log(f"🚀 LIVE(模拟盘)·机械出场(最终定稿): {size_s} | 权利金上限${MAX_PREMIUM} | "
-                f"+{(MECH_TP_MULT-1)*100:.0f}%卖⅓ → +{(MECH_TP2_MULT-1)*100:.0f}%卖⅓(武装) | "
-                f"runner武装后守{MECH_EMA_MIN}分9ema连破{MECH_EMA_N}根 | 止损-{(1-MECH_STOP_MULT)*100:.0f}%全程无保本 | "
-                f"入场TTL{ENTRY_TTL_SEC//60}分 | 到期强平 | 无LLM")
-        else:
-            log(f"🚀 LIVE(模拟盘): {size_s} | 权利金上限${MAX_PREMIUM} | 止盈+{(TP_MULT-1)*100:.0f}%卖半仓 | 镜像出场 | 止损: lotto-{(1-STOP_MULT)*100:.0f}%/波段-{(1-SWING_STOP_MULT)*100:.0f}%兜底 | 到期强平")
+        log(f"🚀 LIVE(模拟盘)·机械出场(最终定稿): {size_s} | 权利金上限${MAX_PREMIUM} | "
+            f"+{(MECH_TP_MULT-1)*100:.0f}%卖⅓ → +{(MECH_TP2_MULT-1)*100:.0f}%卖⅓(武装) | "
+            f"runner武装后守{MECH_EMA_MIN}分9ema连破{MECH_EMA_N}根 | 止损-{(1-MECH_STOP_MULT)*100:.0f}%全程无保本 | "
+            f"入场TTL{ENTRY_TTL_SEC//60}分 | 到期强平 | 无LLM | 站长出场只播报")
     else:
         log("🧪 DRY_RUN: 只解析播报, 不下单")
 

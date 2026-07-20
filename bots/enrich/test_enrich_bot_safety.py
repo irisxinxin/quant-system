@@ -18,7 +18,6 @@ from pathlib import Path
 from datetime import datetime, date, timedelta, timezone
 from unittest import mock
 
-os.environ["EXIT_MODE"] = "mechanical"
 os.environ["ENRICH_LIVE"] = "false"
 os.environ["DISCORD_BOT_TOKEN"] = "x"
 sys.path.insert(0, str(Path(__file__).parent))
@@ -327,9 +326,10 @@ chk("fail_stop 仓位不再被自动交易(等人工)", not subs, f"卖单={subs
 # P0-3: closing 仓位不得被同合约新信号覆盖 / 必须计入敞口 / EXIT要能找到它
 chk("ACTIVE_STATUSES 含 closing", "closing" in B.ACTIVE_STATUSES)
 _srcA = Path(__file__).with_name("discord_enrich_bot.py").read_text()
-chk("EXIT持仓查找已改用 ACTIVE_STATUSES(closing不会被当成无持仓)",
-    'p["status"] in ACTIVE_STATUSES' in _srcA
-    and 'held = [osi for osi, p in positions.items()' in _srcA)
+# (原断言还检查 EXIT 分支的 held 推导用了 ACTIVE_STATUSES —— 那段随 mirror 出场模式
+#  一并删除, 站长出场现在只播报。ACTIVE_STATUSES 本身仍是敞口计算/券商对账的判据。)
+chk("敞口与对账仍按 ACTIVE_STATUSES 计(closing不会被当成无持仓)",
+    _srcA.count('status") in ACTIVE_STATUSES') + _srcA.count('status"] in ACTIVE_STATUSES') >= 2)
 chk("重复建仓守卫用 ACTIVE_STATUSES",
     'if old and old.get("status") in ACTIVE_STATUSES:' in _srcA)
 

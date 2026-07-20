@@ -21,7 +21,6 @@ from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-os.environ.setdefault("EXIT_MODE", "mechanical")
 os.environ.setdefault("ENRICH_LIVE", "true")      # 让 bot 真的走下单链路(下到假券商)
 os.environ.setdefault("DISCORD_BOT_TOKEN", "sim")
 os.environ.setdefault("POSITION_FRAC", "0.5")
@@ -39,7 +38,7 @@ class Violation(Exception):
 
 
 class Sim:
-    def __init__(self, start_et=None, equity=100_000.0, exit_mode="mechanical"):
+    def __init__(self, start_et=None, equity=100_000.0):
         start = start_et or _real_datetime(2026, 7, 20, 10, 0, tzinfo=ET)   # 周一 10:00 ET 盘中
         self.clock = FakeClock(start)
         self.quotes = FakeQuotes(self.clock)
@@ -53,7 +52,6 @@ class Sim:
         self.saved = []           # 每次落盘的快照(用于崩溃重启测试)
         self.save_ok = True       # False 模拟落盘失败
         self._patches = []
-        self.exit_mode = exit_mode
 
     # ── 打补丁: 把 bot 的外部依赖全换成假件 ──
     def __enter__(self):
@@ -110,7 +108,6 @@ class Sim:
             push_discord=_push,
             _alert=_alert,
             us_rth_now=lambda: True,
-            EXIT_MODE=self.exit_mode,
             LIVE=True,
         )
         p.start(); self._patches.append(p)

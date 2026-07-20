@@ -123,7 +123,7 @@ LOGIC_MUTATIONS = [
 ]
 
 MODULES = ["sim.scenarios.normal", "sim.scenarios.adversarial",
-           "sim.scenarios.reduce_ambig", "sim.scenarios.discord_layer",
+           "sim.scenarios.ambig", "sim.scenarios.discord_layer",
            "sim.scenarios.regression_guards"]
 
 

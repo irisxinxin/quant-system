@@ -488,65 +488,54 @@ def sc_dead_quote_still_force_closed_at_expiry(s):
 # E 组合攻击
 # ══════════════════════════════════════════════════════════════════════════
 
-def _mirror_mode(s):
-    """临时切到 mirror 出场模式(机械模式下站长出场信号被完全忽略, 测不到跟随链路)。"""
-    import discord_enrich_bot as B
-    old = B.EXIT_MODE
-    B.EXIT_MODE = "mirror"
-    return B, old
+# (原 _mirror_mode 夹具随 mirror 出场模式一并删除 —— 2026-07-20。
+#  下面两条场景改用 close_position 直接触发: 现实里的触发源是 9ema 拖尾 / 到期强平,
+#  它们同样是"这一轮的出场意图必须留到下一轮"的一次性动作。)
 
 
 def sc_pending_action_kept_when_closing(s):
     """卖单在途期间收到站长全平信号 —— 一次性意图不得丢弃(记 pending_action), 也不得重复卖。"""
     import discord_enrich_bot as B
-    B, old = _mirror_mode(s)
-    try:
-        fails = []
-        p = _open(s, equity=1200.0)
-        s.broker.liquidity[OSI] = 0
-        s.quotes.set_path(OSI, [CRASH])
-        s.tick()                                   # 止损 → 市价卖在途(卡住不成交)
-        fails += expect_eq(p["status"], "closing", "应处于卖单在途状态")
-        n_sell = len(_sell_orders(s))
+    fails = []
+    p = _open(s, equity=1200.0)
+    s.broker.liquidity[OSI] = 0
+    s.quotes.set_path(OSI, [CRASH])
+    s.tick()                                   # 止损 → 市价卖在途(卡住不成交)
+    fails += expect_eq(p["status"], "closing", "应处于卖单在途状态")
+    n_sell = len(_sell_orders(s))
 
-        s.send("$HOOD all out here folks")          # 站长一次性全平令
-        fails += expect_eq(p.get("pending_action"), "full_exit",
-                           "closing 期间收到的全平意图必须记为待办(站长 all out 是一次性信号, 丢了就永久丢了)")
-        fails += expect(bool(s.evs("exit_deferred_closing")), "必须记 exit_deferred_closing 事件")
-        fails += expect_eq(len(_sell_orders(s)), n_sell, "不得在已有卖单之上重复卖")
+    B.close_position(s.positions, OSI, "9ema拖尾出场")   # 卖单在途时又来一个全平意图
+    fails += expect_eq(p.get("pending_action"), "full_exit",
+                       "closing 期间收到的全平意图必须记为待办(一次性动作, 丢了就永久丢了)")
+    fails += expect(bool(s.evs("exit_deferred_closing")), "必须记 exit_deferred_closing 事件")
+    fails += expect_eq(len(_sell_orders(s)), n_sell, "不得在已有卖单之上重复卖")
 
-        del s.broker.liquidity[OSI]
-        s.run(ticks=3)
-        fails += expect_eq(s.broker_pos(OSI), 0, "卖单成交后应平净")
-        fails += expect_eq(p["status"], "closed", "平净后应标 closed")
-        fails += expect_eq(p.get("pending_action"), None, "待办执行完必须清掉")
-        return fails
-    finally:
-        B.EXIT_MODE = old
+    del s.broker.liquidity[OSI]
+    s.run(ticks=3)
+    fails += expect_eq(s.broker_pos(OSI), 0, "卖单成交后应平净")
+    fails += expect_eq(p["status"], "closed", "平净后应标 closed")
+    fails += expect_eq(p.get("pending_action"), None, "待办执行完必须清掉")
+    return fails
 
 
 def sc_exit_intent_lost_on_submit_failure(s):
     """站长全平信号遇上卖单提交失败 —— 一次性出场意图必须留待重试, 不能静默丢弃。"""
     import discord_enrich_bot as B
-    B, old = _mirror_mode(s)
-    try:
-        fails = []
-        p = _open(s, equity=1200.0)
-        s.broker.fail_submit = 1                    # 下一次 submit 网络超时(券商没收到)
-        s.send("$HOOD closing everything out now")  # 站长全平
-        fails += expect(bool(s.evs("exit_submit_failed")), "本场景应确实触发一次提交失败(构造校验)")
-        fails += expect_eq(p["status"], "open", "提交失败时仓位应保持 open")
-        fails += expect_eq(p.get("pending_action"), "full_exit",
-                           "卖单提交失败后必须把一次性出场意图记为待办 —— 实际没有记, "
-                           "站长'all out'从此永久丢失, 仓位只剩 -60% 止损/到期强平兜底")
+    fails = []
+    p = _open(s, equity=1200.0)
+    s.broker.fail_submit = 1                    # 下一次 submit 网络超时(券商没收到)
+    B.close_position(s.positions, OSI, "9ema拖尾出场")
+    fails += expect(bool(s.evs("exit_submit_failed")), "本场景应确实触发一次提交失败(构造校验)")
+    fails += expect_eq(p["status"], "open", "提交失败时仓位应保持 open")
+    fails += expect_eq(p.get("pending_action"), "full_exit",
+                       "卖单提交失败后必须把一次性出场意图记为待办 —— 不记的话这次出场判定"
+                       "从此永久丢失, 仓位只剩 -60% 止损/到期强平兜底")
 
-        s.quotes.set_path(OSI, [FLAT])
-        s.run(ticks=4)                              # 提交故障已恢复, 应自动重试
-        fails += expect_eq(s.broker_pos(OSI), 0,
-                           "故障恢复后必须重试并真的平掉 —— 实际仓位仍在, 站长出场令被吞")
-        return fails
-    finally:
-        B.EXIT_MODE = old
+    s.quotes.set_path(OSI, [FLAT])
+    s.run(ticks=4)                              # 提交故障已恢复, 应自动重试
+    fails += expect_eq(s.broker_pos(OSI), 0,
+                       "故障恢复后必须重试并真的平掉 —— 实际仓位仍在, 出场意图被吞")
+    return fails
 
 
 def sc_buy_signal_during_closing_no_overwrite(s):

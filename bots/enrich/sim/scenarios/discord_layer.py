@@ -33,10 +33,26 @@ def _isolate():
     B._closing.clear()
 
 
-def _mirror():
-    """站长出场镜像模式(EXIT_MODE=mirror)。机械模式下 catch_up 的 EXIT 只提醒不成交,
-    要暴露"重复执行/丢失"的真实后果必须切到会真下单的这一档。"""
-    return mock.patch.object(B, "EXIT_MODE", "mirror")
+def _exit_raises(times=10 ** 9):
+    """让出场消息的处理抛异常 —— 给"处理失败 → 锚点保留 → 重试必须能真的重来"这类场景
+    提供注入点。
+
+    原来靠 EXIT_MODE=mirror 让 EXIT 真下单、再制造下单失败来触发异常。mirror 出场模式
+    已于 2026-07-20 删除(站长出场只播报), 改成直接让播报失败 —— 被测的性质没变:
+    处理抛异常时, 出场去重表不得留痕, 否则 10 分钟内的重试会被"重复出场消息跳过"静默吞掉,
+    而调用方还以为成功、锚点照常前移 → 信号永久丢失。
+
+    times: 失败多少次后恢复正常 —— "第一次失败、重试成功"才测得到完整重试链路。
+    """
+    orig = B.push_discord
+    state = {"n": 0}
+
+    def patched(msg):
+        if "站长出场" in str(msg) and state["n"] < times:
+            state["n"] += 1
+            raise RuntimeError("模拟播报失败")
+        return orig(msg)
+    return mock.patch.object(B, "push_discord", patched)
 
 
 def _sell_orders(s, sym=OSI):
@@ -180,58 +196,63 @@ def sc_catchup_recent_exits_poison_defeats_retry(s):
     重试会被 `if _norm in _recent_exits: return` 直接静默吞掉 —— 而且这次【不抛异常】,
     catch_up 认为处理成功, 锚点照常前移 → 出场信号永久丢失(违反 L2)。
 
-    异常源用真实脏数据: positions 里一条缺 "status" 的历史条目会让 EXIT 的 held 推导 KeyError。
+    异常源: 让出场播报抛一次异常(见 _exit_raises)。原来是靠 positions 里一条缺 "status"
+    的脏数据在 EXIT 推导 held 时抛 KeyError —— mirror 出场模式删除后不再推导 held。
     """
     _isolate()
     fails = []
-    with DiscordSim(s) as d, _mirror():
+    with DiscordSim(s) as d, _exit_raises(times=1):    # 只失败一次, 重试应当成功
         _open_position(s)
         base = d.enrich.post("noise 0")
         d.set_anchor(d.enrich.id, base.id)
         d.set_anchor(d.andy.id, 1)
-        ex = d.enrich.post(EXITMSG, at=d.ago(600))
+        d.enrich.post(EXITMSG, at=d.ago(600))
 
-        s.positions["LEGACY_BAD.US"] = {"ticker": "HOOD", "filled": 1, "sold": 0}  # 缺 status
         d.catch_up()                                   # 第一次: 抛错 → 保留锚点
         fails += expect_eq(d.anchor(d.enrich.id), str(base.id),
                            "第一次追赶应因异常保留锚点")
         fails += expect(bool(d.logs_with("保留锚点待下次重试")),
                         "第一次追赶应记录'保留锚点待下次重试'")
 
-        s.positions.pop("LEGACY_BAD.US")               # 故障已消失
-        n_before = len(_sell_orders(s))                # 建仓时挂的两条止盈腿不算
+        n_before = len(s.evs("exit_signal_mech_ignored"))
         d.catch_up()                                   # 第二次重连(10分钟内)
         skipped = bool(d.logs_with("重复出场消息跳过"))
-        acted = len(_sell_orders(s)) > n_before
+        acted = len(s.evs("exit_signal_mech_ignored")) > n_before
         fails += expect(acted,
                         f"[L2 信号丢失] 重试被 _recent_exits 静默吞掉(skipped={skipped}), "
-                        f"出场从未执行, 而锚点已前移到 {d.anchor(d.enrich.id)} → 永不回看")
+                        f"该出场信号从未被受理, 而锚点已前移到 {d.anchor(d.enrich.id)} → 永不回看")
     return fails
 
 
 def sc_catchup_no_age_gate_on_exit(s):
-    """catch_up 对 EXIT 没有任何时效闸门 —— 三天前的"全部清仓"会平掉今天刚建的仓。
+    """catch_up 的 EXIT 必须有时效闸门 —— 陈年出场令不能当成刚发生的播报出去。
 
-    BUY 有 STALE_BUY_SEC=180 兜底(且 catch_up 直接降级为提醒), EXIT 一条时效检查都没有:
-    `await to_thread(handle, m.content, m.created_at.date(), m.id, ...)` 连 msg_dt 都没传,
-    所以连 _handle 里的迟到闸门也够不着(EXIT 本来也在闸门之前 return)。
-    只要锚点因任何原因退回到几天前(见 sc_catchup_corrupt_anchor_falls_back_to_stale_bak
-    与 sc_catchup_anchor_regresses_on_race_with_live_msg), 陈年出场令就会被当场执行。
+    BUY 有 STALE_BUY_SEC=180 兜底(且 catch_up 直接降级为提醒), EXIT 原本一条时效检查都没有:
+    `await to_thread(handle, ...)` 连 msg_dt 都没传, 连 _handle 的迟到闸门都够不着。
+
+    删除 mirror 出场模式之前, 后果是"三天前的全部清仓当场平掉今天刚建的仓"。现在站长出场
+    只播报, 后果降级为误导: 把三天前的清仓令播成当前信号, 人看到会以为站长刚刚喊撤。
+    锚点退回几天前是真实存在的路径 —— 见 sc_catchup_corrupt_anchor_falls_back_to_stale_bak
+    与 sc_catchup_anchor_regresses_on_race_with_live_msg。
     """
     _isolate()
     fails = []
-    with DiscordSim(s) as d, _mirror():
+    with DiscordSim(s) as d:
         _open_position(s)
         base = d.enrich.post("noise 0")
         d.set_anchor(d.enrich.id, base.id)
         d.set_anchor(d.andy.id, 1)
         d.enrich.post("all out everything", at=d.ago(3 * 86400))    # 三天前的全局清仓令
-        n_sell_before = len(_sell_orders(s))
         d.catch_up()
-        new_sells = _sell_orders(s)[n_sell_before:]
-        fails += expect_eq(len(new_sells), 0,
-                           f"[无时效闸门] 3天前的清仓令被当场执行, 新发了卖单 {new_sells}; "
-                           f"catch_up 的 EXIT 分支没有任何 age 检查(msg_dt 都没传给 handle)")
+        fails += expect_eq(len(s.evs("exit_signal_mech_ignored")), 0,
+                           "[无时效闸门] 3天前的出场令被当成当前信号播报")
+        fails += expect_eq(len(s.evs("stale_exit_skipped")), 1,
+                           "陈年出场应记 stale_exit_skipped(标明已过期), 而不是静默丢弃")
+        # 阳性对照: 刚发生的出场必须照常播报, 否则这条场景等于"永远不播报"的空断言
+        d.enrich.post("all out now", at=d.ago(60))
+        d.catch_up()
+        fails += expect_eq(len(s.evs("exit_signal_mech_ignored")), 1,
+                           "1分钟前的出场信号应正常播报")
     return fails
 
 
@@ -243,7 +264,7 @@ def sc_catchup_corrupt_anchor_falls_back_to_stale_bak(s):
     """
     _isolate()
     fails = []
-    with DiscordSim(s) as d, _mirror():
+    with DiscordSim(s) as d, _exit_raises():
         _open_position(s)
         old = d.enrich.post("noise old", at=d.ago(3 * 86400))
         d.set_anchor(d.andy.id, 1)
@@ -268,7 +289,7 @@ def sc_catchup_break_preserves_anchor_and_retries(s):
     """
     _isolate()
     fails = []
-    with DiscordSim(s) as d, _mirror():
+    with DiscordSim(s) as d, _exit_raises():
         base = d.enrich.post("noise 0")
         d.set_anchor(d.enrich.id, base.id)
         d.set_anchor(d.andy.id, 1)
@@ -354,7 +375,7 @@ def sc_onmessage_anchor_held_when_handle_raises(s):
     """✅ 正向(L2): handle 抛异常时锚点必须保留, 重启后 catch_up 能补回来。"""
     _isolate()
     fails = []
-    with DiscordSim(s) as d, _mirror():
+    with DiscordSim(s) as d, _exit_raises():
         d.boot()
         base = d.enrich.post("noise 0")
         d.set_anchor(d.enrich.id, base.id)
@@ -508,7 +529,7 @@ def sc_main_onready_reentrant_double_catchup(s):
     """
     _isolate()
     fails = []
-    with DiscordSim(s) as d, _mirror():
+    with DiscordSim(s) as d, _exit_raises():
         d.boot()
         base = d.enrich.post("noise 0")
         d.set_anchor(d.enrich.id, base.id)
