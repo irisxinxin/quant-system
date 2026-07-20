@@ -42,10 +42,14 @@ PRICE_RE = re.compile(r"\$(\d*\.?\d+)")
 DATE_RE = re.compile(r"\b(\d{1,2})/(\d{1,2})\b")
 CALLPUT_RE = re.compile(r"\b(calls?|puts?)\b", re.I)
 # 出场关键词 (自然语言, 只提醒)
+# ⚠ 这里的词形必须【覆盖】下面 EXIT_PARTIAL_RE / EXIT_FULL_RE 认的所有词形 —— 它是闸门,
+#   匹配不上就整条判 NOISE, 根本走不到分级。曾经闸门写 `trim`(外层\b卡死)而分级写 `trim\w*`,
+#   于是 "Trimming $NVDA here" 被整条丢弃, 分级里那条 trim\w* 永远等不到输入。
 EXIT_RE = re.compile(
-    r"\b(scal(?:e|ing)\s+(?:out|down)|all\s+out|closing|close\s+out|trim|"
+    r"\b(scal(?:e|ing)\s+(?:out|down)|all\s+out|closing|close\s+out|trim\w*|"
     r"sell(?:ing)?|sold|secure\s+profits?|lock(?:ing)?\s+(?:in\s+)?(?:those\s+)?gains|"
-    r"take\s+(?:the\s+)?(?:profits?|gains)|stopped\s+out|cutting|lock\s+(?:them|it|em)\s+all|"
+    r"tak(?:e|ing)\s+(?:the\s+)?(?:profits?|gains)|stopped\s+out|cutting|"
+    r"lock\s+(?:them|it|em)\s+all|"
     r"holding\s+runners|down\s+to\s+1/[234]|down\s+to\s+runners|secure\s+your\s+gains)\b", re.I)
 # 噪音标志 (整条丢弃, 优先级最高)
 NOISE_RE = re.compile(r"\b(watchlist|recap|levels\s+for\s+the\s+day|mentorship|hypothetical|another\s+example\s+of)\b", re.I)

@@ -14,7 +14,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sim.harness import Sim, Violation
 
-SCENARIO_MODULES = ["sim.scenarios.normal", "sim.scenarios.adversarial"]
+# 固定在前的两个基础模块, 其余 sim/scenarios/*.py 自动发现(新增场景文件不用再改这里)
+_BASE_MODULES = ["sim.scenarios.normal", "sim.scenarios.adversarial"]
+SCENARIO_MODULES = _BASE_MODULES + sorted(
+    f"sim.scenarios.{p.stem}"
+    for p in (Path(__file__).resolve().parent / "sim" / "scenarios").glob("*.py")
+    if not p.stem.startswith("_") and f"sim.scenarios.{p.stem}" not in _BASE_MODULES)
 
 
 def collect():

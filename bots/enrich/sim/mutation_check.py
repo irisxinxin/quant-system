@@ -31,6 +31,16 @@ MUTATIONS = [
 
     ("报价陈旧阈值放到无穷", "QUOTE_MAX_AGE_SEC", 10**9, None),   # 由对抗场景覆盖
     ("卖单卡死超时放到无穷", "EXIT_STUCK_SEC", 10**9, None),
+
+    # 本轮新增的防线, 每条都要能被对应场景抓住。
+    # ⚠ 变异要指向【真正由它守住】的场景, 不是"看起来相关"的场景 —— 否则测的是别的防线:
+    #   · MIN_MARGIN 曾指向 sc_bug_ambig_wrong_side_when_price_ran, 但那条是被 MAX_DEV
+    #     拦住的(best_dev 0.80 > 0.79), 关掉 MIN_MARGIN 它照样绿 → 假的"空转"报告。
+    #     真正只有 MIN_MARGIN 能拦的是"两边都贴合、差距很小"的局面。
+    ("消歧模棱两可闸关闭", "AMBIG_MIN_MARGIN", 0.0, "sc_guard_ambig_close_deviation_refuses"),
+    ("消歧偏离上限放开", "AMBIG_MAX_DEV", 99.0, "sc_guard_ambig_far_deviation_refuses"),
+    ("停机出场时效闸关闭", "STALE_EXIT_SEC", 10**9, "sc_catchup_no_age_gate_on_exit"),
+    ("追赶翻页退回单页100条", "CATCHUP_MAX", 100, "sc_catchup_missed_beyond_100_silently_lost"),
 ]
 
 # 逻辑变异: 常量改不动的行为(如"armed闸"), 用包装函数模拟"该守卫失效"。
@@ -48,11 +58,73 @@ def _mut_force_armed():
     return lambda: setattr(B, "manage_positions", orig)
 
 
+def _mut_broker_qty_none_passes():
+    """把 _broker_qty 查询失败的处理改回旧行为: 查不到就跳过封顶、按本地账本照常卖。
+    (旧代码是 `if bq is not None:` 包住封顶段, 查询失败直接落到提交)"""
+    orig = B._start_exit
+
+    def patched(positions, osi, p, qty, reason, intent="full"):
+        if B._broker_qty(osi) is None:
+            # 模拟"没有这道防线": 伪造成查得到且量充足, 让它一路走到提交
+            _bq = B._broker_qty
+            B._broker_qty = lambda o: max(qty, p.get("filled", 0))
+            try:
+                return orig(positions, osi, p, qty, reason, intent)
+            finally:
+                B._broker_qty = _bq
+        return orig(positions, osi, p, qty, reason, intent)
+    B._start_exit = patched
+    return lambda: setattr(B, "_start_exit", orig)
+
+
+def _mut_sell_budget_unlimited():
+    """I3 硬闸失效: _sell_budget 永远返回充足预算(不减去在挂卖单)。"""
+    orig = B._sell_budget
+    B._sell_budget = lambda p: 10 ** 6
+    return lambda: setattr(B, "_sell_budget", orig)
+
+
+def _mut_anchor_blind_write():
+    """锚点回到盲写(不取 max) —— 分页/重试写入较小 id 时锚点会倒退。"""
+    orig = B._bump
+
+    def patched(state, key, msg_id):
+        state[key] = str(msg_id)
+    B._bump = patched
+    return lambda: setattr(B, "_bump", orig)
+
+
+def _mut_anchor_overwrite_whole():
+    """锚点落盘回到整份覆盖(不与磁盘合并) —— 并发时冲掉别人刚写的锚点。"""
+    orig = B._merge_save_anchor
+
+    def patched(state):
+        return B._save(B.LAST_MSG_JSON, dict(state))
+    B._merge_save_anchor = patched
+    return lambda: setattr(B, "_merge_save_anchor", orig)
+
+
 LOGIC_MUTATIONS = [
     ("armed闸失效(未武装也拖尾)", _mut_force_armed, "sc_unarmed_ema_no_exit"),
+    # 同样注意变异与场景的对应关系:
+    #   · sc_submit_lost_response_no_double_sell 里持仓查询是【正常】的(_broker_qty 返回0
+    #     走对账收口), 拆"查不到时的处理"根本触发不到 → 要用显式注入查询失败的守卫场景。
+    #   · _sell_budget 是纵深防御, 上游 mirror_reduce/close_position 都会先撤净卖腿,
+    #     正常路径走不到它 → 只能直接打 _start_exit 才验得到。
+    #   · 锚点盲写在顺序处理下和取 max 结果相同(id 天然递增), 要乱序写入才证伪得了。
+    ("券商持仓查不到时照常卖", _mut_broker_qty_none_passes,
+     "sc_guard_broker_qty_unknown_refuses_sell"),
+    ("I3硬闸失效(卖单预算无限)", _mut_sell_budget_unlimited,
+     "sc_guard_sell_budget_blocks_stacking"),
+    ("锚点盲写(不取max)", _mut_anchor_blind_write,
+     "sc_guard_anchor_never_regresses"),
+    ("锚点整份覆盖(不合并)", _mut_anchor_overwrite_whole,
+     "sc_catchup_anchor_regresses_on_race_with_live_msg"),
 ]
 
-MODULES = ["sim.scenarios.normal", "sim.scenarios.adversarial"]
+MODULES = ["sim.scenarios.normal", "sim.scenarios.adversarial",
+           "sim.scenarios.reduce_ambig", "sim.scenarios.discord_layer",
+           "sim.scenarios.regression_guards"]
 
 
 def _all_scenarios():

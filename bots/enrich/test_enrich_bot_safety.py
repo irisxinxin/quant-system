@@ -42,7 +42,11 @@ def mkpos(**kw):
 # 公共桩: 禁止任何真实IO
 base = dict(_save=lambda *a: True, journal=lambda **k: None,
             push_discord=lambda *a, **k: False, log=lambda m: None,
-            _alert=lambda m: None)
+            _alert=lambda m: None,
+            # 默认"券商查得到持仓且量充足": _start_exit 会先用它做 I3 封顶, 不 stub 就一路
+            # 抛异常返回 None → 触发"查不到券商真值就不卖"的保护 → 与本条无关的断言全落空。
+            # 要测那条保护本身的用例, 显式覆盖成 lambda osi: None。
+            _broker_qty=lambda osi: 10 ** 6)
 mgr = dict(ensure_protection=lambda *a: None, _option_last=lambda o: None,
            _ema15_break_count=lambda t: None, us_rth_now=lambda: True)
 
@@ -308,7 +312,8 @@ chk("closing 期间收到全平 → 记为待办(动作升级), 不丢弃",
 pos = {"F3": mkpos(filled=6, sold=0)}
 with mock.patch.multiple(B, _submit=lambda *a, **k: (True, "OID"), _save=lambda *a: False,
                          journal=lambda **k: None, push_discord=lambda *a, **k: False,
-                         log=lambda m: None, _alert=lambda m: None):
+                         log=lambda m: None, _alert=lambda m: None,
+                         _broker_qty=lambda osi: 10 ** 6, _live_sell_order=lambda osi: (None, None)):
     B._start_exit(pos, "F3", pos["F3"], 6, "止损")
 chk("卖单落盘失败 → 该仓位置 fail_stop", pos["F3"].get("fail_stop") is True,
     f"fail_stop={pos['F3'].get('fail_stop')}")
@@ -410,11 +415,19 @@ _srcL = Path(__file__).with_name("discord_enrich_bot.py").read_text()
 chk("源码无 llm_classify( 调用", "llm_classify(" not in _srcL)
 
 # 应用层幂等: 券商侧已有在途卖单时认领而非重复提交
+def _brk(qty, sym="G1"):
+    """构造 stock_positions 的返回。_start_exit 会先用它做 I3 封顶, 不 stub 就查不到持仓
+    → 触发"查不到券商真值不卖"的保护 → 后面的断言全落空(这里曾因此假失败)。"""
+    p1 = mock.Mock(); p1.symbol, p1.quantity = sym, qty
+    ch = mock.Mock(); ch.positions = [p1]
+    return mock.Mock(channels=[ch])
+
 pos = {"G1": mkpos(filled=6, sold=0)}
 subs = []
 class _OD:
     def __init__(s2): s2.order_id, s2.status, s2.side = "EXIST9", "OrderStatus.New", "OrderSide.Sell"
-with mock.patch.multiple(B, _trade_ctx=mock.Mock(today_orders=lambda symbol=None: [_OD()]),
+with mock.patch.multiple(B, _trade_ctx=mock.Mock(today_orders=lambda symbol=None: [_OD()],
+                                                 stock_positions=lambda symbols=None: _brk(6, "G1")),
                          _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "NEW"))[1],
                          **base):
     B._start_exit(pos, "G1", pos["G1"], 6, "止损")
@@ -423,11 +436,26 @@ chk("券商已有在途卖单 → 认领不重复提交", not subs and pos["G1"]
 
 pos = {"G2": mkpos(filled=6, sold=0)}
 subs = []
-with mock.patch.multiple(B, _trade_ctx=mock.Mock(today_orders=lambda symbol=None: []),
+with mock.patch.multiple(B, _trade_ctx=mock.Mock(today_orders=lambda symbol=None: [],
+                                                 stock_positions=lambda symbols=None: _brk(6, "G2")),
                          _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "NEW"))[1],
                          **base):
     B._start_exit(pos, "G2", pos["G2"], 6, "止损")
 chk("券商无在途卖单 → 正常提交", subs == [6], f"新单={subs}")
+
+# I3 终极保障: 查不到券商真值时【不卖】。原实现是 `if bq is not None:` 包住封顶逻辑,
+# 查询失败就跳过封顶按本地账本照常卖 —— 而"本地账本偏高"与"查询失败"常是同一次网络故障
+# 的两面(卖单券商已收单但客户端超时, 同期两道防线一起失灵), 仿真复现净持仓 -6 张裸空。
+pos = {"G3": mkpos(filled=6, sold=0)}
+subs = []
+_b3 = dict(base); _b3["_broker_qty"] = lambda osi: None      # 券商持仓查询失败
+with mock.patch.multiple(B, _trade_ctx=mock.Mock(today_orders=lambda symbol=None: []),
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "NEW"))[1],
+                         **_b3):
+    ok3 = B._start_exit(pos, "G3", pos["G3"], 6, "止损")
+chk("查不到券商持仓 → 拒绝卖出(宁可少卖不可裸空)", not subs and ok3 is False, f"新单={subs} 返回={ok3}")
+chk("查不到券商持仓 → 记待办下轮重试(不丢一次性出场意图)",
+    pos["G3"].get("pending_action") == "full_exit", f"pending={pos['G3'].get('pending_action')}")
 
 with mock.patch.object(B, "log", lambda m: None):
     q, note = B.size_qty(0, 50000, "X.US", fallback=1)

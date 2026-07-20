@@ -118,6 +118,7 @@ class Sim:
         # 任一场景注入429后, 按字母序排在它后面的所有场景都会因退避而假失败(曾污染12个)。
         B._optfail.clear(); B._closing.clear(); B._ema_cache.clear()
         B._recent_exits.clear()      # 出场文本10分钟去重表(按假时钟计时, 跨场景会静默吞消息)
+        B._anchor_mem.clear()        # 消息锚点内存镜像(残留会让下个场景的锚点"已经很新"→不回看)
         B._rl_until = 0.0            # 429退避截止时刻
         B._MIT_OK = None
         B._last_equity[0] = None

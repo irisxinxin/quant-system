@@ -45,6 +45,13 @@ def expect_not_in(needle, haystack, what):
 
 
 def osi(ticker, yymmdd, right, strike):
-    """构造 OSI 代码, 与 bot 的 _osi 一致。osi('HOOD','260724','C',120) →
-    HOOD260724C120000.US"""
-    return f"{ticker}{yymmdd}{right}{int(round(strike * 1000)):06d}.US"
+    """构造 OSI 代码 —— 直接转调 bot 的 _osi, 不另写一份。
+
+    ⚠ 这里曾经是独立实现("与 bot 的 _osi 一致"只是注释里的承诺)。两份实现意味着
+      bot 的 _osi 拼错了合约代码, 场景也会跟着拼一样的错 → 仿真全绿但实盘下到错误合约上。
+      测试里凡是重写被测逻辑的地方, 测的都是重写版, 不是真代码。
+    """
+    from datetime import date as _date
+    import discord_enrich_bot as _B
+    d = _date(2000 + int(yymmdd[:2]), int(yymmdd[2:4]), int(yymmdd[4:6]))
+    return _B._osi(ticker, d, right, strike)
