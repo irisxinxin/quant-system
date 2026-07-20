@@ -211,6 +211,36 @@ def sc_guard_ambig_far_deviation_refuses(s):
     return fails
 
 
+def sc_guard_quote_age_uses_local_tz(s):
+    """报价新鲜度必须按【本机时区】解释 SDK 的 naive timestamp —— 按 UTC 解释会偏 8 小时。
+
+    LongPort 的 option_quote().timestamp 是 naive datetime, 值等于本机墙上时间
+    (2026-07-20 真实API核对: SDK ts 23:29:27 / 本机SGT 23:29:28 / UTC 15:29:28)。
+    曾经写成 replace(tzinfo=utc), 于是年龄恒等于【真实年龄 − 28800】, `age > 3600`
+    的实际拒绝线从 1 小时变成 9 小时 —— 覆盖整个交易日加隔夜。
+    后果是漏止损: 流动性差的合约今天没成交时, 拿昨天的 last_done 判今天的止损,
+    明明已跌穿却判"没跌穿"。
+
+    这类 bug 仿真本来抓不到(FakeQuotes 的 quote_age_sec 直接赋值, 不过时区),
+    所以这条场景绕开 FakeQuotes, 直接构造带 naive timestamp 的报价对象打 _quote_usable。
+    """
+    import discord_enrich_bot as B
+    from datetime import timedelta, timezone
+    fails = []
+    # 必须用【bot 自己的时钟】造 timestamp: Sim 把 B.datetime 换成了 FakeClock, 拿真实
+    # datetime.now() 造数据会和假时钟差出好几小时, 场景就假失败了(第一版正是这么写错的)。
+    now_local = B.datetime.now(timezone.utc).astimezone()
+    for mins, should_accept in ((1, True), (30, True), (59, True), (90, False), (600, False)):
+        q = SimpleNamespace(last_done=1.15, trade_status="Normal",
+                            timestamp=(now_local - timedelta(minutes=mins)).replace(tzinfo=None))
+        got = B._quote_usable(q, "GUARD.US")
+        ok = (got is not None) if should_accept else (got is None)
+        fails += expect(ok, f"{mins}分钟前的报价应{'接受' if should_accept else '拒绝'}, "
+                            f"实际 {'接受' if got is not None else '拒绝'}"
+                            f"(按UTC解释会把9小时内的全部放行)")
+    return fails
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # ④ 锚点只进不退
 #    守: _bump 取 max

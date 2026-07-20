@@ -167,8 +167,18 @@ def _quote_usable(q, osi: str):
     if ts is not None:
         try:
             if ts.tzinfo is None:
-                ts = ts.replace(tzinfo=_tzone.utc)   # naive 一律按UTC解释, 不能让
-                # astimezone 用本机时区(SGT+8)去猜 → 会把所有报价算成8小时前=止损全灭
+                # SDK 返回的是 naive datetime, 实测其值 = 【本机时区】的墙上时间
+                # (2026-07-20 用真实API核对: SDK ts 23:29:27 / 本机SGT 23:29:28 / UTC 15:29:28
+                #  → 按SGT解释年龄1秒✅; 按UTC解释 -28799秒❌)。astimezone() 对 naive 值
+                # 正是"按本机时区解释", 所以直接用它。
+                #
+                # ⚠ 这里曾经写 replace(tzinfo=utc), 注释还断言"按本机时区解释会算成8小时前
+                # =止损全灭" —— 诊断反了。真实后果是年龄恒等于【真实年龄 − 28800】, 于是
+                # `age > QUOTE_MAX_AGE_SEC` 的实际拒绝线从 1 小时变成 9 小时, 覆盖整个交易日
+                # 加隔夜: 流动性差的合约今天没成交时, 会拿昨天的 last_done 判今天的止损
+                # → 明明已经跌穿却判"没跌穿"(漏止损)。
+                # 仿真抓不到这类问题 —— FakeQuotes 的 quote_age_sec 是直接赋值的, 根本不过时区。
+                ts = ts.astimezone()
             age = (datetime.now(_tzone.utc) - ts.astimezone(_tzone.utc)).total_seconds()
             if age > QUOTE_MAX_AGE_SEC:
                 log(f"   ⏱️ {osi} 报价陈旧({age/60:.0f}分钟前), 不可用")

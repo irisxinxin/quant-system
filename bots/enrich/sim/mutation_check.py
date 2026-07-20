@@ -84,6 +84,20 @@ def _mut_sell_budget_unlimited():
     return lambda: setattr(B, "_sell_budget", orig)
 
 
+def _mut_quote_age_as_utc():
+    """把 naive timestamp 改回按 UTC 解释 —— 年龄偏 8 小时, 新鲜度阈值实际放宽到 9 小时。"""
+    orig = B._quote_usable
+    from datetime import timezone as _tz
+
+    def patched(q, osi):
+        ts = getattr(q, "timestamp", None)
+        if ts is not None and ts.tzinfo is None:
+            q = type(q)(**{**vars(q), "timestamp": ts.replace(tzinfo=_tz.utc)})
+        return orig(q, osi)
+    B._quote_usable = patched
+    return lambda: setattr(B, "_quote_usable", orig)
+
+
 def _mut_anchor_blind_write():
     """锚点回到盲写(不取 max) —— 分页/重试写入较小 id 时锚点会倒退。"""
     orig = B._bump
@@ -116,6 +130,8 @@ LOGIC_MUTATIONS = [
      "sc_guard_broker_qty_unknown_refuses_sell"),
     ("I3硬闸失效(卖单预算无限)", _mut_sell_budget_unlimited,
      "sc_guard_sell_budget_blocks_stacking"),
+    ("报价年龄按UTC解释(偏8小时)", _mut_quote_age_as_utc,
+     "sc_guard_quote_age_uses_local_tz"),
     ("锚点盲写(不取max)", _mut_anchor_blind_write,
      "sc_guard_anchor_never_regresses"),
     ("锚点整份覆盖(不合并)", _mut_anchor_overwrite_whole,

@@ -371,12 +371,21 @@ with mock.patch.multiple(B, log=lambda m: None):
         chk("报价陈旧2小时 → 不可用", B._option_last("X.US") is None)
     with mock.patch.object(B, "_quote_ctx", _q(1.5, age=1200)):
         chk("报价20分钟(低流动性常态) → 仍可用, 止损不失效", B._option_last("X.US") == 1.5)
-    class NaiveQ(Q):
-        def __init__(s2):
-            super().__init__(1.5); s2.timestamp = datetime.utcnow()   # naive UTC
-    with mock.patch.object(B, "_quote_ctx", mock.Mock(option_quote=lambda syms: [NaiveQ()])):
-        chk("naive时间戳按UTC解释(不被本机SGT当成8小时前致止损全灭)",
-            B._option_last("X.US") == 1.5)
+    # SDK 的 timestamp 是 naive datetime, 值 = 【本机墙上时间】(2026-07-20 真实API核对:
+    # SDK ts 23:29:27 / 本机SGT 23:29:28 / UTC 15:29:28)。
+    # 这条原来用 datetime.utcnow() 造数据并断言"按UTC解释", 前提就是错的 —— 于是把
+    # "年龄恒偏 -8 小时、新鲜度阈值从1小时变成9小时"这个 bug 固化成了测试要求。
+    class NaiveLocalQ(Q):
+        def __init__(s2, mins=0):
+            super().__init__(1.5)
+            s2.timestamp = datetime.now() - timedelta(minutes=mins)   # naive 本机时间
+    with mock.patch.object(B, "_quote_ctx",
+                           mock.Mock(option_quote=lambda syms: [NaiveLocalQ(0)])):
+        chk("naive时间戳按本机时区解释 → 刚出的报价可用", B._option_last("X.US") == 1.5)
+    with mock.patch.object(B, "_quote_ctx",
+                           mock.Mock(option_quote=lambda syms: [NaiveLocalQ(90)])):
+        chk("naive时间戳: 90分钟前的报价应判陈旧(按UTC解释会放行到9小时)",
+            B._option_last("X.US") is None)
     with mock.patch.object(B, "_quote_ctx", _q(1.5, st="Halted")):
         chk("停牌 → 不可用", B._option_last("X.US") is None)
     with mock.patch.object(B, "_quote_ctx", _q(1.5)):
