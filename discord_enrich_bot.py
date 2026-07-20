@@ -62,7 +62,10 @@ ZERO_DTE_FRAC = float(os.environ.get("ZERO_DTE_FRAC", "0.10"))  # 0DTE更小: �
 OI_CAP_PCT = 0.10   # 流动性帽: 张数≤未平仓量10% (防模拟盘假成交失真)
 # ── QA加固常量 (2026-07-20 对抗性QA: 8猎手+逐条核实) ──
 OI_UNKNOWN_CAP = int(os.environ.get("OI_UNKNOWN_CAP", "20"))     # OI拿不到=流动性未知 → 保守帽(原为不封顶, $0.05票可下6666张)
-MAX_GROSS_FRAC = float(os.environ.get("MAX_GROSS_FRAC", "0.6"))  # 全账户在险权利金上限(原无, 一天3条信号=1.5×净值)
+# 全账户在险权利金上限(原无上限: 一天3条常规信号=1.5×净值, 第3条起被券商购买力不足随机拒单)。
+# ⚠️ 这是策略参数不是纯安全参数: 设太低会系统性漏单, 而回测的+16%/笔是在"无上限"下跑出来的。
+# 默认1.0 = 最多压满净值(允许2笔常规单并发), 只挡掉>100%杠杆和随机拒单; 设0则完全关闭该闸。
+MAX_GROSS_FRAC = float(os.environ.get("MAX_GROSS_FRAC", "1.0"))
 MIN_TICK = 0.01     # 期权最小报价档: 止损价低于此值则永不触发(低价期权-60%止损失效)
 OPT_FAIL_ALERT = int(os.environ.get("OPT_FAIL_ALERT", "5"))      # 期权报价连续失败N轮 → 告警(模拟盘止损唯一通道)
 
@@ -155,6 +158,22 @@ def _mech_split(filled: int):
 
 _ema_cache = {}   # ticker -> (checked_at_epoch, break_count)
 _optfail = {}     # osi -> 期权报价连续失败轮数 (止损通道健康度; 模拟盘唯一止损通道)
+_closing = set()  # 正在平仓的osi — 只存内存, 绝不落盘(落盘会导致崩溃重启后永久无法平仓)
+_TERMINAL = frozenset(("Filled", "Canceled", "Expired", "Rejected", "PartialWithdrawal"))
+_CANCELLED = frozenset(("Canceled", "Expired", "Rejected", "PartialWithdrawal"))
+_alert_noexit_warned = [False]
+
+
+def _alert(msg: str):
+    """关键告警: 记日志 + 推Discord。未配webhook时显式标注"告警无出口",
+    否则整个人工兜底层是空的却看不出来(实测本机从未配置过 DISCORD_WEBHOOK_URL)。"""
+    log(msg)
+    try:
+        if not push_discord(msg) and not _alert_noexit_warned[0]:
+            _alert_noexit_warned[0] = True
+            log("   ⚠️ 告警无出口: 未配置 DISCORD_WEBHOOK_URL/URLS, 所有告警只会留在本日志")
+    except Exception as e:
+        log(f"   ⚠️ 告警推送异常: {e}")
 
 
 def _ema15_break_count(ticker: str):
@@ -279,10 +298,12 @@ def log(msg: str):
         pass
 
 
-def _load(p: Path) -> dict:
-    """读状态。不存在→{}; 损坏→先试.bak, 再不行【抛错拒启】。
+def _load(p: Path, strict: bool = False) -> dict:
+    """读状态。不存在→{}; 损坏→先试.bak; 仍不行: strict=True 抛错拒启, 否则告警+返回{}。
     QA-CRITICAL: 原实现裸except返回{}, 半截JSON=bot静默忘记全部持仓(止损没了/runner裸奔/挂单变孤儿)。
-    宁可响亮地起不来, 也绝不带着空仓位表上线。"""
+    仓位/去重表宁可响亮地起不来, 也绝不带着空表上线。
+    但 strict 只能用于 POS_JSON/SEEN_JSON —— 消息锚点(LAST_MSG_JSON)每条消息都写, 且 bump_last
+    在 on_message 第一行【裸调】, 抛错会让所有信号静默丢失, 必须走宽松模式(复审发现)。"""
     if not p.exists():
         return {}
     try:
@@ -301,8 +322,20 @@ def _load(p: Path) -> dict:
                 return d
             except Exception:
                 pass
+        if not strict:
+            log(f"⚠️ {p.name} 损坏且无备份, 非关键状态 → 按空表继续(最坏是重放一次追赶)")
+            return {}
         try:
-            push_discord(f"🚨 enrich状态文件 {p.name} 损坏且无可用备份 — bot拒绝启动, 请人工核对券商持仓")
+            (OUT / "REFUSED_TO_START").write_text(
+                f"{datetime.now():%Y-%m-%d %H:%M:%S} 状态文件 {p.name} 损坏且无可用备份, bot拒绝启动。\n"
+                f"请人工核对券商侧实际持仓后, 修复或删除该文件再启动。\n")
+        except Exception:
+            pass
+        banner = f"🚨🚨 状态文件 {p.name} 损坏且无可用备份 — bot拒绝启动, 请人工核对券商持仓 🚨🚨"
+        print("\n" + "=" * 78 + f"\n{banner}\n" + "=" * 78 + "\n", flush=True)
+        log(banner)
+        try:
+            push_discord(banner)
         except Exception:
             pass
         raise RuntimeError(f"状态文件 {p} 损坏且无可用备份 — 拒绝以空状态启动(会导致在手持仓永久裸奔)")
@@ -314,8 +347,10 @@ def _save(p: Path, d: dict):
     try:
         OUT.mkdir(exist_ok=True)
         if p.exists():
-            try:
-                p.with_suffix(p.suffix + ".bak").write_bytes(p.read_bytes())
+            try:                      # .bak 同样原子化: 直写会被kill打断产生半截备份
+                _bt = p.with_suffix(p.suffix + ".bak.tmp")
+                _bt.write_bytes(p.read_bytes())
+                os.replace(_bt, p.with_suffix(p.suffix + ".bak"))
             except Exception:
                 pass
         tmp = p.with_suffix(p.suffix + ".tmp")
@@ -478,33 +513,45 @@ def close_position(positions: dict, osi: str, reason: str):
     方向性原则: 宁可少卖(仍持多头, 亏损有界=权利金), 绝不多卖(裸空期权=无限风险)。
     """
     p = positions.get(osi)
-    if not p or p["status"] == "closed" or p.get("closing"):
+    if not p or p["status"] == "closed" or osi in _closing:
         return
-    p["closing"] = True      # 防重入(manage_positions轮询 与 EXIT worker 可并发进来)
+    # 防重入守卫必须是【内存态】: 若写进 p 再被 _save 落盘, 崩溃重启后该标志永久为真,
+    # close_position 将永远早退 → 该仓位再也平不掉, 止损空转(自查发现, 与本次要修的bug同类)
+    _closing.add(osi)
     try:
         log(f"🔻 平仓 {osi} ({reason})")
         # 撤三条保护腿, 每条都"撤完复查"把真实成交量记进 sold 再算 remain
-        for id_key, qty_key in (("tp_order_id", "tp_qty"), ("tp2_order_id", "tp2_qty"),
-                                ("stop_order_id", "stop_qty")):
+        unresolved = []
+        for id_key in ("tp_order_id", "tp2_order_id", "stop_order_id"):
             oid = p.get(id_key)
             if not oid:
                 continue
             ok_c = _cancel(oid)
             st, exq, _ = _order_state(oid)          # 撤单后复查真实成交
             if st is None and not ok_c:
-                # 撤失败且查不到 → 这条腿可能还活着并会成交; 按最坏情况假定它全成交, 绝不重复卖
-                assumed = p.get(qty_key, 0)
-                p["sold"] = p.get("sold", 0) + assumed
-                log(f"   🚨 {osi} {id_key} 撤单失败且查单失败 → 保守按已卖{assumed}张记账(防裸空), 需人工核对")
-                journal(ev="close_leg_unknown", osi=osi, leg=id_key, assumed_sold=assumed)
-                push_discord(f"🚨 enrich平仓时 {osi} 的{id_key}撤单+查单双失败, 已保守记账{assumed}张 — 请人工核对券商持仓")
-            elif exq > 0:
+                # 撤失败且查不到真实成交 → 【绝不猜】。保留腿ID, 本轮放弃平仓, 下轮重试。
+                # (曾经写成"假定该腿全成交", 会把sold顶到>=filled → remain<=0 → 直接标closed,
+                #  结果一张没卖却认为已平, 券商侧多头彻底失管 — 比超卖更隐蔽的灾难; 自查+复审发现)
+                unresolved.append(id_key)
+                continue
+            if exq > 0:
                 p["sold"] = p.get("sold", 0) + exq
                 log(f"   ℹ️ {osi} {id_key} 撤单前已成交{exq}张, 已记账(防超卖)")
             p[id_key] = None
-        if p["status"] == "pending" and p.get("entry_order_id"):
-            _cancel(p["entry_order_id"])   # 未成交部分撤掉
-            p["entry_order_id"] = None
+        # 入场买腿: 只要还在途就必须撤。不能再用 status=='pending' 判断 ——
+        # 部分成交时 status 已被改成 open 而 entry_order_id 仍在, 否则剩余买腿会在
+        # 刚触发止损的暴跌里继续挂着接刀, 且仓位标closed后再没人管(复审发现)
+        if p.get("entry_order_id"):
+            if _cancel(p["entry_order_id"]):
+                p["entry_order_id"] = None
+            else:
+                unresolved.append("entry_order_id")
+        if unresolved:
+            log(f"   ⚠️ {osi} 挂单未确认撤销 {unresolved} → 本轮不平仓, 保持{p['status']}, 下轮重试")
+            journal(ev="close_deferred", osi=osi, unresolved=unresolved, reason=reason)
+            _alert(f"⚠️ enrich {osi} 平仓推迟({reason}): {unresolved} 撤单+查单均失败, 下轮重试")
+            _save(POS_JSON, positions)
+            return
         remain = p.get("filled", 0) - p.get("sold", 0)
         if remain > 0:
             ok, r = _submit(osi, side_buy=False, qty=remain, price=None, remark=f"exit-{reason[:12]}")
@@ -523,7 +570,9 @@ def close_position(positions: dict, osi: str, reason: str):
             p["status"] = "closed"
         _save(POS_JSON, positions)
     finally:
-        p["closing"] = False
+        _closing.discard(osi)
+        if positions.get(osi, {}).get("status") == "closed":
+            _optfail.pop(osi, None)
 
 
 def mirror_reduce(positions: dict, osi: str, level: str):
@@ -577,11 +626,16 @@ def manage_positions(positions: dict):
             st, exq, exp = _order_state(p["entry_order_id"])
             if st is not None:
                 if exq > p.get("filled", 0):
-                    p["filled"], p["avg"] = exq, exp
-                    log(f"📥 {osi} 入场成交 {exq}张 @ ${exp}")
-                    journal(ev="entry_fill", osi=osi, qty=exq, avg=exp)
-                    push_discord(f"📥 enrich成交 {osi} ×{exq}张 @ ${exp} (成本${exp*100*exq:.0f})")
-                if st in ("Filled", "Canceled", "Expired", "Rejected"):
+                    p["filled"] = exq
+                    # 成交均价拿不到时【保留旧avg, 绝不清零】: _order_state 对在途单可能返回
+                    # executed_price 为空→exp=0.0, 写进去会让 avg=0 → ensure_protection 早退、
+                    # ④轮询止损的 avg>0 前置失败 = 保护腿+止损全灭且落盘不可逆(复审发现)
+                    if exp > 0:
+                        p["avg"] = exp
+                    log(f"📥 {osi} 入场成交 {exq}张 @ ${exp or p.get('avg')}")
+                    journal(ev="entry_fill", osi=osi, qty=exq, avg=p.get("avg"))
+                    push_discord(f"📥 enrich成交 {osi} ×{exq}张 @ ${p.get('avg')} (成本${p.get('avg',0)*100*exq:.0f})")
+                if st in _TERMINAL:
                     p["entry_order_id"] = None          # 终态: 停止轮询该单
                     if exq > 0:
                         if p["status"] == "pending":
@@ -612,7 +666,7 @@ def manage_positions(positions: dict):
                 push_discord(f"🛑 enrich止损成交 {osi} ×{p.get('stop_qty')}张 @ ${exp}")
                 _save(POS_JSON, positions)
                 continue
-            elif st in ("Canceled", "Expired", "Rejected"):
+            elif st in _CANCELLED:
                 # 审计bug#2: 止损被外部撤销若不清ID, 轮询止损被stop_order_id条件跳过=止损通道全灭
                 if exq > 0:
                     p["sold"] = p.get("sold", 0) + exq
@@ -635,7 +689,7 @@ def manage_positions(positions: dict):
                 if p["filled"] - p["sold"] <= 0:
                     p["status"] = "closed"
                 _save(POS_JSON, positions)   # 机械模式: 不移保本, -60%初始止损全程 (最终定稿)
-            elif st in ("Canceled", "Expired", "Rejected"):
+            elif st in _CANCELLED:
                 if exq > 0:                  # 部分成交后被撤: 先记账防超卖 (审计bug#4)
                     p["sold"] = p.get("sold", 0) + exq
                 p["tp_order_id"] = None      # 挂单失效 → 重配保护
@@ -655,7 +709,7 @@ def manage_positions(positions: dict):
                 if p["filled"] - p["sold"] <= 0:
                     p["status"] = "closed"
                 _save(POS_JSON, positions)
-            elif st in ("Canceled", "Expired", "Rejected"):
+            elif st in _CANCELLED:
                 if exq > 0:
                     p["sold"] = p.get("sold", 0) + exq
                 p["tp2_order_id"] = None
@@ -691,11 +745,11 @@ def manage_positions(positions: dict):
                 #     原本整段静默跳过, 启动横幅还在宣传"止损-60%全程", 用户看不出止损已经不存在。
                 _n = _optfail.get(osi, 0) + 1
                 _optfail[osi] = _n
-                if _n == OPT_FAIL_ALERT:
-                    log(f"🚨 {osi} 期权报价连续{_n}轮失败 → -{(1-_sm)*100:.0f}%止损通道当前失效!")
+                # 周期性重报(原为 ==N 精确相等, 失效5小时也只告警一次)
+                if _n >= OPT_FAIL_ALERT and _n % OPT_FAIL_ALERT == 0:
                     journal(ev="stop_channel_down", osi=osi, fails=_n)
-                    push_discord(f"🚨 enrich {osi} 期权报价连续{_n}轮拿不到 → 止损通道失效, "
-                                 f"该仓位当前仅剩到期强平保护, 请人工盯")
+                    _alert(f"🚨 enrich {osi} 期权报价连续{_n}轮拿不到 → -{(1-_sm)*100:.0f}%止损通道失效, "
+                           f"该仓位当前仅剩到期强平保护, 请人工盯")
             else:
                 _optfail.pop(osi, None)
                 # 报价顺带武装检查: 摸过+60%即武装9ema (TP2成交也会武装, 这里是兜底)
@@ -728,10 +782,16 @@ def manage_positions(positions: dict):
                 and time.time() - p["submitted_ts"] > ENTRY_TTL_SEC:
             _f = p.get("filled", 0)
             _d = f"部分成交{_f}张" if _f else "未成交"
-            log(f"⏳ {osi} 入场单挂{ENTRY_TTL_SEC//60}分钟{_d} → 撤剩余(不接刀)")
+            if not _cancel(p["entry_order_id"]):
+                # 撤单失败仍清ID的话, ①就不再轮询该单, filled 永远冻结在此刻的值, 而券商侧
+                # 可能继续成交 → 多出来的张数裸多无人管、无止损(复审实测: 账面1张 vs 实际3张)
+                log(f"   ⚠️ {osi} 入场单TTL撤单失败, 保留ID下轮重试")
+                journal(ev="entry_ttl_cancel_failed", osi=osi, order_id=p["entry_order_id"])
+                _save(POS_JSON, positions)
+                continue
+            log(f"⏳ {osi} 入场单挂{ENTRY_TTL_SEC//60}分钟{_d} → 已撤剩余(不接刀)")
             journal(ev="entry_ttl_cancel", osi=osi, order_id=p["entry_order_id"], ttl=ENTRY_TTL_SEC, filled=_f)
             push_discord(f"⏳ enrich入场单超时撤单 {osi} (挂{ENTRY_TTL_SEC//60}分钟, {_d}, 撤剩余不接刀)")
-            _cancel(p["entry_order_id"])
             p["entry_order_id"] = None
             if _f > 0:
                 if p["status"] == "pending":
@@ -846,7 +906,11 @@ async def catch_up(client, seen, positions):
                     log(note); push_discord(note)
                     journal(ev="missed_during_downtime", sig=one, ts_signal=str(m.created_at))
                 elif s.kind == "EXIT":
-                    handle(m.content, m.created_at.date(), m.id, seen, positions)  # 出场晚跟好过不跟
+                    # 必须 to_thread: handle 要抢 _handle_lock, 而 _managed_tick 现在会长时间
+                    # 持有该锁; 在事件循环线程里同步抢锁会挂住 discord 心跳 → 断线重连正反馈(复审发现)
+                    import asyncio as _aio
+                    await _aio.to_thread(handle, m.content, m.created_at.date(),
+                                         m.id, seen, positions)   # 出场晚跟好过不跟
             except Exception as e:
                 log(f"追赶处理异常: {e}")
         if missed:
@@ -1077,9 +1141,12 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
     qty, size_note = size_qty(s.limit_price, budget, osi, fallback=qty)
     # QA: 原来每条信号各自按"当前净值×frac"定张, 没有任何组合层上限 —— 站长一天发3-5条是常态,
     #   3条常规单即 1.5×净值(实测), 第三条起被券商以购买力不足随机拒单, 且全账户压在两三个合约上。
-    _eq_now = _last_equity[0]
-    if _eq_now:
-        gross = sum((q.get("filled") or q.get("qty", 0)) * q.get("limit", 0) * 100
+    _eq_now = _last_equity[0] or account_equity_usd()
+    if _eq_now and MAX_GROSS_FRAC > 0:
+        # 必须扣掉已卖出部分: 机械模式 +30%/+60% 会卖掉⅔, 若按 filled 全额计,
+        # 一笔成交就把额度占死(实测高估200%), 当天后续信号会被系统性拒掉(复审发现)
+        gross = sum(max(0, (q.get("filled") or q.get("qty", 0)) - q.get("sold", 0))
+                    * q.get("limit", 0) * 100
                     for q in positions.values() if q.get("status") in ("pending", "open"))
         room = _eq_now * MAX_GROSS_FRAC - gross
         max_q = int(room // (s.limit_price * 100)) if room > 0 else 0
@@ -1128,7 +1195,9 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
 
     seen[str(msg_id)] = key
     seen[key] = str(msg_id)
-    seen[soft_key] = osi        # QA: 软去重(票/方向/行权价/当天), 防推断到期与澄清信号双开
+    # 软去重只在【真的建了仓】时登记: 下单失败还登记的话, 当天站长澄清到期日的正确信号会被永久拒掉
+    if osi in positions:
+        seen[soft_key] = osi
     _save(SEEN_JSON, seen)
 
 
@@ -1169,8 +1238,17 @@ def main():
     else:
         log("🧪 DRY_RUN: 只解析播报, 不下单")
 
-    seen = _load(SEEN_JSON)
-    positions = _load(POS_JSON)
+    # 首次启动先给关键状态文件播一份.bak, 否则"第一次损坏"时无备份可回落=直接拒启且救不回来
+    for _p in (SEEN_JSON, POS_JSON):
+        _b = _p.with_suffix(_p.suffix + ".bak")
+        if _p.exists() and not _b.exists():
+            try:
+                _b.write_bytes(_p.read_bytes())
+                log(f"🗂️ 已为 {_p.name} 建立初始备份")
+            except Exception:
+                pass
+    seen = _load(SEEN_JSON, strict=True)      # 仓位/去重表损坏 → 宁可拒启不带空表上线
+    positions = _load(POS_JSON, strict=True)
     intents = discord.Intents.default()
     intents.message_content = True
     client = discord.Client(intents=intents)
