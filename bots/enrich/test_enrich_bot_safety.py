@@ -400,14 +400,14 @@ chk("低价期权止损抬到最小报价档后可触发", closed, f"closed={clo
 
 hdr("其余审查项")
 
-# LLM 已从实盘bot移除(2026-07-20 用户令): 确认无残留调用路径
+# enrich bot 已定案【不用 LLM】(2026-07-20 用户令), 出场全机械。
+# 下面四条是守卫, 防止 LLM 哪天又被引回实盘链路 —— 出场决策必须是可回测、可仿真、
+# 可复现的确定性逻辑, 不能依赖一个每次调用结果都可能不同的模型。
 chk("bot 不再 import llm_classifier", not hasattr(B, "llm_classify"))
 chk("LLM_ON 常量已移除", not hasattr(B, "LLM_ON"))
 chk("_llm_exit_targets 已移除", not hasattr(B, "_llm_exit_targets"))
 _srcL = Path(__file__).with_name("discord_enrich_bot.py").read_text()
 chk("源码无 llm_classify( 调用", "llm_classify(" not in _srcL)
-chk("llm_classifier.py 仍保留在仓库根(研究脚本在用)",
-    (Path(__file__).resolve().parent.parent.parent / "llm_classifier.py").exists())
 
 # 应用层幂等: 券商侧已有在途卖单时认领而非重复提交
 pos = {"G1": mkpos(filled=6, sold=0)}
