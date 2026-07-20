@@ -41,6 +41,8 @@ MUTATIONS = [
     ("消歧偏离上限放开", "AMBIG_MAX_DEV", 99.0, "sc_guard_ambig_far_deviation_refuses"),
     ("停机出场时效闸关闭", "STALE_EXIT_SEC", 10**9, "sc_catchup_no_age_gate_on_exit"),
     ("追赶翻页退回单页100条", "CATCHUP_MAX", 100, "sc_catchup_missed_beyond_100_silently_lost"),
+    ("心跳间隔放到无穷(等于没有心跳)", "HEARTBEAT_SEC", 10**9,
+     "sc_guard_heartbeat_proves_polling_alive"),
 ]
 
 # 逻辑变异: 常量改不动的行为(如"armed闸"), 用包装函数模拟"该守卫失效"。

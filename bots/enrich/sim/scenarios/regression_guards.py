@@ -241,6 +241,53 @@ def sc_guard_quote_age_uses_local_tz(s):
     return fails
 
 
+def sc_guard_heartbeat_proves_polling_alive(s):
+    """轮询必须周期性打心跳 —— 否则"止损轮询停摆"是完全静默的。
+
+    模拟盘不支持 MIT 触价单, 止损只有轮询这一条通道, 平时不打任何日志。
+    tasks.loop 若因 discord 重连 / 事件循环异常停摆, 外部没有任何信号可看,
+    直到某天需要止损时才发现没止损 —— 那时已经晚了。
+    """
+    import discord_enrich_bot as B
+    fails = []
+    B._last_hb[0] = 0.0
+    s.quotes.set_path(OSI, [1.00] * 40)
+    s.broker.position[OSI] = 6
+    s.positions[OSI] = {"status": "open", "filled": 6, "sold": 0, "avg": 1.00, "qty": 6,
+                        "right": "C", "ticker": "HOOD", "expiry": "2026-07-24",
+                        "strike": 120.0, "entry_order_id": None,
+                        "opened_ts": s.clock.time(), "stop_mult": 0.4}
+    s.tick(n=1)
+    hb = [l for l in s.logs if "💓" in l]
+    fails += expect_eq(len(hb), 1, f"首轮就该打一次心跳, 实际 {len(hb)} 次")
+    if hb:
+        fails += expect(OSI in hb[0] and "距止损" in hb[0],
+                        f"心跳应含持仓与距止损距离(否则看不出止损通道是否有效): {hb[0]}")
+
+    # 节流: HEARTBEAT_SEC 内不重复刷屏
+    s.tick(n=3, seconds=60)
+    fails += expect_eq(len([l for l in s.logs if "💓" in l]), 1,
+                       "10分钟内不应重复打心跳(会淹掉真正的事件日志)")
+
+    # 超过间隔后必须再打 —— 只打一次等于没有心跳
+    s.tick(n=8, seconds=90)
+    fails += expect(len([l for l in s.logs if "💓" in l]) >= 2,
+                    "超过 HEARTBEAT_SEC 后必须再次心跳, 否则无法判断轮询是否还活着")
+
+    # 报价拿不到时, 心跳必须【显式说出止损通道失效】, 不能装作正常
+    s.logs.clear()
+    B._last_hb[0] = 0.0
+    s.quotes.fail.add(OSI)
+    s.tick(n=1)
+    hb2 = [l for l in s.logs if "💓" in l]
+    if hb2:
+        fails += expect("报价不可用" in hb2[0] or "失效" in hb2[0],
+                        f"报价拿不到时心跳必须点明止损通道失效, 实际: {hb2[0]}")
+    else:
+        fails += ["报价失败时仍应打心跳(此时最需要知道轮询还活着)"]
+    return fails
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # ④ 锚点只进不退
 #    守: _bump 取 max

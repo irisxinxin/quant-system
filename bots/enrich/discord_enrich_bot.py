@@ -1020,9 +1020,49 @@ def close_position(positions: dict, osi: str, reason: str):
 
 
 
+HEARTBEAT_SEC = int(os.environ.get("HEARTBEAT_SEC", "600"))   # 心跳间隔(秒)
+_last_hb = [0.0]
+
+
+def _heartbeat(snap: list, positions: dict):
+    """低频心跳 —— 证明【这一轮轮询真的执行了】。
+
+    模拟盘不支持 MIT 触价单, 止损只有轮询这一条通道, 而它平时完全静默:
+    tasks.loop 若因 discord 重连/事件循环异常停摆, 外部没有任何信号, 直到某天
+    需要止损时才发现没止损。心跳把"还活着"变成可观测的。
+    价格取自 ④ 止损判定时已经查过的那次, 不额外打 API。
+    """
+    now = time.time()
+    if now - _last_hb[0] < HEARTBEAT_SEC:
+        return
+    _last_hb[0] = now
+    act = [(o, p) for o, p in positions.items() if p.get("status") in ACTIVE_STATUSES]
+    if not act:
+        log("💓 轮询正常 | 无持仓")
+        return
+    px = dict(snap)
+    parts = []
+    for osi, p in act:
+        remain = p.get("filled", 0) - p.get("sold", 0)
+        avg = p.get("avg", 0) or 0
+        last = px.get(osi)
+        legs = sum(1 for k in ("tp_order_id", "tp2_order_id", "stop_order_id") if p.get(k))
+        if last and avg > 0:
+            stop_px = max(MIN_TICK, avg * p.get("stop_mult", MECH_STOP_MULT))
+            room = (1 - stop_px / last) * 100 if last > 0 else 0
+            parts.append(f"{osi} {remain}张 ${last:.2f}({(last/avg-1)*100:+.0f}%) "
+                         f"距止损${stop_px:.2f}还有{room:.0f}% 保护腿{legs}条")
+        else:
+            # 报价拿不到 = 止损通道对这个仓位是瞎的, 心跳必须显式说出来
+            parts.append(f"{osi} {remain}张 ⚠️报价不可用(止损通道失效) 保护腿{legs}条 "
+                         f"status={p.get('status')}")
+    log("💓 轮询正常 | " + " | ".join(parts))
+
+
 def manage_positions(positions: dict):
     """轮询: 入场单成交→挂止盈; 止盈成交→记账; 到期日强平。"""
     now_et = datetime.now(ET)
+    _hb_snap = []          # [(osi, last)] — 供心跳复用, 不额外查价
     for osi, p in list(positions.items()):
         if p["status"] == "closed":
             continue
@@ -1234,6 +1274,7 @@ def manage_positions(positions: dict):
         if _sm > 0 and p["status"] == "open" and not p.get("stop_order_id") \
                 and p.get("avg", 0) > 0 and p.get("filled", 0) - p.get("sold", 0) > 0:
             last = _option_last(osi)
+            _hb_snap.append((osi, last))      # 给心跳复用这次查价的结果
             if last is None:
                 # QA: 模拟盘不支持MIT触价单, 这是【唯一】止损通道。报价拿不到(OPRA权限/429/合约不识别)
                 #     原本整段静默跳过, 启动横幅还在宣传"止损-60%全程", 用户看不出止损已经不存在。
@@ -1332,6 +1373,9 @@ def manage_positions(positions: dict):
                     close_position(positions, osi, "到期强平")
             except Exception:
                 pass
+    # 心跳放在【循环外、函数最末】: 只有整轮真正跑完才打, 中途 continue 不影响。
+    # 单个仓位抛异常不该让心跳失真, 所以它自己不吞异常 —— 真出问题宁可看到 traceback。
+    _heartbeat(_hb_snap, positions)
 
 
 # ── andy 前向观察 (只记录不下单; 子集=波段+明确止损, 回测PF1.28待前向验证) ──
