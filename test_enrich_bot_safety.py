@@ -273,6 +273,78 @@ chk("TTL撤单竞态期已全成交 → 转open而非closed(防仓位失联)",
     f"status={pos['E3']['status']} filled={pos['E3']['filled']}")
 
 
+hdr("P0 复审第三轮: 待办持久化 / 关键落盘 / closing覆盖 / 孤儿入场单")
+
+# P0-1: 平仓被推迟必须留下【持久化的待办】, 且下轮真的重试
+pos = {"F1": mkpos(filled=6, sold=0, tp_order_id="T", tp_qty=2)}
+with mock.patch.multiple(B, _cancel=lambda o: False, _order_state=lambda o: (None, 0, 0.0),
+                         _submit=lambda *a, **k: (True, "Z"), **base):
+    B.close_position(pos, "F1", "站长all out")
+chk("平仓推迟 → 写入 pending_action(不再静默丢弃一次性出场信号)",
+    pos["F1"].get("pending_action") == "full_exit"
+    and pos["F1"].get("pending_action_reason") == "站长all out",
+    f"pending={pos['F1'].get('pending_action')} reason={pos['F1'].get('pending_action_reason')}")
+
+# 下一轮: 挂单确认终态了 → ⓪b 必须真的重试并发出卖单
+subs = []
+with mock.patch.multiple(B, _cancel=lambda o: True, _order_state=lambda o: ("Canceled", 0, 0.0),
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "Z"))[1],
+                         ensure_protection=lambda *a: None, _option_last=lambda o: None,
+                         _ema15_break_count=lambda t: None, us_rth_now=lambda: True, **base):
+    B.manage_positions(pos)
+chk("下一轮 ⓪b 自动重试待办平仓并发出卖单", subs == [6], f"卖单={subs}")
+chk("重试后进入 closing 等成交确认", pos["F1"]["status"] == "closing")
+
+# 正在 closing 时收到全平信号 → 记为待办(动作升级), 不静默丢弃
+pos = {"F2": mkpos(status="closing", filled=9, sold=0, exit_order_id="X", exit_qty=3,
+                   exit_intent="tp1", exit_reason="轮询止盈", exit_ts=time.time())}
+with mock.patch.multiple(B, _cancel=lambda o: True, _order_state=lambda o: ("New", 0, 0.0),
+                         _submit=lambda *a, **k: (True, "Z"), **base):
+    B.close_position(pos, "F2", "站长all out")
+chk("closing 期间收到全平 → 记为待办(动作升级), 不丢弃",
+    pos["F2"].get("pending_action") == "full_exit", f"pending={pos['F2'].get('pending_action')}")
+
+# P0-2: 卖单已受理但落盘失败 → fail_stop, 停止该仓位自动交易
+pos = {"F3": mkpos(filled=6, sold=0)}
+with mock.patch.multiple(B, _submit=lambda *a, **k: (True, "OID"), _save=lambda *a: False,
+                         journal=lambda **k: None, push_discord=lambda *a, **k: False,
+                         log=lambda m: None, _alert=lambda m: None):
+    B._start_exit(pos, "F3", pos["F3"], 6, "止损")
+chk("卖单落盘失败 → 该仓位置 fail_stop", pos["F3"].get("fail_stop") is True,
+    f"fail_stop={pos['F3'].get('fail_stop')}")
+subs = []
+with mock.patch.multiple(B, _order_state=lambda o: ("Filled", 6, 0.4), _cancel=lambda o: True,
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "Z"))[1],
+                         **mgr, **base):
+    B.manage_positions(pos)
+chk("fail_stop 仓位不再被自动交易(等人工)", not subs, f"卖单={subs}")
+
+# P0-3: closing 仓位不得被同合约新信号覆盖 / 必须计入敞口 / EXIT要能找到它
+chk("ACTIVE_STATUSES 含 closing", "closing" in B.ACTIVE_STATUSES)
+_pc = {"Z.US": mkpos(status="closing", ticker="AAPL")}
+with mock.patch.object(B, "log", lambda m: None):
+    chk("closing 仓位能被 EXIT(scope=all) 找到, 不会被当成无持仓",
+        B._llm_exit_targets(_pc, {"action": "exit_full", "scope": "all"}) == ["Z.US"])
+
+# P0-4: 卖单卡死恢复时, 入场单仍在途则不得标 closed
+pos = {"F4": mkpos(status="closing", filled=1, sold=0, entry_order_id="E", exit_order_id="X",
+                   exit_qty=1, exit_reason="止损", exit_ts=time.time() - 99999)}
+with mock.patch.multiple(B, _order_state=lambda oid: ("Filled", 1, 0.4) if oid == "X"
+                         else ("New", 1, 1.0),
+                         _cancel=lambda o: True, _submit=lambda *a, **k: (True, "Z"),
+                         **mgr, **base):
+    B.manage_positions(pos)
+chk("卡死恢复时入场单在途 → 不标closed(防孤儿仓)",
+    pos["F4"]["status"] != "closed", f"status={pos['F4']['status']} entry={pos['F4'].get('entry_order_id')}")
+
+# 敞口: 在途入场单按最大潜在张数计(部分成交后不得骤降)
+src0 = Path(__file__).with_name("discord_enrich_bot.py").read_text()
+chk("敞口计算含 closing 且按在途最大张数", "_exp_qty" in src0 and "ACTIVE_STATUSES" in src0)
+chk("启动含券商对账(只读)", "def reconcile_with_broker" in src0
+    and "reconcile_with_broker(positions)" in src0)
+chk("catch_up 锚点改为处理成功后前移", "处理成功才前移锚点" in src0)
+
+
 hdr("I5  价格不可用时不得判止损")
 
 class Q:

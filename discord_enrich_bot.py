@@ -192,6 +192,19 @@ def cancel_and_reconcile(oid: str):
     return ok, exq, st
 
 
+def _save_critical(positions: dict, osi: str, p: dict, what: str) -> bool:
+    """落盘"券商侧订单ID"这类关键状态。失败意味着: 券商已收单而本地不知道 ——
+    崩溃重启后会重复下单甚至裸空。因此失败即把该仓位置 fail_stop, 停止对它的一切自动交易,
+    只告警等人工处理。(入场路径已有专门的撤单兜底; 卖腿/保护腿无法安全撤销时只能 fail-stop)"""
+    if _save(POS_JSON, positions):
+        return True
+    p["fail_stop"] = True
+    journal(ev="persist_failed", osi=osi, what=what)
+    _alert(f"🚨 enrich {osi} {what} 已提交但状态落盘失败 → 该仓位进入 fail-stop"
+           f"(停止自动交易), 请人工核对券商挂单与持仓")
+    return False
+
+
 def _outstanding_sells(p: dict) -> int:
     """券商侧尚未成交的卖单总张数(已成交部分已进 sold, 这里只算未成交余量)。"""
     n = 0
@@ -249,6 +262,9 @@ _closing = set()  # 正在平仓的osi — 只存内存, 绝不落盘(落盘会�
 # 订单终态【白名单】。长桥 OrderStatus 共18种, 其余(New/PartialFilled/PendingCancel/WaitToCancel/
 # NotReported/Replaced/Unknown/...)全部视为在途未决 —— 未决状态下【绝不允许】再发新的卖单。
 # (原实现是"列举几个已撤销状态", 漏一个在途态就会误判成已结束 → 旧单还活着又发新单 = 超卖裸空)
+# closing = 卖单已发出但未确认成交 —— 仓位【尚未平掉】, 一切"是否还持有"的判断都必须算上它:
+# 重复建仓守卫/敞口计算/EXIT目标查找 漏掉它会导致 覆盖在途仓位 / 低估敞口 / 忽略"all out"。
+ACTIVE_STATUSES = ("pending", "open", "closing")
 _TERMINAL = frozenset(("Filled", "Canceled", "Expired", "Rejected", "PartialWithdrawal"))
 _CANCELLED = frozenset(("Canceled", "Expired", "Rejected", "PartialWithdrawal"))
 _alert_noexit_warned = [False]
@@ -459,6 +475,72 @@ def _save(p: Path, d: dict):
         return False
 
 
+def reconcile_with_broker(positions: dict) -> dict:
+    """启动时与券商【实际】状态对账 (只读, 不自动改仓)。
+
+    本地JSON格式完好 ≠ 与券商一致。崩溃/漏落盘/人工干预都会造成偏差, 而 .bak 和格式校验
+    都救不了这一层。这里把三方摆出来比对并告警, 由人决定怎么处理:
+      ① 券商侧期权持仓  vs 本地 filled-sold
+      ② 券商侧当日未终态挂单 vs 本地记录的各腿 order_id
+    返回 {"mismatch": [...], "orphan_orders": [...], "orphan_positions": [...]}
+    """
+    out = {"mismatch": [], "orphan_orders": [], "orphan_positions": []}
+    try:
+        broker_pos = {}
+        for ch in _trade_ctx.stock_positions().channels:
+            for sp in getattr(ch, "positions", []) or []:
+                sym = str(getattr(sp, "symbol", ""))
+                qty = int(float(getattr(sp, "quantity", 0) or 0))
+                if qty:
+                    broker_pos[sym] = broker_pos.get(sym, 0) + qty
+        live_oids = {}
+        try:
+            for od in _trade_ctx.today_orders() or []:
+                st = str(od.status).split(".")[-1]
+                if st not in _TERMINAL:
+                    live_oids[str(od.order_id)] = (str(od.symbol), st)
+        except Exception as e:
+            log(f"   对账: 拉取当日订单失败 {e}")
+
+        local_active = {o: p for o, p in positions.items() if p.get("status") in ACTIVE_STATUSES}
+        # ① 持仓数量比对
+        for osi, p in local_active.items():
+            local_q = p.get("filled", 0) - p.get("sold", 0)
+            bq = broker_pos.get(osi, 0)
+            if local_q != bq:
+                out["mismatch"].append(f"{osi}: 本地{local_q}张 vs 券商{bq}张")
+        for sym, bq in broker_pos.items():
+            if bq > 0 and sym not in local_active and sym.endswith(".US") and len(sym) > 15:
+                out["orphan_positions"].append(f"{sym}: 券商持有{bq}张但本地无活跃记录")
+        # ② 挂单比对: 本地记着的腿是否还活着 / 券商侧有没有本地不认识的活单
+        known = set()
+        for osi, p in local_active.items():
+            for k in ("entry_order_id", "tp_order_id", "tp2_order_id", "stop_order_id", "exit_order_id"):
+                if p.get(k):
+                    known.add(str(p[k]))
+        for oid, (sym, st) in live_oids.items():
+            if oid not in known and len(sym) > 15:
+                out["orphan_orders"].append(f"{oid} {sym} ({st})")
+    except Exception as e:
+        log(f"⚠️ 券商对账失败(不阻断启动): {e}")
+        return out
+
+    total = len(out["mismatch"]) + len(out["orphan_orders"]) + len(out["orphan_positions"])
+    if total == 0:
+        log("🔍 券商对账: 本地持仓/挂单与券商一致 ✅")
+    else:
+        lines = ["🚨 券商对账发现不一致 (bot不会自动处理, 请人工确认):"]
+        for t, items in (("数量不符", out["mismatch"]), ("券商有仓本地无记录", out["orphan_positions"]),
+                         ("券商有活单本地不认识", out["orphan_orders"])):
+            for it in items:
+                lines.append(f"   · [{t}] {it}")
+        msg = "\n".join(lines)
+        log(msg)
+        journal(ev="broker_reconcile_mismatch", **out)
+        _alert(msg[:1800])
+    return out
+
+
 def verify_paper_trading() -> bool:
     """铁律: 三处独立验证全是 lb_papertrading 才放行。"""
     try:
@@ -573,7 +655,10 @@ def ensure_protection(positions: dict, osi: str, p: dict):
             journal(ev="tp_place", osi=osi, px=tp_px, qty=tp_qty, order_id=r)
         else:
             log(f"⚠️ {osi} 止盈挂单失败: {r} (靠轮询/出场跟随/到期强平)")
-    _save(POS_JSON, positions)
+    if p.get("tp_order_id") or p.get("tp2_order_id") or p.get("stop_order_id"):
+        _save_critical(positions, osi, p, "保护腿订单ID")   # 挂了单就必须落盘, 否则重启后变孤儿
+    else:
+        _save(POS_JSON, positions)
 
 
 def cancel_stop(p: dict) -> bool:
@@ -640,7 +725,7 @@ def _start_exit(positions: dict, osi: str, p: dict, qty: int, reason: str,
     log(f"   📤 {osi} 市价卖 {qty}张 已受理 order={r} ({reason}) → 等待成交确认")
     journal(ev="exit_submit", osi=osi, qty=qty, reason=reason, order_id=r)
     push_discord(f"📤 enrich卖出已受理 {osi} ×{qty}张 ({reason}) — 待成交确认")
-    _save(POS_JSON, positions)
+    _save_critical(positions, osi, p, f"卖单{r}")
     return True
 
 
@@ -653,8 +738,19 @@ def close_position(positions: dict, osi: str, reason: str):
       · 方向性: 宁可少卖(仍持多头, 亏损上限=权利金), 绝不多卖(裸空期权=无限风险)。
     """
     p = positions.get(osi)
-    if not p or p["status"] in ("closed", "closing") or osi in _closing:
-        return          # closing = 已有卖单在途, 必须等它终态, 否则会重复卖
+    if not p or p["status"] == "closed" or osi in _closing:
+        return
+    if p["status"] == "closing":
+        # 已有卖单在途(可能只是部分减仓)。不能重复卖, 但也【绝不能静默丢弃】这次出场意图 ——
+        # 止损/到期强平因条件持续存在会自然重来, 而站长"all out"/LLM出场/9ema出场是【一次性】的。
+        # 记成待办, 等 ⓪ 把仓位收敛回 open 后由 ⓪b 立即执行(动作升级: 部分减仓 → 全平)。
+        p["pending_action"] = "full_exit"
+        p["pending_action_reason"] = reason
+        p["pending_action_ts"] = time.time()
+        log(f"   ⏸️ {osi} 卖单在途, 记为待办全平({reason}), 待其终态后执行")
+        journal(ev="exit_deferred_closing", osi=osi, reason=reason)
+        _save(POS_JSON, positions)
+        return
     # 防重入守卫必须是【内存态】: 若写进 p 再被 _save 落盘, 崩溃重启后该标志永久为真,
     # close_position 将永远早退 → 该仓位再也平不掉, 止损空转(自查发现, 与本次要修的bug同类)
     _closing.add(osi)
@@ -682,7 +778,11 @@ def close_position(positions: dict, osi: str, reason: str):
                     log(f"   ℹ️ {osi} {id_key} 撤单前已成交{exq}张(补记{d}), 防超卖")
             p[id_key] = None
         if unresolved:
-            log(f"   ⚠️ {osi} 挂单未确认终态 {unresolved} → 本轮不发卖单, 保持{p['status']}下轮重试")
+            # 必须持久化重试意图: 否则一次性出场信号(站长all out/LLM/9ema)就永久丢了
+            p["pending_action"] = "full_exit"
+            p["pending_action_reason"] = reason
+            p["pending_action_ts"] = time.time()
+            log(f"   ⚠️ {osi} 挂单未确认终态 {unresolved} → 本轮不发卖单, 已记待办下轮重试")
             journal(ev="close_deferred", osi=osi, unresolved=unresolved, reason=reason)
             _alert(f"⚠️ enrich {osi} 平仓推迟({reason}): {unresolved} 未确认终态, 下轮重试")
             _save(POS_JSON, positions)
@@ -692,6 +792,7 @@ def close_position(positions: dict, osi: str, reason: str):
             _start_exit(positions, osi, p, remain, reason)
         else:
             p["status"] = "closed"
+            p.pop("pending_action", None); p.pop("pending_action_reason", None)
             log(f"✅ {osi} 无剩仓, 直接标记已平 ({reason})")
             _save(POS_JSON, positions)
     finally:
@@ -737,6 +838,8 @@ def manage_positions(positions: dict):
     for osi, p in list(positions.items()):
         if p["status"] == "closed":
             continue
+        if p.get("fail_stop"):
+            continue      # 关键状态落盘失败 → 停止对该仓位的自动交易, 等人工介入(见 _save_critical)
         time.sleep(0.4)   # API限速保护 (429防护, 昨夜网络抖动后重试风暴教训)
         # ⓪ 在途卖单对账 —— 【sold 只在这里更新】
         #   提交成功≠成交: submit_order 只返回委托号, 订单随后可能被拒绝/部分成交/长期挂起。
@@ -764,6 +867,7 @@ def manage_positions(positions: dict):
                 rem = p.get("filled", 0) - p.get("sold", 0)
                 if rem <= 0 and not p.get("entry_order_id"):
                     p["status"] = "closed"
+                    p.pop("pending_action", None); p.pop("pending_action_reason", None)
                     _optfail.pop(osi, None)
                     _save(POS_JSON, positions)
                     continue
@@ -779,7 +883,9 @@ def manage_positions(positions: dict):
                     if exq_x > 0:
                         p["sold"] = p.get("sold", 0) + exq_x
                     p["exit_order_id"] = None
-                    p["status"] = "open" if (p.get("filled", 0) - p.get("sold", 0)) > 0 else "closed"
+                    # 必须与正常终态分支同一口径: 入场单仍在途时绝不标closed(否则后续成交=孤儿仓)
+                    _rem_x = p.get("filled", 0) - p.get("sold", 0)
+                    p["status"] = "closed" if (_rem_x <= 0 and not p.get("entry_order_id")) else "open"
                     _alert(f"⚠️ enrich {osi} 卖单久挂未成({p.get('exit_reason')}) → 已撤并对账"
                            f"(成交{exq_x}张), 仓位交回正常管理")
                     journal(ev="exit_stuck_recovered", osi=osi, exq=exq_x, state=st_x)
@@ -795,6 +901,15 @@ def manage_positions(positions: dict):
                     continue
             else:
                 continue      # 卖单在途期间不做任何其它动作, 防重复卖
+        # ⓪b 延迟动作重试 —— P0: 上轮因挂单未确认终态而推迟的平仓必须真的重来。
+        #     止损/到期强平会因条件持续而自然重触发, 但站长"all out"/LLM出场/9ema出场是
+        #     【一次性】信号, 没有这个待办队列就永久丢失。
+        if p.get("pending_action") == "full_exit" and p["status"] in ("pending", "open"):
+            _rsn = p.get("pending_action_reason") or "延迟平仓重试"
+            log(f"🔁 {osi} 重试待办平仓 ({_rsn})")
+            close_position(positions, osi, _rsn)
+            if p.get("status") in ("closing", "closed") or p.get("pending_action"):
+                continue        # 已发出卖单 或 仍未成功 → 本轮到此为止
         # ① 入场单状态 (只要入场单还在途就持续对账, 不限于pending)
         # QA修①: 原 `if st is None: continue` — 查单失败(429退避/断网)会把本轮后面整段
         #   ④d入场TTL一并跳过 → 限价单挂一整天专接刀。TTL只依赖本地submitted_ts, 不该被API阻断。
@@ -1085,8 +1200,10 @@ async def catch_up(client, seen, positions):
             log(f"追赶失败 ch={ch_id}: {e}")
             continue
         for m in missed:
-            state[key] = str(m.id)
+            # 锚点【处理成功后才前移】。原本在循环首行无条件前移, 处理某条停机期间的 EXIT 抛异常时
+            # 锚点已越过它并最终落盘 → 该出场信号永久丢失(与 on_message 同一类缺陷, 上轮只修了实时路径)
             if m.author.id != AUTHOR_ID or not m.content:
+                state[key] = str(m.id)        # 明确无需处理 → 可安全前移
                 continue
             one = " ".join(m.content.split())[:90]
             try:
@@ -1104,8 +1221,12 @@ async def catch_up(client, seen, positions):
                     import asyncio as _aio
                     await _aio.to_thread(handle, m.content, m.created_at.date(),
                                          m.id, seen, positions)   # 出场晚跟好过不跟
+                state[key] = str(m.id)        # 处理成功才前移锚点
             except Exception as e:
-                log(f"追赶处理异常: {e}")
+                # 保留锚点: 下次重连会重新回看这条(BUY有seen[msg_id]兜底, EXIT重复执行也安全 ——
+                # close_position 按 remain=filled-sold 计算, 已平仓则直接返回)
+                log(f"追赶处理异常(保留锚点待下次重试): {e}")
+                break                          # 不跳过它继续推进后面的消息, 否则锚点仍会越过它
         if missed:
             log(f"⏰ 追赶完成 ch={ch_id}: 回看了 {len(missed)} 条停机期间消息")
     _save(LAST_MSG_JSON, state)
@@ -1159,9 +1280,9 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
     s = parse_signal(text, msg_date)
     one = " ".join(text.split())[:100]
     if s.kind == "NOISE":
-        held_any = any(p["status"] in ("pending", "open") for p in positions.values())
+        held_any = any(p["status"] in ACTIVE_STATUSES for p in positions.values())
         if LLM_ON and LIVE and held_any and len(one) > 15 and "http" not in text:
-            held_tks = [p["ticker"] for p in positions.values() if p["status"] in ("pending", "open")]
+            held_tks = [p["ticker"] for p in positions.values() if p["status"] in ACTIVE_STATUSES]
             v = llm_classify(text, held_tks)
             if v:
                 journal(ev="llm_classify", rule="NOISE", verdict=v, sig=one)
@@ -1194,11 +1315,11 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
             journal(ev="exit_signal_mech_ignored", ticker=s.ticker, level=s.exit_level, sig=one)
             return
         held = [osi for osi, p in positions.items()
-                if p["status"] in ("pending", "open")
+                if p["status"] in ACTIVE_STATUSES
                 and (s.ticker == "*" or p.get("ticker") == s.ticker)]
         if s.exit_level == "alert" and LIVE:
             # 多票/豁免词 → LLM仲裁: 能解析出明确tickers就按票执行 (审计漏洞#1: 多票出场瘫痪)
-            held_all = [p["ticker"] for p in positions.values() if p["status"] in ("pending", "open")]
+            held_all = [p["ticker"] for p in positions.values() if p["status"] in ACTIVE_STATUSES]
             v = llm_classify(text, held_all) if (LLM_ON and held_all) else None
             if v:
                 journal(ev="llm_classify", rule="EXIT/alert", verdict=v, sig=one)
@@ -1254,7 +1375,7 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
     is_ambig = False
     if s.kind == "BUY_NOEXPIRY":
         if LLM_ON and LIVE:
-            held_tks = [p["ticker"] for p in positions.values() if p["status"] in ("pending", "open")]
+            held_tks = [p["ticker"] for p in positions.values() if p["status"] in ACTIVE_STATUSES]
             v = llm_classify(text, held_tks)
             if v:
                 journal(ev="llm_classify", rule="BUY_NOEXPIRY", verdict=v, sig=one)
@@ -1286,7 +1407,7 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
 
     # 🤖 LLM否决闸: 规则说买, LLM说不是买(对冲/评论/出场) → 保守不下单
     if LLM_ON and LIVE:
-        held_tks = [p["ticker"] for p in positions.values() if p["status"] in ("pending", "open")]
+        held_tks = [p["ticker"] for p in positions.values() if p["status"] in ACTIVE_STATUSES]
         v = llm_classify(text, held_tks)
         if v:
             journal(ev="llm_classify", rule=s.kind, verdict=v, sig=one)
@@ -1312,7 +1433,7 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
     # QA-CRITICAL: 去重key含日期, 跨日复述同一合约会走到 positions[osi]=dict(...) 把未平仓记录
     #   整条覆盖 → filled/avg清零(止损前置条件失效) + 旧GTC止盈单变孤儿 + 到期强平只卖新批量
     old = positions.get(osi)
-    if old and old.get("status") in ("pending", "open"):
+    if old and old.get("status") in ACTIVE_STATUSES:
         _r = old.get("filled", 0) - old.get("sold", 0)
         log(f"↩️ {osi} 已有未平仓持仓(status={old['status']}, 剩{_r}张) → 跳过重复建仓(防状态覆盖丢账)")
         journal(ev="dup_open_skip", osi=osi, old_status=old.get("status"), remain=_r)
@@ -1349,9 +1470,14 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
     if _eq_now and MAX_GROSS_FRAC > 0:
         # 必须扣掉已卖出部分: 机械模式 +30%/+60% 会卖掉⅔, 若按 filled 全额计,
         # 一笔成交就把额度占死(实测高估200%), 当天后续信号会被系统性拒掉(复审发现)
-        gross = sum(max(0, (q.get("filled") or q.get("qty", 0)) - q.get("sold", 0))
-                    * q.get("limit", 0) * 100
-                    for q in positions.values() if q.get("status") in ("pending", "open"))
+        # 潜在最大敞口: ①含 closing(卖单未确认成交=仓位还在) ②入场单仍在途时按 max(下单量, 已成交)
+        #   计 —— 计划20张只成交1张时 filled=1, 但另19张买单还活着, 按 filled 算会严重低估
+        def _exp_qty(q):
+            base = max(q.get("qty", 0), q.get("filled", 0)) if q.get("entry_order_id") \
+                else q.get("filled", 0) or q.get("qty", 0)
+            return max(0, base - q.get("sold", 0))
+        gross = sum(_exp_qty(q) * q.get("limit", 0) * 100
+                    for q in positions.values() if q.get("status") in ACTIVE_STATUSES)
         room = _eq_now * MAX_GROSS_FRAC - gross
         max_q = int(room // (s.limit_price * 100)) if room > 0 else 0
         if max_q < 1:
@@ -1472,6 +1598,8 @@ def main():
                 pass
     seen = _load(SEEN_JSON, strict=True)      # 仓位/去重表损坏 → 宁可拒启不带空表上线
     positions = _load(POS_JSON, strict=True)
+    if LIVE:
+        reconcile_with_broker(positions)      # 只读对账: 本地JSON格式完好≠与券商一致
     intents = discord.Intents.default()
     intents.message_content = True
     client = discord.Client(intents=intents)
