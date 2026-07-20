@@ -13,9 +13,11 @@ import csv, json, subprocess, sys
 from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
+# 仓库根进 path: 复用根目录的 backtest_andy 解析器。
+ROOT = Path(__file__).resolve().parent.parent.parent      # 仓库根 — data/ output/ git 都在这
+sys.path.insert(1, str(ROOT))
 import warnings; warnings.filterwarnings("ignore")
 
-ROOT = Path(__file__).parent
 BARS = ROOT / "data" / "enrich_bars"
 HIST = ROOT / "output" / "enrich_history.json"
 ORDERS = ROOT / "output" / "enrich_orders.csv"

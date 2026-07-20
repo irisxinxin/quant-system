@@ -30,6 +30,9 @@ from decimal import Decimal
 from pathlib import Path
 from zoneinfo import ZoneInfo
 sys.path.insert(0, str(Path(__file__).parent))
+# 仓库根也要进 path: 本 bot 复用根目录的 backtest_andy 的出场正则(parse_entry/EXIT_*_RE)。
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(1, str(REPO_ROOT))
 import warnings; warnings.filterwarnings("ignore")
 
 import discord
@@ -90,7 +93,11 @@ ENTRY_TTL_SEC = int(os.environ.get("ENTRY_TTL_SEC", "1200"))    # 在途入场�
 # (审计发现+MSFT复盘: 挂一天的限价单只会在期权崩盘穿价时成交=专门接刀; "不追高"的另一半是"不接刀")
 ET = ZoneInfo("America/New_York")
 
-OUT = Path(__file__).parent / "output"
+# ⚠ 状态目录固定在【仓库根】的 output/, 不跟着本文件走。
+# bot 从根目录搬进 bots/enrich/ 时, 原来的 Path(__file__).parent/"output" 会指向
+# bots/enrich/output/ → 持仓/去重表/追赶锚点全部读不到 = 状态静默清零。
+# 归档 job(enrich_archive.py) 和一堆回测脚本也都按仓库根的 output/ 找文件。
+OUT = REPO_ROOT / "output"
 # DRY_RUN 用独立去重表: 否则 DRY_RUN 期间"看过"的信号, 切回 LIVE 后会被当成重复信号永久跳过
 SEEN_JSON = OUT / ("enrich_seen.json" if os.environ.get("ENRICH_LIVE", "").lower() == "true"
                    else "enrich_seen_dry.json")

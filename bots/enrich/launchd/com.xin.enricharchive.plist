@@ -18,7 +18,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>source /Users/xin/.longport_creds.env &amp;&amp; /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/enrich_archive.py >> /Users/xin/Documents/Claude/Projects/money/quant_system/output/enrich_archive_run.log 2>&amp;1</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/bots/enrich/enrich_archive.py >> /Users/xin/Documents/Claude/Projects/money/quant_system/output/enrich_archive_run.log 2>&amp;1</string>
     </array>
 
     <key>WorkingDirectory</key>

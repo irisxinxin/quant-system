@@ -4,10 +4,14 @@
   com.xin.enrichbot.plist — enrich Discord期权跟单bot (discord_enrich_bot.py), 常驻
 
   安装:
-    cp com.xin.enrichbot.plist ~/Library/LaunchAgents/
+    cp bots/enrich/launchd/com.xin.enrichbot.plist ~/Library/LaunchAgents/
     launchctl load ~/Library/LaunchAgents/com.xin.enrichbot.plist
   日志: tail -f /Users/xin/Documents/Claude/Projects/money/quant_system/output/enrich_bot.log
   ⚠ 全程 LongPort 模拟盘 (启动三重校验 lb_papertrading, 不过即退; KeepAlive会重试)
+  ⚠ 当前 ENRICH_LIVE=false (DRY_RUN, 只解析播报不下单)。这里的值必须和
+    ~/Library/LaunchAgents/ 里那份一致 —— 否则下次 cp 安装会静默把 bot 切回真下单。
+    要恢复模拟盘下单: 改成 true, 重新 cp + launchctl unload/load。
+  ⚠ WorkingDirectory 保持仓库根: 状态文件 output/、K线 data/、归档的 git 操作都按根目录找。
   规则(2026-07-19 最终定稿): 进场跟站长限价不追高+TTL20分不接刀 | +30%卖⅓ → +60%卖⅓(武装) |
   runner武装后守15分9ema连破2根 | 止损-60%全程无保本 | 到期强平 | 无LLM | hedge当lotto跟⅓仓
 -->
@@ -20,7 +24,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>source /Users/xin/.longport_creds.env &amp;&amp; export ENRICH_LIVE=true POSITION_FRAC=0.5 LOTTO_FRAC=0.3333 ZERO_DTE_FRAC=0.10 EXIT_MODE=mechanical MECH_TP_MULT=1.3 MECH_TP2_MULT=1.6 MECH_STOP_MULT=0.4 MECH_EMA_MIN=15 MECH_EMA_N=2 ENTRY_TTL_SEC=1200 &amp;&amp; exec /usr/bin/caffeinate -s /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/discord_enrich_bot.py</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; export ENRICH_LIVE=false POSITION_FRAC=0.5 LOTTO_FRAC=0.3333 ZERO_DTE_FRAC=0.10 EXIT_MODE=mechanical MECH_TP_MULT=1.3 MECH_TP2_MULT=1.6 MECH_STOP_MULT=0.4 MECH_EMA_MIN=15 MECH_EMA_N=2 ENTRY_TTL_SEC=1200 &amp;&amp; exec /usr/bin/caffeinate -s /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/bots/enrich/discord_enrich_bot.py</string>
     </array>
 
     <key>WorkingDirectory</key>

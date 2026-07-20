@@ -406,8 +406,8 @@ chk("LLM_ON 常量已移除", not hasattr(B, "LLM_ON"))
 chk("_llm_exit_targets 已移除", not hasattr(B, "_llm_exit_targets"))
 _srcL = Path(__file__).with_name("discord_enrich_bot.py").read_text()
 chk("源码无 llm_classify( 调用", "llm_classify(" not in _srcL)
-chk("llm_classifier.py 仍保留(研究脚本在用)",
-    Path(__file__).with_name("llm_classifier.py").exists())
+chk("llm_classifier.py 仍保留在仓库根(研究脚本在用)",
+    (Path(__file__).resolve().parent.parent.parent / "llm_classifier.py").exists())
 
 # 应用层幂等: 券商侧已有在途卖单时认领而非重复提交
 pos = {"G1": mkpos(filled=6, sold=0)}
