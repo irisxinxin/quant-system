@@ -188,6 +188,8 @@ LOGIC_MUTATIONS = [
      "sc_guard_close_position_sweeps_orphan"),
     ("保本关闭(回到不保本)", _mut_breakeven_off,
      "sc_guard_breakeven_after_tp1"),
+    ("保本关闭→真实盘MIT重挂不到入场价", _mut_breakeven_off,
+     "sc_mit_breakeven_replaces_old_stop"),
     ("锚点盲写(不取max)", _mut_anchor_blind_write,
      "sc_guard_anchor_never_regresses"),
     ("锚点整份覆盖(不合并)", _mut_anchor_overwrite_whole,
@@ -196,7 +198,7 @@ LOGIC_MUTATIONS = [
 
 MODULES = ["sim.scenarios.normal", "sim.scenarios.adversarial",
            "sim.scenarios.ambig", "sim.scenarios.discord_layer",
-           "sim.scenarios.regression_guards", "sim.scenarios.strategy_v2", "sim.scenarios.strategy_v2_adv"]
+           "sim.scenarios.regression_guards", "sim.scenarios.strategy_v2", "sim.scenarios.strategy_v2_adv", "sim.scenarios.real_account_mit"]
 
 
 def _all_scenarios():

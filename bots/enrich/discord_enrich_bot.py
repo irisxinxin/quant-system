@@ -1298,7 +1298,7 @@ def manage_positions(positions: dict):
                 # 入场单仍在途时绝不标closed: 否则后续成交的张数会变成无人管理的孤儿仓
                 if p["filled"] - p["sold"] <= 0 and not p.get("entry_order_id"):
                     p["status"] = "closed"
-                _save(POS_JSON, positions)   # 机械模式: 不移保本, -60%初始止损全程 (最终定稿)
+                _save(POS_JSON, positions)
             elif st in _CANCELLED:
                 _credit_leg(p, "tp_order_id", exq)   # 部分成交后被撤: 先记账防超卖(审计bug#4)
                 p["tp_order_id"] = None      # 挂单失效 → 重配保护

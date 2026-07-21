@@ -162,6 +162,9 @@ class FakeBroker:
         self.liquidity = {}              # symbol -> 每 tick 最多成交张数(默认全量)
         self.submit_but_lose_response = 0  # >0: 券商收单成功但抛异常给客户端(幂等场景)
         self.allow_naked = True          # True=允许卖超(用于暴露bug); False=券商侧拒单
+        # False=模拟当前【模拟盘】(不支持MIT触价单, 抛604050→bot回退轮询)
+        # True =模拟【真实盘】(MIT挂得成+触价成交), 用于测真实盘会走的 MIT 止损路径
+        self.mit_supported = False
 
     # ── TradeContext 接口 ──
     def submit_order(self, symbol, order_type, side, submitted_quantity,
@@ -173,8 +176,9 @@ class FakeBroker:
         ot = str(order_type).split(".")[-1]
         sd = str(side).split(".")[-1]
         tif = str(time_in_force).split(".")[-1]
-        if ot == "MIT":
+        if ot == "MIT" and not self.mit_supported:
             raise SimError("604050 condition order not supported")   # 模拟盘不支持触价单
+        # mit_supported=True: MIT 挂得成(真实盘), 存为未触发的触价单, tick 里触价才成交
         o = _Order(symbol, sd, int(submitted_quantity), ot,
                    float(submitted_price) if submitted_price is not None else None,
                    float(trigger_price) if trigger_price is not None else None,
@@ -277,6 +281,15 @@ class FakeBroker:
                 elif o.order_type == "MO":
                     fillable = o.submitted_quantity - o.executed_quantity
                     px = last
+                elif o.order_type == "MIT":
+                    # 触价市价(真实盘止损): sell 单 low<=trigger 触发 → 市价成交; buy 单 high>=trigger
+                    hit = (o.side == "Sell" and o.trigger is not None and low <= o.trigger) or \
+                          (o.side == "Buy" and o.trigger is not None and high >= o.trigger)
+                    if hit:
+                        fillable = o.submitted_quantity - o.executed_quantity
+                        px = last          # 触发后按市价(可能滑点, 与真实一致)
+                    else:
+                        px = None
                 else:
                     px = None
                 if fillable > 0 and px is not None:
