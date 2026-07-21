@@ -193,7 +193,7 @@ def sc_exit_order_stuck_pending_cancel(s):
     s.broker.stuck_cancel.add(exit_oid)        # 逃生舱撤单也撤不动
     s.run(ticks=8)                             # 超过 EXIT_STUCK_SEC=300s
 
-    fails += expect_eq(len(_sell_orders(s)), 3, "卡死期间不得再发新卖单(应只有 tp1/tp2/exit 三张)")
+    fails += expect_eq(len(_sell_orders(s)), 2, "卡死期间不得再发新卖单(单档: 只有 tp1/exit 两张)")
     fails += expect(bool(_alerts_like(s, "卡死", "人工")),
                     "卖单卡死且仓位失去全部自动保护时必须告警")
     fails += expect_eq(p["status"], "closing", "撤不掉的卖单仍在途, 不得擅自改状态")
@@ -631,14 +631,14 @@ def sc_double_stop_trigger_no_double_sell(s):
 
 
 def sc_tp_and_stop_same_bar(s):
-    """同一根K线里既穿一档止盈又击穿止损(巨幅震荡bar) —— 两条通道各卖一次, 合计不得超过持仓。"""
+    """同一根K线里既穿首档止盈又击穿止损(巨幅震荡bar) —— 两条通道各卖一次, 合计不得超过持仓。"""
     fails = []
-    p = _open(s, equity=1200.0)                    # 6张, 一档2张@1.30
-    s.quotes.set_path(OSI, [(0.30, 1.35, 0.25)])   # 最高$1.35(触一档) 最新$0.30(触止损)
+    p = _open(s, equity=1200.0)                    # 6张, 首档卖½=3张@1.30
+    s.quotes.set_path(OSI, [(0.30, 1.35, 0.25)])   # 最高$1.35(触首档) 最新$0.30(触止损)
     s.tick()
 
-    fails += expect_eq(p.get("sold"), 2, "一档止盈应恰好成交2张")
-    fails += expect_eq(p.get("exit_qty"), 4, "止损应只卖剩下的4张, 不得按 filled 全额再卖一遍")
+    fails += expect_eq(p.get("sold"), 3, "首档止盈应恰好成交3张(卖½)")
+    fails += expect_eq(p.get("exit_qty"), 3, "止损应只卖剩下的3张, 不得按 filled 全额再卖一遍")
     s.run(ticks=3)
     fails += expect_eq(_sold_at_broker(s), 6, "总卖出必须恰好6张(止盈+止损不得重叠卖)")
     fails += expect_eq(s.broker_pos(OSI), 0, "应平净")

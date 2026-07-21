@@ -100,6 +100,30 @@ def _mut_quote_age_as_utc():
     return lambda: setattr(B, "_quote_usable", orig)
 
 
+def _mut_breakeven_off():
+    """拆掉保本: _stop_price 无视 be 键, 一律走 avg×stop_mult(回到不保本)。"""
+    orig = B._stop_price
+
+    def patched(p):
+        avg = p.get("avg", 0) or 0.0
+        return max(B.MIN_TICK, avg * p.get("stop_mult", B.MECH_STOP_MULT))
+    B._stop_price = patched
+    return lambda: setattr(B, "_stop_price", orig)
+
+
+def _mut_breakeven_ignores_be_flag():
+    """拆掉隔离: _stop_price 无视 be 键, 只要 reduced 就保本(会误伤老仓位)。"""
+    orig = B._stop_price
+
+    def patched(p):
+        avg = p.get("avg", 0) or 0.0
+        if p.get("reduced") or p.get("tp1_done"):
+            return max(B.MIN_TICK, avg)
+        return max(B.MIN_TICK, avg * p.get("stop_mult", B.MECH_STOP_MULT))
+    B._stop_price = patched
+    return lambda: setattr(B, "_stop_price", orig)
+
+
 def _mut_anchor_blind_write():
     """锚点回到盲写(不取 max) —— 分页/重试写入较小 id 时锚点会倒退。"""
     orig = B._bump
@@ -134,6 +158,10 @@ LOGIC_MUTATIONS = [
      "sc_guard_sell_budget_blocks_stacking"),
     ("报价年龄按UTC解释(偏8小时)", _mut_quote_age_as_utc,
      "sc_guard_quote_age_uses_local_tz"),
+    ("保本关闭(回到不保本)", _mut_breakeven_off,
+     "sc_guard_breakeven_after_tp1"),
+    ("保本无视be键(误伤老仓位)", _mut_breakeven_ignores_be_flag,
+     "sc_guard_breakeven_isolated_by_be_flag"),
     ("锚点盲写(不取max)", _mut_anchor_blind_write,
      "sc_guard_anchor_never_regresses"),
     ("锚点整份覆盖(不合并)", _mut_anchor_overwrite_whole,

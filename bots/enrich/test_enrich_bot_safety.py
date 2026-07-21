@@ -234,7 +234,8 @@ placed = []
 with mock.patch.multiple(B, _submit=lambda osi, side_buy, qty, price=None, **k:
                          (placed.append(qty), (True, "O"))[1], **base):
     B.ensure_protection({"N2": p}, "N2", p)
-chk("新建仓 sold=0 时档位不变(⅓+⅓, 与回测一致)", placed == [3, 3], f"挂出{placed}")
+chk("新建仓 sold=0 时单档卖½(2026-07-21回测定案, 不再挂二档)",
+    placed == [round(9 * B.MECH_TP_FRAC)], f"挂出{placed} (应=[{round(9*B.MECH_TP_FRAC)}])")
 
 # _sell_budget: 已挂未成交卖单要占额度
 p = mkpos(filled=9, sold=0, tp_order_id="T", tp_qty=3, tp2_order_id="T2", tp2_qty=3)

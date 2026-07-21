@@ -53,7 +53,7 @@ def _reasons(s, ev):
 # ══════════════════════════════════════════════════════════════════════════
 
 def sc_full_mechanical_exit(s):
-    """完整机械出场: 建仓→+30%卖⅓→+60%卖⅓并武装9ema→runner保留在手。"""
+    """完整机械出场(2026-07-21单档定案): 建仓→+30%卖½→首档后保本→剩仓摸+60%武装9ema→runner在手。"""
     s.quotes.set_path(HOOD_120, [0.83, 0.83, 0.95, 1.10, 1.20, 1.35, 1.40, 1.25, 1.20, 1.20])
     s.quotes.open_interest[HOOD_120] = 500_000
     s.quotes.candles["HOOD"] = CANDLES_RISING      # 标的一路上行 → 9ema不破, runner该留着
@@ -63,23 +63,26 @@ def sc_full_mechanical_exit(s):
     p = s.pos(HOOD_120) or {}
     f = []
     f += expect_eq(p.get("status"), "open", "跑完后仓位应仍为 open(runner在手)")
-    f += expect_ge(len(s.evs("tp_fill")), 1, "一档止盈(+30%)应成交")
-    f += expect_ge(len(s.evs("tp2_fill")), 1, "二档止盈(+60%)应成交")
-    f += expect_eq(p.get("armed"), True, "二档成交后 runner 应武装9ema (armed=True)")
-    # 卖出量应≈⅔, 剩余≈⅓ runner
+    f += expect_ge(len(s.evs("tp_fill")), 1, "首档止盈(+30%)应成交")
+    f += expect_eq(len(s.evs("tp2_fill")), 0, "单档策略: 不该再有二档止盈成交")
+    f += expect_eq(p.get("armed"), True, "剩仓摸到+60%后 runner 应武装9ema (armed=True)")
+    # 首档卖½, 剩½ runner
     filled, sold = p.get("filled", 0), p.get("sold", 0)
-    f += expect_ge(filled, 3, "常规单张数应≥3才谈得上三等分")
-    f += expect(abs(sold - filled * 2 / 3) <= 2,
-                f"两档共卖出应≈⅔仓: filled={filled} sold={sold}")
+    f += expect_ge(filled, 2, "常规单张数应≥2才谈得上对半分")
+    f += expect(abs(sold - round(filled * 0.5)) <= 1,
+                f"首档应卖≈½仓: filled={filled} sold={sold}")
     f += expect_ge(_remain(s, HOOD_120), 1, "runner 应至少保留1张")
     f += expect_eq(s.broker_pos(HOOD_120), _remain(s, HOOD_120), "runner 张数应与券商侧一致")
+    # 新策略核心: 首档止盈后止损移到入场价(保本)
+    f += expect(B._stop_price(p) >= p.get("avg", 0) * 0.999,
+                f"首档止盈后止损应移到保本(入场价): stop={B._stop_price(p):.3f} avg={p.get('avg')}")
     f += expect_not_in("ema_exit", [e.get("ev") for e in s.events],
                        "标的未破9ema, 不该有9ema出场")
     return f
 
 
 def sc_tp1_only_no_arm(s):
-    """只涨到+35%: 一档成交、二档不成交、runner不武装(armed保持False)。"""
+    """只涨到+35%: 首档成交、未摸+60%不武装(armed保持False), runner靠保本止损守着。"""
     s.quotes.set_path(HOOD_120, [0.83, 0.83, 0.95, 1.10, 1.12, 1.12, 1.05, 1.00, 1.00, 1.00])
     s.quotes.open_interest[HOOD_120] = 500_000
     s.quotes.candles["HOOD"] = CANDLES_RISING
@@ -88,12 +91,14 @@ def sc_tp1_only_no_arm(s):
 
     p = s.pos(HOOD_120) or {}
     f = []
-    f += expect_ge(len(s.evs("tp_fill")), 1, "一档止盈(+30%)应成交")
-    f += expect_eq(len(s.evs("tp2_fill")), 0, "最高仅+35%, 二档(+60%)不该成交")
+    f += expect_ge(len(s.evs("tp_fill")), 1, "首档止盈(+30%)应成交")
+    f += expect_eq(len(s.evs("runner_armed")), 0, "最高仅+35%, 未摸+60%不该武装")
     f += expect(not p.get("armed"), f"未摸到+60%, 不该武装9ema: armed={p.get('armed')}")
     f += expect_eq(p.get("status"), "open", "仓位应仍为 open")
-    f += expect_ge(_remain(s, HOOD_120), 1, "一档后应还有剩仓")
-    f += expect(p.get("tp2_order_id") is not None, "二档止盈单应仍挂在券商侧等着")
+    f += expect_ge(_remain(s, HOOD_120), 1, "首档后应还有剩仓(runner)")
+    # 未武装的 runner 靠保本止损守(首档已止盈 → 保本生效)
+    f += expect(B._stop_price(p) >= p.get("avg", 0) * 0.999,
+                "首档后剩仓应有保本止损兜底(即使未武装9ema)")
     return f
 
 
@@ -125,7 +130,7 @@ def sc_armed_ema_exit(s):
 
     p = s.pos(HOOD_120) or {}
     f = []
-    f += expect_ge(len(s.evs("tp2_fill")), 1, "先要摸到+60%把runner武装起来")
+    f += expect_ge(len(s.evs("runner_armed")), 1, "先要摸到+60%把runner武装起来(单档: 靠价格摸+60%, 不靠二档成交)")
     f += expect_ge(len(s.evs("ema_exit")), 1, "武装后标的连破2根9ema应触发出场")
     ev = (s.evs("ema_exit") or [{}])[0]
     f += expect_eq(ev.get("ticker"), "HOOD", "9ema出场应记录【标的】ticker")
@@ -399,7 +404,7 @@ def sc_premium_over_max_rejected(s):
 # ══════════════════════════════════════════════════════════════════════════
 
 def sc_protection_after_tp1(s):
-    """一档止盈成交后剩余仓位仍有保护腿(不能"卖完一档就裸奔")。"""
+    """首档止盈成交后剩余仓位不能"卖完就裸奔" —— 单档策略下保护 = 保本止损轮询。"""
     s.quotes.set_path(HOOD_120, [0.83, 0.83, 0.95, 1.10, 1.12, 1.10, 1.05, 1.05, 1.05])
     s.quotes.open_interest[HOOD_120] = 500_000
     s.quotes.candles["HOOD"] = CANDLES_RISING
@@ -411,13 +416,13 @@ def sc_protection_after_tp1(s):
     sells = _live_sells(s, HOOD_120)
     sell_qty = sum(o.submitted_quantity - o.executed_quantity for o in sells)
     f = []
-    f += expect_ge(len(s.evs("tp_fill")), 1, "一档止盈应已成交")
-    f += expect_ge(remain, 1, "一档止盈后应还有剩仓")
-    # 保护腿 = 券商侧还挂着的二档止盈 + 仍然生效的轮询止损通道
-    f += expect_ge(len(sells), 1, "一档成交后剩仓必须仍有券商侧卖出保护腿(二档止盈)")
-    f += expect_le(sell_qty, remain, "挂出的保护腿张数不得超过剩仓")
-    f += expect(p.get("tp2_order_id") is not None, "二档止盈腿不该被一档成交连带清掉")
-    f += expect_ge(p.get("stop_mult", 0), 0.01, "轮询止损通道应仍然武装(stop_mult>0)")
-    f += expect_eq(p.get("stop_mult"), B.MECH_STOP_MULT, "机械模式止损应是 -60% (MECH_STOP_MULT)")
-    f += expect_eq(len(s.evs("stop_trigger")), 0, "价格未跌破-60%, 不该误触止损")
+    f += expect_ge(len(s.evs("tp_fill")), 1, "首档止盈应已成交")
+    f += expect_ge(remain, 1, "首档止盈后应还有剩仓(runner)")
+    f += expect_le(sell_qty, remain, "挂出的卖单张数不得超过剩仓(超了=裸空)")
+    # 单档策略: 首档后不再挂二档卖单, 保护改由【保本止损轮询】承担
+    f += expect(p.get("tp2_order_id") is None, "单档策略: 不该有二档止盈腿")
+    f += expect(B._stop_price(p) >= p.get("avg", 0) * 0.999,
+                f"首档后止损应移到保本(入场价), 剩仓不裸奔: stop={B._stop_price(p):.3f} avg={p.get('avg')}")
+    f += expect_ge(p.get("stop_mult", 0), 0.01, "止损通道应仍然武装(stop_mult>0)")
+    f += expect_eq(len(s.evs("stop_trigger")), 0, "价格未跌回入场价, 不该误触保本止损")
     return f
