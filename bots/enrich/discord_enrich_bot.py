@@ -302,27 +302,19 @@ def _tp_params(remain: int, avg: float):
     return max(1, round(remain * MECH_TP_FRAC)), round(avg * MECH_TP_MULT, 2)
 
 
-LEGACY_STOP_MULT = 0.4   # 2026-07-21 前的旧默认(-60%)。给老仓位兜底用, 【不随策略变】。
-
 def _stop_price(p: dict) -> float:
     """当前止损价 —— 止损判定/挂单/心跳显示【唯一】来源, 三处都调它, 不各写一份。
 
-    保本(be 且已首档止盈): 止损=入场价 avg。回测(bt_be_grid)结论: 保本在每个结构上
-    胜率+5~10pp、最差月更好, 且不牺牲上行(只在首档止盈后启用, 那时已落袋一档利润)。
+    保本(MECH_BE 开 且已首档止盈): 止损=入场价 avg。回测(bt_be_grid)结论: 保本在每个结构
+    上胜率+5~10pp、最差月更好, 且不牺牲上行(只在首档止盈后启用, 那时已落袋一档利润)。
     否则: avg × stop_mult。都不低于 MIN_TICK —— 低价期权 avg×0.5 可能落在最小报价档以下,
     last 永远够不到 → 止损失效(旧bug)。
 
-    隔离(老持仓不被就地改止损): 用【be 键是否存在】判新旧, 不用 stop_mult 是否存在 ——
-      · 新仓位开仓必带 be 键(True/False), stop_mult 缺失时 fallback 到当前 MECH_STOP_MULT
-      · 老仓位 dict 里【没有】be 键, stop_mult 缺失时 fallback 到固定的 LEGACY_STOP_MULT(-60%)
-    原实现 fallback 一律用 MECH_STOP_MULT(会随策略变): 老仓位若某次落盘丢了 stop_mult 键,
-    止损会被新默认从-60%悄悄收紧到-50%, 破坏隔离(对抗测试挖出)。
-    """
+    保本是【全局】行为, 对所有仓位一视同仁(2026-07-21 用户拍板: 模拟单不做新旧隔离)。"""
     avg = p.get("avg", 0) or 0.0
-    if p.get("be") and (p.get("reduced") or p.get("tp1_done")):
+    if MECH_BE and (p.get("reduced") or p.get("tp1_done")):
         return max(MIN_TICK, avg)
-    default_sm = MECH_STOP_MULT if ("be" in p) else LEGACY_STOP_MULT
-    return max(MIN_TICK, avg * p.get("stop_mult", default_sm))
+    return max(MIN_TICK, avg * p.get("stop_mult", MECH_STOP_MULT))
 
 
 _ema_cache = {}   # ticker -> (checked_at_epoch, break_count)
@@ -739,7 +731,7 @@ def ensure_protection(positions: dict, osi: str, p: dict):
         if ok:
             _MIT_OK = True
             p["stop_order_id"], p["stop_qty"], p["stop_order_id_counted"] = r, _sq, 0
-            _be = p.get("be") and (p.get("reduced") or p.get("tp1_done"))
+            _be = MECH_BE and (p.get("reduced") or p.get("tp1_done"))
             log(f"🛡️ {osi} 券商侧止损已挂: {_sq}张 触发${trig} " +
                 ("(保本)" if _be else f"(-{(1-_sm)*100:.0f}%)"))
             journal(ev="stop_place", osi=osi, trigger=trig, qty=_sq, order_id=r)
@@ -1111,7 +1103,7 @@ def _heartbeat(snap: list, positions: dict):
         legs = sum(1 for k in ("tp_order_id", "tp2_order_id", "stop_order_id") if p.get(k))
         if last and avg > 0:
             stop_px = _stop_price(p)         # 与真正止损判定同一来源(保本时=入场价)
-            _be = p.get("be") and (p.get("reduced") or p.get("tp1_done"))
+            _be = MECH_BE and (p.get("reduced") or p.get("tp1_done"))
             room = (1 - stop_px / last) * 100 if last > 0 else 0
             parts.append(f"{osi} {remain}张 ${last:.2f}({(last/avg-1)*100:+.0f}%) "
                          f"距止损${stop_px:.2f}({'保本' if _be else '-'+str(round((1-p.get('stop_mult',MECH_STOP_MULT))*100))+'%'})还有{room:.0f}% 保护腿{legs}条")
@@ -1373,7 +1365,7 @@ def manage_positions(positions: dict):
                     _save(POS_JSON, positions)
                 # stop_px 走 _stop_price 单一来源(保本时=入场价, 否则 avg×stop_mult; 均≥MIN_TICK)
                 stop_px = _stop_price(p)
-                _be = p.get("be") and (p.get("reduced") or p.get("tp1_done"))
+                _be = MECH_BE and (p.get("reduced") or p.get("tp1_done"))
                 if last <= stop_px:
                     lab = "保本止损" if _be else f"止损-{(1-_sm)*100:.0f}%"
                     log(f"🛑 {osi} 轮询止损: 最新${last} ≤ ${stop_px:.2f} ({lab})")
@@ -1812,7 +1804,7 @@ def _handle(text: str, msg_date: date, msg_id: int, seen: dict, positions: dict,
                                   filled=0, sold=0, avg=0.0, tp_order_id=None, tp_qty=0,
                                   tp2_order_id=None, tp2_qty=0, tp1_done=False, tp2_done=False,
                                   armed=False, submitted_ts=time.time(),
-                                  stop_mult=_sm0, be=MECH_BE,   # be: 首档止盈后是否移保本(老仓位无此键→不保本, 隔离)
+                                  stop_mult=_sm0,
                                   status="pending", opened=str(msg_date))
             if not _save(POS_JSON, positions):
                 # 券商已收单但本地存不下 → 崩溃/重启后完全不知道有这个仓位。撤单是唯一安全解。

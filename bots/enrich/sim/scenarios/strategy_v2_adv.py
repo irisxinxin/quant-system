@@ -6,8 +6,7 @@
   · 保本 whipsaw: 同轮止盈+保本止损, 不重复卖不裸空
   · 武装口径: bot 用 last_done 判 +60% 武装(回测用 bar.high), high 穿但收盘没穿会漏武装
   · 武装先于首档: last 直接摸 +60% 但 reduced 尚未置位时, 9ema 出场会不会把全仓当 runner 平
-  · 隔离: 老仓位(无 be)全生命周期都不保本/不被就地加 be
-  · 卖½ 取整 + 部分入场 + 崩溃重启下 be 持久
+  · 卖½ 取整 + 部分入场 + 崩溃重启后保本仍生效
 通用不变式(裸空/账实/孤儿/弃仓)由 runner 自动跑。
 """
 import discord_enrich_bot as B
@@ -21,7 +20,7 @@ FLAT = (1.00, 1.00, 1.00)
 
 
 def _open_new(s, equity=1200.0, oi=500_000):
-    """走真实链路开一个新策略仓(带 be=True)。equity=1200 → 6张。"""
+    """走真实链路开一个新策略仓(保本由全局 MECH_BE 控制)。equity=1200 → 6张。"""
     B._rl_until = 0.0
     s.broker.equity = equity
     s.quotes.set_path(OSI, [FLAT])
@@ -46,14 +45,14 @@ def _uptrend_candles(n=20):
 # ══════════════════════════════════════════════════════════════════════════
 
 def sc_adv_no_breakeven_before_tp1(s):
-    """首档止盈前 be=True 但 reduced=False → 止损必须仍是 -50%, 不是保本(入场价)。
+    """首档止盈前(reduced=False) → 止损必须仍是 -50%, 不是保本(入场价)。
 
     若 _stop_price 误在 reduced 前就保本, 价格跌到入场价下方一点(-2%)就会清仓 ——
     等于从没止盈过就在 -2% 割肉。断言: -2% 不触发, -50% 才触发。
     """
     fails = []
     p = _open_new(s)
-    fails += expect(bool(p) and p.get("be") is True, "新仓应带 be=True")
+    fails += expect(bool(p), "新仓应建仓成功")
     fails += expect(not p.get("reduced"), "开仓时尚未首档止盈")
     if p:
         fails += expect(abs(B._stop_price(p) - p["avg"] * 0.5) < 1e-6,
@@ -110,7 +109,7 @@ def sc_adv_breakeven_full_lifecycle(s):
     p = s.pos(OSI)
     fails += expect_ge(len(s.evs("stop_trigger")), 1, "跌回入场价应触发保本止损")
     bt = [e for e in s.evs("stop_trigger") if e.get("be")]
-    fails += expect_ge(len(bt), 1, "触发的应是【保本】止损(be=True)")
+    fails += expect_ge(len(bt), 1, "触发的应是【保本】止损(止损价=入场价)")
     s.run(ticks=3)
     fails += expect_eq(s.broker_pos(OSI), 0, "保本平净后券商侧应为 0")
     fails += expect_eq(p.get("sold"), p.get("filled"), "sold 应收敛到 filled(不多不少)")
@@ -198,43 +197,6 @@ def sc_adv_arm_before_tp1_no_oversell(s):
     return fails
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# 5. 隔离 —— 老仓位(无 be)全生命周期
-# ══════════════════════════════════════════════════════════════════════════
-
-def sc_adv_old_position_lifecycle_never_breakeven(s):
-    """老仓位(无 be 键, stop_mult=0.4)跑首档止盈→跌回入场价: 绝不保本, 绝不被加 be,
-    且价格在入场价上方(-60%止损线之上)时不能被平掉。"""
-    fails = []
-    B._rl_until = 0.0
-    # 老仓位: 已建仓 open, 6张, 无 be 键, stop_mult=0.4, 有 GTC 一档止盈腿
-    s.broker.position[OSI] = 6
-    s.quotes.set_path(OSI, [(1.35, 1.40, 1.30)])   # 摸 +30% 触老仓一档
-    s.positions[OSI] = dict(ticker=TK, filled=6, sold=0, avg=1.00, qty=6,
-                            right="C", expiry="2026-07-24", strike=120.0,
-                            entry_order_id=None, stop_mult=0.4,
-                            reduced=False, tp1_done=False, armed=False,
-                            tp_order_id=None, tp2_order_id=None,
-                            status="open", opened="2026-07-20")
-    s.tick()      # ①b 补挂止盈腿 + 若穿价则成交
-    p = s.pos(OSI)
-    fails += expect_not_in("be", p, "老仓位跑一轮不得被加 be 键")
-    # 跌回入场价 1.00: 老仓 -60% 止损线=0.40, 1.00 远在上方 → 不能触发止损
-    s.quotes.set_path(OSI, [(1.00, 1.00, 1.00)] * 3)
-    s.tick(n=3)
-    p = s.pos(OSI)
-    fails += expect_not_in("be", p, "老仓位跌回入场价仍不得被加 be 键")
-    fails += expect(abs(B._stop_price(p) - p["avg"] * 0.4) < 1e-6,
-                    f"老仓位止损应始终 -60%(avg×0.4): {B._stop_price(p):.3f}")
-    fails += expect_eq(s.evs("stop_trigger"), [],
-                       "老仓位在入场价(远高于-60%线)绝不能触发止损 —— 若触发说明被新保本逻辑污染")
-    fails += expect_eq(s.broker_pos(OSI), 6 - p.get("sold", 0), "券商持仓应与账本一致")
-    return fails
-
-
-# ══════════════════════════════════════════════════════════════════════════
-# 6. 卖½ 取整 —— 1 张仓
-# ══════════════════════════════════════════════════════════════════════════
 
 def sc_adv_one_lot_tp1_closes_clean(s):
     """1 张仓摸 +30%: round(1×0.5)=0→max(1)=1 → 卖光整仓, 干净平仓无孤儿单。"""
@@ -274,7 +236,6 @@ def sc_adv_partial_entry_then_breakeven(s):
     p = s.pos(OSI)
     filled = p["filled"]
     fails += expect(0 < filled < 30, f"应为部分成交: 实际 {filled}/30")
-    fails += expect(p.get("be") is True, "部分入场的新仓仍应带 be=True")
     fails += expect_eq(filled, s.broker_pos(OSI), "filled 必须=券商持仓")
     del s.broker.liquidity[OSI]
     # 首档止盈
@@ -309,7 +270,6 @@ def sc_adv_breakeven_survives_restart(s):
     if snaps:
         restored = {k: dict(v) for k, v in snaps[-1].items()}
         rp = restored[OSI]
-        fails += expect(rp.get("be") is True, "重启恢复的仓位必须仍带 be=True")
         fails += expect(rp.get("reduced") is True, "重启恢复的仓位必须仍带 reduced=True")
         fails += expect(abs(B._stop_price(rp) - rp["avg"]) < 1e-6,
                         f"重启后保本止损必须仍=入场价: {B._stop_price(rp):.3f}")
@@ -421,7 +381,7 @@ def sc_adv_exit_never_claims_protective_leg(s):
     orphan = r.order_id
     s.positions[OSI] = dict(ticker=TK, filled=6, sold=0, avg=1.00, qty=6, right="C",
                             expiry="2026-07-24", strike=120.0, entry_order_id=None,
-                            stop_mult=0.5, be=True, reduced=False, tp1_done=False,
+                            stop_mult=0.5, reduced=False, tp1_done=False,
                             armed=False, tp_order_id=None, tp2_order_id=None,
                             status="open", opened="2026-07-21")
     s.quotes.set_path(OSI, [(0.45, 0.45, 0.45)])   # -55% → 应触发 -50% 止损

@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""sim/scenarios/strategy_v2.py — 对抗 2026-07-21 新策略(单档30卖½ + 保本 + 隔离)。
+"""sim/scenarios/strategy_v2.py — 对抗 2026-07-21 新策略(单档30卖½ + 保本)。
 
 目的是【找 bug】, 不是刷覆盖: 每个场景断言"正确/安全行为", bot 错了就红。
 攻击面 = 新策略独有的边界与竞态:
-  · 隔离健壮性(老仓位在各种情况下都不被新保本/新止损影响)
   · 保本的触发/不重复卖/whipsaw
   · 首档卖½的取整边界(绝不超卖)
   · 首档部分成交时保本尚未生效、剩仓仍受保护
-  · be 键落盘持久
 写法约定见 scenario_api.py。通用不变式(裸空/账实/孤儿/弃仓)由 runner 自动跑。
+(2026-07-21 用户拍板: 模拟单不做新旧隔离, 保本全局生效 → 原隔离场景已删。)
 """
 import discord_enrich_bot as B
 from sim.scenario_api import expect, expect_eq, expect_le, expect_ge
@@ -27,7 +26,7 @@ def _isolate():
 
 
 def _open_new(s, equity=1200.0, path=(FLAT,), oi=500_000):
-    """走真实链路开一个【新策略】仓(带 be 键)。"""
+    """走真实链路开一个新策略仓(保本由全局 MECH_BE 控制)。"""
     _isolate()
     s.broker.equity = equity
     s.quotes.set_path(OSI, list(path))
@@ -36,51 +35,6 @@ def _open_new(s, equity=1200.0, path=(FLAT,), oi=500_000):
     s.tick()
     return s.pos(OSI)
 
-
-# ══════════════════════════════════════════════════════════════════════════
-# 隔离健壮性 —— 老仓位(切策略当天的 PLTR 类)绝不被新保本/新止损影响
-# ══════════════════════════════════════════════════════════════════════════
-
-def sc_v2_isolation_survives_stop_mult_loss(s):
-    """老仓位隔离不能依赖 stop_mult 键存在 —— 键丢了也必须走旧 -60%, 不被新默认拖到 -50%。
-
-    对抗探针挖出: 原 fallback 用会随策略变的 MECH_STOP_MULT, 老仓位丢 stop_mult 键就被收紧。
-    """
-    fails = []
-    # 老仓位: 无 be 键, stop_mult 键【丢失】, 已首档止盈
-    old_lost = dict(avg=1.36, reduced=True, tp1_done=True)
-    fails += expect(abs(B._stop_price(old_lost) - 1.36 * 0.4) < 1e-6,
-                    f"老仓位丢stop_mult键应仍走-60%: {B._stop_price(old_lost):.4f} 应=0.544")
-    # 新仓位: 有 be 键, stop_mult 丢失 → 首档前 fallback 到新默认 -50%(不是旧-60%)
-    new_lost = dict(avg=1.36, be=True, reduced=False)
-    fails += expect(abs(B._stop_price(new_lost) - 1.36 * B.MECH_STOP_MULT) < 1e-6,
-                    f"新仓位丢stop_mult应走新默认: {B._stop_price(new_lost):.4f}")
-    return fails
-
-
-def sc_v2_old_position_manage_never_adds_be(s):
-    """老仓位跑一整轮仓位管理, 绝不能被【就地加上 be 键】—— 一旦加了, 它下轮就开始保本, 隔离破功。"""
-    _isolate()
-    fails = []
-    # 构造 PLTR 类老仓位: 已首档止盈, 无 be 键, stop_mult=0.4, 有 runner
-    s.broker.position[OSI] = 4
-    s.quotes.set_path(OSI, [1.50] * 8)             # 现价远离入场价, 不触发任何出场
-    s.positions[OSI] = dict(ticker="HOOD", filled=6, sold=2, avg=1.36, qty=6,
-                            right="C", expiry="2026-07-24", strike=120.0,
-                            entry_order_id=None, stop_mult=0.4, reduced=True, tp1_done=True,
-                            tp_order_id=None, tp2_order_id="OLD-TP2", tp2_qty=2,
-                            armed=False, status="open", opened="2026-07-20")
-    s.tick(n=3)
-    p = s.pos(OSI)
-    fails += expect("be" not in p, f"老仓位不得被加 be 键(加了就会保本, 破坏隔离): be={p.get('be')}")
-    fails += expect(abs(B._stop_price(p) - 1.36 * 0.4) < 1e-6,
-                    f"老仓位止损应始终 -60%: {B._stop_price(p):.4f}")
-    return fails
-
-
-# ══════════════════════════════════════════════════════════════════════════
-# 卖½ 取整边界 —— 任何 filled 下都绝不超卖
-# ══════════════════════════════════════════════════════════════════════════
 
 def sc_v2_sell_half_never_oversell(s):
     """首档卖½在各 filled 值下: 挂出的卖单张数绝不超过持仓(超了=裸空)。"""
@@ -114,7 +68,7 @@ def sc_v2_partial_first_tp_still_protected(s):
     s.quotes.set_path(OSI, [1.00] * 10)
     s.positions[OSI] = dict(ticker="HOOD", filled=6, sold=0, avg=1.00, qty=6,
                             right="C", expiry="2026-07-24", strike=120.0,
-                            entry_order_id=None, stop_mult=0.5, be=True,
+                            entry_order_id=None, stop_mult=0.5,
                             tp_order_id="TP", tp_qty=3, tp_order_id_counted=0,
                             reduced=False, tp1_done=False, armed=False,
                             status="open", opened="2026-07-21")
@@ -161,22 +115,4 @@ def sc_v2_breakeven_triggers_flat_no_double(s):
     return fails
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# be 键落盘持久 —— 崩溃重启后新仓位仍保本
-# ══════════════════════════════════════════════════════════════════════════
 
-def sc_v2_be_flag_persisted(s):
-    """新仓位的 be 键必须落盘 —— 否则崩溃重启后新仓位丢了 be, 退化成不保本。"""
-    _isolate()
-    fails = []
-    p = _open_new(s, equity=1200.0)
-    fails += expect(p is not None and "be" in p, "新仓位内存对象应带 be 键")
-    fails += expect(p and p.get("be") is True, f"MECH_BE=1 时新仓位 be 应为 True: {p.get('be') if p else None}")
-    # 落盘快照里必须含 be(s.saved 记录每次 _save 的快照)
-    snaps = [snap for name, snap in s.saved if OSI in snap]
-    if snaps:
-        last = snaps[-1][OSI]
-        fails += expect("be" in last, "落盘快照里新仓位必须含 be 键(否则重启后丢失保本)")
-    else:
-        fails += ["未捕获到落盘快照(应至少落盘一次)"]
-    return fails

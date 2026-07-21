@@ -37,34 +37,6 @@ def sc_guard_breakeven_after_tp1(s):
     return fails
 
 
-def sc_guard_breakeven_isolated_by_be_flag(s):
-    """保本必须 per-position 隔离: 老仓位(无 be 键)首档止盈后【不】保本, 仍走原 stop_mult。
-
-    这是 PLTR 首日持仓的隔离依据 —— 改策略当天 PLTR 已在跑, 不能被新保本逻辑就地改止损。
-    _stop_price 若无视 be 键一律保本 → 老仓位止损被抬到入场价 → 本场景红。
-    """
-    import discord_enrich_bot as B
-    fails = []
-    # 老仓位: 有 reduced(已首档止盈), 但【无 be 键】, stop_mult=0.4(-60%)
-    old = dict(avg=1.36, stop_mult=0.4, reduced=True, tp1_done=True)
-    fails += expect(abs(B._stop_price(old) - 1.36 * 0.4) < 1e-6,
-                    f"老仓位(无be)应走原-60%: {B._stop_price(old):.4f} 应=0.544")
-    # 新仓位: 有 be=True, 同样已首档止盈 → 保本(入场价)
-    new = dict(avg=1.36, stop_mult=0.5, be=True, reduced=True, tp1_done=True)
-    fails += expect(abs(B._stop_price(new) - 1.36) < 1e-6,
-                    f"新仓位(be=True)应保本: {B._stop_price(new):.4f} 应=1.36")
-    # 未首档止盈的新仓位: be虽True但reduced=False → 仍走-50%(保本只在首档后启用)
-    pre = dict(avg=1.36, stop_mult=0.5, be=True, reduced=False, tp1_done=False)
-    fails += expect(abs(B._stop_price(pre) - 1.36 * 0.5) < 1e-6,
-                    f"首档止盈前(be=True但未reduced)应走-50%: {B._stop_price(pre):.4f} 应=0.68")
-    return fails
-
-
-# ══════════════════════════════════════════════════════════════════════════
-# ① I3 终极保障: 券商持仓查不到时【不卖】
-#    守: _start_exit 的 `if bq is None: 拒卖`
-#    变异: 券商持仓查不到时照常卖
-# ══════════════════════════════════════════════════════════════════════════
 
 def sc_guard_broker_qty_unknown_refuses_sell(s):
     """券商持仓查询失败时绝不卖 —— 账本偏高与查询失败常是同一次网络故障的两面。
@@ -292,7 +264,7 @@ def sc_guard_close_position_sweeps_orphan(s):
                                    time_in_force="GoodTilCanceled", submitted_price=1.3, remark="tp1")
     s.positions[OSI] = dict(ticker="HOOD", filled=6, sold=0, avg=1.00, qty=6, right="C",
                             expiry="2026-07-24", strike=120.0, entry_order_id=None,
-                            stop_mult=0.5, be=True, reduced=False, tp1_done=False, armed=False,
+                            stop_mult=0.5, reduced=False, tp1_done=False, armed=False,
                             tp_order_id=None, tp2_order_id=None, status="open", opened="2026-07-21")
     s.quotes.set_path(OSI, [1.00] * 6)
     B.close_position(s.positions, OSI, "测试平仓")
