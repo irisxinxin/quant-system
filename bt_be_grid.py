@@ -19,8 +19,12 @@ bt_be_grid.py — 聚焦回测: 保本(止损移入场价) vs 不保本, × 止�
 import json, math, pickle, sys, os
 import statistics as st
 from datetime import datetime, timezone, date, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 import warnings; warnings.filterwarnings("ignore")
+
+ET = ZoneInfo("America/New_York")
+ENTRY_TTL = timedelta(minutes=20)   # 对齐 bot ENTRY_TTL_SEC=1200: 挂单20分未成交撤(不接刀)
 
 sys.path.insert(0, str(Path(__file__).parent))
 from enrich_parser import parse_signal
@@ -65,15 +69,18 @@ def build_prepped():
         parsed.append((m["id"], ts, m["text"], parse_signal(m["text"], ts.date())))
     buys, seen = [], set()
     for mid, ts, text, s in parsed:
-        if s.kind in ("BUY", "BUY_NOEXPIRY") and s.limit_price <= 8.0:
+        # 对齐 bot: MAX_PREMIUM=5.0 (原回测用8.0会吃 bot 从不买的 $5-8 单)
+        if s.kind in ("BUY", "BUY_NOEXPIRY") and s.limit_price <= 5.0:
             pass
-        elif s.kind == "BUY_AMBIG" and s.limit_price <= 8.0:
+        elif s.kind == "BUY_AMBIG" and s.limit_price <= 5.0:
             side = _resolve_ambig_hist(q, E, s, ts)
             if side is None: continue
             s.kind, s.right = "BUY", side
         else:
             continue
-        if not (LO <= s.expiry <= HI): continue
+        # 对齐 bot: 按【入场日】落在分析窗(原按 expiry 会漏掉7月进/8月到期的单)
+        if not (LO <= ts.date() <= HI): continue
+        if s.expiry < ts.date(): continue                # 已到期信号 bot 跳过
         key = f"{s.ticker}{s.expiry}{s.strike}{s.right}:{ts.date()}"
         if key in seen: continue
         seen.add(key); buys.append(dict(ts=ts, sig=s))
@@ -144,23 +151,37 @@ def build_prepped():
         ob, real = opt5(s, b["ts"])
         if not ob or len(ob) < 3: continue
         entry = s.limit_price
-        fi = next((i for i, x in enumerate(ob) if x["l"] <= entry), None)
+        # 对齐 bot: 只有【入场后20分钟内】期权真跌到≤limit 才成交, 否则视为撤单(不接刀)
+        ttl_cut = b["ts"] + ENTRY_TTL
+        fi = next((i for i, x in enumerate(ob) if x["ts"] <= ttl_cut and x["l"] <= entry), None)
         if fi is None: continue
         base = min(entry, ob[fi]["o"])
-        path = ob[fi:]
+        # 对齐 bot: 到期日 15:40 ET 强平 → 丢弃到期日 15:40 ET 之后的 bar(仅到期日截, 中途日留隔夜)
+        path = [x for x in ob[fi:]
+                if not (x["ts"].astimezone(ET).date() == s.expiry
+                        and (x["ts"].astimezone(ET).hour, x["ts"].astimezone(ET).minute) >= (15, 40))]
+        if len(path) < 3: continue
         u5 = gi5(s.ticker, b["ts"].date(), s.expiry)
         if not u5: continue
         lotto = ("lotto" in (s.size_tag or "").lower()
                  or "scalp" in " ".join(s.raw.split()).lower() or s.expiry == b["ts"].date())
-        prepped.append(dict(base=base, path=path, real=real, lotto=lotto,
+        prepped.append(dict(base=base, path=path, real=real, lotto=lotto, entry_ts=b["ts"],
+                            ticker=s.ticker, right=s.right, expiry=s.expiry,
                             m=str(b["ts"])[:7], e15=make_ema_series(u5, 15)))
     return prepped
 
 
+ARM_MULT = 1.6   # runner 摸 +60% 武装(= bot MECH_TP2_MULT), 武装后才守9ema
+
+
 def simulate(p, ladder, fracs, stop, ema_n, be):
-    """单笔收益率。be=True: 首档止盈后止损移入场价(保本); be=False: 止损始终 base*stop。"""
+    """单笔收益率。be=True: 首档止盈后止损移入场价(保本); be=False: 止损始终 base*stop。
+
+    ⚠ 武装门控(2026-07-22修): runner 必须先摸到 base*ARM_MULT(+60%)【武装】后才守9ema,
+    与 bot 一致(未武装的runner只受止损+到期管, 防早盘回踩把runner误洗在低点)。
+    之前缺这道门 → runner一进场就守9ema, 早盘一回踩就被砍 → 系统性低估runner。"""
     base, path = p["base"], p["path"]
-    pos, first_trim, val = 1.0, False, 0.0
+    pos, first_trim, armed, val = 1.0, False, False, 0.0
     done = [False] * len(ladder)
     ebreak, ep = 0, 0
     es = p["e15"]
@@ -175,12 +196,13 @@ def simulate(p, ladder, fracs, stop, ema_n, be):
                 f = min(fracs[j], pos); val += f * base * (1 + thr); pos -= f
                 done[j] = True; first_trim = True
         if pos <= 1e-9: break
-        if es:
-            fired = False
+        if not armed and x["h"] >= base * ARM_MULT:   # 摸+60% → 武装(此后才守9ema)
+            armed = True
+        if es:                                        # ebreak 每根连续维护 → 始终=【当前】连破根数
             while ep < len(es) and es[ep][0] <= x["ts"]:
                 ebreak = ebreak + 1 if es[ep][1] else 0; ep += 1
-                if ebreak >= ema_n: fired = True
-            if fired: val += pos * x["o"]; pos = 0; break
+            if armed and ebreak >= ema_n:             # 武装后且当前连破≥N才平(非sticky, 与bot取当前streak一致)
+                val += pos * x["o"]; pos = 0; break
     if pos > 1e-9: val += pos * path[-1]["c"]
     return val / base - 1
 
@@ -205,6 +227,8 @@ def main():
         ("纯runner",   [],        []),
         ("单档30卖⅓",  [.3],      [1/3]),
         ("单档30卖½",  [.3],      [.5]),
+        ("单档40卖½",  [.4],      [.5]),
+        ("单档50卖½",  [.5],      [.5]),
         ("单档40卖⅓",  [.4],      [1/3]),
         ("单档60卖⅓",  [.6],      [1/3]),
         ("30/50 各⅓",  [.3, .5],  [1/3, 1/3]),

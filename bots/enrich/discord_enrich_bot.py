@@ -12,10 +12,11 @@ discord_enrich_bot.py — 监听 Discord #期权-波段-enrich 信号 → 解析
   4. 去重: 同一期权同一天只开一次; 消息ID去重
   5. 限价单 only, 单张权利金>MAX_PREMIUM 拒绝; 已到期信号跳过
 
-仓位管理 (机械出场, 无AI; 站长的出场消息只播报不执行):
-  · 止盈: 入场成交 → 挂两档 GTC 限价卖, +30%卖⅓ / +60%卖⅓(二档成交=runner武装)
-  · 拖尾: runner 武装后守【标的】15分9ema, 连破2根 → 市价平
-  · 止损: -60% 全程有效, 不移保本 (模拟盘唯一通道是轮询, MIT挂单会被拒)
+仓位管理 (机械出场, 无AI; 站长的出场消息只播报不执行 —— 2026-07-22 F不对称过夜定案):
+  · 止盈: 入场成交 → 挂单档 GTC 限价卖 +30%卖½ (剩半跑runner; 不再挂二档卖单)
+  · runner: 不保本(MECH_BE=0, 让它扛回撤接大runner如GOOGL) → 摸+60%武装 → 守【标的】15分9ema连破2根市价平
+  · 止损: -50% 全程 (MECH_STOP_MULT=0.5; 模拟盘唯一通道是轮询, 真实盘走券商侧MIT)
+  · 过夜: 【未落袋满仓】(not reduced)非到期日15:40 ET收盘前平, 不裸扛过夜避IBM式-94%gap; 已落袋runner留过夜
   · 到期强平: 到期日 15:40 ET 剩仓市价全平, 防归零/行权
   · 天然风控: 买期权最大亏=权利金 (每笔 ≤ MAX_PREMIUM×100×张数)
 
@@ -23,8 +24,8 @@ discord_enrich_bot.py — 监听 Discord #期权-波段-enrich 信号 → 解析
   python3 discord_enrich_bot.py                                  # DRY_RUN
   ENRICH_LIVE=true OPTION_CONTRACTS=2 python3 discord_enrich_bot.py   # 模拟盘真下单
 环境: DISCORD_BOT_TOKEN(必须) / OPTION_CONTRACTS(默认1) / MAX_PREMIUM(默认5.0)
-      / MECH_TP_MULT(1.3) / MECH_TP2_MULT(1.6) / MECH_STOP_MULT(0.4)
-      / DISCORD_WEBHOOK_URL(可选回报推送)
+      / MECH_TP_MULT(1.3) / MECH_TP_FRAC(0.5) / MECH_TP2_MULT(1.6) / MECH_STOP_MULT(0.5)
+      / MECH_BE(F策略=0) / F_EOD_CLOSE_UNREDUCED(1) / DISCORD_WEBHOOK_URL(可选回报推送)
 """
 import os, re, sys, json, base64, time, math
 from datetime import datetime, date, time as dtime, timezone as _tzone
@@ -92,13 +93,15 @@ CATCHUP_MAX = int(os.environ.get("CATCHUP_MAX", "500"))
 # 出场侧放宽到 6 小时: 持仓晚跟好过不跟, 但隔夜/隔日的清仓令绝不能拿来平今天新建的仓。
 STALE_EXIT_SEC = int(os.environ.get("STALE_EXIT_SEC", "21600"))
 
-# ── 出场规则 (2026-07-21 回测定案, 用户拍板; bt_be_grid 稳健性网格) ──
-# 机械出场(无AI): +30%卖½ → 首档止盈后止损移入场价(保本) → 剩仓摸+60%武装
+# ── 出场规则 (2026-07-22 引擎修bug后重测定案, 用户拍板 F不对称过夜; bt_be_grid + overnight_asym) ──
+# 机械出场(无AI): +30%卖½ → runner不保本(MECH_BE=0, 维持-50%不移入场价) → 剩仓摸+60%武装
 #                → 守【标的】15分9ema连破2根拖尾 → 到期强平。初始止损-50%。
-# 回测(bt_be_grid n=127 2-7月, 单档30卖½保本): 稳健甜点, 胜率66% 中位+9% 最差月+0~1%;
-#   稳的结论只有"保本>不保本""止损别太紧", 卖多少无定论(取折中½), 只信相对排序不信幅度。
-# 2026-07-19 旧定稿是"两档+30卖⅓/+60卖⅓ -60全程无保本"(bt_mechanical_v2), 已被本次替换 ——
-#   回测显示第二档砍肥尾无收益、不保本掉胜率, 旧策略在 bt_be_grid 排 #33/45。
+#                → 未落袋满仓(not reduced)非到期日15:40收盘前平(F_EOD_CLOSE_UNREDUCED), 不裸扛过夜。
+# 回测教训: 旧引擎缺【武装门控】(runner一进场就守9ema)→ 结论"保本>不保本"是bug造成的假象;
+#   修复后重测(n=86, 加TTL/premium$5/到期15:40对齐bot): 保本vs不保本是【权衡】——保本胜率79%但砍死
+#   回撤后爆发的runner(GOOGL被砍+15%次日却+1270%), 不保本加权+42%接得住。F不对称=runner不保本扛过夜
+#   接GOOGL + 未落袋满仓收盘平避IBM式-94%裸扛gap: 加权+39% 胜率56% 最差-50% 灾难9(A现状是-94%/16)。
+# 2026-07-19 更早旧定稿"两档+30卖⅓/+60卖⅓ -60全程无保本"亦已被替换。只信相对排序不信幅度(真实K仅10单)。
 # 站长的出场消息【只播报不执行】。
 #
 # 2026-07-20 删除了 EXIT_MODE 开关与 mirror(跟站长出场)模式。理由:
@@ -107,17 +110,21 @@ STALE_EXIT_SEC = int(os.environ.get("STALE_EXIT_SEC", "21600"))
 #     (环境变量没到位就静默切成另一套策略), 且仿真在它上面挖出过裸空和三处信号丢弃
 # 要回切请从 git 恢复(commit e6a0041 及之前), 别在这里加开关。
 # 2026-07-21 回测定案(bt_be_grid, n=127 2-7月): 单档止盈 + 首档后保本 + 15m9ema。
-#   稳健结论: 保本>不保本(胜率系统性+5~10pp)、单档≈两档但省一档、止损-50/-60都行别用-40。
-#   卖多少无定论(全样本偏⅓真实K偏⅔), 取折中½。详见 bt_be_grid.py。
+#   2026-07-22 引擎修bug(武装门控缺失+sticky)后重测: 保本vs不保本是【权衡】不是碾压——
+#   保本胜率高(79%)但会把回撤到入场价的runner砍死(GOOGL被砍在+15%, 次日却+1270%);
+#   不保本加权高(+42%)因接得住这类。IBM-94%则是【没落袋满仓裸扛过夜】被逆gap打穿。
+#   → 采用【F不对称过夜策略】: runner不保本(MECH_BE=0)让它扛过夜接大runner;
+#     未落袋满仓(not reduced)非到期日收盘前平, 不裸扛过夜。详见 bt_be_grid.py + scratchpad/overnight_asym.py。
 MECH_TP_MULT = float(os.environ.get("MECH_TP_MULT", "1.3"))     # 首档止盈 +30%
 MECH_TP_FRAC = float(os.environ.get("MECH_TP_FRAC", "0.5"))     # 首档卖多少(0.5=卖半, 剩半跑runner)
 MECH_TP2_MULT = float(os.environ.get("MECH_TP2_MULT", "1.6"))   # +60% = runner武装9ema的阈值(不再挂二档卖单)
-MECH_BE = os.environ.get("MECH_BE", "1") == "1"                 # 首档止盈后止损移到入场价(保本)
-MECH_STOP_MULT = float(os.environ.get("MECH_STOP_MULT", "0.5")) # 初始止损 -50% (首档止盈前有效; 之后若MECH_BE则移保本)
+MECH_BE = os.environ.get("MECH_BE", "1") == "1"                 # 首档止盈后止损移到入场价(保本); F策略=0(runner不保本, 让它扛回撤接大runner)
+MECH_STOP_MULT = float(os.environ.get("MECH_STOP_MULT", "0.5")) # 初始止损 -50% (首档止盈前有效; 之后若MECH_BE则移保本, 否则维持-50%)
 MECH_EMA_MIN = int(os.environ.get("MECH_EMA_MIN", "15"))        # 9ema时间框架(分钟)
 MECH_EMA_N = int(os.environ.get("MECH_EMA_N", "2"))             # 连破N根(已完成bar)出runner
 ENTRY_TTL_SEC = int(os.environ.get("ENTRY_TTL_SEC", "1200"))    # 在途入场单TTL: 20分钟未成交撤单
 # (审计发现+MSFT复盘: 挂一天的限价单只会在期权崩盘穿价时成交=专门接刀; "不追高"的另一半是"不接刀")
+F_EOD_CLOSE_UNREDUCED = os.environ.get("F_EOD_CLOSE_UNREDUCED", "1") == "1"  # F策略: 非到期日15:40 ET平【未落袋满仓】(不裸扛过夜); 已落袋runner留过夜
 ET = ZoneInfo("America/New_York")
 
 # ⚠ 状态目录固定在【仓库根】的 output/, 不跟着本文件走。
@@ -1433,15 +1440,21 @@ def manage_positions(positions: dict):
                     p["status"] = "closed"
                 _save(POS_JSON, positions)
                 continue
-        # ④ 到期日强平 (15:40 ET 后)
+        # ④ 到期日强平 (15:40 ET 后) + F不对称过夜: 非到期日收盘平【未落袋满仓】
         if p["status"] in ("pending", "open"):
             try:
                 exp_d = date.fromisoformat(p["expiry"])
+                hm = (now_et.hour, now_et.minute)
                 # QA: 原 `date>=exp_d and (h,m)>=(15,40)` 元组比较陷阱 — 若到期日15:40那刻没跑到,
                 #     次日09:30时 (9,30)>=(15,40) 为False, 要拖到次日15:40才平, 已到期合约多挂近一天
-                if now_et.date() > exp_d or (now_et.date() == exp_d
-                                             and (now_et.hour, now_et.minute) >= (15, 40)):
-                    close_position(positions, osi, "到期强平")
+                if now_et.date() > exp_d or (now_et.date() == exp_d and hm >= (15, 40)):
+                    close_position(positions, osi, "到期强平")   # 到期无上界: 必须避行权/归零, 收盘后也要平
+                elif F_EOD_CLOSE_UNREDUCED and (15, 40) <= hm < (16, 0) \
+                        and p["status"] == "open" and not p.get("reduced"):
+                    # F: 从没首档止盈的满仓=裸扛, 一个逆gap就-94%(如IBM 07-08), 收盘前平掉不过夜。
+                    # 已落袋+30%的runner(reduced)=赢来的钱, 留过夜接GOOGL这类回撤后爆发(见bt_be_grid回测)。
+                    # 窗口封在 15:40-16:00: 只在市场还开着能市价卖时平; 16:00后收盘无法成交, 不 fire(等次日)。
+                    close_position(positions, osi, "收盘平未落袋(F:不裸扛过夜)")
             except Exception:
                 pass
     # 心跳放在【循环外、函数最末】: 只有整轮真正跑完才打, 中途 continue 不影响。
@@ -1872,11 +1885,12 @@ def main():
             size_s = f"每信号${POSITION_USD:,.0f}/lotto${LOTTO_USD:,.0f} (OI帽{OI_CAP_PCT:.0%})"
         else:
             size_s = f"每信号{CONTRACTS}张"
-        log(f"🚀 LIVE(模拟盘)·机械出场(2026-07-21回测定案): {size_s} | 权利金上限${MAX_PREMIUM} | "
+        log(f"🚀 LIVE(模拟盘)·机械出场(2026-07-22 F不对称过夜定案): {size_s} | 权利金上限${MAX_PREMIUM} | "
             f"+{(MECH_TP_MULT-1)*100:.0f}%卖{MECH_TP_FRAC:.0%} → "
-            f"{'首档后止损移保本' if MECH_BE else '止损全程无保本'} | "
+            f"{'首档后止损移保本' if MECH_BE else 'runner不保本(维持止损, 扛回撤接大runner)'} | "
             f"剩仓摸+{(MECH_TP2_MULT-1)*100:.0f}%武装 → 守{MECH_EMA_MIN}分9ema连破{MECH_EMA_N}根 | "
-            f"初始止损-{(1-MECH_STOP_MULT)*100:.0f}% | 入场TTL{ENTRY_TTL_SEC//60}分 | 到期强平 | 无LLM | 站长出场只播报")
+            f"初始止损-{(1-MECH_STOP_MULT)*100:.0f}% | 入场TTL{ENTRY_TTL_SEC//60}分 | "
+            f"{'未落袋满仓15:40收盘平不过夜' if F_EOD_CLOSE_UNREDUCED else ''} | 到期强平 | 无LLM | 站长出场只播报")
     else:
         log("🧪 DRY_RUN: 只解析播报, 不下单")
 

@@ -12,11 +12,11 @@
     ~/Library/LaunchAgents/ 里那份一致 —— 否则下次 cp 安装会静默改变运行模式。
     要停下单只播报: 改成 false, 重新 cp + launchctl unload/load。
   ⚠ WorkingDirectory 保持仓库根: 状态文件 output/、K线 data/、归档的 git 操作都按根目录找。
-  规则(2026-07-21 回测定案 bt_be_grid): 进场跟站长限价不追高+TTL20分不接刀 |
-  +30%卖½ → 首档后止损移入场价(保本, MECH_BE=1) | 剩仓摸+60%武装 → 守15分9ema连破2根 |
-  初始止损-50%(MECH_STOP_MULT=0.5) | 到期强平 | 无LLM | hedge当lotto跟⅓仓 | 站长出场只播报。
-  改动只对【新单】生效; 切换当天的老持仓(如PLTR)无 be 键 + 已存 stop_mult → 走旧-60%不保本, 隔离。
-  2026-07-19 旧定稿(两档+30卖⅓/+60卖⅓ -60全程无保本)已被替换, 见 git。
+  规则(2026-07-22 引擎修bug后重测定案 bt_be_grid + F不对称过夜): 进场跟站长限价不追高+TTL20分不接刀 |
+  +30%卖½ → runner不保本(MECH_BE=0, 让它扛回撤接大runner如GOOGL) | 剩仓摸+60%武装 → 守15分9ema连破2根 |
+  初始止损-50%(MECH_STOP_MULT=0.5) | 未落袋满仓非到期日15:40收盘前平(F_EOD_CLOSE_UNREDUCED=1, 不裸扛过夜避IBM式-94%) |
+  已落袋runner留过夜 | 到期强平 | 无LLM | hedge当lotto跟⅓仓 | 站长出场只播报。
+  2026-07-21 定稿(保本MECH_BE=1)因回测引擎缺武装门控bug→结论有误, 已修正; 2026-07-19 旧定稿(两档-60全程)更早被替换, 见 git。
 -->
 <plist version="1.0">
 <dict>
@@ -27,7 +27,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>source /Users/xin/.longport_creds.env &amp;&amp; export ENRICH_LIVE=true POSITION_FRAC=0.5 LOTTO_FRAC=0.3333 ZERO_DTE_FRAC=0.10 MECH_TP_MULT=1.3 MECH_TP_FRAC=0.5 MECH_TP2_MULT=1.6 MECH_BE=1 MECH_STOP_MULT=0.5 MECH_EMA_MIN=15 MECH_EMA_N=2 ENTRY_TTL_SEC=1200 &amp;&amp; exec /usr/bin/caffeinate -s /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/bots/enrich/discord_enrich_bot.py</string>
+        <string>source /Users/xin/.longport_creds.env &amp;&amp; export ENRICH_LIVE=true POSITION_FRAC=0.5 LOTTO_FRAC=0.3333 ZERO_DTE_FRAC=0.10 MECH_TP_MULT=1.3 MECH_TP_FRAC=0.5 MECH_TP2_MULT=1.6 MECH_BE=0 MECH_STOP_MULT=0.5 MECH_EMA_MIN=15 MECH_EMA_N=2 ENTRY_TTL_SEC=1200 F_EOD_CLOSE_UNREDUCED=1 &amp;&amp; exec /usr/bin/caffeinate -s /usr/local/bin/python3 /Users/xin/Documents/Claude/Projects/money/quant_system/bots/enrich/discord_enrich_bot.py</string>
     </array>
 
     <key>WorkingDirectory</key>
