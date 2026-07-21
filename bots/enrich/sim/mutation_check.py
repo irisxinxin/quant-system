@@ -100,6 +100,20 @@ def _mut_quote_age_as_utc():
     return lambda: setattr(B, "_quote_usable", orig)
 
 
+def _mut_stop_fallback_uses_current_default():
+    """把 _stop_price 的 stop_mult fallback 改回一律用当前 MECH_STOP_MULT(会随策略变)
+    —— 老仓位丢 stop_mult 键就被新默认从-60%收紧到-50%, 破坏隔离。"""
+    orig = B._stop_price
+
+    def patched(p):
+        avg = p.get("avg", 0) or 0.0
+        if p.get("be") and (p.get("reduced") or p.get("tp1_done")):
+            return max(B.MIN_TICK, avg)
+        return max(B.MIN_TICK, avg * p.get("stop_mult", B.MECH_STOP_MULT))
+    B._stop_price = patched
+    return lambda: setattr(B, "_stop_price", orig)
+
+
 def _mut_breakeven_off():
     """拆掉保本: _stop_price 无视 be 键, 一律走 avg×stop_mult(回到不保本)。"""
     orig = B._stop_price
@@ -158,6 +172,8 @@ LOGIC_MUTATIONS = [
      "sc_guard_sell_budget_blocks_stacking"),
     ("报价年龄按UTC解释(偏8小时)", _mut_quote_age_as_utc,
      "sc_guard_quote_age_uses_local_tz"),
+    ("止损fallback用当前默认(破坏老仓位隔离)", _mut_stop_fallback_uses_current_default,
+     "sc_v2_isolation_survives_stop_mult_loss"),
     ("保本关闭(回到不保本)", _mut_breakeven_off,
      "sc_guard_breakeven_after_tp1"),
     ("保本无视be键(误伤老仓位)", _mut_breakeven_ignores_be_flag,
@@ -170,7 +186,7 @@ LOGIC_MUTATIONS = [
 
 MODULES = ["sim.scenarios.normal", "sim.scenarios.adversarial",
            "sim.scenarios.ambig", "sim.scenarios.discord_layer",
-           "sim.scenarios.regression_guards"]
+           "sim.scenarios.regression_guards", "sim.scenarios.strategy_v2"]
 
 
 def _all_scenarios():

@@ -302,19 +302,27 @@ def _tp_params(remain: int, avg: float):
     return max(1, round(remain * MECH_TP_FRAC)), round(avg * MECH_TP_MULT, 2)
 
 
+LEGACY_STOP_MULT = 0.4   # 2026-07-21 前的旧默认(-60%)。给老仓位兜底用, 【不随策略变】。
+
 def _stop_price(p: dict) -> float:
     """当前止损价 —— 止损判定/挂单/心跳显示【唯一】来源, 三处都调它, 不各写一份。
 
     保本(be 且已首档止盈): 止损=入场价 avg。回测(bt_be_grid)结论: 保本在每个结构上
     胜率+5~10pp、最差月更好, 且不牺牲上行(只在首档止盈后启用, 那时已落袋一档利润)。
-    否则: avg × stop_mult(默认-50%)。都不低于 MIN_TICK ——
-    低价期权 avg×0.5 可能落在最小报价档以下, last 永远够不到 → 止损失效(旧bug)。
-    per-position: be/stop_mult 存在各自仓位里, 老仓位无 be 标记 → 走原-60%不保本, 天然隔离。
+    否则: avg × stop_mult。都不低于 MIN_TICK —— 低价期权 avg×0.5 可能落在最小报价档以下,
+    last 永远够不到 → 止损失效(旧bug)。
+
+    隔离(老持仓不被就地改止损): 用【be 键是否存在】判新旧, 不用 stop_mult 是否存在 ——
+      · 新仓位开仓必带 be 键(True/False), stop_mult 缺失时 fallback 到当前 MECH_STOP_MULT
+      · 老仓位 dict 里【没有】be 键, stop_mult 缺失时 fallback 到固定的 LEGACY_STOP_MULT(-60%)
+    原实现 fallback 一律用 MECH_STOP_MULT(会随策略变): 老仓位若某次落盘丢了 stop_mult 键,
+    止损会被新默认从-60%悄悄收紧到-50%, 破坏隔离(对抗测试挖出)。
     """
     avg = p.get("avg", 0) or 0.0
     if p.get("be") and (p.get("reduced") or p.get("tp1_done")):
         return max(MIN_TICK, avg)
-    return max(MIN_TICK, avg * p.get("stop_mult", MECH_STOP_MULT))
+    default_sm = MECH_STOP_MULT if ("be" in p) else LEGACY_STOP_MULT
+    return max(MIN_TICK, avg * p.get("stop_mult", default_sm))
 
 
 _ema_cache = {}   # ticker -> (checked_at_epoch, break_count)
