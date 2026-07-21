@@ -745,30 +745,6 @@ def ensure_protection(positions: dict, osi: str, p: dict):
         _save(POS_JSON, positions)
 
 
-def _cancel_sell_legs(p: dict, osi: str) -> bool:
-    """撤净【全部在挂卖腿】(tp/tp2/stop)并确认终态。返回是否全部撤净。
-
-    减仓/止盈这类"发新卖单"的路径必须先过这里, 只撤止损腿是不够的:
-    持仓6 + 止盈腿在挂3 + 再市价卖3 → 两边都成交就卖了7张 = 裸空(仿真实测净持仓-1)。
-    不碰 entry_order_id —— 减仓不需要撤买腿, 那是全平(close_position)的事。"""
-    ok = True
-    for id_key in ("tp_order_id", "tp2_order_id", "stop_order_id"):
-        oid = p.get(id_key)
-        if not oid:
-            continue
-        done, exq, st, _exp = cancel_and_reconcile(oid)
-        if exq > 0:
-            d = _credit_leg(p, id_key, exq)
-            if d:
-                log(f"   ℹ️ {osi} {id_key} 撤单前已成交{exq}张(补记{d}), 防超卖")
-        if done:
-            p[id_key] = None
-        else:
-            log(f"   ⚠️ {osi} {id_key} {oid} 未确认终态({st}), 不可再发卖单")
-            ok = False
-    return ok
-
-
 def cancel_stop(p: dict) -> bool:
     """撤券商侧止损腿【并确认终态】。返回是否撤净 —— False 时旧单可能仍会成交, 不可再发卖单。
     (原实现丢弃 _cancel 返回值就清ID: 撤单失败也当撤掉了 → 旧止损单+新卖单 = 超卖裸空)"""
