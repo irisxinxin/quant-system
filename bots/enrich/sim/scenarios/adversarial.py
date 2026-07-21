@@ -260,7 +260,10 @@ def sc_submit_lost_response_no_double_sell(s):
     s.quotes.set_path(OSI, [CRASH])
     s.tick()                                   # 止损 → 卖单进了券商, 客户端认为失败
 
-    fails += expect(bool(s.evs("exit_submit_failed")), "本场景应确实触发一次'提交失败'(构造校验)")
+    # 丢响应现在在 _submit 层就反查认领(submit_lost_reclaimed), 不再冒泡成 exit_submit_failed
+    # —— 更早堵住重复卖。构造校验只要求"丢响应被处理", 不锁定是认领还是失败。
+    fails += expect(bool(s.evs("submit_lost_reclaimed")) or bool(s.evs("exit_submit_failed")),
+                    "本场景应确实触发一次丢响应并被处理(认领或记失败, 构造校验)")
     s.run(ticks=4)                             # 券商侧那张市价单会立刻成交
 
     sold = _sold_at_broker(s)

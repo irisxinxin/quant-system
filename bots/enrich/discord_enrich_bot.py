@@ -686,7 +686,37 @@ def _submit(osi: str, side_buy: bool, qty: int, price: float | None, tif_gtc=Fal
         resp = _trade_ctx.submit_order(**kw)
         return True, resp.order_id
     except Exception as e:
+        # 丢响应: submit_order 抛异常, 但券商【可能已收单】(网络超时/客户端断连)。SDK 无
+        # client_request_id 幂等键 → 只能反查 today_orders 看是否真下单了。查到匹配的未终态单
+        # → 认领它(返回其id, 视为成功), 否则这张单 bot 不追踪 = 孤儿(对抗测试挖出: 孤儿保护
+        # 腿会在+30%意外成交摧毁runner, 或崩盘后残留成裸空空头)。查不到/查失败 → 按失败返回。
+        oid = _reclaim_lost_submit(osi, side_buy, remark)
+        if oid:
+            log(f"   🔁 {osi} 提交丢响应但券商已收单 → 认领 {oid} (remark={remark})")
+            journal(ev="submit_lost_reclaimed", osi=osi, order_id=oid, remark=remark)
+            return True, oid
         return False, str(e)
+
+
+def _reclaim_lost_submit(osi: str, side_buy: bool, remark: str):
+    """提交丢响应后反查券商是否真收单。返回匹配的【未终态】订单id, 或 None。
+    按 symbol+side+remark 精确匹配 —— remark 编码了腿类型(enrich-entry/tp1/stop/exit-*),
+    正常路径下同类腿券商侧至多一张在途(挂腿前都有 not xxx_order_id 守卫)。"""
+    want_side = "Buy" if side_buy else "Sell"
+    try:
+        for od in _trade_ctx.today_orders(symbol=osi) or []:
+            if str(getattr(od, "symbol", "")) != osi:
+                continue
+            if str(getattr(od, "side", "")).split(".")[-1] != want_side:
+                continue
+            if str(getattr(od, "remark", "")) != remark:
+                continue
+            if str(od.status).split(".")[-1] in _TERMINAL:
+                continue
+            return str(od.order_id)
+    except Exception as e:
+        _rl_hit(e)
+    return None
 
 
 _MIT_OK = None   # None=未探测 / True=真实账户支持触价单 / False=模拟盘604050不支持
@@ -814,14 +844,20 @@ def _broker_qty(osi: str):
 
 
 def _live_sell_order(osi: str):
-    """券商侧该合约当前是否已有【未终态的卖单】。返回 (order_id, 状态) 或 (None, None)。
+    """券商侧该合约当前是否已有【未终态的出场卖单】(remark=exit-*)。返回 (id, 状态) 或 (None,None)。
 
     应用层幂等: longport SDK 的 submit_order 没有 client_request_id(3.0.23 与最新 4.3.3 都没有,
     幂等键只存在于 REST 层), 所以网络超时"券商已收单但客户端认为失败"这类重复提交只能靠提交前
-    查重来挡。查不到不代表没有(查询本身可能失败), 因此这只是减少重复, 不是保证。"""
+    查重来挡。查不到不代表没有(查询本身可能失败), 因此这只是减少重复, 不是保证。
+
+    ⚠ 只认【出场单】(remark 以 exit 开头), 跳过 tp/stop 保护腿: _start_exit 靠它防重复【出场】,
+    若把 tp1 限价保护腿也当出场单认领 → 假 closing、④轮询止损(要求status==open)被禁用、
+    那张 tp 限价单价没到永不成交 → 仓位卡死无止损(对抗测试挖出, 尤其孤儿 tp 不在排除列表时)。"""
     try:
         for od in _trade_ctx.today_orders(symbol=osi) or []:
             if str(getattr(od, "side", "")).split(".")[-1] != "Sell":
+                continue
+            if not str(getattr(od, "remark", "")).startswith("exit"):
                 continue
             st = str(od.status).split(".")[-1]
             if st not in _TERMINAL:
@@ -830,6 +866,25 @@ def _live_sell_order(osi: str):
         if not _rl_hit(e):
             log(f"   查在途卖单失败 {osi}: {e}")
     return None, None
+
+
+def _live_orphan_sells(osi: str, known_ids: set) -> list:
+    """券商侧该合约【未终态、bot 不追踪(不在 known_ids)】的卖单 id = 孤儿。
+    丢响应且反查(_reclaim_lost_submit)也失败时会留下这种孤儿。平仓时必须撤净它们,
+    否则标 closed 后残留, 价格回弹成交 → 未授权空头裸空(对抗测试挖出)。"""
+    out = []
+    try:
+        for od in _trade_ctx.today_orders(symbol=osi) or []:
+            if str(getattr(od, "side", "")).split(".")[-1] != "Sell":
+                continue
+            if str(od.status).split(".")[-1] in _TERMINAL:
+                continue
+            oid = str(od.order_id)
+            if oid not in known_ids:
+                out.append(oid)
+    except Exception as e:
+        _rl_hit(e)
+    return out
 
 
 def _start_exit(positions: dict, osi: str, p: dict, qty: int, reason: str,
@@ -972,6 +1027,22 @@ def close_position(positions: dict, osi: str, reason: str):
                 if d:
                     log(f"   ℹ️ {osi} {id_key} 撤单前已成交{exq}张(补记{d}), 防超卖")
             p[id_key] = None
+        # 孤儿清扫(纵深防御): 撤完 bot 追踪的四条腿后, 券商侧若还有该合约未终态卖单, 就是
+        # bot 不认识的孤儿(丢响应且反查也失败留下的)。平仓=清空该合约, 这些必须撤 —— 否则标
+        # closed 后残留, 价格回弹成交 = 未授权空头裸空(对抗测试全真实链路复现: 净持仓-3)。
+        known = {str(p.get(k)) for k in ("tp_order_id", "tp2_order_id", "stop_order_id",
+                                         "exit_order_id") if p.get(k)}
+        for oid in _live_orphan_sells(osi, known):
+            done_o, exq_o, st_o, _ = cancel_and_reconcile(oid)
+            if exq_o > 0:
+                p["sold"] = p.get("sold", 0) + exq_o     # 孤儿撤单前已成交也要记账
+            if done_o:
+                log(f"   🧹 {osi} 撤掉券商侧孤儿卖单 {oid}(成交{exq_o})")
+                journal(ev="orphan_sell_cancelled", osi=osi, order_id=oid, exq=exq_o)
+                _alert(f"🧹 enrich {osi} 平仓时发现并撤掉券商侧孤儿卖单 {oid}(成交{exq_o}张) — "
+                       f"疑似丢响应残留, 请留意是否有更多")
+            else:
+                unresolved.append(f"orphan({st_o})")     # 撤不掉 → 推迟, 不标 closed
         if unresolved:
             # 必须持久化重试意图: 否则一次性出场信号(站长all out/9ema出场)就永久丢了
             p["pending_action"] = "full_exit"

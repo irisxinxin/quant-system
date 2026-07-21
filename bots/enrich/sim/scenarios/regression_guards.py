@@ -259,6 +259,50 @@ def sc_guard_ambig_far_deviation_refuses(s):
     return fails
 
 
+def sc_guard_live_sell_only_claims_exit_leg(s):
+    """_live_sell_order 只认【出场单】(remark=exit-*), 不认 tp/stop 保护腿。
+
+    隔离测②(纵深防御, 端到端场景里被①的丢响应认领兜住, 需直接打函数才证伪): 券商侧同时挂
+    tp 保护腿和 exit 出场单, _live_sell_order 必须只返回 exit 那张。若认领 tp 限价腿当出场单
+    → _start_exit 假 closing、④止损被禁用、tp 价没到永不成交 → 仓位卡死无止损。
+    """
+    import discord_enrich_bot as B
+    fails = []
+    s.broker.submit_order(symbol=OSI, order_type="LO", side="Sell", submitted_quantity=3,
+                          time_in_force="GoodTilCanceled", submitted_price=1.3, remark="tp1")
+    r_exit = s.broker.submit_order(symbol=OSI, order_type="MO", side="Sell", submitted_quantity=6,
+                                   time_in_force="Day", submitted_price=None, remark="exit-止损")
+    oid, st = B._live_sell_order(OSI)
+    fails += expect_eq(oid, r_exit.order_id,
+                       f"_live_sell_order 应只认 exit 出场单, 实际认领 {oid}(不该认 tp 保护腿)")
+    return fails
+
+
+def sc_guard_close_position_sweeps_orphan(s):
+    """平仓时必须撤净券商侧 bot 不追踪的孤儿卖单, 否则标 closed 后残留 → 回弹成交裸空。
+
+    隔离测③(纵深防御): 直接往券商塞一张 bot 从没追踪的孤儿卖单, 再 close_position,
+    验证孤儿被撤 + 平仓后券商侧无残留活单。
+    """
+    import discord_enrich_bot as B
+    fails = []
+    s.broker.position[OSI] = 6
+    # 券商侧孤儿卖单(bot 账本里没有它的 id)
+    orphan = s.broker.submit_order(symbol=OSI, order_type="LO", side="Sell", submitted_quantity=3,
+                                   time_in_force="GoodTilCanceled", submitted_price=1.3, remark="tp1")
+    s.positions[OSI] = dict(ticker="HOOD", filled=6, sold=0, avg=1.00, qty=6, right="C",
+                            expiry="2026-07-24", strike=120.0, entry_order_id=None,
+                            stop_mult=0.5, be=True, reduced=False, tp1_done=False, armed=False,
+                            tp_order_id=None, tp2_order_id=None, status="open", opened="2026-07-21")
+    s.quotes.set_path(OSI, [1.00] * 6)
+    B.close_position(s.positions, OSI, "测试平仓")
+    s.run(ticks=3)
+    live = [o for o in s.broker.live_orders(OSI) if o.side == "Sell"]
+    fails += expect_eq(len(live), 0,
+                       f"平仓后券商侧不得残留孤儿卖单: 实际残留 {[o.order_id for o in live]}")
+    return fails
+
+
 def sc_guard_quote_age_uses_local_tz(s):
     """报价新鲜度必须按【本机时区】解释 SDK 的 naive timestamp —— 按 UTC 解释会偏 8 小时。
 

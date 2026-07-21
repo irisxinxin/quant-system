@@ -100,6 +100,39 @@ def _mut_quote_age_as_utc():
     return lambda: setattr(B, "_quote_usable", orig)
 
 
+def _mut_submit_no_reclaim():
+    """拆掉 _submit 丢响应反查认领 → 丢响应留孤儿卖单。"""
+    orig = B._reclaim_lost_submit
+    B._reclaim_lost_submit = lambda osi, side_buy, remark: None
+    return lambda: setattr(B, "_reclaim_lost_submit", orig)
+
+
+def _mut_live_sell_claims_any_leg():
+    """拆掉 _live_sell_order 的 exit-remark 过滤 → 认领任何在途卖单(含tp保护腿)。"""
+    orig = B._live_sell_order
+
+    def patched(osi):
+        try:
+            for od in B._trade_ctx.today_orders(symbol=osi) or []:
+                if str(getattr(od, "side", "")).split(".")[-1] != "Sell":
+                    continue
+                st = str(od.status).split(".")[-1]
+                if st not in B._TERMINAL:
+                    return str(od.order_id), st
+        except Exception:
+            pass
+        return None, None
+    B._live_sell_order = patched
+    return lambda: setattr(B, "_live_sell_order", orig)
+
+
+def _mut_no_orphan_sweep():
+    """拆掉平仓孤儿清扫 → 券商侧孤儿卖单残留。"""
+    orig = B._live_orphan_sells
+    B._live_orphan_sells = lambda osi, known: []
+    return lambda: setattr(B, "_live_orphan_sells", orig)
+
+
 def _mut_stop_fallback_uses_current_default():
     """把 _stop_price 的 stop_mult fallback 改回一律用当前 MECH_STOP_MULT(会随策略变)
     —— 老仓位丢 stop_mult 键就被新默认从-60%收紧到-50%, 破坏隔离。"""
@@ -174,6 +207,12 @@ LOGIC_MUTATIONS = [
      "sc_guard_quote_age_uses_local_tz"),
     ("止损fallback用当前默认(破坏老仓位隔离)", _mut_stop_fallback_uses_current_default,
      "sc_v2_isolation_survives_stop_mult_loss"),
+    ("_submit丢响应不反查(留孤儿)", _mut_submit_no_reclaim,
+     "sc_adv_lostresp_no_orphan_protective_leg"),
+    ("_live_sell_order认领任何卖单(误认保护腿)", _mut_live_sell_claims_any_leg,
+     "sc_guard_live_sell_only_claims_exit_leg"),
+    ("平仓不扫孤儿(残留→裸空)", _mut_no_orphan_sweep,
+     "sc_guard_close_position_sweeps_orphan"),
     ("保本关闭(回到不保本)", _mut_breakeven_off,
      "sc_guard_breakeven_after_tp1"),
     ("保本无视be键(误伤老仓位)", _mut_breakeven_ignores_be_flag,
@@ -186,7 +225,7 @@ LOGIC_MUTATIONS = [
 
 MODULES = ["sim.scenarios.normal", "sim.scenarios.adversarial",
            "sim.scenarios.ambig", "sim.scenarios.discord_layer",
-           "sim.scenarios.regression_guards", "sim.scenarios.strategy_v2"]
+           "sim.scenarios.regression_guards", "sim.scenarios.strategy_v2", "sim.scenarios.strategy_v2_adv"]
 
 
 def _all_scenarios():

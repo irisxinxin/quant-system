@@ -227,6 +227,10 @@ class FakeBroker:
             d.order_id, d.symbol, d.side = o.order_id, o.symbol, o.side
             d.status, d.executed_quantity = o.status, o.executed_quantity
             d.executed_price = o.executed_price
+            # 真实 LongPort Order 带 remark(2026-07-21实测 today_orders 返回'tp2'), fake 原漏了
+            # → bot 的丢响应认领/出场认领按 remark 甄别腿类型时全拿到空串, 匹配失效。补齐:
+            d.remark = o.remark
+            d.submitted_quantity = o.submitted_quantity
             out.append(d)
         return out
 

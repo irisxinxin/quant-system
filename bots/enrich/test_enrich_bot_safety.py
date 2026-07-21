@@ -434,15 +434,33 @@ def _brk(qty, sym="G1"):
 
 pos = {"G1": mkpos(filled=6, sold=0)}
 subs = []
-class _OD:
-    def __init__(s2): s2.order_id, s2.status, s2.side = "EXIST9", "OrderStatus.New", "OrderSide.Sell"
+class _OD:      # 券商侧在途【出场】单(remark=exit-*)
+    def __init__(s2):
+        s2.order_id, s2.status, s2.side = "EXIST9", "OrderStatus.New", "OrderSide.Sell"
+        s2.remark = "exit-止损"
 with mock.patch.multiple(B, _trade_ctx=mock.Mock(today_orders=lambda symbol=None: [_OD()],
                                                  stock_positions=lambda symbols=None: _brk(6, "G1")),
                          _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "NEW"))[1],
                          **base):
     B._start_exit(pos, "G1", pos["G1"], 6, "止损")
-chk("券商已有在途卖单 → 认领不重复提交", not subs and pos["G1"].get("exit_order_id") == "EXIST9",
+chk("券商已有在途出场单 → 认领不重复提交", not subs and pos["G1"].get("exit_order_id") == "EXIST9",
     f"新单={subs} exit_id={pos['G1'].get('exit_order_id')}")
+
+# 反向: 券商侧在途的是【保护腿】(tp remark) → 绝不认领它当出场单(否则假closing止损失效)
+pos = {"G1b": mkpos(filled=6, sold=0)}
+subs = []
+class _ODtp:
+    def __init__(s2):
+        s2.order_id, s2.status, s2.side = "TPLEG", "OrderStatus.New", "OrderSide.Sell"
+        s2.remark = "tp1"
+with mock.patch.multiple(B, _trade_ctx=mock.Mock(today_orders=lambda symbol=None: [_ODtp()],
+                                                 stock_positions=lambda symbols=None: _brk(6, "G1b")),
+                         _submit=lambda osi, side_buy, qty, price, **k: (subs.append(qty), (True, "NEW"))[1],
+                         **base):
+    B._start_exit(pos, "G1b", pos["G1b"], 6, "止损")
+chk("券商在途的是tp保护腿 → 不认领, 新提交出场市价单",
+    subs == [6] and pos["G1b"].get("exit_order_id") == "NEW",
+    f"新单={subs} exit_id={pos['G1b'].get('exit_order_id')} (不该认领 TPLEG)")
 
 pos = {"G2": mkpos(filled=6, sold=0)}
 subs = []
