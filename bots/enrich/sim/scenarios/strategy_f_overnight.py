@@ -197,3 +197,94 @@ def sc_f_no_close_after_1600_market_closed(s):
         fails += expect(p is not None and p.get("status") == "open",
                         "F: 16:00后市场关闭不该fire收盘平(否则挂个成交不了的市价单), 应等次日15:40窗")
     return fails
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# F 过夜阶梯边界 edge case (用户2026-07-22指出: 新策略的边界要补齐)
+# ══════════════════════════════════════════════════════════════════════════
+
+def sc_f_eod_1lot_runner_holds_not_trim(s):
+    """F阶梯: g≥50%但剩仓只1张(不可分半, rem<2) → 原样留过夜, 不砍成0/不误全平(保留过夜上限)。"""
+    with _f_config():
+        _isolate()
+        fails = []
+        s.broker.position[OSI] = 1
+        s.quotes.set_path(OSI, [1.80] * 4)                  # g=+80%≥50
+        s.positions[OSI] = dict(ticker="HOOD", filled=2, sold=1, avg=1.00, qty=2,
+                                right="C", expiry="2026-07-24", strike=120.0,
+                                entry_order_id=None, stop_mult=0.5,
+                                reduced=True, tp1_done=True, armed=False,
+                                status="open", opened="2026-07-20")
+        s.clock.set_et(2026, 7, 20, 15, 50)
+        s.tick()
+        p = s.pos(OSI)
+        fails += expect(p is not None and p.get("status") == "open"
+                        and (p.get("filled", 0) - p.get("sold", 0)) == 1,
+                        "F阶梯: 1张runner g≥50 应原样留过夜(rem<2不砍), 不该砍成0/全平")
+        fails += expect(not p.get("eod_trim_date"), "1张不触发砍半, 不该打trim标记")
+    return fails
+
+
+def sc_f_expiry_day_full_close_beats_ladder_trim(s):
+    """F阶梯: 到期日15:40强平【优先于】过夜阶梯 —— 即使g≥50%强runner也必须全平, 不能砍半留(0DTE不可过夜/防行权)。"""
+    with _f_config():
+        _isolate()
+        fails = []
+        eosi = "HOOD260720C120000.US"                       # 到期=默认时钟日07-20
+        s.broker.position[eosi] = 4
+        s.quotes.set_path(eosi, [1.80] * 6)                 # g=+80%≥50 的强runner
+        s.positions[eosi] = dict(ticker="HOOD", filled=4, sold=0, avg=1.00, qty=4,
+                                 right="C", expiry="2026-07-20", strike=120.0,
+                                 entry_order_id=None, stop_mult=0.5,
+                                 reduced=True, tp1_done=True, armed=False,
+                                 status="open", opened="2026-07-20")
+        s.clock.set_et(2026, 7, 20, 15, 50)                 # 到期日收盘窗
+        s.tick(n=3)
+        p = s.pos(eosi)
+        closed = p is None or p.get("status") in ("closing", "closed") \
+            or (p.get("filled", 0) - p.get("sold", 0)) == 0
+        fails += expect(closed, "到期日强runner必须全平(到期强平优先于阶梯砍半)")
+        fails += expect(p is None or not p.get("eod_trim_date"),
+                        "到期日走的应是全平不是阶梯砍半(不该打trim标记)")
+        fails += expect_eq(s.broker_pos(eosi), 0, "到期日平净不裸空")
+    return fails
+
+
+def sc_f_eod_trim_guard_resets_next_day(s):
+    """F阶梯: '本日只砍一次'守卫按【日期】—— 次日g仍≥50%应能【再砍一次】(不是砍一次就永久锁死)。"""
+    with _f_config():
+        _isolate()
+        fails = []
+        s.broker.position[OSI] = 4                          # 券商侧=本地remain(filled8-sold4), 一致
+        s.quotes.set_path(OSI, [1.80] * 30)                 # 全程g=+80%
+        s.positions[OSI] = dict(ticker="HOOD", filled=8, sold=4, avg=1.00, qty=8,
+                                right="C", expiry="2026-07-24", strike=120.0,
+                                entry_order_id=None, stop_mult=0.5,
+                                reduced=True, tp1_done=True, armed=False,
+                                status="open", opened="2026-07-20")
+        s.clock.set_et(2026, 7, 20, 15, 50); s.tick(n=3)    # 第1夜: 砍半(卖2)
+        sold_d1 = (s.pos(OSI) or {}).get("sold", 0)
+        fails += expect(sold_d1 > 4, f"第1夜应砍半(sold从4升到{sold_d1})")
+        s.clock.set_et(2026, 7, 21, 15, 50); s.tick(n=3)    # 第2夜(非到期日): 守卫按日期重置, 应再砍
+        sold_d2 = (s.pos(OSI) or {}).get("sold", 0)
+        fails += expect(sold_d2 > sold_d1,
+                        f"第2夜g仍≥50应再砍一次(sold从{sold_d1}升到{sold_d2}); 守卫按日期重置不该永久锁死")
+        fails += expect_le(s.broker_pos(OSI), 8, "多夜砍半累计不得超卖")
+    return fails
+
+
+def sc_f_eod_noquote_unreduced_conservative_close(s):
+    """F阶梯: 收盘窗报价失效(OPRA权限/429/停牌)+未落袋满仓 → 保守全平(无价也不裸扛过夜)。"""
+    with _f_config():
+        _isolate()
+        fails = []
+        p = _open_new(s, equity=1200.0, path=(FLAT,))       # 未落袋满仓, 建仓时有价
+        fails += expect(p is not None and not p.get("reduced"), "前置: 未落袋满仓")
+        s.quotes.fail.add(OSI)                              # option_quote 抛错 → _option_last返None
+        s.clock.set_et(2026, 7, 20, 15, 50)
+        s.tick(n=3)
+        p = s.pos(OSI)
+        closed = p is None or p.get("status") in ("closing", "closed") \
+            or (p.get("filled", 0) - p.get("sold", 0)) == 0
+        fails += expect(closed, "F阶梯: 报价失效+未落袋满仓应保守全平(无价也不裸扛过夜)")
+    return fails
