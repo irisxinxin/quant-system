@@ -409,7 +409,8 @@ with mock.patch.multiple(B, _option_last=lambda o: 0.01,
                          _order_state=lambda oid: ("Filled", 0, 0.0), _cancel=lambda o: True,
                          ensure_protection=lambda *a: None, _ema15_break_count=lambda t: None,
                          _submit=lambda *a, **k: (True, "Z"), us_rth_now=lambda: True, **base):
-    B.manage_positions(pos)
+    B.manage_positions(pos)          # tick1: 2连poll确认 count=1(不平)
+    B.manage_positions(pos)          # tick2: count=2 → 确认触发止损
 chk("低价期权止损抬到最小报价档后可触发", closed, f"closed={closed}")
 
 

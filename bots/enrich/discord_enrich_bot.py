@@ -120,6 +120,7 @@ MECH_TP_FRAC = float(os.environ.get("MECH_TP_FRAC", "0.5"))     # 首档卖多�
 MECH_TP2_MULT = float(os.environ.get("MECH_TP2_MULT", "1.6"))   # +60% = runner武装9ema的阈值(不再挂二档卖单)
 MECH_BE = os.environ.get("MECH_BE", "1") == "1"                 # 首档止盈后止损移到入场价(保本); F策略=0(runner不保本, 让它扛回撤接大runner)
 MECH_STOP_MULT = float(os.environ.get("MECH_STOP_MULT", "0.5")) # 初始止损 -50% (首档止盈前有效; 之后若MECH_BE则移保本, 否则维持-50%)
+STOP_CONFIRM_TICKS = int(os.environ.get("STOP_CONFIRM_TICKS", "2"))  # 轮询止损【2连poll确认】: 连续N轮跌破才真平(防开盘/瞬时针尖假止损, PLTR $0.70针尖教训); 中途弹回清零
 MECH_EMA_MIN = int(os.environ.get("MECH_EMA_MIN", "15"))        # 9ema时间框架(分钟)
 MECH_EMA_N = int(os.environ.get("MECH_EMA_N", "2"))             # 连破N根(已完成bar)出runner
 ENTRY_TTL_SEC = int(os.environ.get("ENTRY_TTL_SEC", "1200"))    # 在途入场单TTL: 20分钟未成交撤单
@@ -1381,11 +1382,25 @@ def manage_positions(positions: dict):
                 stop_px = _stop_price(p)
                 _be = MECH_BE and (p.get("reduced") or p.get("tp1_done"))
                 if last <= stop_px:
+                    # 【2连poll确认】防开盘/瞬时针尖假止损(PLTR $0.70针尖: 单根bar下影穿保本价, 收盘却$1.16)。
+                    # 连续 STOP_CONFIRM_TICKS 轮(每轮60s)都跌破才真平; 中途弹回即清零。瞬时针尖弹回→不触发,
+                    # 真崩(持续跌破)照样平, 最多晚 STOP_CONFIRM_TICKS-1 轮(≈60s, 期权亏损有上限=权利金)。
+                    p["stop_breach"] = p.get("stop_breach", 0) + 1
                     lab = "保本止损" if _be else f"止损-{(1-_sm)*100:.0f}%"
-                    log(f"🛑 {osi} 轮询止损: 最新${last} ≤ ${stop_px:.2f} ({lab})")
-                    journal(ev="stop_trigger", osi=osi, last=last, avg=p["avg"], stop_px=stop_px, be=bool(_be))
-                    close_position(positions, osi, lab)
-                    continue
+                    if p["stop_breach"] >= STOP_CONFIRM_TICKS:
+                        log(f"🛑 {osi} 轮询止损: 最新${last} ≤ ${stop_px:.2f} ({lab}, 连{p['stop_breach']}轮确认)")
+                        journal(ev="stop_trigger", osi=osi, last=last, avg=p["avg"], stop_px=stop_px,
+                                be=bool(_be), confirms=p["stop_breach"])
+                        close_position(positions, osi, lab)
+                        continue
+                    log(f"⏳ {osi} 止损条件触及 最新${last}≤${stop_px:.2f}({lab}) — 待确认防针尖 {p['stop_breach']}/{STOP_CONFIRM_TICKS}轮")
+                    journal(ev="stop_breach_pending", osi=osi, last=last, stop_px=stop_px, count=p["stop_breach"])
+                    _save(POS_JSON, positions)
+                elif p.get("stop_breach"):
+                    # 价格弹回止损线上方 → 清零(上一次触及是瞬时针尖, 已过)
+                    log(f"↩️ {osi} 价格弹回 最新${last}>${stop_px:.2f} → 止损确认计数清零(针尖已过)")
+                    p["stop_breach"] = 0
+                    _save(POS_JSON, positions)
         # ④c 机械模式: runner【武装后】守标的15分9ema, 连破N根(已完成bar)→全平
         #    (最终定稿: 摸到+60%才武装; 未武装的runner只受-60%止损+到期强平管, 防早盘回踩误洗肥尾)
         if p["status"] == "open" and p.get("armed") \

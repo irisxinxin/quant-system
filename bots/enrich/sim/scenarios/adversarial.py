@@ -184,7 +184,7 @@ def sc_exit_order_stuck_pending_cancel(s):
     p = _open(s, equity=1200.0)
     s.broker.liquidity[OSI] = 0                # 卖单永不成交
     s.quotes.set_path(OSI, [CRASH])
-    s.tick()                                   # -70% → 止损 → 市价卖在途
+    s.tick(n=2)                                # -70%持续2轮 → 2连poll确认 → 止损 → 市价卖在途
     exit_oid = p.get("exit_order_id")
     fails += expect(bool(exit_oid), "止损应已提交市价卖单")
     fails += expect_eq(p["status"], "closing", "卖单在途期间应为 closing")
@@ -258,7 +258,7 @@ def sc_submit_lost_response_no_double_sell(s):
     p = _open(s, equity=1200.0)                # 6张
     s.broker.submit_but_lose_response = 1
     s.quotes.set_path(OSI, [CRASH])
-    s.tick()                                   # 止损 → 卖单进了券商, 客户端认为失败
+    s.tick(n=2)                                # 2连poll确认 → 止损 → 卖单进了券商, 客户端认为失败
 
     # 丢响应现在在 _submit 层就反查认领(submit_lost_reclaimed), 不再冒泡成 exit_submit_failed
     # —— 更早堵住重复卖。构造校验只要求"丢响应被处理", 不锁定是认领还是失败。
@@ -285,7 +285,7 @@ def sc_rejected_sell_returns_to_open(s):
     p = _open(s, equity=1200.0)
     s.broker.reject_next_submit = 1
     s.quotes.set_path(OSI, [CRASH])
-    s.tick()                                   # 止损 → 提交 → 立刻 Rejected
+    s.tick(n=2)                                # 2连poll确认 → 止损 → 提交 → 立刻 Rejected
     fails += expect_eq(p["status"], "closing", "提交成功(拿到委托号)后应进 closing 等成交确认")
     fails += expect_eq(p.get("sold", 0), 0, "I1: 拿到委托号不等于成交")
 
@@ -368,7 +368,7 @@ def sc_partial_exit_reprotect_by_remain(s):
     p = _open(s, equity=6000.0)                # 30张
     s.broker.liquidity[OSI] = 0
     s.quotes.set_path(OSI, [CRASH])
-    s.tick()                                   # 止损 → 市价卖 30 张在途, 一张都成交不了
+    s.tick(n=2)                                # 2连poll确认 → 止损 → 市价卖 30 张在途, 一张都成交不了
     exit_oid = p.get("exit_order_id")
     fails += expect(bool(exit_oid), "止损应已提交市价卖")
 
@@ -503,7 +503,7 @@ def sc_pending_action_kept_when_closing(s):
     p = _open(s, equity=1200.0)
     s.broker.liquidity[OSI] = 0
     s.quotes.set_path(OSI, [CRASH])
-    s.tick()                                   # 止损 → 市价卖在途(卡住不成交)
+    s.tick(n=2)                                # 2连poll确认 → 止损 → 市价卖在途(卡住不成交)
     fails += expect_eq(p["status"], "closing", "应处于卖单在途状态")
     n_sell = len(_sell_orders(s))
 
@@ -547,7 +547,7 @@ def sc_buy_signal_during_closing_no_overwrite(s):
     p = _open(s, equity=1200.0)
     s.broker.liquidity[OSI] = 0
     s.quotes.set_path(OSI, [CRASH])
-    s.tick()
+    s.tick(n=2)                                # 2连poll确认 → 止损 → 卖单在途
     exit_oid, filled = p.get("exit_order_id"), p["filled"]
     fails += expect(bool(exit_oid), "应有卖单在途")
 
@@ -588,8 +588,11 @@ def sc_entry_inflight_zero_net_not_closed(s):
 
     s.broker.fail_cancel = 0
     s.quotes.set_path(OSI, [FLAT])
-    s.run(ticks=3)                                 # 入场单又成交一些 → 必须被接管
-    fails += expect_eq(p["filled"] - p.get("sold", 0), s.broker_pos(OSI), "后续成交必须纳入账本")
+    # 入场限价=保本价=1.00 → 任何能让入场成交的价(≤1.00)必同时压在保本止损线上, 躲不掉;
+    # 2连poll确认把保本止损开卖推迟一个tick, 序列后移。liquidity=1/tick 慢速成交+排空需足够tick到稳态。
+    s.run(ticks=40)                                # 入场单又成交一些 → 必须被接管(排空到稳态)
+    fails += expect_eq(p["filled"] - p.get("sold", 0), s.broker_pos(OSI),
+                       "后续成交必须纳入账本(账实一致; 排空后本地剩仓=券商持仓)")
     if s.broker_pos(OSI) > 0:
         fails += expect(_has_protection(p) or p["status"] == "closing",
                         "后续成交的张数必须重新获得保护")
@@ -638,7 +641,7 @@ def sc_tp_and_stop_same_bar(s):
     fails = []
     p = _open(s, equity=1200.0)                    # 6张, 首档卖½=3张@1.30
     s.quotes.set_path(OSI, [(0.30, 1.35, 0.25)])   # 最高$1.35(触首档) 最新$0.30(触止损)
-    s.tick()
+    s.tick(n=2)                                    # 首档broker侧high成交(tick1) + 止损2连确认(tick2)
 
     fails += expect_eq(p.get("sold"), 3, "首档止盈应恰好成交3张(卖½)")
     fails += expect_eq(p.get("exit_qty"), 3, "止损应只卖剩下的3张, 不得按 filled 全额再卖一遍")
@@ -646,6 +649,43 @@ def sc_tp_and_stop_same_bar(s):
     fails += expect_eq(_sold_at_broker(s), 6, "总卖出必须恰好6张(止盈+止损不得重叠卖)")
     fails += expect_eq(s.broker_pos(OSI), 0, "应平净")
     fails += expect_eq(p.get("sold"), p.get("filled"), "sold 应收敛到 filled")
+    return fails
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# 轮询止损【2连poll确认】防开盘/瞬时针尖假止损 (PLTR $0.70针尖教训, 用户2026-07-22)
+# ══════════════════════════════════════════════════════════════════════════
+
+def sc_stop_spike_no_fire_then_recover(s):
+    """开盘/瞬时针尖: 价格单tick穿止损后弹回 → 2连poll确认下【不】触发止损(防PLTR式$0.70针尖假止损洗掉仓位)。"""
+    fails = []
+    p = _open(s, equity=1200.0)                    # 未落袋, 止损=avg×stop_mult(远高于CRASH)
+    s.quotes.set_path(OSI, [CRASH])
+    s.tick()                                        # tick1: 触及止损但只count=1, 不平
+    fails += expect_not_in(p["status"], ("closing", "closed"),
+                           "针尖单tick穿止损不该立刻平(2连poll确认防假止损)")
+    fails += expect_eq(p.get("stop_breach"), 1, "应记一次触及待确认(stop_breach=1)")
+    fails += expect_eq(s.evs("stop_trigger"), [], "第1轮不该真触发止损")
+    s.quotes.set_path(OSI, [FLAT])                 # 价格弹回止损线上方
+    s.tick()                                        # tick2: 弹回 → 计数清零, 不平
+    fails += expect_eq(p["status"], "open", "针尖弹回后仓位应仍正常持有(未被假止损洗掉)")
+    fails += expect(not p.get("stop_breach"), "弹回应清零止损确认计数")
+    fails += expect_eq(s.evs("stop_trigger"), [], "全程不该有真止损触发")
+    fails += expect_eq(s.broker_pos(OSI), p["filled"] - p.get("sold", 0), "仓位账实一致, 未被针尖误平")
+    return fails
+
+
+def sc_stop_sustained_crash_fires_after_confirm(s):
+    """真崩盘: 价格连续2轮跌破止损 → 确认后照常平(确认只挡瞬时针尖, 绝不挡真崩)。"""
+    fails = []
+    p = _open(s, equity=1200.0)
+    s.quotes.set_path(OSI, [CRASH])
+    s.tick()                                        # tick1: count=1, pending
+    fails += expect_eq(p.get("stop_breach"), 1, "第1轮记待确认")
+    fails += expect_not_in(p["status"], ("closing", "closed"), "第1轮不平")
+    s.tick()                                        # tick2: count=2 → 确认 → 真平
+    fails += expect_ge(len(s.evs("stop_trigger")), 1, "连2轮跌破 → 确认后必须真止损(不挡真崩)")
+    fails += expect_in(p["status"], ("closing", "closed"), "确认后应进入平仓")
     return fails
 
 

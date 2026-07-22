@@ -43,6 +43,8 @@ MUTATIONS = [
     ("追赶翻页退回单页100条", "CATCHUP_MAX", 100, "sc_catchup_missed_beyond_100_silently_lost"),
     ("心跳间隔放到无穷(等于没有心跳)", "HEARTBEAT_SEC", 10**9,
      "sc_guard_heartbeat_proves_polling_alive"),
+    ("止损2连poll确认关闭(单tick即平)", "STOP_CONFIRM_TICKS", 1,
+     "sc_stop_spike_no_fire_then_recover"),   # 关掉确认→针尖单tick即被假止损洗掉
 ]
 
 # 逻辑变异: 常量改不动的行为(如"armed闸"), 用包装函数模拟"该守卫失效"。
