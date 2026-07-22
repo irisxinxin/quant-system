@@ -16,7 +16,7 @@ discord_enrich_bot.py — 监听 Discord #期权-波段-enrich 信号 → 解析
   · 止盈: 入场成交 → 挂单档 GTC 限价卖 +30%卖½ (剩半跑runner; 不再挂二档卖单)
   · runner: 不保本(MECH_BE=0, 让它扛回撤接大runner如GOOGL) → 摸+60%武装 → 守【标的】15分9ema连破2根市价平
   · 止损: -50% 全程 (MECH_STOP_MULT=0.5; 模拟盘唯一通道是轮询, 真实盘走券商侧MIT)
-  · 过夜: 【未落袋满仓】(not reduced)非到期日15:40 ET收盘前平, 不裸扛过夜避IBM式-94%gap; 已落袋runner留过夜
+  · 过夜阶梯: 非到期日15:40-16:00按剩仓当前收益g: g<30%全平(不裸扛避IBM式-94%gap) / 30-50%留过夜 / ≥50%砍半再留(降险接肥尾)
   · 到期强平: 到期日 15:40 ET 剩仓市价全平, 防归零/行权
   · 天然风控: 买期权最大亏=权利金 (每笔 ≤ MAX_PREMIUM×100×张数)
 
@@ -124,7 +124,14 @@ MECH_EMA_MIN = int(os.environ.get("MECH_EMA_MIN", "15"))        # 9ema时间框�
 MECH_EMA_N = int(os.environ.get("MECH_EMA_N", "2"))             # 连破N根(已完成bar)出runner
 ENTRY_TTL_SEC = int(os.environ.get("ENTRY_TTL_SEC", "1200"))    # 在途入场单TTL: 20分钟未成交撤单
 # (审计发现+MSFT复盘: 挂一天的限价单只会在期权崩盘穿价时成交=专门接刀; "不追高"的另一半是"不接刀")
-F_EOD_CLOSE_UNREDUCED = os.environ.get("F_EOD_CLOSE_UNREDUCED", "1") == "1"  # F策略: 非到期日15:40 ET平【未落袋满仓】(不裸扛过夜); 已落袋runner留过夜
+F_EOD_CLOSE_UNREDUCED = os.environ.get("F_EOD_CLOSE_UNREDUCED", "1") == "1"  # F策略: 非到期日15:40-16:00 ET 按剩仓当前收益g处理过夜
+# F过夜阶梯(用户2026-07-22, 回测overnight_ladder: 加权+42%/胜率72%/尾部-50%):
+#   收盘前(15:40-16:00)看剩仓当前收益 g=现价/入场-1:
+#   g<F_EOD_CLOSE_BELOW → 全平不过夜(含未落袋满仓+回撤的runner; 胜率引擎) |
+#   F_EOD_CLOSE_BELOW≤g<F_EOD_TRIM_ABOVE → 原样留过夜 | g≥F_EOD_TRIM_ABOVE → 砍半剩仓降风险再留过夜。
+#   代价: XOM式"当天回撤次日爆发"的runner会被<30%误杀=尾部保护必付代价(收盘时它和IBM式将崩单无法区分)。
+F_EOD_CLOSE_BELOW = float(os.environ.get("F_EOD_CLOSE_BELOW", "0.30"))
+F_EOD_TRIM_ABOVE = float(os.environ.get("F_EOD_TRIM_ABOVE", "0.50"))
 ET = ZoneInfo("America/New_York")
 
 # ⚠ 状态目录固定在【仓库根】的 output/, 不跟着本文件走。
@@ -1449,12 +1456,29 @@ def manage_positions(positions: dict):
                 #     次日09:30时 (9,30)>=(15,40) 为False, 要拖到次日15:40才平, 已到期合约多挂近一天
                 if now_et.date() > exp_d or (now_et.date() == exp_d and hm >= (15, 40)):
                     close_position(positions, osi, "到期强平")   # 到期无上界: 必须避行权/归零, 收盘后也要平
-                elif F_EOD_CLOSE_UNREDUCED and (15, 40) <= hm < (16, 0) \
-                        and p["status"] == "open" and not p.get("reduced"):
-                    # F: 从没首档止盈的满仓=裸扛, 一个逆gap就-94%(如IBM 07-08), 收盘前平掉不过夜。
-                    # 已落袋+30%的runner(reduced)=赢来的钱, 留过夜接GOOGL这类回撤后爆发(见bt_be_grid回测)。
-                    # 窗口封在 15:40-16:00: 只在市场还开着能市价卖时平; 16:00后收盘无法成交, 不 fire(等次日)。
-                    close_position(positions, osi, "收盘平未落袋(F:不裸扛过夜)")
+                elif F_EOD_CLOSE_UNREDUCED and (15, 40) <= hm < (16, 0) and p["status"] == "open":
+                    # F不对称过夜【阶梯】(用户2026-07-22): 窗口封15:40-16:00(市场开着能市价卖; 16:00后不fire等次日)。
+                    # 按剩仓当前收益 g 三档: g<30全平(不裸扛过夜, 含未落袋满仓+回撤runner) /
+                    #   30~50原样留 / ≥50砍半剩仓降隔夜风险再留。回测 overnight_ladder: 加权+42%/胜率72%/尾部-50%。
+                    _rem = p.get("filled", 0) - p.get("sold", 0)
+                    _lp = _option_last(osi)
+                    if _rem > 0 and _lp is not None and p.get("avg", 0) > 0:
+                        _g = _lp / p["avg"] - 1
+                        if _g < F_EOD_CLOSE_BELOW:
+                            close_position(positions, osi, f"收盘平 g{_g*100:+.0f}%<{F_EOD_CLOSE_BELOW*100:.0f}(F:不裸扛过夜)")
+                        elif _g >= F_EOD_TRIM_ABOVE and _rem >= 2 \
+                                and p.get("eod_trim_date") != now_et.date().isoformat():
+                            # ≥50%: 砍半剩仓(降风险), 剩下留过夜接肥尾。本日只砍一次(否则窗口内每轮都砍)。
+                            # 1张不可分→落到"原样留"(保留过夜上限)。走 _start_exit(与tp1轮询同一安全出场路径)。
+                            p["eod_trim_date"] = now_et.date().isoformat()
+                            _tq = max(1, _rem // 2)
+                            log(f"✂️ {osi} 收盘砍半 g{_g*100:+.0f}%≥{F_EOD_TRIM_ABOVE*100:.0f} 卖{_tq}/{_rem}张 → 剩{_rem-_tq}留过夜(降隔夜风险)")
+                            journal(ev="eod_trim", osi=osi, g=round(_g, 3), sell=_tq, remain=_rem)
+                            _start_exit(positions, osi, p, _tq, "收盘砍半(F:降隔夜风险)", intent="tp1")
+                        # 30%~50% 或 1张runner: 原样留过夜(什么都不做)
+                    elif _lp is None and not p.get("reduced"):
+                        # 报价拿不到无法判g, 但未落袋满仓裸扛风险高 → 保守全平(不留过夜)
+                        close_position(positions, osi, "收盘平未落袋(报价失效, 保守不过夜)")
             except Exception:
                 pass
     # 心跳放在【循环外、函数最末】: 只有整轮真正跑完才打, 中途 continue 不影响。
@@ -1890,7 +1914,7 @@ def main():
             f"{'首档后止损移保本' if MECH_BE else 'runner不保本(维持止损, 扛回撤接大runner)'} | "
             f"剩仓摸+{(MECH_TP2_MULT-1)*100:.0f}%武装 → 守{MECH_EMA_MIN}分9ema连破{MECH_EMA_N}根 | "
             f"初始止损-{(1-MECH_STOP_MULT)*100:.0f}% | 入场TTL{ENTRY_TTL_SEC//60}分 | "
-            f"{'未落袋满仓15:40收盘平不过夜' if F_EOD_CLOSE_UNREDUCED else ''} | 到期强平 | 无LLM | 站长出场只播报")
+            f"{f'过夜阶梯(g<{F_EOD_CLOSE_BELOW*100:.0f}平/{F_EOD_CLOSE_BELOW*100:.0f}-{F_EOD_TRIM_ABOVE*100:.0f}留/≥{F_EOD_TRIM_ABOVE*100:.0f}砍半留)' if F_EOD_CLOSE_UNREDUCED else ''} | 到期强平 | 无LLM | 站长出场只播报")
     else:
         log("🧪 DRY_RUN: 只解析播报, 不下单")
 

@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
-"""sim/scenarios/strategy_f_overnight.py — 对抗 2026-07-22 F不对称过夜策略【线上真实配置】。
+"""sim/scenarios/strategy_f_overnight.py — 对抗 2026-07-22 F不对称过夜【阶梯】策略(线上真实配置)。
 
-线上跑 MECH_BE=0(runner不保本, 让它扛回撤接大runner如GOOGL) +
-F_EOD_CLOSE_UNREDUCED=1(未落袋满仓 15:40-16:00 收盘前平不裸扛过夜, 已落袋runner留过夜)。
-
-⚠ feedback_paper_serves_live: sim 默认 MECH_BE=1(旧保本), 但线上 F 走 MECH_BE=0 ——
-  那是【模拟盘全绿≠线上没bug】的坑。这里显式切到线上配置, 覆盖线上真实会走的路径。
-攻击面:
-  · runner 不保本后是否真维持-50%(回撤到入场价不被误砍 = 接得住GOOGL)
-  · 未落袋满仓 15:40-16:00 是否收盘平(不裸扛过夜避IBM式-94% gap)且平净不裸空
-  · 已落袋runner 15:50 是否留过夜(不被误平)
-  · F窗口边界: <15:40不平、≥16:00不平(市场关闭无法市价卖)
+线上: MECH_BE=0(runner不保本扛回撤接大runner) + F过夜阶梯(收盘15:40-16:00按剩仓当前收益g):
+  g<F_EOD_CLOSE_BELOW(30%)   → 全平不过夜(含未落袋满仓+回撤runner; 胜率引擎)
+  30%≤g<F_EOD_TRIM_ABOVE(50%) → 原样留过夜
+  g≥50%                       → 砍半剩仓降风险再留过夜(本日只砍一次)
+⚠ feedback_paper_serves_live: sim默认MECH_BE=1(旧保本), 这里显式切MECH_BE=0覆盖线上真实路径。
+攻击面: 三档边界、砍半不重复不裸空、窗口边界(<15:40/≥16:00不动)、runner回撤(XOM式)被<30%全平。
 """
 import discord_enrich_bot as B
 from sim.scenario_api import expect, expect_eq, expect_le, expect_ge
@@ -49,84 +45,132 @@ def _open_new(s, equity=1200.0, path=(FLAT,), oi=500_000):
     return s.pos(OSI)
 
 
+def _runner(s, price_after_tp1):
+    """建仓 → 摸+30%首档卖½ → runner 停在 price_after_tp1。返回持仓。"""
+    _isolate()
+    s.quotes.set_path(OSI, [1.00, 1.35, 1.35, price_after_tp1])
+    p = _open_new(s, equity=1200.0, path=(FLAT,))
+    s.clock.set_et(2026, 7, 20, 12, 0)                    # 盘中, 远离F收盘窗
+    s.quotes.set_path(OSI, [1.35, price_after_tp1, price_after_tp1])
+    s.tick(n=3)
+    return s.pos(OSI)
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # runner 不保本(MECH_BE=0): 首档止盈后止损仍-50%, 回撤到入场价不被砍
 # ══════════════════════════════════════════════════════════════════════════
 
 def sc_f_runner_no_breakeven_rides_minus50(s):
-    """F(MECH_BE=0): 首档+30%卖½后 runner 止损仍是-50%(不移保本)。回撤到入场价1.00 > -50%(0.50)
-    → runner 不该被止损平(这正是接住GOOGL: 砍在保本就吃不到次日爆发)。"""
+    """F(MECH_BE=0): 首档+30%卖½后 runner 止损仍-50%(不移保本)。盘中回撤到入场价1.00 > -50%(0.50)
+    → runner 不该被止损平(接GOOGL: 砍在保本就吃不到次日爆发)。"""
     with _f_config():
-        _isolate()
         fails = []
-        # 摸+30%(1.30)首档卖½ → runner; 再跌回入场价1.00(GOOGL式回撤)
-        s.quotes.set_path(OSI, [1.00, 1.35, 1.35, 1.00, 1.00, 1.00, 1.00])
-        p = _open_new(s, equity=1200.0, path=(FLAT,))
-        s.clock.set_et(2026, 7, 20, 12, 0)                 # 盘中, 远离F收盘窗
-        s.quotes.set_path(OSI, [1.35, 1.35, 1.00, 1.00, 1.00])
-        s.tick(n=5)
-        p = s.pos(OSI)
+        p = _runner(s, 1.00)                              # 首档后回撤到入场价1.00(盘中12点, 非收盘窗)
         fails += expect_ge(len(s.evs("tp_fill")), 1, "首档止盈应成交(reduced置位)")
         if p and (p.get("filled", 0) - p.get("sold", 0)) > 0:
             sp = B._stop_price(p)
             fails += expect(abs(sp - p["avg"] * 0.5) < 1e-6,
                             f"F: reduced后MECH_BE=0 → runner止损应=-50%({p['avg']*0.5:.3f}), 实际{sp:.3f}(移了保本=错)")
             fails += expect(p.get("status") == "open",
-                            "F: runner回撤到入场价(>-50%)不该被止损平, 应活着接后续爆发")
+                            "F: runner盘中回撤到入场价(>-50%)不该被止损平, 应活着接后续爆发")
         else:
-            fails += ["runner 不该在回撤到入场价时消失(MECH_BE=0应维持-50%不砍)"]
+            fails += ["runner 不该在盘中回撤到入场价时消失(MECH_BE=0应维持-50%不砍)"]
     return fails
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# F 收盘平未落袋满仓 (15:40-16:00), runner 留过夜
+# F 过夜阶梯三档: <30全平 / 30-50留 / ≥50砍半留
 # ══════════════════════════════════════════════════════════════════════════
 
 def sc_f_eod_closes_unreduced(s):
-    """F: 未落袋满仓(从没摸+30%) 非到期日 15:50 ET → 收盘前市价平(不裸扛过夜), 平净不裸空。"""
+    """F阶梯: 未落袋满仓(从没摸+30%, g必<30%) 15:50 ET → 全平不裸扛过夜, 平净不裸空。"""
     with _f_config():
         _isolate()
         fails = []
-        p = _open_new(s, equity=1200.0, path=(FLAT,))       # 价格平, 从没摸+30% → 未落袋满仓
+        p = _open_new(s, equity=1200.0, path=(FLAT,))       # 价格平g≈0, 从没摸+30% → 未落袋满仓
         fails += expect(p is not None and not p.get("reduced"), "前置: 应有未落袋满仓(reduced=False)")
-        s.clock.set_et(2026, 7, 20, 15, 50)                 # 非到期日(expiry07-24) 15:40-16:00窗内
-        s.tick(n=3)                                         # F触发close_position + 市价卖成交settle
+        s.clock.set_et(2026, 7, 20, 15, 50)                 # 非到期日 15:40-16:00窗内
+        s.tick(n=3)                                         # 触发全平 + 市价卖成交settle
         p = s.pos(OSI)
         closed = p is None or p.get("status") in ("closing", "closed") \
             or (p.get("filled", 0) - p.get("sold", 0)) == 0
-        fails += expect(closed, f"F: 未落袋满仓应在15:40-16:00收盘平, 实际status={p and p.get('status')}")
-        fails += expect_eq(s.broker_pos(OSI), 0, "F收盘平后必须平净, 不留裸多/裸空")
+        fails += expect(closed, f"F阶梯: 未落袋满仓(g<30)应收盘全平, 实际status={p and p.get('status')}")
+        fails += expect_eq(s.broker_pos(OSI), 0, "全平后必须平净, 不留裸多/裸空")
+    return fails
+
+
+def sc_f_eod_closes_weak_runner(s):
+    """F阶梯: 已落袋runner但收盘回撤到 g<30%(如+10%) → 全平不过夜。
+    这就是XOM式"当天回撤次日爆发"被误杀的路径 —— 尾部保护的必付代价(收盘时它和将崩单无法区分)。"""
+    with _f_config():
+        fails = []
+        p = _runner(s, 1.10)                                # 首档落袋 → runner回撤到1.10(+10% < 30%)
+        fails += expect(p is not None and p.get("reduced"), "前置: 已落袋runner(reduced=True)")
+        if p:
+            s.quotes.set_path(OSI, [1.10, 1.10])
+            s.clock.set_et(2026, 7, 20, 15, 50)
+            s.tick(n=3)
+            p = s.pos(OSI)
+            closed = p is None or p.get("status") in ("closing", "closed") \
+                or (p.get("filled", 0) - p.get("sold", 0)) == 0
+            fails += expect(closed, "F阶梯: 收盘g<30%的回撤runner应全平(不裸扛过夜)")
+            fails += expect_eq(s.broker_pos(OSI), 0, "全平后不裸空")
     return fails
 
 
 def sc_f_runner_holds_overnight(s):
-    """F: 已落袋+30%的runner(reduced=True) 15:50 ET → 【不】被收盘平, 留过夜接大runner。"""
+    """F阶梯: 已落袋runner收盘时 g∈[30%,50%)(如+40%) → 原样留过夜(接GOOGL类)。"""
     with _f_config():
-        _isolate()
         fails = []
-        s.quotes.set_path(OSI, [1.00, 1.35, 1.35, 1.20, 1.20, 1.20, 1.20])
-        p = _open_new(s, equity=1200.0, path=(FLAT,))
-        s.clock.set_et(2026, 7, 20, 12, 0)
-        s.quotes.set_path(OSI, [1.35, 1.35, 1.20, 1.20])
-        s.tick(n=4)                                         # 摸+30%落袋 → runner(未武装, 价1.20)
-        p = s.pos(OSI)
-        fails += expect(p is not None and p.get("reduced"), "前置: 应有已落袋runner(reduced=True)")
+        p = _runner(s, 1.40)                                # runner停在1.40(+40%, 未武装)
+        fails += expect(p is not None and p.get("reduced"), "前置: 已落袋runner(reduced=True)")
         if p:
-            s.clock.set_et(2026, 7, 20, 15, 50)             # 收盘窗内
+            s.quotes.set_path(OSI, [1.40, 1.40])            # 收盘价 g=+40% ∈[30,50) → 原样留
+            s.clock.set_et(2026, 7, 20, 15, 50)
             s.tick()
             p = s.pos(OSI)
             fails += expect(p is not None and p.get("status") == "open"
                             and (p.get("filled", 0) - p.get("sold", 0)) > 0,
-                            "F: 已落袋runner不该被收盘平, 应留过夜(接GOOGL类回撤后爆发)")
+                            "F阶梯: g∈[30,50)的runner不该被收盘平/砍, 应原样留过夜")
+    return fails
+
+
+def sc_f_eod_trims_strong_runner(s):
+    """F阶梯: 收盘时 g≥50%(如+80%)且剩≥2张 → 砍半剩仓降风险, 剩下留过夜; 本日只砍一次, 不裸空。"""
+    with _f_config():
+        _isolate()
+        fails = []
+        s.broker.position[OSI] = 4                          # 券商侧runner 4张(已落袋 filled8/sold4)
+        s.quotes.set_path(OSI, [1.80] * 8)                  # 现价1.80 = +80% (g≥50)
+        s.positions[OSI] = dict(ticker="HOOD", filled=8, sold=4, avg=1.00, qty=8,
+                                right="C", expiry="2026-07-24", strike=120.0,
+                                entry_order_id=None, stop_mult=0.5,
+                                reduced=True, tp1_done=True, armed=False,
+                                status="open", opened="2026-07-20")
+        s.clock.set_et(2026, 7, 20, 15, 50)                 # EOD窗内
+        s.tick(n=3)                                         # 触发砍半(卖4//2=2) + settle
+        p = s.pos(OSI)
+        fails += expect(p is not None, "砍半后仓位应还在(非全平)")
+        if p:
+            rem = p.get("filled", 0) - p.get("sold", 0)
+            fails += expect(p.get("status") == "open", "砍半后应回open留过夜")
+            fails += expect(0 < rem < 4, f"应砍掉部分留部分过夜(剩{rem}张, 期望0<rem<4)")
+            fails += expect_eq(p.get("eod_trim_date"), "2026-07-20", "应标记本日已砍(防窗口内重复砍)")
+        fails += expect_le(s.broker_pos(OSI), 4, "券商持仓≤原剩仓, 不裸空")
+        # 窗口内再tick: eod_trim_date 守卫 → 不该再砍
+        before = (s.pos(OSI) or {}).get("sold", 0)
+        s.tick()
+        after = (s.pos(OSI) or {}).get("sold", 0)
+        fails += expect_eq(after, before, "本日只砍一次: 窗口内再tick不该再砍")
     return fails
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# F 窗口边界: <15:40 不平、≥16:00 不平(市场关闭)
+# F 窗口边界: <15:40 不动、≥16:00 不动(市场关闭)
 # ══════════════════════════════════════════════════════════════════════════
 
 def sc_f_no_close_before_1540(s):
-    """F: 15:40前不该平未落袋满仓(让它盘中继续跑, 还可能摸+30%落袋转runner)。"""
+    """F: 15:40前不该动未落袋满仓(让它盘中继续跑, 还可能摸+30%落袋转runner)。"""
     with _f_config():
         _isolate()
         fails = []
@@ -140,8 +184,8 @@ def sc_f_no_close_before_1540(s):
 
 
 def sc_f_no_close_after_1600_market_closed(s):
-    """F窗口封在15:40-16:00: 16:00后市场关闭, 市价卖成交不了 → F不该fire(等次日窗口)。
-    这也是通用场景 sc_partial_exit_reprotect_by_remain(用16:05触发Day单撤销)不被F误伤的保证。"""
+    """F窗口封在15:40-16:00: 16:00后市场关闭市价卖不了 → F不该动(等次日窗口)。
+    也是通用场景 sc_partial_exit_reprotect_by_remain(用16:05触发Day单撤销)不被F误伤的保证。"""
     with _f_config():
         _isolate()
         fails = []
