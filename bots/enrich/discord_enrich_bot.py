@@ -1479,18 +1479,24 @@ def manage_positions(positions: dict):
                     _lp = _option_last(osi)
                     if _rem > 0 and _lp is not None and p.get("avg", 0) > 0:
                         _g = _lp / p["avg"] - 1
-                        if _g < F_EOD_CLOSE_BELOW:
-                            close_position(positions, osi, f"收盘平 g{_g*100:+.0f}%<{F_EOD_CLOSE_BELOW*100:.0f}(F:不裸扛过夜)")
+                        # 未落袋满仓(not reduced)一律平 —— F核心不变式【显式自证】, 不再隐式依赖"tp1必在+30%先成交"
+                        #   (回放reviewer指出: 若tp1因故没成交, unreduced+g∈[30,50)会满仓裸扛过夜=违反F)。
+                        #   已落袋runner: 回撤到g<30也平; 30-50留; ≥50砍半。
+                        if not p.get("reduced") or _g < F_EOD_CLOSE_BELOW:
+                            _rs = "未落袋满仓不裸扛" if not p.get("reduced") else f"g{_g*100:+.0f}%<{F_EOD_CLOSE_BELOW*100:.0f}"
+                            close_position(positions, osi, f"收盘平 {_rs}(F:不裸扛过夜)")
                         elif _g >= F_EOD_TRIM_ABOVE and _rem >= 2 \
                                 and p.get("eod_trim_date") != now_et.date().isoformat():
-                            # ≥50%: 砍半剩仓(降风险), 剩下留过夜接肥尾。本日只砍一次(否则窗口内每轮都砍)。
+                            # 已落袋runner g≥50%: 砍半剩仓(降风险), 剩下留过夜接肥尾。本日只砍一次(否则窗口内每轮都砍)。
                             # 1张不可分→落到"原样留"(保留过夜上限)。走 _start_exit(与tp1轮询同一安全出场路径)。
+                            # intent="tp1" 复用: 成交后⓪会再置reduced/tp1_done(此刻本已True, 幂等无害);
+                            #   语义上这是"收盘砍半"非"首档止盈", 若将来按 exit_intent=="tp1" 判"首次减仓"需注意区分。
                             p["eod_trim_date"] = now_et.date().isoformat()
                             _tq = max(1, _rem // 2)
                             log(f"✂️ {osi} 收盘砍半 g{_g*100:+.0f}%≥{F_EOD_TRIM_ABOVE*100:.0f} 卖{_tq}/{_rem}张 → 剩{_rem-_tq}留过夜(降隔夜风险)")
                             journal(ev="eod_trim", osi=osi, g=round(_g, 3), sell=_tq, remain=_rem)
                             _start_exit(positions, osi, p, _tq, "收盘砍半(F:降隔夜风险)", intent="tp1")
-                        # 30%~50% 或 1张runner: 原样留过夜(什么都不做)
+                        # 剩下: 已落袋runner g∈[30,50) 或 1张runner → 原样留过夜(未落袋满仓已在上面被平掉, 到不了这里)
                     elif _lp is None and not p.get("reduced"):
                         # 报价拿不到无法判g, 但未落袋满仓裸扛风险高 → 保守全平(不留过夜)
                         close_position(positions, osi, "收盘平未落袋(报价失效, 保守不过夜)")

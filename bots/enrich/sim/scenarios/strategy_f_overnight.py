@@ -288,3 +288,26 @@ def sc_f_eod_noquote_unreduced_conservative_close(s):
             or (p.get("filled", 0) - p.get("sold", 0)) == 0
         fails += expect(closed, "F阶梯: 报价失效+未落袋满仓应保守全平(无价也不裸扛过夜)")
     return fails
+
+
+def sc_f_eod_unreduced_g_above30_still_closed(s):
+    """F加固(回放reviewer#1): 未落袋满仓(reduced=False)即使收盘 g≥30%(罕见: tp1因故没成交) → 仍必须
+    全平不裸扛过夜。防"未落袋⟹g<30"的隐式不变式被tp1失败路径打破而满仓过夜。"""
+    with _f_config():
+        _isolate()
+        fails = []
+        s.broker.position[OSI] = 4
+        s.quotes.set_path(OSI, [1.40] * 6)                  # g=+40% ∈[30,50): 无reduced守卫会被"原样留"
+        s.positions[OSI] = dict(ticker="HOOD", filled=4, sold=0, avg=1.00, qty=4,
+                                right="C", expiry="2026-07-24", strike=120.0,
+                                entry_order_id=None, stop_mult=0.5,
+                                reduced=False, tp1_done=False, armed=False,   # 关键: 未落袋满仓
+                                status="open", opened="2026-07-20")
+        s.clock.set_et(2026, 7, 20, 15, 50)
+        s.tick(n=3)
+        p = s.pos(OSI)
+        closed = p is None or p.get("status") in ("closing", "closed") \
+            or (p.get("filled", 0) - p.get("sold", 0)) == 0
+        fails += expect(closed, "F加固: 未落袋满仓即使g≥30也必须收盘平(不裸扛过夜), 不该落到'原样留'")
+        fails += expect_eq(s.broker_pos(OSI), 0, "平净不裸空")
+    return fails
