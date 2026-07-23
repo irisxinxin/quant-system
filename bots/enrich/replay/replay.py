@@ -69,11 +69,15 @@ def _rth(clock):
     return now.weekday() < 5 and dtime(9, 31) <= now.time() <= dtime(15, 58)
 
 
+BARS = ROOT / "data" / "enrich_bars"
+
+
 class Replay:
-    def __init__(self, oracle_path, equity=100_000.0):
+    def __init__(self, oracle_path, equity=100_000.0, config=None):
         O = pickle.load(open(oracle_path, "rb"))
         self.opt, self.und15, self.meta = O["opt"], O["und15"], O["meta"]
         self.equity = equity
+        self.config = config or {}   # {bot常量名: 值} — patch B.* 做配置对比(MECH_BE/F_EOD_*/MECH_STOP_MULT等)
         self.violations = []       # [(ts, [viol...])]
         self.errors = []           # [(ts, context, traceback)]
         self.msg_stats = dict(total=0, buy=0, exit=0, entered=0, alerted=0)
@@ -91,12 +95,15 @@ class Replay:
         s = Sim(start_et=start.replace(tzinfo=ET), equity=self.equity)
         s.quotes = ReplayQuotes(s.clock, self.opt, self.und15)
         s.broker.quotes = s.quotes
+        def _jrn(**kv):                                                        # journal补时钟ts(给每单重建生命周期)
+            kv.setdefault("ts", str(s.clock.now(UTC)))
+            s.events.append(dict(kv))
         with s:
-            mock.patch.object(B, "us_rth_now", lambda: _rth(s.clock)).start()   # 还原真实RTH门
-            def _jrn(**kv):                                                     # journal补时钟ts(给每单重建生命周期)
-                kv.setdefault("ts", str(s.clock.now(UTC)))
-                s.events.append(dict(kv))
-            mock.patch.object(B, "journal", _jrn).start()
+            # extra patch 全部登记进 s._patches → 随 Sim.__exit__ 一起 stop, 避免配置对比多次run时泄漏
+            for k, v in self.config.items():           # 配置对比: patch bot 模块常量
+                pt = mock.patch.object(B, k, v); pt.start(); s._patches.append(pt)
+            pt = mock.patch.object(B, "us_rth_now", lambda: _rth(s.clock)); pt.start(); s._patches.append(pt)
+            pt = mock.patch.object(B, "journal", _jrn); pt.start(); s._patches.append(pt)
             self.s = s
             for ts, m in msgs:
                 self._advance_to(s, ts)                # 补跑持仓管理到这条消息时刻
@@ -178,6 +185,23 @@ class Replay:
                             exits=reasons, overnight=overnight,
                             realized_pct=round(realized) if realized is not None else None))
         return out
+
+    def portfolio(self):
+        """组合级回测指标(从每单realized_pct聚合)。区分真实K/BS(BS只看结构不信幅度)。"""
+        import statistics as st
+        ts = [x for x in self.trades() if x.get("entered") and x.get("realized_pct") is not None]
+        real = [x for x in ts if (BARS / f"{x['osi']}.csv").exists()]
+
+        def agg(rows):
+            if not rows:
+                return {}
+            r = [x["realized_pct"] for x in rows]
+            return dict(n=len(rows), 均值=round(sum(r) / len(r)), 中位=round(st.median(r)),
+                        胜率=round(sum(1 for x in r if x > 0) / len(r) * 100),
+                        最差=round(min(r)), 最好=round(max(r)),
+                        过夜=sum(1 for x in rows if x.get("overnight")),
+                        止损=sum(1 for x in rows if any("止损" in (e or "") for e in (x.get("exits") or []))))
+        return dict(全部=agg(ts), 真实K=agg(real), 违规=len(self.violations), 异常=len(self.errors))
 
     def save_capture(self, path):
         from collections import Counter
