@@ -26,15 +26,32 @@ UTC = timezone.utc
 
 def refresh_history():
     """Discord 一次性拉取, 覆盖存档。失败保留旧档。"""
-    import os, discord
+    import os, socket
+    import aiohttp
+    _orig = aiohttp.TCPConnector.__init__      # 2026-07-31起: 本机网络IPv6半残且Discord需走本地代理
+    def _v4(self, *a, **kw):
+        kw["family"] = socket.AF_INET
+        _orig(self, *a, **kw)
+    aiohttp.TCPConnector.__init__ = _v4
+    import discord
     token = os.environ.get("DISCORD_BOT_TOKEN")
     if not token:
         print("⚠️ 无DISCORD_BOT_TOKEN, 跳过消息存档"); return
+    proxy = os.environ.get("HTTPS_PROXY")
+    if not proxy:                              # launchd环境无shell代理变量 → 探测本地Clash
+        try:
+            s = socket.create_connection(("127.0.0.1", 7897), timeout=1); s.close()
+            proxy = "http://127.0.0.1:7897"
+        except OSError:
+            proxy = None
     intents = discord.Intents.default(); intents.message_content = True
-    client = discord.Client(intents=intents)
+    client = discord.Client(intents=intents, proxy=proxy)
     AUTHOR_ID = 1392020997393088542
     CHANS = {"期权-波段-enrich": HIST, "andy-option": ROOT/"output"/"andy_history.json",
-             "股票赵哥-日内": ROOT/"output"/"zhaoge_history.json"}
+             "股票赵哥-日内": ROOT/"output"/"zhaoge_history.json",
+             "elite-alert": ROOT/"output"/"elite_alert_history.json",
+             "elite-commentary": ROOT/"output"/"elite_commentary_history.json",
+             "指数-casey": ROOT/"output"/"casey_history.json"}
 
     @client.event
     async def on_ready():
