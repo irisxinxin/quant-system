@@ -90,6 +90,11 @@ def refresh_history():
                                     import re as _re
                                     urls = [a.url for a in m.attachments] + \
                                         _re.findall(r"https://cdn\.discordapp\.com/attachments/\S+", m.content or "")
+                                    for e in m.embeds:      # 形态频道的图挂在embed上
+                                        if e.image and e.image.url:
+                                            urls.append(e.image.url)
+                                        elif e.thumbnail and e.thumbnail.url:
+                                            urls.append(e.thumbnail.url)
                                     for i, u in enumerate(urls):
                                         f = d / f"{m.id}_{i}.png"
                                         if f.exists():
