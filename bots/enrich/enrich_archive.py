@@ -61,7 +61,8 @@ def refresh_history():
              "边城": ROOT/"output"/"biancheng_history.json",
              "索亚": ROOT/"output"/"suoya_history.json",
              "信号": ROOT/"output"/"kova_signal_history.json",
-             "潜力形态-多": ROOT/"output"/"qianli_duo_history.json"}
+             "潜力形态-多": ROOT/"output"/"qianli_duo_history.json",
+             "小鱼日内vip": ROOT/"output"/"xiaoyu_intraday_history.json"}
     KOVA = 1520803125647380640        # Kova本人
     KOVA_TR = 1511035459709702314     # 懂王翻译2
     ALLOW = {ZWZF, ZWZF3, ZZ, KOVA, KOVA_TR}  # 站长中继×2+张张+Kova+翻译
