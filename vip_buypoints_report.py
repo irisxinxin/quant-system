@@ -79,11 +79,17 @@ def main():
     raw = json.loads((ROOT / "output" / "vip_buypoints_raw.json").read_text())
     raw.setdefault("danta", DANTA)   # 已有(含图片补录)则不覆盖
     now = datetime.now(ZoneInfo("Asia/Singapore"))
-    body = "\n".join([
+    parts = [
         sec("xiaoyu", "小鱼vip (鱼哥 · 板块轮动/仓位管理型)", raw["xiaoyu"]),
         sec("danta", "蛋挞vip (UnstoppableEggtart · GEX点位派)", raw["danta"]),
         sec("zhangzhang", "张张 (zzlucky · 指数杠杆ETF为主)", raw["zhangzhang"]),
-    ])
+    ]
+    for key, title in [("tangzhuren", "唐主任 (指数点位+快进快出报单)"),
+                       ("biancheng", "边城 (期权卖方策略流 · sell put/spread)"),
+                       ("suoya", "索亚财经 (期权现金流稳健派 · DCA+sell put接货)")]:
+        if key in raw:
+            parts.append(sec(key, title, raw[key]))
+    body = "\n".join(parts)
     OUT.write_text(f"""<meta charset="utf-8"><title>三频道买点汇总 · {now:%m-%d}</title>
 <style>
 body{{background:#0d1117;color:#e6edf3;font:14px/1.6 -apple-system,"PingFang SC",sans-serif;
