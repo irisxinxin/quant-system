@@ -145,11 +145,44 @@ def wanted_contracts():
     return sorted(out)
 
 
+
+def casey_elite_contracts():
+    """casey(QQQ/SPY 0DTE '683p'口径) + elite('QQQ JULY 31 685C'口径) 近32天合约。"""
+    import re
+    out = set()
+    cutoff = date.today() - timedelta(days=32)
+    MON = {"JAN":1,"FEB":2,"MAR":3,"APR":4,"MAY":5,"JUN":6,"JUL":7,"AUG":8,"SEP":9,"OCT":10,"NOV":11,"DEC":12}
+    try:
+        for m in json.load(open(ROOT/"output"/"casey_history.json")):
+            d = datetime.fromisoformat(m["ts"]).date()
+            if d < cutoff: continue
+            for tk, st, r in re.findall(r"\b(QQQ|SPY|IWM)\s+(\d{2,4})\s*([cpCP])\b", m["text"]):
+                out.add(f"{tk}{d:%y%m%d}{r.upper()}{int(st)*1000:06d}.US")
+    except Exception as e:
+        print(f"⚠️ casey合约收集失败: {e}")
+    try:
+        for m in json.load(open(ROOT/"output"/"elite_alert_history.json")):
+            d = datetime.fromisoformat(m["ts"]).date()
+            if d < cutoff: continue
+            for tk, mon, day, st, r in re.findall(r"\b([A-Z]{1,5})\s+([A-Z]{3,9})\s+(\d{1,2})\s+(\d{2,4})([CP])\b", m["text"].upper()):
+                mo = MON.get(mon[:3])
+                if not mo: continue
+                y = d.year + (1 if mo < d.month - 6 else 0)
+                try:
+                    exp = date(y, mo, int(day))
+                except ValueError:
+                    continue
+                out.add(f"{tk}{exp:%y%m%d}{r}{int(st)*1000:06d}.US")
+    except Exception as e:
+        print(f"⚠️ elite合约收集失败: {e}")
+    return out
+
+
 def archive_bars(ctx):
     from longport.openapi import Period, AdjustType
     BARS.mkdir(parents=True, exist_ok=True)
     n_new = 0
-    for osi in wanted_contracts():
+    for osi in sorted(set(wanted_contracts()) | casey_elite_contracts()):
         try:
             b = ctx.candlesticks(osi, Period.Min_5, 1000, AdjustType.NoAdjust)
         except Exception:
