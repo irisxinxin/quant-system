@@ -84,7 +84,8 @@ def main():
         sec("danta", "蛋挞vip (UnstoppableEggtart · GEX点位派)", raw["danta"]),
         sec("zhangzhang", "张张 (zzlucky · 指数杠杆ETF为主)", raw["zhangzhang"]),
     ]
-    for key, title in [("tangzhuren", "唐主任 (指数点位+快进快出报单)"),
+    for key, title in [("cm", "CM (实盘持仓表 · 用户手动供图)"),
+                       ("tangzhuren", "唐主任 (指数点位+快进快出报单)"),
                        ("biancheng", "边城 (期权卖方策略流 · sell put/spread)"),
                        ("suoya", "索亚财经 (期权现金流稳健派 · DCA+sell put接货)")]:
         if key in raw:
