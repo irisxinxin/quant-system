@@ -60,12 +60,14 @@ def refresh_history():
              "唐主任": ROOT/"output"/"tangzhuren_history.json",
              "边城": ROOT/"output"/"biancheng_history.json",
              "索亚": ROOT/"output"/"suoya_history.json",
-             "信号": ROOT/"output"/"kova_signal_history.json"}
+             "信号": ROOT/"output"/"kova_signal_history.json",
+             "潜力形态-多": ROOT/"output"/"qianli_duo_history.json"}
     KOVA = 1520803125647380640        # Kova本人
     KOVA_TR = 1511035459709702314     # 懂王翻译2
     ALLOW = {ZWZF, ZWZF3, ZZ, KOVA, KOVA_TR}  # 站长中继×2+张张+Kova+翻译
 
-    IMG_SAVE = {"蛋挞vip": ROOT / "data" / "danta_img"}   # 点位表以图片发布的频道 → 落盘抢救(CDN链接会过期)
+    IMG_SAVE = {"蛋挞vip": ROOT / "data" / "danta_img",   # 点位表以图片发布的频道 → 落盘抢救(CDN链接会过期)
+                "潜力形态-多": ROOT / "data" / "qianli_img"}   # 形态派全靠图
 
     @client.event
     async def on_ready():
