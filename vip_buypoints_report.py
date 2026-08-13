@@ -77,8 +77,7 @@ def sec(ch_key, title, data):
 
 def main():
     raw = json.loads((ROOT / "output" / "vip_buypoints_raw.json").read_text())
-    raw["danta"] = DANTA
-    (ROOT / "output" / "vip_buypoints_raw.json").write_text(json.dumps(raw, ensure_ascii=False))
+    raw.setdefault("danta", DANTA)   # 已有(含图片补录)则不覆盖
     now = datetime.now(ZoneInfo("Asia/Singapore"))
     body = "\n".join([
         sec("xiaoyu", "小鱼vip (鱼哥 · 板块轮动/仓位管理型)", raw["xiaoyu"]),

@@ -46,12 +46,20 @@ def refresh_history():
             proxy = None
     intents = discord.Intents.default(); intents.message_content = True
     client = discord.Client(intents=intents, proxy=proxy)
-    AUTHOR_ID = 1392020997393088542
+    ZWZF = 1392020997393088542        # 站长转发#2054
+    ZWZF3 = 1486283682753937488       # 站长转发3#7191
+    ZZ = 1535470978660827196          # zhangzhanglucky/zzlucky (张张本人)
     CHANS = {"期权-波段-enrich": HIST, "andy-option": ROOT/"output"/"andy_history.json",
              "股票赵哥-日内": ROOT/"output"/"zhaoge_history.json",
              "elite-alert": ROOT/"output"/"elite_alert_history.json",
              "elite-commentary": ROOT/"output"/"elite_commentary_history.json",
-             "指数-casey": ROOT/"output"/"casey_history.json"}
+             "指数-casey": ROOT/"output"/"casey_history.json",
+             "小鱼vip": ROOT/"output"/"xiaoyu_vip_history.json",
+             "蛋挞vip": ROOT/"output"/"danta_vip_history.json",
+             "张张": ROOT/"output"/"zhangzhang_history.json"}
+    ALLOW = {ZWZF, ZWZF3, ZZ}         # 各频道白名单发信人(站长两个中继号+张张本人)
+
+    IMG_SAVE = {"蛋挞vip": ROOT / "data" / "danta_img"}   # 点位表以图片发布的频道 → 落盘抢救(CDN链接会过期)
 
     @client.event
     async def on_ready():
@@ -61,8 +69,29 @@ def refresh_history():
                     if key in c.name:
                         msgs = []
                         async for m in c.history(limit=3000):
-                            if m.author.id == AUTHOR_ID and m.content:
-                                msgs.append(dict(id=m.id, ts=m.created_at.isoformat(), text=m.content))
+                            if m.author.id in ALLOW and (m.content or m.attachments):
+                                row = dict(id=m.id, ts=m.created_at.isoformat(), text=m.content or "")
+                                if m.attachments:
+                                    row["att"] = [a.filename for a in m.attachments]
+                                msgs.append(row)
+                                d = IMG_SAVE.get(key)
+                                if d:
+                                    d.mkdir(parents=True, exist_ok=True)
+                                    # 中继号把图片贴成正文CDN链接(非附件), 从文本抠链接下载; 链接会过期→趁新鲜每天抢救
+                                    import re as _re
+                                    urls = [a.url for a in m.attachments] + \
+                                        _re.findall(r"https://cdn\.discordapp\.com/attachments/\S+", m.content or "")
+                                    for i, u in enumerate(urls):
+                                        f = d / f"{m.id}_{i}.png"
+                                        if f.exists():
+                                            continue
+                                        try:
+                                            async with aiohttp.ClientSession() as sess:
+                                                async with sess.get(u, proxy=proxy, timeout=aiohttp.ClientTimeout(total=30)) as r:
+                                                    if r.status == 200:
+                                                        f.write_bytes(await r.read())
+                                        except Exception:
+                                            pass
                         msgs.reverse()
                         path.write_text(json.dumps(msgs, ensure_ascii=False))
                         print(f"① 消息存档 {key}: {len(msgs)} 条")
