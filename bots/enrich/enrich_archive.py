@@ -56,7 +56,10 @@ def refresh_history():
              "指数-casey": ROOT/"output"/"casey_history.json",
              "小鱼vip": ROOT/"output"/"xiaoyu_vip_history.json",
              "蛋挞vip": ROOT/"output"/"danta_vip_history.json",
-             "张张": ROOT/"output"/"zhangzhang_history.json"}
+             "张张": ROOT/"output"/"zhangzhang_history.json",
+             "唐主任": ROOT/"output"/"tangzhuren_history.json",
+             "边城": ROOT/"output"/"biancheng_history.json",
+             "索亚": ROOT/"output"/"suoya_history.json"}
     ALLOW = {ZWZF, ZWZF3, ZZ}         # 各频道白名单发信人(站长两个中继号+张张本人)
 
     IMG_SAVE = {"蛋挞vip": ROOT / "data" / "danta_img"}   # 点位表以图片发布的频道 → 落盘抢救(CDN链接会过期)
@@ -67,6 +70,7 @@ def refresh_history():
             for c in g.text_channels:
                 for key, path in CHANS.items():
                     if key in c.name:
+                      try:
                         msgs = []
                         async for m in c.history(limit=3000):
                             if m.author.id in ALLOW and (m.content or m.attachments):
@@ -95,6 +99,8 @@ def refresh_history():
                         msgs.reverse()
                         path.write_text(json.dumps(msgs, ensure_ascii=False))
                         print(f"① 消息存档 {key}: {len(msgs)} 条")
+                      except Exception as e:
+                        print(f"⚠️ {c.name} 跳过: {str(e)[:60]}")  # 如边城聊天区403, 不拖垮其他频道
         await client.close()
 
     client.run(token, log_handler=None)
