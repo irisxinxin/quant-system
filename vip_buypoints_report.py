@@ -84,7 +84,8 @@ def main():
         sec("danta", "蛋挞vip (UnstoppableEggtart · GEX点位派)", raw["danta"]),
         sec("zhangzhang", "张张 (zzlucky · 指数杠杆ETF为主)", raw["zhangzhang"]),
     ]
-    for key, title in [("kova", "Kova (#信号 · 实时喊单带止损, 买强势+死止损)"),
+    for key, title in [("qianli", "潜力形态-多 (英文形态派 · flag/VCP/杯柄, 图为主)"),
+                       ("kova", "Kova (#信号 · 实时喊单带止损, 买强势+死止损)"),
                        ("cm", "CM (实盘持仓表 · 用户手动供图)"),
                        ("tangzhuren", "唐主任 (指数点位+快进快出报单)"),
                        ("biancheng", "边城 (期权卖方策略流 · sell put/spread)"),
