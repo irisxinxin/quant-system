@@ -239,3 +239,130 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ═══════════════ 自设止损版跟单模拟 (elite) ═══════════════
+def follower_stop_sim(trades, stop_pct, today):
+    """入场=警报后下一bar开盘; 他的SOLD腿照跟(下一bar开盘);
+    剩余仓位任意bar.Low≤入场×(1-stop) → 止损(跳空按开盘); 到期残值兜底。"""
+    rows = []
+    for tr in trades:
+        bars = load_bars(tr["osi"])
+        if not bars:
+            continue
+        fe, fets = next_open(bars, tr["ts"])
+        if not fe or fe <= 0:
+            continue
+        stop_px = fe * (1 - stop_pct)
+        legs = sorted(tr["legs"], key=lambda l: l["ts"])
+        li, remain, value, stopped = 0, 1.0, 0.0, False
+        for b in bars:
+            if b["ts"] <= fets:
+                continue
+            while li < len(legs) and legs[li]["ts"] < b["ts"] and remain > 1e-9:
+                f = min(legs[li]["frac"], remain)
+                value += b["o"] * f
+                remain -= f
+                li += 1
+            if remain > 1e-9 and b["l"] <= stop_px:
+                value += min(b["o"], stop_px) * remain
+                remain = 0.0
+                stopped = True
+                break
+        if remain > 1e-9:
+            if tr["exp"] < today:
+                value += bars[-1]["c"] * remain      # 到期残值
+            else:
+                value += bars[-1]["c"] * remain      # 在途按最后价mark
+        pct = (value / fe - 1) * 100
+        rows.append(dict(label=tr["label"], pct=pct, stopped=stopped,
+                         open_=(tr["exp"] >= today and not stopped and (1.0 - sum(l["frac"] for l in tr["legs"])) > 1e-6)))
+    return rows
+
+
+def stop_scan():
+    today = date(2026, 8, 13)
+    trades = elite_ledger()
+    print("═"*74)
+    print("ELITE 跟单+自设止损 (bar开盘成交, 有K线的13笔; 含AMZN/MU1000C按现状mark)")
+    print("═"*74)
+    # 7月无K线的6笔按他报价的结果(4胜均+41%: +22/+6/+40/+131/+22/+28; 688C无K线按-stop%计)
+    JULY_HIS = [22, 6, 40, 131, 22, 28]
+    for sp in (0.4, 0.5, 0.6, 0.7):
+        rows = follower_stop_sim(trades, sp, today)
+        closed = [r for r in rows if not r["open_"]]
+        vals = [r["pct"] for r in closed]
+        w = sum(1 for v in vals if v > 0)
+        n_stop = sum(1 for r in closed if r["stopped"])
+        avg = sum(vals) / len(vals)
+        # 全样本估算: 8月bar口径 + 7月他报价 + 688C按-stop
+        full = vals + JULY_HIS + [-sp * 100]
+        fw = sum(1 for v in full if v > 0)
+        print(f"\n─── 止损 -{sp*100:.0f}% ───")
+        print(f"  8月bar口径: {len(vals)}笔 胜{w}({w/len(vals)*100:.0f}%) 均{avg:+.1f}%/笔 累计{sum(vals):+.0f}% 触发止损{n_stop}次")
+        print(f"  全样本估算(+7月他报价6笔): {len(full)}笔 胜{fw}({fw/len(full)*100:.0f}%) 均{sum(full)/len(full):+.1f}%/笔 累计{sum(full):+.0f}%")
+        if sp == 0.6:
+            for r in rows:
+                tag = "⛔止损" if r["stopped"] else ("在途" if r["open_"] else "跟腿")
+                print(f"    {r['label']:22} {r['pct']:+7.1f}%  {tag}")
+
+
+if __name__ == "__main__" and "--stops" in sys.argv:
+    stop_scan()
+
+
+# ═══════════════ 时间止损版 ("及时离场"的可测代理) ═══════════════
+def follower_timestop_sim(trades, stop_pct, hours, today):
+    """在-stop%硬损基础上加: 入场满hours小时且仍无浮盈(bar开盘<入场价) → 剩余全撤。"""
+    rows = []
+    for tr in trades:
+        bars = load_bars(tr["osi"])
+        if not bars:
+            continue
+        fe, fets = next_open(bars, tr["ts"])
+        if not fe or fe <= 0:
+            continue
+        stop_px = fe * (1 - stop_pct)
+        legs = sorted(tr["legs"], key=lambda l: l["ts"])
+        li, remain, value = 0, 1.0, 0.0
+        why = "跟腿/到期"
+        for b in bars:
+            if b["ts"] <= fets:
+                continue
+            while li < len(legs) and legs[li]["ts"] < b["ts"] and remain > 1e-9:
+                f = min(legs[li]["frac"], remain)
+                value += b["o"] * f
+                remain -= f
+                li += 1
+            if remain <= 1e-9:
+                break
+            if b["l"] <= stop_px:
+                value += min(b["o"], stop_px) * remain
+                remain = 0.0; why = "硬止损"; break
+            if (b["ts"] - fets).total_seconds() > hours * 3600 and b["o"] < fe:
+                value += b["o"] * remain
+                remain = 0.0; why = f"时损{hours}h"; break
+        if remain > 1e-9:
+            value += bars[-1]["c"] * remain
+        rows.append(dict(label=tr["label"], pct=(value / fe - 1) * 100, why=why,
+                         open_=(tr["exp"] >= today and why == "跟腿/到期" and (1.0 - sum(l["frac"] for l in tr["legs"])) > 1e-6)))
+    return rows
+
+
+if __name__ == "__main__" and "--timestop" in sys.argv:
+    today = date(2026, 8, 13)
+    trades = elite_ledger()
+    print("基准(-60%硬损, 无时损):")
+    base = follower_stop_sim(trades, 0.6, today)
+    vals = [r["pct"] for r in base if not r["open_"]]
+    print(f"  {len(vals)}笔 均{sum(vals)/len(vals):+.1f}% 累计{sum(vals):+.0f}%")
+    for hrs in (2, 4, 6.5, 24):
+        rows = follower_timestop_sim(trades, 0.6, hrs, today)
+        closed = [r for r in rows if not r["open_"]]
+        vals = [r["pct"] for r in closed]
+        w = sum(1 for v in vals if v > 0)
+        nt = sum(1 for r in closed if r["why"].startswith("时损"))
+        print(f"\n-60%损 + {hrs}小时无浮盈即撤: {len(vals)}笔 胜{w}({w/len(vals)*100:.0f}%) 均{sum(vals)/len(vals):+.1f}% 累计{sum(vals):+.0f}% (时损触发{nt}次)")
+        if hrs == 4:
+            for r in rows:
+                print(f"    {r['label']:22} {r['pct']:+7.1f}%  {r['why']}")
