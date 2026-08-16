@@ -68,7 +68,9 @@ def refresh_history():
     ALLOW = {ZWZF, ZWZF3, ZZ, KOVA, KOVA_TR}  # 站长中继×2+张张+Kova+翻译
 
     IMG_SAVE = {"蛋挞vip": ROOT / "data" / "danta_img",   # 点位表以图片发布的频道 → 落盘抢救(CDN链接会过期)
-                "潜力形态-多": ROOT / "data" / "qianli_img"}   # 形态派全靠图
+                "潜力形态-多": ROOT / "data" / "qianli_img",   # 形态派全靠图
+                "小鱼vip": ROOT / "data" / "xiaoyu_img",       # 鱼哥每天两次的 radar10.png(雷达十票 P10/P50/P90 预测图)
+                "小鱼日内vip": ROOT / "data" / "danta_intraday_img"}  # 蛋挞在日内频道发的点位图/持仓图
 
     @client.event
     async def on_ready():
