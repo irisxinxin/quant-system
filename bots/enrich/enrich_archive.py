@@ -62,7 +62,8 @@ def refresh_history():
              "索亚": ROOT/"output"/"suoya_history.json",
              "信号": ROOT/"output"/"kova_signal_history.json",
              "潜力形态-多": ROOT/"output"/"qianli_duo_history.json",
-             "小鱼日内vip": ROOT/"output"/"xiaoyu_intraday_history.json"}
+             "小鱼日内vip": ROOT/"output"/"xiaoyu_intraday_history.json",
+             "所有突發信息": ROOT/"output"/"samlam_history.json"}   # Sam lam投資筆記(港, Minervini流)
     KOVA = 1520803125647380640        # Kova本人
     KOVA_TR = 1511035459709702314     # 懂王翻译2
     ALLOW = {ZWZF, ZWZF3, ZZ, KOVA, KOVA_TR}  # 站长中继×2+张张+Kova+翻译
@@ -70,7 +71,8 @@ def refresh_history():
     IMG_SAVE = {"蛋挞vip": ROOT / "data" / "danta_img",   # 点位表以图片发布的频道 → 落盘抢救(CDN链接会过期)
                 "潜力形态-多": ROOT / "data" / "qianli_img",   # 形态派全靠图
                 "小鱼vip": ROOT / "data" / "xiaoyu_img",       # 鱼哥每天两次的 radar10.png(雷达十票 P10/P50/P90 预测图)
-                "小鱼日内vip": ROOT / "data" / "danta_intraday_img"}  # 蛋挞在日内频道发的点位图/持仓图
+                "小鱼日内vip": ROOT / "data" / "danta_intraday_img",  # 蛋挞在日内频道发的点位图/持仓图
+                "所有突發信息": ROOT / "data" / "samlam_img"}          # Sam lam 的图表标注(base/breakout 划线图)
 
     @client.event
     async def on_ready():
