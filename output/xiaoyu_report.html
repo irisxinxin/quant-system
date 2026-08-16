@@ -1,0 +1,232 @@
+<meta charset="utf-8"><title>小鱼喊单回测总表</title><style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#1a1a1a;--mut:#6b7280;--line:#e5e7eb;--head:#f6f7f9;--zeb:#fafbfc;--up:#0a8f52;--dn:#d1344e;--acc:#2563eb}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1115;--fg:#e6e8eb;--mut:#9aa3af;--line:#262b33;--head:#171a20;--zeb:#13161b;--up:#35d48b;--dn:#ff6b81;--acc:#7aa2ff}}
+*{box-sizing:border-box}body{margin:0;padding:28px 20px 60px;background:var(--bg);color:var(--fg);
+font:15px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;max-width:1180px;margin-inline:auto}
+h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+h2{font-size:19px;margin:38px 0 12px;padding-top:16px;border-top:2px solid var(--line)}
+h3{font-size:16px;margin:24px 0 10px;color:var(--mut);font-weight:600}
+p{margin:8px 0}.li{margin:4px 0;color:var(--mut);font-size:14px}
+blockquote{margin:12px 0;padding:10px 14px;border-left:3px solid var(--acc);background:var(--head);border-radius:0 6px 6px 0;font-size:14px;color:var(--mut)}
+blockquote b{color:var(--fg)}
+.w{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{background:var(--head);text-align:left;font-weight:600;font-size:12.5px;color:var(--mut);
+padding:10px 12px;white-space:nowrap;position:sticky;top:0}
+td{padding:8px 12px;border-top:1px solid var(--line);vertical-align:top}
+tr:nth-child(even) td{background:var(--zeb)}
+td:nth-child(n+4){white-space:nowrap}
+table tr td:last-child{white-space:normal;color:var(--mut);font-size:12.5px;min-width:220px}
+.up{color:var(--up);font-weight:600}.dn{color:var(--dn);font-weight:600}
+code{background:var(--head);padding:1px 5px;border-radius:4px;font-size:12.5px}
+b{font-weight:650}
+</style>
+<h1>小鱼(鱼哥) 喊单 &amp; 买点回测总表</h1>
+<p><b>区间</b> 2026-06-08 ~ 2026-08-14（他 VIP 频道 350 条消息全量人工建台账） <b>基准</b> 同期 QQQ <b>+2.1%</b>　<b>最后交易日</b> 2026-08-14</p>
+<h2>一、总账</h2>
+<div class='w'><table>
+<tr><th>跟单方式</th><th>笔数</th><th>胜率</th><th>均笔收益</th><th>中位</th><th>同期QQQ</th><th><b>超额(alpha)</b></th><th>跑赢大盘比例</th></tr>
+<tr><td>① 无脑跟喊单（喊单日收盘买，持有至今）</td><td>108</td><td>41.7%</td><td><b>-4.9%</b></td><td><span class='dn'>-3.4%</span></td><td><span class='up'>+1.9%</span></td><td><b>-6.8%</b></td><td>35.2%</td></tr>
+<tr><td>② 用他的321止盈（<span class='up'>+30%</span>走⅓ / <span class='up'>+50%</span>走一半 / <span class='up'>+100%</span>清）</td><td>108</td><td>45.4%</td><td><b>-2.3%</b></td><td><span class='dn'>-1.8%</span></td><td><span class='up'>+1.9%</span></td><td><b>-4.2%</b></td><td>38.9%</td></tr>
+<tr><td>③ 321止盈 + 机械-20%止损（对照，他本人不设损）</td><td>108</td><td>33.3%</td><td><b>-5.3%</b></td><td><span class='dn'>-13.6%</span></td><td><span class='up'>+1.9%</span></td><td><b>-7.1%</b></td><td>28.7%</td></tr>
+<tr><td>④ <b>只挂他给的具体点位</b>（成交12/31）</td><td>12</td><td>83%</td><td><b>+20.8%</b></td><td><span class='up'>+17.8%</span></td><td><span class='up'>+5.3%</span></td><td><b>+15.5%</b></td><td>—</td></tr>
+</table></div>
+<div class='w'><table>
+<tr><th>跟他的仓位曲线（择时）</th><th>收益</th><th>最大回撤</th></tr>
+<tr><td>一直满仓 QQQ（躺平基准）</td><td><b>+2.09%</b></td><td>—</td></tr>
+<tr><td>跟他的现金比例 × QQQ（纯择时贡献）</td><td><span class='up'>+1.10%</span></td><td><span class='dn'>-6.9%</span></td></tr>
+<tr><td>跟他仓位 × 他的等权组合（完整跟单）</td><td><b>-5.21%</b></td><td><span class='dn'>-21.1%</span></td></tr>
+</table></div>
+<h2>二、他给了具体买点的票（31 个点位）</h2>
+<h3>✅ 已成交的 12 个 —— 这是他最值钱的东西</h3>
+<div class='w'><table>
+<tr><th>票</th><th>给点位日期</th><th>他的挂单价</th><th>实际成交</th><th>成交日</th><th>至今收益</th><th>同期QQQ</th><th>超额</th></tr>
+<tr><td><b>AXTI</b></td><td>2026-07-14</td><td>40</td><td>40</td><td>2026-07-28</td><td><b>+104.1%</b></td><td><span class='up'>+8.2%</span></td><td><span class='up'>+95.9%</span></td></tr>
+<tr><td><b>SNDK</b></td><td>2026-08-10</td><td>1200</td><td>1200</td><td>2026-08-10</td><td><b>+36.8%</b></td><td><span class='up'>+1.4%</span></td><td><span class='up'>+35.4%</span></td></tr>
+<tr><td><b>ORCL</b></td><td>2026-07-14</td><td>115</td><td>115</td><td>2026-07-24</td><td><b>+30.9%</b></td><td><span class='up'>+6.8%</span></td><td><span class='up'>+24.1%</span></td></tr>
+<tr><td><b>SPCL</b></td><td>2026-07-14</td><td>25</td><td>24.89</td><td>2026-07-17</td><td><b>+23.3%</b></td><td><span class='up'>+5.1%</span></td><td><span class='up'>+18.2%</span></td></tr>
+<tr><td><b>SNDK</b></td><td>2026-07-21</td><td>1350</td><td>1350</td><td>2026-07-27</td><td><b>+21.6%</b></td><td><span class='up'>+7.2%</span></td><td><span class='up'>+14.4%</span></td></tr>
+<tr><td><b>MU</b></td><td>2026-07-14</td><td>800</td><td>800</td><td>2026-07-28</td><td><b>+21.5%</b></td><td><span class='up'>+8.2%</span></td><td><span class='up'>+13.3%</span></td></tr>
+<tr><td><b>TSLA</b></td><td>2026-07-24</td><td>300</td><td>300</td><td>2026-07-29</td><td><b>+14.1%</b></td><td><span class='up'>+10.5%</span></td><td><span class='up'>+3.6%</span></td></tr>
+<tr><td><b>ASTS</b></td><td>2026-06-12</td><td>66</td><td>66</td><td>2026-06-25</td><td><b>+7.5%</b></td><td><span class='up'>+2.1%</span></td><td><span class='up'>+5.4%</span></td></tr>
+<tr><td><b>COIN</b></td><td>2026-07-14</td><td>140</td><td>140</td><td>2026-07-31</td><td><b>+6.1%</b></td><td><span class='up'>+6.3%</span></td><td><span class='dn'>-0.2%</span></td></tr>
+<tr><td><b>VSH</b></td><td>2026-07-14</td><td>35</td><td>35</td><td>2026-07-17</td><td><b>+0.2%</b></td><td><span class='up'>+5.1%</span></td><td><span class='dn'>-4.9%</span></td></tr>
+<tr><td><b>APP</b></td><td>2026-08-06</td><td>325</td><td>325</td><td>2026-08-11</td><td><b>-2.9%</b></td><td><span class='up'>+1.8%</span></td><td><span class='dn'>-4.7%</span></td></tr>
+<tr><td><b>ASTS</b></td><td>2026-06-12</td><td>82</td><td>82</td><td>2026-06-12</td><td><b>-13.4%</b></td><td><span class='up'>+1.3%</span></td><td><span class='dn'>-14.7%</span></td></tr>
+</table></div>
+<blockquote>12 笔成交：胜率 <b>83%</b>，均笔 <b>+20.8%</b>，超额 <b>+15.5%</b>。但成交集中在 7/17–7/31（本段最低点区），有「市场刚好给了机会」的成分。</blockquote>
+<h3>❌ 从未触及的 19 个 —— 踏空率 61%，这是跟他的最大成本</h3>
+<div class='w'><table>
+<tr><th>票</th><th>给点位日期</th><th>他的挂单价</th><th>现价</th><th>现价比挂单高</th></tr>
+<tr><td>SPCL</td><td>2026-07-31</td><td>15</td><td>30.7</td><td><b>+105%</b></td></tr>
+<tr><td>SPCL</td><td>2026-07-31</td><td>18</td><td>30.7</td><td><b>+71%</b></td></tr>
+<tr><td>SPCL</td><td>2026-08-03</td><td>18</td><td>30.7</td><td><b>+71%</b></td></tr>
+<tr><td>ARM</td><td>2026-08-03</td><td>170</td><td>279.44</td><td><b>+64%</b></td></tr>
+<tr><td>CRWV</td><td>2026-08-03</td><td>65</td><td>105.26</td><td><b>+62%</b></td></tr>
+<tr><td>SPCX</td><td>2026-07-27</td><td>90</td><td>140.0</td><td><b>+56%</b></td></tr>
+<tr><td>SPCX</td><td>2026-08-03</td><td>90</td><td>140.0</td><td><b>+56%</b></td></tr>
+<tr><td>LITE</td><td>2026-08-03</td><td>600</td><td>926.14</td><td><b>+54%</b></td></tr>
+<tr><td>AXTI</td><td>2026-08-04</td><td>54</td><td>81.64</td><td><b>+51%</b></td></tr>
+<tr><td>MU</td><td>2026-08-03</td><td>700</td><td>971.66</td><td><b>+39%</b></td></tr>
+<tr><td>TSLA</td><td>2026-07-27</td><td>250</td><td>342.27</td><td><b>+37%</b></td></tr>
+<tr><td>TSLA</td><td>2026-08-03</td><td>250</td><td>342.27</td><td><b>+37%</b></td></tr>
+<tr><td>INTC</td><td>2026-08-03</td><td>80</td><td>102.5</td><td><b>+28%</b></td></tr>
+<tr><td>IREN</td><td>2026-08-03</td><td>35</td><td>44.06</td><td><b>+26%</b></td></tr>
+<tr><td>INTC</td><td>2026-08-03</td><td>82</td><td>102.5</td><td><b>+25%</b></td></tr>
+<tr><td>AAPL</td><td>2026-08-03</td><td>250</td><td>305.93</td><td><b>+22%</b></td></tr>
+<tr><td>MU</td><td>2026-08-10</td><td>800</td><td>971.66</td><td><b>+22%</b></td></tr>
+<tr><td>COIN</td><td>2026-08-03</td><td>140</td><td>148.47</td><td><b>+6%</b></td></tr>
+<tr><td>APP</td><td>2026-08-06</td><td>300</td><td>315.44</td><td><b>+5%</b></td></tr>
+</table></div>
+<h2>三、108 笔喊单全表（无点位的口径①，按收益排序）</h2>
+<div class='w'><table>
+<tr><th>#</th><th>票</th><th>板块</th><th>喊单日</th><th>入场价</th><th>现价</th><th>收益</th><th>同期QQQ</th><th>超额</th><th>用321止盈后</th><th>他的原话</th></tr>
+<tr><td>1</td><td><b>FSLY</b></td><td>软件</td><td>2026-06-09</td><td>18.63</td><td>29.94</td><td><b>+60.7%</b></td><td><span class='up'>+3.3%</span></td><td><span class='up'>+57.4%</span></td><td><span class='up'>+46.9%</span></td><td>第一回撤线吸</td></tr>
+<tr><td>2</td><td><b>MDB</b></td><td>软件</td><td>2026-07-27</td><td>309.71</td><td>460.23</td><td><b>+48.6%</b></td><td><span class='up'>+7.2%</span></td><td><span class='up'>+41.4%</span></td><td><span class='up'>+42.9%</span></td><td>软件五强</td></tr>
+<tr><td>3</td><td><b>PYPL</b></td><td>软件</td><td>2026-07-02</td><td>45.47</td><td>61.66</td><td><b>+35.6%</b></td><td><span class='up'>+2.6%</span></td><td><span class='up'>+33.0%</span></td><td><span class='up'>+33.7%</span></td><td>个股名单</td></tr>
+<tr><td>4</td><td><b>MSFT</b></td><td>M7大科技</td><td>2026-06-29</td><td>368.57</td><td>495.36</td><td><b>+34.4%</b></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+33.4%</span></td><td><span class='up'>+32.9%</span></td><td>M7 load起来</td></tr>
+<tr><td>5</td><td><b>NOW</b></td><td>软件</td><td>2026-06-24</td><td>93.8</td><td>124.0</td><td><b>+32.2%</b></td><td><span class='up'>+2.9%</span></td><td><span class='up'>+29.3%</span></td><td><span class='up'>+31.5%</span></td><td>左侧，40%回撤，看10-15%涨幅出掉</td></tr>
+<tr><td>6</td><td><b>PLTR</b></td><td>软件</td><td>2026-07-08</td><td>132.22</td><td>174.0</td><td><b>+31.6%</b></td><td><span class='up'>+2.8%</span></td><td><span class='up'>+28.8%</span></td><td><span class='up'>+31.1%</span></td><td>顺带看看</td></tr>
+<tr><td>7</td><td><b>SMCI</b></td><td>光电存/半导体</td><td>2026-06-15</td><td>30.85</td><td>39.83</td><td><b>+29.1%</b></td><td><span class='dn'>-1.7%</span></td><td><span class='up'>+30.8%</span></td><td><span class='up'>+29.4%</span></td><td>超跌名单</td></tr>
+<tr><td>8</td><td><b>FCEL</b></td><td>核电储能</td><td>2026-06-09</td><td>17.49</td><td>22.37</td><td><b>+27.9%</b></td><td><span class='up'>+3.3%</span></td><td><span class='up'>+24.6%</span></td><td><span class='up'>+60.0%</span></td><td>第一回撤线吸</td></tr>
+<tr><td>9</td><td><b>ADBE</b></td><td>软件</td><td>2026-06-29</td><td>206.43</td><td>264.02</td><td><b>+27.9%</b></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+26.9%</span></td><td><span class='up'>+28.6%</span></td><td>重点</td></tr>
+<tr><td>10</td><td><b>RDW</b></td><td>太空</td><td>2026-08-04</td><td>10.63</td><td>13.59</td><td><b>+27.8%</b></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+26.8%</span></td><td><span class='up'>+28.5%</span></td><td>太空(8/7点名)</td></tr>
+<tr><td>11</td><td><b>QNT</b></td><td>量子</td><td>2026-07-27</td><td>52.83</td><td>63.61</td><td><b>+20.4%</b></td><td><span class='up'>+7.2%</span></td><td><span class='up'>+13.2%</span></td><td><span class='up'>+23.6%</span></td><td>加密量子两天行情，入了做短线</td></tr>
+<tr><td>12</td><td><b>IREN</b></td><td>矿/数据中心</td><td>2026-07-31</td><td>36.8</td><td>44.05</td><td><b>+19.7%</b></td><td><span class='up'>+6.3%</span></td><td><span class='up'>+13.4%</span></td><td><span class='up'>+23.2%</span></td><td>波段看多，目标45（他给过点位 35）</td></tr>
+<tr><td>13</td><td><b>NET</b></td><td>软件</td><td>2026-07-27</td><td>265.61</td><td>315.81</td><td><b>+18.9%</b></td><td><span class='up'>+7.2%</span></td><td><span class='up'>+11.7%</span></td><td><span class='up'>+18.9%</span></td><td>软件五强</td></tr>
+<tr><td>14</td><td><b>LITE</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>785.77</td><td>926.42</td><td><b>+17.9%</b></td><td><span class='up'>+1.1%</span></td><td><span class='up'>+16.8%</span></td><td><span class='up'>+17.9%</span></td><td>继续抄：光（他给过点位 600）</td></tr>
+<tr><td>15</td><td><b>MXL</b></td><td>光电存/半导体</td><td>2026-08-04</td><td>72.72</td><td>84.86</td><td><b>+16.7%</b></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+15.7%</span></td><td><span class='up'>+16.7%</span></td><td>高Beta</td></tr>
+<tr><td>16</td><td><b>MP</b></td><td>矿/数据中心</td><td>2026-08-07</td><td>51.11</td><td>58.73</td><td><b>+14.9%</b></td><td><span class='up'>+1.1%</span></td><td><span class='up'>+13.8%</span></td><td><span class='up'>+14.9%</span></td><td>矿四子</td></tr>
+<tr><td>17</td><td><b>DXYZ</b></td><td>其他小盘</td><td>2026-06-15</td><td>28.0</td><td>32.0</td><td><b>+14.3%</b></td><td><span class='dn'>-1.7%</span></td><td><span class='up'>+16.0%</span></td><td><span class='up'>+14.3%</span></td><td>超跌名单</td></tr>
+<tr><td>18</td><td><b>SIVEF</b></td><td>其他小盘</td><td>2026-08-04</td><td>3.88</td><td>4.43</td><td><b>+14.1%</b></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+13.1%</span></td><td><span class='up'>+14.1%</span></td><td>高Beta</td></tr>
+<tr><td>19</td><td><b>XOM</b></td><td>油/大宗</td><td>2026-07-08</td><td>141.13</td><td>160.04</td><td><b>+13.4%</b></td><td><span class='up'>+2.8%</span></td><td><span class='up'>+10.6%</span></td><td><span class='up'>+13.4%</span></td><td>大油第二</td></tr>
+<tr><td>20</td><td><b>USO</b></td><td>油/大宗</td><td>2026-07-08</td><td>112.21</td><td>126.57</td><td><b>+12.8%</b></td><td><span class='up'>+2.8%</span></td><td><span class='up'>+10.0%</span></td><td><span class='up'>+12.8%</span></td><td>大油第三</td></tr>
+<tr><td>21</td><td><b>ONDS</b></td><td>无人机</td><td>2026-06-30</td><td>8.24</td><td>9.24</td><td><b>+12.1%</b></td><td><span class='dn'>-0.7%</span></td><td><span class='up'>+12.8%</span></td><td><span class='up'>+12.1%</span></td><td>无人机盘前异动，继续入</td></tr>
+<tr><td>22</td><td><b>XE</b></td><td>其他小盘</td><td>2026-06-11</td><td>18.73</td><td>20.98</td><td><b>+12.0%</b></td><td><span class='up'>+1.9%</span></td><td><span class='up'>+10.1%</span></td><td><span class='up'>+12.0%</span></td><td>腰斩换手率极低，可低吸定投</td></tr>
+<tr><td>23</td><td><b>FIGR</b></td><td>加密</td><td>2026-06-09</td><td>28.28</td><td>31.42</td><td><b>+11.1%</b></td><td><span class='up'>+3.3%</span></td><td><span class='up'>+7.8%</span></td><td><span class='up'>+11.1%</span></td><td>第一回撤线吸</td></tr>
+<tr><td>24</td><td><b>KOS</b></td><td>油/大宗</td><td>2026-07-08</td><td>2.29</td><td>2.54</td><td><b>+10.9%</b></td><td><span class='up'>+2.8%</span></td><td><span class='up'>+8.1%</span></td><td><span class='up'>+10.9%</span></td><td>油，不感兴趣可略过</td></tr>
+<tr><td>25</td><td><b>AMZN</b></td><td>M7大科技</td><td>2026-06-29</td><td>240.14</td><td>262.71</td><td><b>+9.4%</b></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+8.4%</span></td><td><span class='up'>+9.4%</span></td><td>M7 load起来</td></tr>
+<tr><td>26</td><td><b>SNPS</b></td><td>软件</td><td>2026-07-27</td><td>388.99</td><td>421.67</td><td><b>+8.4%</b></td><td><span class='up'>+7.2%</span></td><td><span class='up'>+1.2%</span></td><td><span class='up'>+8.4%</span></td><td>壁垒很高技术图不错，可以慢慢加</td></tr>
+<tr><td>27</td><td><b>RCAT</b></td><td>无人机</td><td>2026-06-29</td><td>10.32</td><td>11.12</td><td><b>+7.8%</b></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+6.8%</span></td><td><span class='up'>+7.8%</span></td><td>无人机短线机会</td></tr>
+<tr><td>28</td><td><b>RKLB</b></td><td>太空</td><td>2026-08-04</td><td>74.48</td><td>80.21</td><td><b>+7.7%</b></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+6.7%</span></td><td><span class='up'>+7.7%</span></td><td>单独的票我推rklb</td></tr>
+<tr><td>29</td><td><b>ORCL</b></td><td>M7大科技</td><td>2026-07-10</td><td>140.64</td><td>150.48</td><td><b>+7.0%</b></td><td><span class='up'>+0.8%</span></td><td><span class='up'>+6.2%</span></td><td><span class='up'>+7.0%</span></td><td>中长线不错的买点（他给过点位 115）</td></tr>
+<tr><td>30</td><td><b>CRWV</b></td><td>矿/数据中心</td><td>2026-06-09</td><td>98.45</td><td>105.24</td><td><b>+6.9%</b></td><td><span class='up'>+3.3%</span></td><td><span class='up'>+3.6%</span></td><td><span class='up'>+6.9%</span></td><td>同上（他给过点位 65）</td></tr>
+<tr><td>31</td><td><b>BRBR</b></td><td>健康消费</td><td>2026-06-21</td><td>10.17</td><td>10.75</td><td><b>+5.7%</b></td><td><span class='dn'>-0.9%</span></td><td><span class='up'>+6.6%</span></td><td><span class='up'>+13.8%</span></td><td>现价即可，位置前景收益都不错</td></tr>
+<tr><td>32</td><td><b>META</b></td><td>M7大科技</td><td>2026-06-29</td><td>562.6</td><td>589.6</td><td><b>+4.8%</b></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+3.8%</span></td><td><span class='up'>+4.8%</span></td><td>M7 load起来</td></tr>
+<tr><td>33</td><td><b>AXTI</b></td><td>光电存/半导体</td><td>2026-06-09</td><td>78.36</td><td>81.65</td><td><b>+4.2%</b></td><td><span class='up'>+3.3%</span></td><td><span class='up'>+0.9%</span></td><td><span class='up'>+12.8%</span></td><td>谨慎做多，找相对性价比好的（他给过点位 40/54）</td></tr>
+<tr><td>34</td><td><b>USAR</b></td><td>矿/数据中心</td><td>2026-08-07</td><td>19.33</td><td>20.01</td><td><b>+3.5%</b></td><td><span class='up'>+1.1%</span></td><td><span class='up'>+2.4%</span></td><td><span class='up'>+3.5%</span></td><td>矿四子</td></tr>
+<tr><td>35</td><td><b>AA</b></td><td>油/大宗</td><td>2026-07-08</td><td>48.51</td><td>49.97</td><td><b>+3.0%</b></td><td><span class='up'>+2.8%</span></td><td><span class='up'>+0.2%</span></td><td><span class='up'>+3.0%</span></td><td>铝可以少买点</td></tr>
+<tr><td>36</td><td><b>UBER</b></td><td>软件</td><td>2026-06-24</td><td>73.85</td><td>75.92</td><td><b>+2.8%</b></td><td><span class='up'>+2.9%</span></td><td><span class='dn'>-0.1%</span></td><td><span class='up'>+2.8%</span></td><td>左侧，两年低点，看10%反弹</td></tr>
+<tr><td>37</td><td><b>CBRS</b></td><td>其他小盘</td><td>2026-06-12</td><td>214.0</td><td>218.92</td><td><b>+2.3%</b></td><td><span class='up'>+1.3%</span></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+2.3%</span></td><td>很低了继续低吸</td></tr>
+<tr><td>38</td><td><b>DDOG</b></td><td>软件</td><td>2026-07-27</td><td>251.86</td><td>255.39</td><td><b>+1.4%</b></td><td><span class='up'>+7.2%</span></td><td><span class='dn'>-5.8%</span></td><td><span class='up'>+1.4%</span></td><td>软件五强</td></tr>
+<tr><td>39</td><td><b>FGRU</b></td><td>其他小盘</td><td>2026-06-15</td><td>9.9</td><td>10.02</td><td><b>+1.2%</b></td><td><span class='dn'>-1.7%</span></td><td><span class='up'>+2.9%</span></td><td><span class='up'>+10.8%</span></td><td>超跌名单</td></tr>
+<tr><td>40</td><td><b>WULF</b></td><td>矿/数据中心</td><td>2026-08-12</td><td>17.19</td><td>17.38</td><td><b>+1.1%</b></td><td><span class='up'>+1.0%</span></td><td><span class='up'>+0.1%</span></td><td><span class='up'>+1.1%</span></td><td>低位，应该有15-30%涨幅</td></tr>
+<tr><td>41</td><td><b>ALMU</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>18.25</td><td>18.41</td><td><b>+0.9%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-0.2%</span></td><td><span class='up'>+0.9%</span></td><td>继续抄：光</td></tr>
+<tr><td>42</td><td><b>NFLX</b></td><td>M7大科技</td><td>2026-07-02</td><td>77.65</td><td>78.19</td><td><b>+0.7%</b></td><td><span class='up'>+2.6%</span></td><td><span class='dn'>-1.9%</span></td><td><span class='up'>+0.7%</span></td><td>七姐妹除TSLA，加上NFLX</td></tr>
+<tr><td>43</td><td><b>FPS</b></td><td>其他小盘</td><td>2026-08-04</td><td>39.4</td><td>39.68</td><td><b>+0.7%</b></td><td><span class='up'>+1.0%</span></td><td><span class='dn'>-0.3%</span></td><td><span class='up'>+0.7%</span></td><td>高Beta</td></tr>
+<tr><td>44</td><td><b>UUUU</b></td><td>矿/数据中心</td><td>2026-06-12</td><td>15.04</td><td>15.1</td><td><b>+0.4%</b></td><td><span class='up'>+1.3%</span></td><td><span class='dn'>-0.9%</span></td><td><span class='up'>+0.4%</span></td><td>多余子弹优先布局超跌</td></tr>
+<tr><td>45</td><td><b>APLD</b></td><td>矿/数据中心</td><td>2026-08-12</td><td>31.15</td><td>31.21</td><td><b>+0.2%</b></td><td><span class='up'>+1.0%</span></td><td><span class='dn'>-0.8%</span></td><td><span class='up'>+0.2%</span></td><td>低位，应该有15-30%涨幅</td></tr>
+<tr><td>46</td><td><b>ANNA</b></td><td>油/大宗</td><td>2026-07-08</td><td>2.75</td><td>2.75</td><td><b>+0.0%</b></td><td><span class='up'>+2.8%</span></td><td><span class='dn'>-2.8%</span></td><td><span class='up'>+10.0%</span></td><td>油首选，低位换手极少，收益远大于风险</td></tr>
+<tr><td>47</td><td><b>CIFR</b></td><td>矿/数据中心</td><td>2026-08-12</td><td>17.87</td><td>17.85</td><td><b>-0.1%</b></td><td><span class='up'>+1.0%</span></td><td><span class='dn'>-1.1%</span></td><td><span class='dn'>-0.1%</span></td><td>低位，应该有15-30%涨幅</td></tr>
+<tr><td>48</td><td><b>COHR</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>327.24</td><td>325.93</td><td><b>-0.4%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-1.5%</span></td><td><span class='dn'>-0.4%</span></td><td>继续抄：光</td></tr>
+<tr><td>49</td><td><b>FLNC</b></td><td>核电储能</td><td>2026-08-12</td><td>13.2</td><td>13.13</td><td><b>-0.5%</b></td><td><span class='up'>+1.0%</span></td><td><span class='dn'>-1.5%</span></td><td><span class='dn'>-0.5%</span></td><td>过两天慢慢切</td></tr>
+<tr><td>50</td><td><b>HTZ</b></td><td>其他小盘</td><td>2026-08-07</td><td>2.27</td><td>2.24</td><td><b>-1.3%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-2.4%</span></td><td><span class='dn'>-1.3%</span></td><td>想要lotto的可以看看，我已买了点</td></tr>
+<tr><td>51</td><td><b>SOFI</b></td><td>加密</td><td>2026-07-06</td><td>18.61</td><td>18.29</td><td><b>-1.7%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-2.8%</span></td><td><span class='dn'>-1.7%</span></td><td>load some</td></tr>
+<tr><td>52</td><td><b>CRML</b></td><td>矿/数据中心</td><td>2026-08-04</td><td>6.78</td><td>6.66</td><td><b>-1.8%</b></td><td><span class='up'>+1.0%</span></td><td><span class='dn'>-2.8%</span></td><td><span class='dn'>-1.8%</span></td><td>矿新增</td></tr>
+<tr><td>53</td><td><b>NASA</b></td><td>太空</td><td>2026-07-07</td><td>26.91</td><td>26.37</td><td><b>-2.0%</b></td><td><span class='up'>+3.1%</span></td><td><span class='dn'>-5.1%</span></td><td><span class='dn'>-2.0%</span></td><td>第一批轻仓买入(带PE或ETF)</td></tr>
+<tr><td>54</td><td><b>BE</b></td><td>核电储能</td><td>2026-08-12</td><td>237.16</td><td>230.05</td><td><b>-3.0%</b></td><td><span class='up'>+1.0%</span></td><td><span class='dn'>-4.0%</span></td><td><span class='dn'>-3.0%</span></td><td>过两天慢慢切到be/flnc/amsc</td></tr>
+<tr><td>55</td><td><b>GOOG</b></td><td>M7大科技</td><td>2026-07-31</td><td>356.65</td><td>343.45</td><td><b>-3.7%</b></td><td><span class='up'>+6.3%</span></td><td><span class='dn'>-10.0%</span></td><td><span class='dn'>-3.7%</span></td><td>8/3三批加仓 10%档</td></tr>
+<tr><td>56</td><td><b>BOT</b></td><td>无人机</td><td>2026-06-29</td><td>33.29</td><td>31.66</td><td><b>-4.9%</b></td><td><span class='up'>+1.0%</span></td><td><span class='dn'>-5.9%</span></td><td><span class='up'>+6.8%</span></td><td>接近上市后低位，适合分批底部定投</td></tr>
+<tr><td>57</td><td><b>SMR</b></td><td>核电储能</td><td>2026-06-12</td><td>9.89</td><td>9.39</td><td><b>-5.1%</b></td><td><span class='up'>+1.3%</span></td><td><span class='dn'>-6.4%</span></td><td><span class='dn'>-5.1%</span></td><td>继续加大力度吸</td></tr>
+<tr><td>58</td><td><b>QUBT</b></td><td>量子</td><td>2026-06-09</td><td>9.51</td><td>9.02</td><td><b>-5.2%</b></td><td><span class='up'>+3.3%</span></td><td><span class='dn'>-8.5%</span></td><td><span class='dn'>-5.2%</span></td><td>量子和数据中心也是，继续吸</td></tr>
+<tr><td>59</td><td><b>HYPG</b></td><td>其他小盘</td><td>2026-06-11</td><td>20.75</td><td>19.65</td><td><b>-5.3%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-7.2%</span></td><td><span class='up'>+6.5%</span></td><td>扩大版名单</td></tr>
+<tr><td>60</td><td><b>APP</b></td><td>软件</td><td>2026-08-06</td><td>335.67</td><td>315.53</td><td><b>-6.0%</b></td><td><span class='up'>+2.3%</span></td><td><span class='dn'>-8.3%</span></td><td><span class='dn'>-6.0%</span></td><td>APP可以抄点啦，上车（他给过点位 325/300）</td></tr>
+<tr><td>61</td><td><b>TTMI</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>149.97</td><td>140.07</td><td><b>-6.6%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-7.7%</span></td><td><span class='dn'>-6.6%</span></td><td>继续抄：PCB</td></tr>
+<tr><td>62</td><td><b>CIEN</b></td><td>光电存/半导体</td><td>2026-06-24</td><td>463.51</td><td>428.75</td><td><b>-7.5%</b></td><td><span class='up'>+2.9%</span></td><td><span class='dn'>-10.4%</span></td><td><span class='dn'>-7.5%</span></td><td>左侧，回撤到400出头稳住</td></tr>
+<tr><td>63</td><td><b>NKE</b></td><td>健康消费</td><td>2026-07-02</td><td>44.09</td><td>40.74</td><td><b>-7.6%</b></td><td><span class='up'>+2.6%</span></td><td><span class='dn'>-10.2%</span></td><td><span class='dn'>-7.6%</span></td><td>另辟蹊径名单</td></tr>
+<tr><td>64</td><td><b>MRVL</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>243.27</td><td>222.11</td><td><b>-8.7%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-9.8%</span></td><td><span class='dn'>-8.7%</span></td><td>继续抄：光</td></tr>
+<tr><td>65</td><td><b>VRT</b></td><td>核电储能</td><td>2026-07-09</td><td>323.92</td><td>293.8</td><td><b>-9.3%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-10.4%</span></td><td><span class='dn'>-9.3%</span></td><td>继续抄：电</td></tr>
+<tr><td>66</td><td><b>AMPX</b></td><td>无人机</td><td>2026-06-30</td><td>13.86</td><td>12.52</td><td><b>-9.7%</b></td><td><span class='dn'>-0.7%</span></td><td><span class='dn'>-9.0%</span></td><td><span class='dn'>-9.7%</span></td><td>底部+电池被无人机带动，收益大于风险</td></tr>
+<tr><td>67</td><td><b>MCHP</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>88.26</td><td>79.17</td><td><b>-10.3%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-11.4%</span></td><td><span class='dn'>-10.3%</span></td><td>继续抄：电控</td></tr>
+<tr><td>68</td><td><b>IBM</b></td><td>量子</td><td>2026-06-23</td><td>264.94</td><td>234.21</td><td><b>-11.6%</b></td><td><span class='up'>+2.4%</span></td><td><span class='dn'>-14.0%</span></td><td><span class='dn'>-11.6%</span></td><td>量子国家战略，还能冲一波</td></tr>
+<tr><td>69</td><td><b>RGTI</b></td><td>量子</td><td>2026-06-23</td><td>21.28</td><td>18.81</td><td><b>-11.6%</b></td><td><span class='up'>+2.4%</span></td><td><span class='dn'>-14.0%</span></td><td><span class='dn'>-11.6%</span></td><td>量子国家战略</td></tr>
+<tr><td>70</td><td><b>RMBS</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>114.13</td><td>100.89</td><td><b>-11.6%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-12.7%</span></td><td><span class='dn'>-11.6%</span></td><td>继续抄：存</td></tr>
+<tr><td>71</td><td><b>CRCL</b></td><td>加密</td><td>2026-06-09</td><td>81.1</td><td>71.61</td><td><b>-11.7%</b></td><td><span class='up'>+3.3%</span></td><td><span class='dn'>-15.0%</span></td><td><span class='dn'>-11.7%</span></td><td>第一回撤线吸</td></tr>
+<tr><td>72</td><td><b>SNDK</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>1858.27</td><td>1640.85</td><td><b>-11.7%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-12.8%</span></td><td><span class='dn'>-11.7%</span></td><td>继续抄：存（他给过点位 1350/1200）</td></tr>
+<tr><td>73</td><td><b>COIN</b></td><td>加密</td><td>2026-07-06</td><td>168.87</td><td>148.44</td><td><b>-12.1%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-13.2%</span></td><td><span class='dn'>-12.1%</span></td><td>load some（他给过点位 140/140）</td></tr>
+<tr><td>74</td><td><b>GLW</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>192.38</td><td>166.02</td><td><b>-13.7%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-14.8%</span></td><td><span class='dn'>-13.7%</span></td><td>继续抄：光</td></tr>
+<tr><td>75</td><td><b>BKSY</b></td><td>太空</td><td>2026-06-11</td><td>35.97</td><td>30.93</td><td><b>-14.0%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-15.9%</span></td><td><span class='dn'>-14.0%</span></td><td>扩大版名单</td></tr>
+<tr><td>76</td><td><b>AMSC</b></td><td>核电储能</td><td>2026-07-09</td><td>37.17</td><td>31.93</td><td><b>-14.1%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-15.2%</span></td><td><span class='dn'>-14.1%</span></td><td>继续抄：电</td></tr>
+<tr><td>77</td><td><b>ARM</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>327.87</td><td>279.35</td><td><b>-14.8%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-15.9%</span></td><td><span class='dn'>-14.8%</span></td><td>继续抄：CPU（他给过点位 170）</td></tr>
+<tr><td>78</td><td><b>XPEV</b></td><td>其他小盘</td><td>2026-07-15</td><td>13.78</td><td>11.7</td><td><b>-15.1%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-17.0%</span></td><td><span class='dn'>-15.1%</span></td><td>PYPL转仓过来，看好机器人量产</td></tr>
+<tr><td>79</td><td><b>QBTS</b></td><td>量子</td><td>2026-06-23</td><td>25.03</td><td>21.18</td><td><b>-15.4%</b></td><td><span class='up'>+2.4%</span></td><td><span class='dn'>-17.8%</span></td><td><span class='dn'>-15.4%</span></td><td>量子国家战略</td></tr>
+<tr><td>80</td><td><b>HIMS</b></td><td>健康消费</td><td>2026-06-21</td><td>33.54</td><td>28.14</td><td><b>-16.1%</b></td><td><span class='dn'>-0.9%</span></td><td><span class='dn'>-15.2%</span></td><td><span class='dn'>-16.1%</span></td><td>健康赛道继续加仓拿稳</td></tr>
+<tr><td>81</td><td><b>AMKR</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>72.16</td><td>58.95</td><td><b>-18.3%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-19.4%</span></td><td><span class='dn'>-18.3%</span></td><td>继续抄：PCB</td></tr>
+<tr><td>82</td><td><b>MRAM</b></td><td>其他小盘</td><td>2026-06-09</td><td>23.28</td><td>18.88</td><td><b>-18.9%</b></td><td><span class='up'>+3.3%</span></td><td><span class='dn'>-22.2%</span></td><td><span class='dn'>-18.9%</span></td><td>第一回撤线吸</td></tr>
+<tr><td>83</td><td><b>MU</b></td><td>光电存/半导体</td><td>2026-06-19</td><td>1211.38</td><td>971.53</td><td><b>-19.8%</b></td><td><span class='dn'>-0.9%</span></td><td><span class='dn'>-18.9%</span></td><td><span class='dn'>-19.8%</span></td><td>雷达的票还不错（他给过点位 800/700/800）</td></tr>
+<tr><td>84</td><td><b>ASTS</b></td><td>太空</td><td>2026-06-09</td><td>88.71</td><td>70.97</td><td><b>-20.0%</b></td><td><span class='up'>+3.3%</span></td><td><span class='dn'>-23.3%</span></td><td><span class='dn'>-20.0%</span></td><td>同上（他给过点位 82/66）</td></tr>
+<tr><td>85</td><td><b>VSH</b></td><td>光电存/半导体</td><td>2026-07-09</td><td>44.04</td><td>35.1</td><td><b>-20.3%</b></td><td><span class='up'>+1.1%</span></td><td><span class='dn'>-21.4%</span></td><td><span class='dn'>-20.3%</span></td><td>继续抄：MLCC（他给过点位 35）</td></tr>
+<tr><td>86</td><td><b>SATL</b></td><td>太空</td><td>2026-06-11</td><td>7.52</td><td>5.8</td><td><b>-22.9%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-24.8%</span></td><td><span class='dn'>-22.9%</span></td><td>扩大版名单</td></tr>
+<tr><td>87</td><td><b>BTBT</b></td><td>加密</td><td>2026-06-16</td><td>2.04</td><td>1.57</td><td><b>-23.0%</b></td><td><span class='up'>+0.2%</span></td><td><span class='dn'>-23.2%</span></td><td><span class='dn'>-23.0%</span></td><td>点名</td></tr>
+<tr><td>88</td><td><b>OKLO</b></td><td>核电储能</td><td>2026-06-11</td><td>57.86</td><td>44.38</td><td><b>-23.3%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-25.2%</span></td><td><span class='dn'>-23.3%</span></td><td>扩大版名单</td></tr>
+<tr><td>89</td><td><b>POET</b></td><td>光电存/半导体</td><td>2026-06-12</td><td>12.53</td><td>9.59</td><td><b>-23.5%</b></td><td><span class='up'>+1.3%</span></td><td><span class='dn'>-24.8%</span></td><td><span class='dn'>-23.5%</span></td><td>按第一回撤加</td></tr>
+<tr><td>90</td><td><b>PL</b></td><td>太空</td><td>2026-06-08</td><td>32.74</td><td>24.69</td><td><b>-24.6%</b></td><td><span class='up'>+2.1%</span></td><td><span class='dn'>-26.7%</span></td><td><span class='dn'>-24.6%</span></td><td>支撑和第一回退都差不多了，技术上看着很好</td></tr>
+<tr><td>91</td><td><b>UAMY</b></td><td>油/大宗</td><td>2026-06-11</td><td>7.33</td><td>5.51</td><td><b>-24.8%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-26.7%</span></td><td><span class='dn'>-24.8%</span></td><td>扩大版名单</td></tr>
+<tr><td>92</td><td><b>INTC</b></td><td>光电存/半导体</td><td>2026-06-19</td><td>140.94</td><td>102.46</td><td><b>-27.3%</b></td><td><span class='dn'>-0.9%</span></td><td><span class='dn'>-26.4%</span></td><td><span class='dn'>-27.3%</span></td><td>雷达的票还不错（他给过点位 82/80）</td></tr>
+<tr><td>93</td><td><b>LASE</b></td><td>其他小盘</td><td>2026-06-12</td><td>2.1</td><td>1.48</td><td><b>-29.5%</b></td><td><span class='up'>+1.3%</span></td><td><span class='dn'>-30.8%</span></td><td><span class='dn'>-9.7%</span></td><td>多余子弹优先布局超跌</td></tr>
+<tr><td>94</td><td><b>WOLF</b></td><td>光电存/半导体</td><td>2026-06-11</td><td>45.54</td><td>31.79</td><td><b>-30.2%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-32.1%</span></td><td><span class='dn'>-10.1%</span></td><td>扩大版名单</td></tr>
+<tr><td>95</td><td><b>FLY</b></td><td>太空</td><td>2026-06-11</td><td>39.37</td><td>26.65</td><td><b>-32.3%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-34.2%</span></td><td><span class='dn'>-32.3%</span></td><td>扩大版名单，跌破第一二回撤慢慢定投</td></tr>
+<tr><td>96</td><td><b>PURR</b></td><td>加密</td><td>2026-06-16</td><td>10.04</td><td>6.68</td><td><b>-33.5%</b></td><td><span class='up'>+0.2%</span></td><td><span class='dn'>-33.7%</span></td><td><span class='dn'>-33.5%</span></td><td>还会新高</td></tr>
+<tr><td>97</td><td><b>CBRG</b></td><td>其他小盘</td><td>2026-06-11</td><td>6.95</td><td>4.61</td><td><b>-33.7%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-35.6%</span></td><td><span class='dn'>-33.7%</span></td><td>扩大版名单</td></tr>
+<tr><td>98</td><td><b>EOSE</b></td><td>核电储能</td><td>2026-06-09</td><td>6.26</td><td>4.02</td><td><b>-35.8%</b></td><td><span class='up'>+3.3%</span></td><td><span class='dn'>-39.1%</span></td><td><span class='dn'>-13.9%</span></td><td>第一回撤线吸</td></tr>
+<tr><td>99</td><td><b>RVI</b></td><td>其他小盘</td><td>2026-06-16</td><td>44.54</td><td>28.55</td><td><b>-35.9%</b></td><td><span class='up'>+0.2%</span></td><td><span class='dn'>-36.1%</span></td><td><span class='dn'>-35.9%</span></td><td>还会新高</td></tr>
+<tr><td>100</td><td><b>CPSH</b></td><td>其他小盘</td><td>2026-06-09</td><td>6.81</td><td>4.31</td><td><b>-36.7%</b></td><td><span class='up'>+3.3%</span></td><td><span class='dn'>-40.0%</span></td><td><span class='dn'>-14.5%</span></td><td>第一回撤线吸</td></tr>
+<tr><td>101</td><td><b>CRCG</b></td><td>其他小盘</td><td>2026-06-11</td><td>16.23</td><td>10.26</td><td><b>-36.8%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-38.7%</span></td><td><span class='dn'>-36.8%</span></td><td>扩大版名单</td></tr>
+<tr><td>102</td><td><b>ON</b></td><td>光电存/半导体</td><td>2026-06-19</td><td>131.55</td><td>82.61</td><td><b>-37.2%</b></td><td><span class='dn'>-0.9%</span></td><td><span class='dn'>-36.3%</span></td><td><span class='dn'>-37.2%</span></td><td>雷达的票还不错</td></tr>
+<tr><td>103</td><td><b>LUNR</b></td><td>太空</td><td>2026-06-11</td><td>30.64</td><td>19.0</td><td><b>-38.0%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-39.9%</span></td><td><span class='dn'>-38.0%</span></td><td>扩大版名单</td></tr>
+<tr><td>104</td><td><b>TE</b></td><td>其他小盘</td><td>2026-06-11</td><td>8.47</td><td>5.11</td><td><b>-39.7%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-41.6%</span></td><td><span class='dn'>-39.7%</span></td><td>扩大版名单</td></tr>
+<tr><td>105</td><td><b>SPCL</b></td><td>太空</td><td>2026-06-12</td><td>51.26</td><td>30.7</td><td><b>-40.1%</b></td><td><span class='up'>+1.3%</span></td><td><span class='dn'>-41.4%</span></td><td><span class='up'>+13.3%</span></td><td>按第一回撤加（他给过点位 25/18/15/18）</td></tr>
+<tr><td>106</td><td><b>KEEL</b></td><td>其他小盘</td><td>2026-06-17</td><td>5.97</td><td>3.51</td><td><b>-41.2%</b></td><td><span class='up'>+1.2%</span></td><td><span class='dn'>-42.4%</span></td><td><span class='dn'>-41.2%</span></td><td>loaded some keel</td></tr>
+<tr><td>107</td><td><b>MNTS</b></td><td>太空</td><td>2026-06-09</td><td>12.69</td><td>4.83</td><td><b>-61.9%</b></td><td><span class='up'>+3.3%</span></td><td><span class='dn'>-65.2%</span></td><td><span class='dn'>-31.2%</span></td><td>第一回撤线吸</td></tr>
+<tr><td>108</td><td><b>VCX</b></td><td>其他小盘</td><td>2026-06-11</td><td>122.34</td><td>34.38</td><td><b>-71.9%</b></td><td><span class='up'>+1.9%</span></td><td><span class='dn'>-73.8%</span></td><td><span class='dn'>-37.9%</span></td><td>扩大版名单</td></tr>
+</table></div>
+<h2>四、按板块（口径①）</h2>
+<div class='w'><table>
+<tr><th>板块</th><th>笔数</th><th>胜率</th><th>均笔</th><th>超额</th><th>票</th></tr>
+<tr><td><b>软件</b></td><td>11</td><td>91%</td><td><b>+23.8%</b></td><td><span class='up'>+19.6%</span></td><td>ADBE APP DDOG FSLY MDB NET NOW PLTR PYPL SNPS UBER</td></tr>
+<tr><td><b>M7大科技</b></td><td>6</td><td>83%</td><td><b>+8.8%</b></td><td><span class='up'>+6.6%</span></td><td>AMZN GOOG META MSFT NFLX ORCL</td></tr>
+<tr><td><b>矿/数据中心</b></td><td>9</td><td>78%</td><td><b>+5.0%</b></td><td><span class='up'>+3.1%</span></td><td>APLD CIFR CRML CRWV IREN MP USAR UUUU WULF</td></tr>
+<tr><td><b>油/大宗</b></td><td>6</td><td>67%</td><td><b>+2.6%</b></td><td><span class='dn'>-0.1%</span></td><td>AA ANNA KOS UAMY USO XOM</td></tr>
+<tr><td><b>无人机</b></td><td>4</td><td>50%</td><td><b>+1.3%</b></td><td><span class='up'>+1.2%</span></td><td>AMPX BOT ONDS RCAT</td></tr>
+<tr><td><b>量子</b></td><td>5</td><td>20%</td><td><b>-4.7%</b></td><td><span class='dn'>-8.2%</span></td><td>IBM QBTS QNT QUBT RGTI</td></tr>
+<tr><td><b>健康消费</b></td><td>3</td><td>33%</td><td><b>-6.0%</b></td><td><span class='dn'>-6.3%</span></td><td>BRBR HIMS NKE</td></tr>
+<tr><td><b>核电储能</b></td><td>8</td><td>12%</td><td><b>-7.9%</b></td><td><span class='dn'>-9.7%</span></td><td>AMSC BE EOSE FCEL FLNC OKLO SMR VRT</td></tr>
+<tr><td><b>光电存/半导体</b></td><td>21</td><td>24%</td><td><b>-9.2%</b></td><td><span class='dn'>-10.1%</span></td><td>ALMU AMKR ARM AXTI CIEN COHR GLW INTC LITE MCHP MRVL MU MXL ON POET RMBS SMCI SNDK TTMI VSH WOLF</td></tr>
+<tr><td><b>加密</b></td><td>6</td><td>17%</td><td><b>-11.8%</b></td><td><span class='dn'>-13.3%</span></td><td>BTBT COIN CRCL FIGR PURR SOFI</td></tr>
+<tr><td><b>其他小盘</b></td><td>18</td><td>33%</td><td><b>-17.9%</b></td><td><span class='dn'>-19.2%</span></td><td>CBRG CBRS CPSH CRCG DXYZ FGRU FPS HTZ HYPG KEEL LASE MRAM RVI SIVEF TE VCX XE XPEV</td></tr>
+<tr><td><b>太空</b></td><td>11</td><td>18%</td><td><b>-20.0%</b></td><td><span class='dn'>-22.1%</span></td><td>ASTS BKSY FLY LUNR MNTS NASA PL RDW RKLB SATL SPCL</td></tr>
+</table></div>
+<h2>五、按他自己划的市场阶段</h2>
+<div class='w'><table>
+<tr><th>阶段</th><th>笔数</th><th>胜率</th><th>均笔</th><th>同期QQQ</th><th>超额</th></tr>
+<tr><td>6月 防御期（他压 40–50% 现金）</td><td>58</td><td>34%</td><td><b>-11.6%</b></td><td><span class='up'>+1.5%</span></td><td><span class='dn'>-13.1%</span></td></tr>
+<tr><td>7月 等抄底条件（QQQ650/恐慌20/油110）</td><td>35</td><td>46%</td><td><b>+2.0%</b></td><td><span class='up'>+2.8%</span></td><td><span class='dn'>-0.8%</span></td></tr>
+<tr><td>8月 三批加仓 → 8/13 喊满仓</td><td>15</td><td>60%</td><td><b>+4.9%</b></td><td><span class='up'>+1.1%</span></td><td><span class='up'>+3.8%</span></td></tr>
+</table></div>
+<h2>六、事件研究：跟进之后被套多久</h2>
+<div class='w'><table>
+<tr><th>跟进后</th><th>平均超额(vs QQQ)</th><th>跑赢比例</th></tr>
+<tr><td>T+1 个交易日</td><td><b>-1.34%</b></td><td>—</td></tr>
+<tr><td>T+3 个交易日</td><td><b>-0.05%</b></td><td>—</td></tr>
+<tr><td>T+5 个交易日</td><td><b>-2.44%</b></td><td>—</td></tr>
+<tr><td>T+10 个交易日</td><td><b>-4.99%</b></td><td>—</td></tr>
+<tr><td>T+20 个交易日</td><td><b>-13.10%</b></td><td>—</td></tr>
+</table></div>
+<blockquote>他喊单当天的收盘价，平均比<b>前 5 日最低点高 13.4%</b>（中位 <span class='up'>+9.4%</span>）——习惯在票已经弹起来一截之后才喊。</blockquote>
+<h2>七、口径与诚实性说明</h2>
+<p class='li'>• 台账由<b>人工逐条读 350 条原始消息</b>建立（<code>output/xiaoyu_vip_calls.json</code>，每条带原话），不是正则扫的。</p>
+<p class='li'>• 口径①按<b>喊单日收盘价</b>买入。他强调「到点位才买」，所以这个口径对他偏严苛——这正是单列口径④的原因。</p>
+<p class='li'>• 限价单按<b>日线 Low ≤ 挂单价</b>才算成交，成交价取 min(挂单价, 当日开盘)，不存在「最高价穿过就算成交」的自欺。</p>
+<p class='li'>• 他多次说「这些视频都说了」，<b>视频里的口径没有进台账</b>，属于已知缺口。</p>
+<p class='li'>• 板块分组最小的只有 3–5 笔；择时组合为日频等权再平衡近似。</p>
+<p class='li'>• 全部价格取自 Yahoo 日线；VCX/MNTS/ON/CRCG 等异常跌幅已单独查过拆股事件（CRCG 的 1:10 拆股在 5/5，早于喊单日，不影响）。</p>
