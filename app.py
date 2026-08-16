@@ -256,6 +256,13 @@ async def kova_notes():
     return HTMLResponse(notes_path.read_text(encoding="utf-8"))
 
 
+@app.get("/xiaoyu", response_class=HTMLResponse)
+async def xiaoyu_notes():
+    """小鱼(鱼哥) 信号源笔记页(打法体系/回测成绩/信用记录/跟单协议)。"""
+    p = Path(__file__).parent / "templates" / "xiaoyu_notes.html"
+    return HTMLResponse(p.read_text(encoding="utf-8"))
+
+
 @app.get("/stops", response_class=HTMLResponse)
 async def stop_dashboard():
     """持仓止损面板(动态页，刷新即拉最新日线 → /api/stops)。"""

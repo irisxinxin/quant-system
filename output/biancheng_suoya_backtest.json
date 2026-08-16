@@ -1,0 +1,638 @@
+{
+ "biancheng": [
+  {
+   "d": "07-16",
+   "tk": "MSFT",
+   "desc": "7/24 call(входpre-archive)",
+   "kind": "buy_call",
+   "pnl": 500,
+   "source": "claim",
+   "fill": "confirmed",
+   "note": "9块关, 一手赚500翻倍多; 入场在归档前"
+  },
+  {
+   "d": "07-16",
+   "tk": "QQQ",
+   "desc": "700/690 sell put spread exp7/17 cr1.8",
+   "kind": "sps",
+   "strikes": [
+    700,
+    690
+   ],
+   "exp": "2026-07-17",
+   "credit": 180,
+   "source": "bars",
+   "fill": "confirmed",
+   "note": "平仓价未报('挂5止损'→'可以关了'), 按到期结算近似",
+   "pnl": -287,
+   "settle": 695.33
+  },
+  {
+   "d": "07-16",
+   "tk": "NFLX",
+   "desc": "76/82/88 call蝶 exp7/17 db1.0",
+   "kind": "fly_call",
+   "strikes": [
+    76,
+    82,
+    88
+   ],
+   "exp": "2026-07-17",
+   "debit": 100,
+   "source": "bars",
+   "fill": "confirmed",
+   "note": "赌财报彩票",
+   "pnl": -100,
+   "settle": 68.95
+  },
+  {
+   "d": "07-16",
+   "tk": "ISRG",
+   "desc": "430 calendar 赌财报 db1.5",
+   "kind": "calendar",
+   "exp": "2026-07-17",
+   "debit": 150,
+   "source": "bars",
+   "strikes": [
+    430
+   ],
+   "note": "结果未报; 按430距离近似(远离则亏损上限150)",
+   "pnl": null,
+   "settle": 345.42
+  },
+  {
+   "d": "07-17",
+   "tk": "QQQ",
+   "desc": "685/675 sps exp7/20 cr2.0",
+   "kind": "sps",
+   "strikes": [
+    685,
+    675
+   ],
+   "exp": "2026-07-20",
+   "credit": 200,
+   "close_cost": 6,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "0.06关, 吃满",
+   "pnl": 194
+  },
+  {
+   "d": "07-17",
+   "tk": "WDC",
+   "desc": "430/420 sps exp7/24 cr4.0",
+   "kind": "sps",
+   "strikes": [
+    430,
+    420
+   ],
+   "exp": "2026-07-24",
+   "credit": 400,
+   "source": "bars",
+   "fill": "confirmed",
+   "note": "未报平仓, 按到期结算",
+   "pnl": 400,
+   "settle": 519.8
+  },
+  {
+   "d": "07-17",
+   "tk": "MSFT",
+   "desc": "380/360 sps exp7/24 挂4",
+   "kind": "sps",
+   "strikes": [
+    380,
+    360
+   ],
+   "exp": "2026-07-24",
+   "credit": 400,
+   "source": "bars",
+   "fill": "assumed",
+   "note": "成交未确认",
+   "pnl": 400,
+   "settle": 381.7
+  },
+  {
+   "d": "07-20",
+   "tk": "SPX",
+   "desc": "7300/7280 put对角 exp7/24-27 db1.8",
+   "kind": "diag",
+   "debit": 180,
+   "close_px": 570,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "5.7关, 翻3倍多 → +390",
+   "pnl": 390
+  },
+  {
+   "d": "07-20",
+   "tk": "NOW",
+   "desc": "110/120 call spread(拆股后价) db1.8 + 112 calendar db1.1",
+   "kind": "cs_mix",
+   "pnl": 170,
+   "source": "claim",
+   "fill": "confirmed",
+   "note": "7/23建议1.4-1.5出CS(小亏), 7/28 3.1出calendar长腿; 两单合并≈+170, 拆分有歧义"
+  },
+  {
+   "d": "07-23",
+   "tk": "QQQ",
+   "desc": "685/675 sps exp7/24 cr1.6",
+   "kind": "sps",
+   "strikes": [
+    685,
+    675
+   ],
+   "exp": "2026-07-24",
+   "credit": 160,
+   "source": "bars",
+   "fill": "confirmed",
+   "note": "收盘前提醒手动平, QQQ收684.23在两腿之间, 平仓成本≈0.8-1.0 → ≈+70",
+   "pnl": 83,
+   "settle": 684.23
+  },
+  {
+   "d": "07-23",
+   "tk": "MSFT",
+   "desc": "365/345 sps exp7/31 cr4.2",
+   "kind": "sps",
+   "strikes": [
+    365,
+    345
+   ],
+   "exp": "2026-07-31",
+   "credit": 420,
+   "source": "bars",
+   "fill": "confirmed",
+   "pnl": 420,
+   "settle": 464.72
+  },
+  {
+   "d": "07-24",
+   "tk": "QQQ",
+   "desc": "675/665 sps exp7/27 cr1.6",
+   "kind": "sps",
+   "strikes": [
+    675,
+    665
+   ],
+   "exp": "2026-07-27",
+   "credit": 160,
+   "close_cost": 4,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "0.04关吃满",
+   "pnl": 156
+  },
+  {
+   "d": "07-24",
+   "tk": "MSFT",
+   "desc": "390 sell put exp7/31 单腿当正股买",
+   "kind": "sp",
+   "strikes": [
+    390
+   ],
+   "exp": "2026-07-31",
+   "credit": null,
+   "source": "bars",
+   "fill": "confirmed",
+   "note": "权利金未报, 只判胜负",
+   "pnl": null,
+   "outcome": "胜(权利金未报)",
+   "settle": 464.72
+  },
+  {
+   "d": "07-27",
+   "tk": "AAPL",
+   "desc": "315 put calendar空 db0.75 x2手",
+   "kind": "calendar",
+   "debit": 150,
+   "source": "bars",
+   "strikes": [
+    315
+   ],
+   "exp": "2026-08-07",
+   "note": "AAPL 8/7前在315下方→买腿盈利, 但平仓未报; 保守按不亏不赚待定, 记bars判定",
+   "pnl": null,
+   "settle": 313.33
+  },
+  {
+   "d": "07-27",
+   "tk": "WDC",
+   "desc": "430 sell put exp7/31 6.2成交",
+   "kind": "sp",
+   "strikes": [
+    430
+   ],
+   "exp": "2026-07-31",
+   "credit": 620,
+   "source": "bars",
+   "fill": "confirmed",
+   "note": "'7.27到期'应为笔误, 按7/31判",
+   "pnl": 620,
+   "settle": 544.84
+  },
+  {
+   "d": "07-28",
+   "tk": "QQQ",
+   "desc": "665/655 sps exp7/28 cr1.8",
+   "kind": "sps",
+   "strikes": [
+    665,
+    655
+   ],
+   "exp": "2026-07-28",
+   "credit": 180,
+   "close_cost": 150,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "1.5安全下车 → +30",
+   "pnl": 30
+  },
+  {
+   "d": "07-29",
+   "tk": "QQQ",
+   "desc": "658/648 sps exp7/30 cr1.8",
+   "kind": "sps",
+   "strikes": [
+    658,
+    648
+   ],
+   "exp": "2026-07-30",
+   "credit": 180,
+   "close_cost": 8,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "0.08关",
+   "pnl": 172
+  },
+  {
+   "d": "07-29",
+   "tk": "LRCX",
+   "desc": "280/300/320 call蝶 exp7/31 db2.5 赌财报",
+   "kind": "fly_call",
+   "debit": 250,
+   "close_px": 1750,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "17.5出 → +1500",
+   "pnl": 1500
+  },
+  {
+   "d": "07-29",
+   "tk": "AAPL",
+   "desc": "320 put exp8/7 db1.8 (估值高+资金轮出)",
+   "kind": "buy_put",
+   "debit": 180,
+   "close_px": 1490,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "14.9关 → +1310, 6-7倍",
+   "pnl": 1310
+  },
+  {
+   "d": "07-29",
+   "tk": "QQQ",
+   "desc": "670/680 call spread exp7/29 db1.5 防卖飞",
+   "kind": "cs",
+   "strikes": [
+    670,
+    680
+   ],
+   "exp": "2026-07-29",
+   "debit": 150,
+   "source": "bars",
+   "fill": "assumed",
+   "note": "建议单, QQQ收661.73→归零",
+   "pnl": -150,
+   "settle": 661.73
+  },
+  {
+   "d": "07-29",
+   "tk": "APH",
+   "desc": "180 call 8/21 加仓1.1→3块关(7/31)",
+   "kind": "buy_call",
+   "pnl": 190,
+   "source": "claim",
+   "fill": "confirmed",
+   "note": "只可见加仓腿+1.9; 原仓入场pre-archive亏损未知"
+  },
+  {
+   "d": "07-31",
+   "tk": "MSFT",
+   "desc": "420/450 cs exp7/31 29关'几乎吃满'",
+   "kind": "cs",
+   "pnl": null,
+   "source": "claim",
+   "fill": "confirmed",
+   "note": "入场pre-archive, 胜, 金额不可算"
+  },
+  {
+   "d": "07-31",
+   "tk": "CEG",
+   "desc": "calendar 9.8关",
+   "kind": "calendar",
+   "pnl": null,
+   "source": "claim",
+   "fill": "confirmed",
+   "note": "入场pre-archive, 胜负金额不可算"
+  },
+  {
+   "d": "07-31",
+   "tk": "MSFT",
+   "desc": "450/480 cs 8/21 两张分别10和11出→换450 sp cr12",
+   "kind": "cs",
+   "pnl": null,
+   "source": "claim",
+   "fill": "confirmed",
+   "note": "入场pre-archive"
+  },
+  {
+   "d": "07-31",
+   "tk": "MSFT",
+   "desc": "450 sell put 8/21 cr~12",
+   "kind": "sp",
+   "strikes": [
+    450
+   ],
+   "credit": 1200,
+   "close_cost": 100,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "8/6 1块关 +1100 (赚90%+)",
+   "pnl": 1100
+  },
+  {
+   "d": "08-03",
+   "tk": "DRAM",
+   "desc": "44 sell put exp8/7 cr~1.5 x2手",
+   "kind": "sp",
+   "strikes": [
+    44
+   ],
+   "exp": "2026-08-07",
+   "credit": 300,
+   "source": "bars",
+   "fill": "confirmed",
+   "note": "2手合计",
+   "pnl": 300,
+   "settle": 50.6
+  },
+  {
+   "d": "08-03",
+   "tk": "MSFT",
+   "desc": "明年3月480 leap call 止盈一张 58.6 (成本15)",
+   "kind": "buy_call",
+   "pnl": 4360,
+   "source": "claim",
+   "fill": "confirmed",
+   "note": "四倍收益, 入场pre-archive但成本自报"
+  },
+  {
+   "d": "08-03",
+   "tk": "SPX",
+   "desc": "7330/7310 对角 db1.1 非农对冲",
+   "kind": "diag",
+   "debit": 110,
+   "close_px": 35,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "0.35关 → -75",
+   "pnl": -75
+  },
+  {
+   "d": "08-04",
+   "tk": "SHOP",
+   "desc": "130/140 cs exp8/7 db2.0 赌财报",
+   "kind": "cs",
+   "debit": 200,
+   "close_px": 970,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "9.7关 → +770",
+   "pnl": 770
+  },
+  {
+   "d": "08-04",
+   "tk": "CEG",
+   "desc": "270/285 cs exp8/7 db4.0 赌财报",
+   "kind": "cs",
+   "strikes": [
+    270,
+    285
+   ],
+   "exp": "2026-08-07",
+   "debit": 400,
+   "source": "bars",
+   "fill": "assumed",
+   "note": "'挂4还没成交'后无确认",
+   "pnl": -400,
+   "settle": 269.89
+  },
+  {
+   "d": "08-05",
+   "tk": "APP",
+   "desc": "460/470 cs exp8/7 db2.5 赌财报",
+   "kind": "cs",
+   "strikes": [
+    460,
+    470
+   ],
+   "exp": "2026-08-07",
+   "debit": 250,
+   "source": "bars",
+   "fill": "assumed",
+   "note": "APP财报崩到298 → 归零; 成交未确认",
+   "pnl": -250,
+   "settle": 346.8
+  },
+  {
+   "d": "08-05",
+   "tk": "QQQ",
+   "desc": "720/710 buy put spread exp8/7 db1.7 非农对冲",
+   "kind": "bps",
+   "strikes": [
+    720,
+    710
+   ],
+   "exp": "2026-08-07",
+   "debit": 170,
+   "source": "bars",
+   "fill": "assumed",
+   "note": "'目前还成交不了'",
+   "pnl": -170,
+   "settle": 723.03
+  },
+  {
+   "d": "08-06",
+   "tk": "CRM",
+   "desc": "200 calendar 过财报 db2.0",
+   "kind": "calendar",
+   "debit": 200,
+   "source": "pending",
+   "note": "8/21+8/28腿, 仍持仓"
+  },
+  {
+   "d": "08-06",
+   "tk": "VST",
+   "desc": "155 calendar 赌财报 db2.0",
+   "kind": "calendar",
+   "debit": 200,
+   "close_px": 120,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "1.2平, 亏80",
+   "pnl": -80
+  },
+  {
+   "d": "08-06",
+   "tk": "TWLO",
+   "desc": "165 put calendar 短空财报 db1.0",
+   "kind": "calendar",
+   "debit": 100,
+   "pnl": -100,
+   "source": "bars",
+   "fill": "confirmed",
+   "note": "TWLO财报后走高, 买腿8/14归零 → -100"
+  },
+  {
+   "d": "08-07",
+   "tk": "WDC",
+   "desc": "400 sell put exp8/14 cr6.0",
+   "kind": "sp",
+   "strikes": [
+    400
+   ],
+   "exp": "2026-08-14",
+   "credit": 600,
+   "source": "bars",
+   "fill": "confirmed",
+   "pnl": 600,
+   "settle": 508.8
+  },
+  {
+   "d": "08-07",
+   "tk": "SPX",
+   "desc": "7650对角 CPI对冲 db3.5",
+   "kind": "diag",
+   "debit": 350,
+   "close_px": 40,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "8/12剩腿0.4关 → -310",
+   "pnl": -310
+  },
+  {
+   "d": "08-10",
+   "tk": "MSFT",
+   "desc": "520 sell call exp8/14 cr3.0 (对leap对冲)",
+   "kind": "sc",
+   "credit": 300,
+   "close_cost": 25,
+   "source": "self",
+   "fill": "confirmed",
+   "note": "0.25关 → +275",
+   "pnl": 275
+  },
+  {
+   "d": "08-10",
+   "tk": "NBIS",
+   "desc": "170/168 buy put spread exp8/14 db2.3 赌财报空",
+   "kind": "bps",
+   "debit": 230,
+   "pnl": -230,
+   "source": "bars",
+   "fill": "confirmed",
+   "note": "NBIS财报+32% → 归零"
+  },
+  {
+   "d": "08-10",
+   "tk": "ORCL",
+   "desc": "130 sell put btc 0.8 (入场pre-archive)",
+   "kind": "sp",
+   "pnl": null,
+   "source": "claim",
+   "fill": "confirmed",
+   "note": "'赚90%' 权利金未报, 胜"
+  },
+  {
+   "d": "08-10",
+   "tk": "CRCL",
+   "desc": "70/85 cs 10/16 db3.6",
+   "kind": "cs",
+   "strikes": [
+    70,
+    85
+   ],
+   "exp": "2026-10-16",
+   "debit": 360,
+   "source": "pending"
+  },
+  {
+   "d": "08-10",
+   "tk": "APP",
+   "desc": "400/440 cs 11/20 db8.0 中期估值修复",
+   "kind": "cs",
+   "strikes": [
+    400,
+    440
+   ],
+   "exp": "2026-11-20",
+   "debit": 800,
+   "source": "pending",
+   "note": "APP现315, 深度价外"
+  },
+  {
+   "d": "08-11",
+   "tk": "CRWV",
+   "desc": "95/105 cs db2.0 (到期未注明)",
+   "kind": "cs",
+   "strikes": [
+    95,
+    105
+   ],
+   "debit": 200,
+   "source": "pending",
+   "note": "CRWV现105 → 接近满值"
+  },
+  {
+   "d": "08-12",
+   "tk": "IGV",
+   "desc": "leap call 4.3止盈(另一张8/4 4.0回本)",
+   "kind": "buy_call",
+   "pnl": null,
+   "source": "claim",
+   "fill": "confirmed",
+   "note": "入场pre-archive"
+  },
+  {
+   "d": "08-12",
+   "tk": "MSFT",
+   "desc": "460 sell put 9/18 挂5",
+   "kind": "sp",
+   "strikes": [
+    460
+   ],
+   "exp": "2026-09-18",
+   "credit": 500,
+   "source": "pending",
+   "fill": "assumed"
+  },
+  {
+   "d": "08-13",
+   "tk": "AMAT",
+   "desc": "560/570 cs exp8/14 db2.5 赌财报",
+   "kind": "cs",
+   "strikes": [
+    560,
+    570
+   ],
+   "exp": "2026-08-14",
+   "debit": 250,
+   "source": "bars",
+   "fill": "assumed",
+   "note": "AMAT 8/14收507 → 归零",
+   "pnl": -250,
+   "settle": 507.18
+  }
+ ]
+}

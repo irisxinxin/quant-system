@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小鱼(鱼哥) 信号源笔记</title>
+<style>
+:root{
+  --bg:#0b0e14; --s1:#141923; --s2:#1a202c;
+  --border:rgba(255,255,255,.07); --border2:rgba(255,255,255,.14);
+  --text:#e6edf3; --text2:#9ba6b4; --text3:#6b7585;
+  --accent:#39c5cf; --accent2:#67e8f1;
+  --green:#4ade80; --red:#f87171; --amber:#fbbf24; --blue:#58a6ff; --purple:#c084fc;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:
+  radial-gradient(1100px 550px at 10% -6%, rgba(57,197,207,.08), transparent 60%),
+  radial-gradient(900px 450px at 100% 0%, rgba(192,132,252,.05), transparent 55%),
+  var(--bg);
+  color:var(--text);font-family:'Inter','Noto Sans SC',system-ui,-apple-system,'PingFang SC',sans-serif;
+  font-size:15px;line-height:1.75;letter-spacing:.005em}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:34px 26px 90px}
+header.hero{margin-bottom:30px}
+.hero .tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.08em;
+  color:var(--accent);border:1px solid rgba(57,197,207,.35);border-radius:99px;padding:4px 13px;margin-bottom:14px}
+h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+.sub{color:var(--text2);font-size:14.5px;max-width:760px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:6px 12px;font-size:12.5px;color:var(--text2)}
+.chip b{color:var(--text);font-weight:650}
+h2{font-size:20px;font-weight:750;margin:44px 0 6px;padding-top:22px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;letter-spacing:-.01em}
+h2 .n{font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.1em}
+h3{font-size:15.5px;font-weight:700;margin:22px 0 8px;color:var(--accent2)}
+p{margin:9px 0;color:var(--text2)} p b,li b{color:var(--text);font-weight:650}
+ul{margin:8px 0 8px 2px;list-style:none}
+li{margin:7px 0;padding-left:20px;position:relative;color:var(--text2)}
+li:before{content:'';position:absolute;left:4px;top:11px;width:6px;height:6px;border-radius:2px;background:var(--accent);opacity:.75}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin:14px 0}
+.card.g{border-left:3px solid var(--green)} .card.r{border-left:3px solid var(--red)}
+.card.a{border-left:3px solid var(--amber)} .card.b{border-left:3px solid var(--blue)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+.big{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.up{color:var(--green)} .dn{color:var(--red)} .am{color:var(--amber)}
+.lbl{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.tbl{overflow-x:auto;border:1px solid var(--border);border-radius:12px;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{background:var(--s2);text-align:left;font-size:12px;color:var(--text3);font-weight:700;letter-spacing:.04em;
+  padding:10px 13px;white-space:nowrap}
+td{padding:9px 13px;border-top:1px solid var(--border);color:var(--text2);vertical-align:top}
+td:first-child{color:var(--text);font-weight:600;white-space:nowrap}
+tr:hover td{background:rgba(255,255,255,.02)}
+blockquote{border-left:3px solid var(--purple);background:rgba(192,132,252,.06);border-radius:0 10px 10px 0;
+  padding:12px 16px;margin:12px 0;font-size:14px;color:var(--text2)}
+blockquote .who{display:block;font-size:12px;color:var(--purple);font-weight:700;margin-bottom:3px}
+code{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:1px 7px;font-size:12.5px;
+  font-family:'JetBrains Mono',monospace;color:var(--accent2)}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;border-radius:99px;padding:2px 10px;margin-right:6px}
+.pill.g{background:rgba(74,222,128,.13);color:var(--green)} .pill.r{background:rgba(248,113,113,.13);color:var(--red)}
+.pill.a{background:rgba(251,191,36,.13);color:var(--amber)} .pill.b{background:rgba(88,166,255,.13);color:var(--blue)}
+.foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);font-size:12.5px;color:var(--text3)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="tag">🐟 信号源档案 · SIGNAL SOURCE NOTES</div>
+  <h1>小鱼（鱼哥）· VIP 频道</h1>
+  <p class="sub">中长线板块轮动 + 分批 ADC 定投打法。回测区间 <b class="mono">2026-06-08 ~ 08-14</b>（350 条消息全量人工建台账，108 笔喊单 + 31 个数字点位）。本页 = 他是谁、怎么跟、坑在哪。</p>
+  <div class="meta">
+    <span class="chip">风格 <b>左侧低吸 · 无止损 · 板块口号多</b></span>
+    <span class="chip">发言频率 <b>~5条/交易日</b></span>
+    <span class="chip">可机械执行 <b>22%</b>（31/139 带数字）</span>
+    <span class="chip">同期基准 <b>QQQ +2.1%</b></span>
+  </div>
+</header>
+
+<h2><span class="n">01</span>一句话总评</h2>
+<div class="card b">
+  <p style="font-size:16px"><b>他的「名单」是负资产（alpha -6.8%），他的「数字」是正资产（alpha +15.5%）。</b>名单让你追在反弹后（喊单价平均比前5日低点高 13.4%），数字让你等在回踩处。代价：61% 的点位永远等不到（踏空）。</p>
+</div>
+<div class="grid2">
+  <div class="card r">
+    <div class="lbl">无脑跟喊单（108笔，收盘买入持有）</div>
+    <div class="big dn">-4.9%</div>
+    <p>胜率 41.7% · alpha <b class="dn">-6.8%</b> · 只有 35% 的单跑赢 QQQ</p>
+  </div>
+  <div class="card g">
+    <div class="lbl">只挂他给的数字点位（31挂12成交）</div>
+    <div class="big up">+20.8%</div>
+    <p>胜率 83% · alpha <b class="up">+15.5%</b> · 但踏空 19/31 = 61%</p>
+  </div>
+</div>
+
+<h2><span class="n">02</span>他的打法体系（原话提炼）</h2>
+<h3>入场：左侧分批，斐波那契回撤定档</h3>
+<ul>
+  <li><b>回撤 0.618 档开始小仓试探，0.5 档按计划加仓</b>——"回撤到阶段高点的 0.618 附近 → 开始小仓位分批布局"</li>
+  <li><b>ADC 摊低成本</b>："到了预先设定的价位就分批买入，涨了不追，跌了不慌"</li>
+  <li>左右侧口径（8/13 那条值得留档）：<b>"左侧小仓试错、越确认越加；右侧确认启动后先把基础仓位上够，涨多了反而不要追着加"</b></li>
+  <li>时段纪律："注意 90% 情况避免盘前盘后交易"</li>
+</ul>
+<h3>出场：321 止盈，没有止损</h3>
+<div class="card">
+  <p class="mono" style="color:var(--text)">+30% 盈利 → 走 1/3　·　+50% → 剩下的走 1/2　·　+100% → 全走</p>
+  <p>辅助规则：单票 +20% 左右可先锁一部分（7 月口径）。<b>他从不设单票止损</b>，风控全靠仓位和现金比例。回测验证：给他机械加 -20% 止损反而更差（-2.3% → -5.3%），因为他的票波动大、砍完就反弹——<b>他不设损在他的体系内是自洽的</b>，代价是完整跟单最大回撤 -21%。</p>
+</div>
+<h3>仓位：现金比例是他的主控台</h3>
+<p>6月 40-50% 现金防御 → 7月等待 → 7/31 转多(35-40%) → 8/4 提到 80% → 8/7 80-90% → <b>8/12-13 满仓</b>。回测：跟他的仓位曲线 ×QQQ = +1.1%，不如躺平满仓 QQQ 的 +2.1%——<b>择时没有贡献，还多了 -6.9% 回撤</b>。他唯一一次喊满仓发生在 QQQ 已从 656 反弹 +11% 之后。</p>
+
+<h2><span class="n">03</span>回测成绩单</h2>
+<div class="tbl"><table>
+<tr><th>口径</th><th>笔数</th><th>胜率</th><th>均笔</th><th>alpha</th><th>备注</th></tr>
+<tr><td>① 无脑跟喊单</td><td>108</td><td>41.7%</td><td class="dn">-4.9%</td><td class="dn">-6.8%</td><td>收盘买入持有至 8/14</td></tr>
+<tr><td>② 他的 321 止盈</td><td>108</td><td>45.4%</td><td class="dn">-2.3%</td><td class="dn">-4.2%</td><td>比①好但仍为负</td></tr>
+<tr><td>③ ② + 机械-20%止损</td><td>108</td><td>33.3%</td><td class="dn">-5.3%</td><td class="dn">-7.1%</td><td>更差——他不设损是对的</td></tr>
+<tr><td>④ 只挂他的数字点位</td><td>12/31</td><td class="up">83%</td><td class="up">+20.8%</td><td class="up">+15.5%</td><td>踏空 61%；成交集中在 7 月低点区</td></tr>
+</table></div>
+<div class="tbl"><table>
+<tr><th>分阶段（口径①）</th><th>笔数</th><th>胜率</th><th>均笔</th><th>alpha</th></tr>
+<tr><td>6月 防御期</td><td>58</td><td>34.5%</td><td class="dn">-11.6%</td><td class="dn">-13.1%</td></tr>
+<tr><td>7月 等抄底条件</td><td>35</td><td>45.7%</td><td class="up">+2.0%</td><td class="dn">-0.8%</td></tr>
+<tr><td>8月 三批加仓→满仓</td><td>15</td><td>60.0%</td><td class="up">+4.9%</td><td class="up">+3.8%</td></tr>
+</table></div>
+<p>跟进衰减：T+1 <b class="dn">-1.34%</b> → T+5 <b class="dn">-2.44%</b> → T+10 <b class="dn">-4.99%</b>（相对QQQ超额）。<b>他喊单当天收盘价平均比前 5 日最低点高 +13.4%</b>——他自己等回踩，但喊出来的时候票往往已经弹了。</p>
+
+<h2><span class="n">04</span>板块红黑榜（他的口味 ≠ 他的强项）</h2>
+<div class="grid2">
+  <div class="card g">
+    <div class="lbl">✅ 他顺口提的反而最赚</div>
+    <ul>
+      <li><b>软件</b>（7/27 "软件五强 AMNND"）：11笔 胜率 91% 均笔 <b class="up">+23.8%</b></li>
+      <li><b>M7大科技</b>：6笔 83% <b class="up">+8.8%</b></li>
+      <li><b>矿/数据中心</b>：9笔 78% <b class="up">+5.0%</b></li>
+    </ul>
+  </div>
+  <div class="card r">
+    <div class="lbl">❌ 他喊得最响的最亏</div>
+    <ul>
+      <li><b>太空</b>（喊单量第一）：11笔 胜率 18% 均笔 <b class="dn">-20.0%</b></li>
+      <li><b>小盘超跌名单</b>（6月）：18笔 33% <b class="dn">-17.9%</b>（VCX -72%、MNTS -62%、KEEL -41%）</li>
+      <li><b>加密</b> 17% <b class="dn">-11.8%</b> · <b>光电存</b> 24% <b class="dn">-9.2%</b> · <b>核电储能</b> 13% <b class="dn">-7.9%</b></li>
+    </ul>
+  </div>
+</div>
+
+<h2><span class="n">05</span>点位战绩（他唯一值钱的输出）</h2>
+<div class="tbl"><table>
+<tr><th>成交的 12 笔</th><th>挂单价</th><th>成交日</th><th>至 8/14</th></tr>
+<tr><td>AXTI</td><td class="mono">40</td><td>07-28</td><td class="up">+104.1%</td></tr>
+<tr><td>SNDK</td><td class="mono">1200</td><td>08-10</td><td class="up">+36.8%</td></tr>
+<tr><td>ORCL</td><td class="mono">115</td><td>07-24</td><td class="up">+30.9%</td></tr>
+<tr><td>SPCL</td><td class="mono">25</td><td>07-17</td><td class="up">+23.3%</td></tr>
+<tr><td>SNDK</td><td class="mono">1350</td><td>07-27</td><td class="up">+21.6%</td></tr>
+<tr><td>MU</td><td class="mono">800</td><td>07-28</td><td class="up">+21.5%</td></tr>
+<tr><td>TSLA / ASTS66 / COIN / VSH / APP / ASTS82</td><td colspan="2">其余六笔</td><td>+14.1% ~ -13.4%</td></tr>
+</table></div>
+<p><b>还挂着、从未触及的（现价高出 22~105%）：</b><span class="mono">MU 700/800 · LITE 600 · INTC 80/82 · ARM 170 · CRWV 65 · SPCX 90 · AXTI 54 · TSLA 250 · SPCL 18/15 · IREN 35 · AAPL 250 · COIN 140 · APP 300</span>。这些是他的"再跌我就接"清单——如果真回撤到位，历史数据支持这些位置值得接。</p>
+
+<h2><span class="n">06</span>言行一致性档案（信用记录）</h2>
+<div class="card a">
+  <p><b>⚠️ 抄底三条件自己没守。</b>7/28 立的规矩：前提=财报季结束，三条件满足其二——<code>QQQ 650</code> / <code>CNN恐慌 20</code> / <code>油 110</code>。实际：QQQ 区间最低 <b class="mono">661</b>（650 从未触及），另两条也没凑齐，但 8/3 就开始三批加仓、8/12 满仓。<b>结果是对的（抄在 685-700，涨到 731），但流程与宣言不符</b>——他的"条件"是弹性的，不能当成他的机械纪律来跟。</p>
+</div>
+<div class="card g">
+  <p><b>✅ 不追高说到做到。</b>"开盘冲太高的票，接近7-8%以上的，先等回踩"；AXTI "54以上别上头"。他的数字点位全部低于市价，无一例外。</p>
+</div>
+<div class="card a">
+  <p><b>⚠️ 喊单节奏滞后。</b>数据实锤：喊单价平均高于前5日低点 13.4%，T+1 平均跑输 QQQ 1.34%。他"发现→确认→喊出来"的链路要几天，你拿到的信号天然是二手价。</p>
+</div>
+<div class="card r">
+  <p><b>❌ 雷达图（radar10.png）已验证无用。</b>18 张快照拆解：盘前那张的涨跌幅是<b>昨天的</b>；58% 的行是隔夜旧单；BIAS 93% 恒 Bull；NOTES 是固定模板。整榜跟单超额 ≈ 0。已决定不再跟踪（2026-08-16）。</p>
+</div>
+
+<h2><span class="n">07</span>跟单协议（如果要跟）</h2>
+<ul>
+  <li><b>只跟数字，不跟名单。</b>他说出具体价格才记录；"太空矿继续加"这类口号一律忽略。</li>
+  <li><b>限价单等回踩，接受 61% 踏空。</b>踏空不是失败——踏空的那批平均已高出 40%+，追进去才是失败。</li>
+  <li><b>出场用他的 321，不加机械止损</b>（回测证明加了更差）。但完整跟单的最大回撤是 <b class="dn">-21%</b>，仓位要按这个压力测试来定。</li>
+  <li><b>板块过滤：</b>他给软件/M7/数据中心的点位权重调高；太空/小盘超跌名单减半或跳过。</li>
+  <li><b>他的现金比例当情绪指标看，别当交易信号执行</b>（择时贡献为负）。</li>
+  <li><b>永远记住他的月度方差：</b>6月那种防御期他照样喊了 58 笔，均笔 -11.6%。他不是止损型选手，跌市里他的单会一路加仓一路套。</li>
+</ul>
+
+<h2><span class="n">08</span>与蛋挞的关系（同期对比 8/4~8/14）</h2>
+<div class="tbl"><table>
+<tr><th></th><th>小鱼</th><th>蛋挞</th></tr>
+<tr><td>同窗口收益（各自最优口径）</td><td>喊单 +4.9% / 点位 +16.9%(n=2)</td><td>点位 +3.6%（18/47 成交）</td></tr>
+<tr><td>可机械执行比例</td><td class="dn">22%</td><td class="up">81%（四件套：两档入场+止损+TP1/TP2）</td></tr>
+<tr><td>单票止损</td><td class="dn">无</td><td class="up">几乎每票都给</td></tr>
+<tr><td>跌市实盘证据</td><td>有（6月 -11.6%）</td><td class="am">无——她的表全发在 8/10 后，只有 4 天证据</td></tr>
+</table></div>
+<p>结论：<b>同期同口径小鱼并不输</b>（8/4-8/11 同持仓期：小鱼 +7.6% vs 蛋挞 +3.8%）。蛋挞的优势是<b>格式</b>（能挂单睡觉），不是已证明的收益。等她经历一段下跌再重判。</p>
+
+<h2><span class="n">09</span>待办 / 数据缺口</h2>
+<ul>
+  <li>他多次说"视频里都讲了"——<b>视频口径从未进台账</b>，已知盲区。</li>
+  <li>radar 图归档已上线（<code>data/xiaoyu_img/</code>，每日 05:10），虽已判定不跟，留档以备复核。</li>
+  <li>下一段回撤（他的 QQQ 650 真到、或市场再 risk-off）= 检验他"左侧加仓不止损"体系的真正考场，届时重跑全量回测。</li>
+  <li>关注他 8 月挂单里最接近成交的：<span class="mono">APP 300（差5%）· COIN 140（差6%）</span>。</li>
+</ul>
+
+<div class="foot">
+  数据：output/xiaoyu_vip_calls.json（台账）· xiaoyu_vip_backtest.json（回测）· xiaoyu_radar_snapshots.json（雷达图转录）· danta_vs_xiaoyu.json（对比）<br>
+  脚本：backtest_xiaoyu_vip.py · analyze_xiaoyu_radar.py · backtest_danta_vs_xiaoyu.py · make_xiaoyu_report.py ｜ 生成 2026-08-16 ｜ 回测≠预测，买卖自决
+</div>
+
+</div>
+</body>
+</html>
