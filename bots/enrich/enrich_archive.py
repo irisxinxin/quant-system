@@ -38,12 +38,22 @@ def refresh_history():
     if not token:
         print("⚠️ 无DISCORD_BOT_TOKEN, 跳过消息存档"); return
     proxy = os.environ.get("HTTPS_PROXY")
-    if not proxy:                              # launchd环境无shell代理变量 → 探测本地Clash
+    if not proxy:
+        # 2026-08-17: 代理环境会变(Clash 7897 ↔ SSX-NG 1087, 且1087的privoxy拒绝Discord CONNECT)。
+        # 探测顺序: 直连Discord可用→不走代理; 否则依次试本地代理端口。
+        import urllib.request as _ur
         try:
-            s = socket.create_connection(("127.0.0.1", 7897), timeout=1); s.close()
-            proxy = "http://127.0.0.1:7897"
-        except OSError:
+            _ur.urlopen("https://discord.com/api/v10/gateway", timeout=6)
             proxy = None
+        except Exception:
+            proxy = None
+            for port in (7897, 7890, 1087):
+                try:
+                    s = socket.create_connection(("127.0.0.1", port), timeout=1); s.close()
+                    proxy = f"http://127.0.0.1:{port}"
+                    break
+                except OSError:
+                    continue
     intents = discord.Intents.default(); intents.message_content = True
     client = discord.Client(intents=intents, proxy=proxy)
     ZWZF = 1392020997393088542        # 站长转发#2054
