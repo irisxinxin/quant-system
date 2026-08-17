@@ -73,16 +73,20 @@ def refresh_history():
              "信号": ROOT/"output"/"kova_signal_history.json",
              "潜力形态-多": ROOT/"output"/"qianli_duo_history.json",
              "小鱼日内vip": ROOT/"output"/"xiaoyu_intraday_history.json",
-             "所有突發信息": ROOT/"output"/"samlam_history.json"}   # Sam lam投資筆記(港, Minervini流)
+             "所有突發信息": ROOT/"output"/"samlam_history.json",   # Sam lam投資筆記(港, Minervini流)
+             "华尔街观察-正股": ROOT/"output"/"wallst_history.json"}  # 第九源: 大类资产轮动(黄金主仓+行业ETF)
     KOVA = 1520803125647380640        # Kova本人
     KOVA_TR = 1511035459709702314     # 懂王翻译2
-    ALLOW = {ZWZF, ZWZF3, ZZ, KOVA, KOVA_TR}  # 站长中继×2+张张+Kova+翻译
+    TTT = 1350502142997434582         # ttt2023(群主, 华尔街观察频道发布人)
+    WSGC = 1538784726234693652        # 华尔街观察官方号
+    ALLOW = {ZWZF, ZWZF3, ZZ, KOVA, KOVA_TR, TTT, WSGC}  # 站长中继×2+张张+Kova+翻译+华尔街观察×2
 
     IMG_SAVE = {"蛋挞vip": ROOT / "data" / "danta_img",   # 点位表以图片发布的频道 → 落盘抢救(CDN链接会过期)
                 "潜力形态-多": ROOT / "data" / "qianli_img",   # 形态派全靠图
                 "小鱼vip": ROOT / "data" / "xiaoyu_img",       # 鱼哥每天两次的 radar10.png(雷达十票 P10/P50/P90 预测图)
                 "小鱼日内vip": ROOT / "data" / "danta_intraday_img",  # 蛋挞在日内频道发的点位图/持仓图
-                "所有突發信息": ROOT / "data" / "samlam_img"}          # Sam lam 的图表标注(base/breakout 划线图)
+                "所有突發信息": ROOT / "data" / "samlam_img",          # Sam lam 的图表标注(base/breakout 划线图)
+                "华尔街观察-正股": ROOT / "data" / "wallst_img"}          # 华尔街观察周报配图
 
     @client.event
     async def on_ready():
