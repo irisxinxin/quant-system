@@ -118,5 +118,27 @@
   "stop_mult": 0.5,
   "status": "closed",
   "opened": "2026-07-22"
+ },
+ "AMD260817C520000.US": {
+  "ticker": "AMD",
+  "entry_order_id": null,
+  "qty": 20,
+  "limit": 1.5,
+  "expiry": "2026-08-17",
+  "filled": 20,
+  "sold": 0,
+  "avg": 1.5,
+  "tp_order_id": "1274023219510157312",
+  "tp_qty": 10,
+  "tp2_order_id": null,
+  "tp2_qty": 0,
+  "tp1_done": false,
+  "tp2_done": false,
+  "armed": false,
+  "submitted_ts": 1786979277.259845,
+  "stop_mult": 0.5,
+  "status": "open",
+  "opened": "2026-08-17",
+  "tp_order_id_counted": 0
  }
 }
