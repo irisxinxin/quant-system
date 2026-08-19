@@ -74,7 +74,8 @@ def refresh_history():
              "潜力形态-多": ROOT/"output"/"qianli_duo_history.json",
              "小鱼日内vip": ROOT/"output"/"xiaoyu_intraday_history.json",
              "所有突發信息": ROOT/"output"/"samlam_history.json",   # Sam lam投資筆記(港, Minervini流)
-             "华尔街观察-正股": ROOT/"output"/"wallst_history.json"}  # 第九源: 大类资产轮动(黄金主仓+行业ETF)
+             "华尔街观察-正股": ROOT/"output"/"wallst_history.json",  # 第九源: 大类资产轮动(黄金主仓+行业ETF)
+             "seek-vip": ROOT/"output"/"seek_vip_history.json"}  # 第十二源候选: ~Seeker~英文技术流(站长转发3中继), 深回撤埋伏+阻力位, 8/19接入观察
     KOVA = 1520803125647380640        # Kova本人
     KOVA_TR = 1511035459709702314     # 懂王翻译2
     TTT = 1350502142997434582         # ttt2023(群主, 华尔街观察频道发布人)
@@ -86,7 +87,8 @@ def refresh_history():
                 "小鱼vip": ROOT / "data" / "xiaoyu_img",       # 鱼哥每天两次的 radar10.png(雷达十票 P10/P50/P90 预测图)
                 "小鱼日内vip": ROOT / "data" / "danta_intraday_img",  # 蛋挞在日内频道发的点位图/持仓图
                 "所有突發信息": ROOT / "data" / "samlam_img",          # Sam lam 的图表标注(base/breakout 划线图)
-                "华尔街观察-正股": ROOT / "data" / "wallst_img"}          # 华尔街观察周报配图
+                "华尔街观察-正股": ROOT / "data" / "wallst_img",          # 华尔街观察周报配图
+                "seek-vip": ROOT / "data" / "seek_img"}                  # Seeker 的点位全画在图上(箱体zone)
 
     @client.event
     async def on_ready():
