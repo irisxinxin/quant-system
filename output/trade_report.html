@@ -54,20 +54,16 @@
     @media (max-width: 480px) { body { padding: 10px; } .tile .v { font-size: 19px; } }
     </style></head><body>
 <h1>📊 交易战报 · LongPort 模拟盘</h1>
-<div class='sub'>生成于 2026-08-18 07:05:30 SGT (ET 08-17 19:05) · 静态快照, 双击 战报.command 刷新</div>
+<div class='sub'>生成于 2026-08-23 09:17:47 SGT (ET 08-22 21:17) · 静态快照, 双击 战报.command 刷新</div>
 <div class='legend'>配色: <span class='up'>▲红=盈利</span> / <span class='dn'>▼绿=亏损</span> (长桥习惯), 数字自带±号</div>
 <div class='tiles'>
 <div class='tile'><div class='k'>浮动盈亏 (持仓中)</div><div class='v'><span class='dim'>—</span></div></div>
 <div class='tile'><div class='k'>已实现盈亏</div><div class='v'><span class='dn num'>▼ $-6,642</span></div></div>
-<div class='tile'><div class='k'>持仓</div><div class='v'>1 笔</div></div>
-<div class='tile'><div class='k'>andy 观察</div><div class='v'>48 笔</div></div>
+<div class='tile'><div class='k'>持仓</div><div class='v'>0 笔</div></div>
+<div class='tile'><div class='k'>andy 观察</div><div class='v'>67 笔</div></div>
 </div>
 <h2>💼 当前持仓 <small>enrich 实盘</small></h2>
-<div class='card'>
-<div class='head'><span class='title'>AMD 2026-08-17 <span class='dim'>×20张</span></span><span class='dim'>—</span></div>
-<div class='kv'><div><div class='k'>成本</div><div class='v num'>@1.5 ≈$3,000</div></div><div><div class='k'>现价</div><div class='v num'><span class='dim'>无行情</span></div></div><div><div class='k'>止盈/止损</div><div class='v num'>止盈✓ @1.95 / 止损 @≈1.05(理论)</div></div><div><div class='k'>状态</div><div class='v'><span class='tag t-open'>持仓中</span></div></div></div>
-<div class='osi' style='margin-top:6px'>AMD260817C520000.US · 信号日 2026-08-17</div>
-</div>
+<div class='empty'>无持仓</div>
 <h2>✅ 已平仓回合</h2>
 <div class='card'><div class='head'><span class='title'>#1 MSFT</span><span class='dn num' style='font-size:1.05em'>▼ $-4,218 (-42.2%)</span></div>
 <div class='wrap'><table><tr><th>时间 SGT</th><th>动作</th><th class='r'>张</th><th class='r'>价格</th><th class='r'>本笔盈亏</th></tr>
@@ -90,10 +86,10 @@
 <tr><td class='num'>07-16 22:37:12</td><td>平仓卖出 (止损-30%)</td><td class='r num'>108</td><td class='r num'>0.52</td><td class='r'><span class='dn num'>▼ $-2,376</span></td></tr>
 </table></div></div>
 <div style='margin:4px 0 2px'>合计已实现: <span class='dn num' style='font-size:1.05em'>▼ $-6,642</span></div>
-<div class='note'>进行中回合 4 个 (PLTR260724C140000.US, NVDA260722C210000.US, NBIS260724C250000.US, AMD260817C520000.US) — 见〈当前持仓〉</div>
+<div class='note'>进行中回合 5 个 (PLTR260724C140000.US, NVDA260722C210000.US, NBIS260724C250000.US, PLTR260821C180000.US, AMD260817C520000.US) — 见〈当前持仓〉</div>
 <h2>📜 信号源历史成绩 <small>按跟单规则逐笔模拟 · 真实K线</small></h2>
 <div class='card'><div class='head'><span class='title'>enrich (实盘同款规则: 2张·止盈2x·镜像·止损-30%)</span><span class='dn num' style='font-size:1.05em'>▼ $-121 (-2.3%)</span></div>
-<div class='sub'>可测 19 笔 (胜 6 / 负 13) · 无数据/未成交 122 笔 (详见折叠) · 数据截至 2026-08-18T06:41</div>
+<div class='sub'>可测 19 笔 (胜 6 / 负 13) · 无数据/未成交 122 笔 (详见折叠) · 数据截至 2026-08-23T09:17</div>
 <div class='wrap'><table><tr><th>日期 SGT</th><th>合约</th><th class='r'>入场</th><th>出场路径</th><th class='r'>盈亏</th></tr>
 <tr><td class='num'>07-06 21:33:42</td><td><b>IBM 07/10 $305C</b></td><td class='r num'>1.95</td><td class='wrapcell dim'>1@2.91·镜像减仓(p; 1@3.2·二次减仓→清</td><td class='r'><span class='up num'>▲ $+218 (+55.9%)</span></td></tr>
 <tr><td class='num'>07-07 01:48:06</td><td><b>LLY 07/10 $1300C</b></td><td class='r num'>1.7</td><td class='wrapcell dim'>1@3.75·止盈+100; 1@1.19·止损-50%</td><td class='r'><span class='up num'>▲ $+151 (+44.5%)</span></td></tr>
@@ -240,8 +236,8 @@
 <tr><td class='num'>08-14 03:07:16</td><td class='dim'>HOOD 08/21 $105C</td><td class='dim'>K线已被长桥清除</td></tr>
 </table></div></details>
 </div>
-<div class='card'><div class='head'><span class='title'>andy 波段+止损子集 (他的止损+BE·$1万/笔)</span><span class='dn num' style='font-size:1.05em'>▼ $-16,229 (-6.1%)</span></div>
-<div class='sub'>可测 28 笔 (胜 8 / 负 20) · 无数据/未成交 32 笔 (详见折叠) · 数据截至 2026-08-18T06:41</div>
+<div class='card'><div class='head'><span class='title'>andy 波段+止损子集 (他的止损+BE·$1万/笔)</span><span class='dn num' style='font-size:1.05em'>▼ $-38,127 (-14.4%)</span></div>
+<div class='sub'>可测 28 笔 (胜 6 / 负 22) · 无数据/未成交 32 笔 (详见折叠) · 数据截至 2026-08-23T09:17</div>
 <div class='wrap'><table><tr><th>日期 SGT</th><th>合约</th><th class='r'>入场</th><th>出场路径</th><th class='r'>盈亏</th></tr>
 <tr><td class='num'>07-28 21:40:50</td><td><b>BRKB 08/07 $520C</b></td><td class='r num'>2.8</td><td class='wrapcell dim'>35@1.65·止损</td><td class='r'><span class='dn num'>▼ $-4,074 (-41.6%)</span></td></tr>
 <tr><td class='num'>07-28 22:07:22</td><td><b>WSM 08/21 $250C</b></td><td class='r num'>5.7</td><td class='wrapcell dim'>17@5·止损</td><td class='r'><span class='dn num'>▼ $-1,214 (-12.5%)</span></td></tr>
@@ -249,7 +245,7 @@
 <tr><td class='num'>07-30 02:12:07</td><td><b>IBM 08/21 $235C</b></td><td class='r num'>6.88</td><td class='wrapcell dim'>14@6·止损</td><td class='r'><span class='dn num'>▼ $-1,252 (-13.0%)</span></td></tr>
 <tr><td class='num'>08-03 21:34:12</td><td><b>DIA 08/07 $533C</b></td><td class='r num'>2.25</td><td class='wrapcell dim'>41@1.95·止损</td><td class='r'><span class='dn num'>▼ $-1,287 (-14.0%)</span></td></tr>
 <tr><td class='num'>08-03 21:41:58</td><td><b>SCHW 08/21 $107C</b></td><td class='r num'>1.9</td><td class='wrapcell dim'>50@1.45·止损</td><td class='r'><span class='dn num'>▼ $-2,320 (-24.4%)</span></td></tr>
-<tr><td class='num'>08-03 22:44:21</td><td><b>NTAP 08/21 $195C</b> <span class='tag t-watch'>持仓中</span></td><td class='r num'>3.6</td><td class='wrapcell dim'>13@7.4·止盈2x; 14@10.07·持仓中mar</td><td class='r'><span class='up num'>▲ $+13,960 (+143.6%)</span></td></tr>
+<tr><td class='num'>08-03 22:44:21</td><td><b>NTAP 08/21 $195C</b></td><td class='r num'>3.6</td><td class='wrapcell dim'>13@7.4·止盈2x; 14@0·归零</td><td class='r'><span class='dn num'>▼ $-138 (-1.4%)</span></td></tr>
 <tr><td class='num'>08-03 23:29:38</td><td><b>GOOG 08/07 $385C</b></td><td class='r num'>2.0</td><td class='wrapcell dim'>50@0.81·止损</td><td class='r'><span class='dn num'>▼ $-6,020 (-60.2%)</span></td></tr>
 <tr><td class='num'>08-04 03:05:48</td><td><b>GE 08/07 $375C</b></td><td class='r num'>2.6</td><td class='wrapcell dim'>19@3·跟随减仓; 19@2.56·止损</td><td class='r'><span class='up num'>▲ $+631 (+6.4%)</span></td></tr>
 <tr><td class='num'>08-04 21:41:54</td><td><b>ZS 08/14 $170C</b></td><td class='r num'>3.0</td><td class='wrapcell dim'>16@3.25·跟随减仓; 17@3·二次减仓清</td><td class='r'><span class='up num'>▲ $+354 (+3.6%)</span></td></tr>
@@ -270,7 +266,7 @@
 <tr><td class='num'>08-12 21:39:02</td><td><b>INTC 08/17 $104C</b></td><td class='r num'>2.2</td><td class='wrapcell dim'>22@2.73·跟随减仓; 23@2.2·止损</td><td class='r'><span class='up num'>▲ $+1,103 (+11.1%)</span></td></tr>
 <tr><td class='num'>08-12 21:45:52</td><td><b>DELL 08/14 $490C</b></td><td class='r num'>3.6</td><td class='wrapcell dim'>13@3·跟随减仓; 14@3·止损</td><td class='r'><span class='dn num'>▼ $-1,658 (-17.1%)</span></td></tr>
 <tr><td class='num'>08-12 21:51:20</td><td><b>TSM 08/21 $455C</b></td><td class='r num'>2.65</td><td class='wrapcell dim'>37@2.3·止损</td><td class='r'><span class='dn num'>▼ $-1,347 (-13.7%)</span></td></tr>
-<tr><td class='num'>08-13 01:34:15</td><td><b>ORCL 08/21 $167.5C</b> <span class='tag t-watch'>持仓中</span></td><td class='r num'>1.3</td><td class='wrapcell dim'>50@1.56·持仓中mar</td><td class='r'><span class='up num'>▲ $+1,230 (+18.9%)</span></td></tr>
+<tr><td class='num'>08-13 01:34:15</td><td><b>ORCL 08/21 $167.5C</b></td><td class='r num'>1.3</td><td class='wrapcell dim'>50@0·归零</td><td class='r'><span class='dn num'>▼ $-6,570 (-101.1%)</span></td></tr>
 </table></div>
 <details><summary class='dim' style='cursor:pointer;font-size:12px'>未成交/撤单/无K线数据 32 笔 (点开)</summary><div class='wrap' style='margin-top:6px'><table>
 <tr><td class='num'>07-27 21:39:05</td><td class='dim'>MMM 07/31 $177.5C</td><td class='dim'>K线已被长桥清除</td></tr>
@@ -313,7 +309,7 @@
 <tr><td><b>ABNB</b></td><td class='num'>07-15 21:56:54</td><td class='r num'>2.45</td><td class='r num'>2.0</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>22:12:20[partial]; 22:15:46[partial]; 22:21:01[partial]; 12:14:22[partial]; 12:14:22[full]</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>TGT</b></td><td class='num'>07-15 22:19:13</td><td class='r num'>2.15</td><td class='r num'>1.75</td><td class='r num'>1.7</td><td class='r'><span class='dn num'>-21%</span></td><td class='wrapcell'>22:31:43[partial]; 21:42:58[partial]; 21:38:32[partial]; 21:40:37[partial]; 21:41:06[partial]; 21:43:24[partial]; 21:43:55[partial]; 21:44:22[partial]; 21:45:33[partial]; 21:46:57[full]</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>TGT</b></td><td class='num'>07-15 23:20:48</td><td class='r num'>2.7</td><td class='r num'>2.2</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
-<tr><td><b>HOOD</b></td><td class='num'>07-16 01:56:54</td><td class='r num'>2.42</td><td class='r num'>2.0</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>HOOD</b></td><td class='num'>07-16 01:56:54</td><td class='r num'>2.42</td><td class='r num'>2.0</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>21:40:11[partial]; 21:40:34[partial]; 21:41:16[partial]; 21:46:20[full]</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>V</b></td><td class='num'>07-16 22:07:40</td><td class='r num'>2.4</td><td class='r num'>2.0</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>22:55:00[partial]; 23:05:24[partial]; 23:06:44[partial]; 12:14:25[partial]; 12:14:25[partial]; 12:14:25[partial]</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>V</b></td><td class='num'>07-17 00:58:38</td><td class='r num'>7.6</td><td class='r num'>7.0</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>C</b></td><td class='num'>07-17 23:05:12</td><td class='r num'>2.7</td><td class='r num'>2.35</td><td class='r num'>1.44</td><td class='r'><span class='dn num'>-47%</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
@@ -322,7 +318,7 @@
 <tr><td><b>SKHY</b></td><td class='num'>07-20 21:55:57</td><td class='r num'>5.15</td><td class='r num'>4.5</td><td class='r num'>0.03</td><td class='r'><span class='dn num'>-99%</span></td><td class='wrapcell'>22:17:11[partial]; 22:21:08[partial]; 02:19:45[be]</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>V</b></td><td class='num'>07-20 22:47:13</td><td class='r num'>4.6</td><td class='r num'>4.0</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>BABA</b></td><td class='num'>07-20 23:30:29</td><td class='r num'>2.5</td><td class='r num'>2.05</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>23:42:47[full]</td><td><span class='tag t-watch'>观察中</span></td></tr>
-<tr><td><b>HOOD</b></td><td class='num'>07-21 00:10:30</td><td class='r num'>3.9</td><td class='r num'>3.5</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>HOOD</b></td><td class='num'>07-21 00:10:30</td><td class='r num'>3.9</td><td class='r num'>3.5</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>21:57:12[partial]; 21:59:42[partial]; 22:02:34[be]</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>MMM</b></td><td class='num'>07-21 21:44:43</td><td class='r num'>1.8</td><td class='r num'>1.4</td><td class='r num'>0.02</td><td class='r'><span class='dn num'>-99%</span></td><td class='wrapcell'>21:52:07[partial]; 21:55:40[partial]; 22:02:20[partial]; 22:02:36[partial]; 22:04:43[partial]; 11:36:23[partial]; 11:36:24[partial]; 11:36:24[partial]; 11:36:24[partial]; 11:36:24[partial]; 11:36:24[partial]; 11:36:24[partial]; 11:36:24[full]</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>JPM</b></td><td class='num'>07-21 22:04:00</td><td class='r num'>2.7</td><td class='r num'>2.2</td><td class='r num'>7.57</td><td class='r'><span class='up num'>+180%</span></td><td class='wrapcell'>23:44:37[partial]; 11:36:21[partial]; 11:36:21[partial]; 11:36:22[partial]; 11:36:22[partial]; 11:36:22[partial]; 11:36:22[full]</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>NBIS</b></td><td class='num'>07-22 00:07:40</td><td class='r num'>6.7</td><td class='r num'>6.0</td><td class='r num'>0.01</td><td class='r'><span class='dn num'>-100%</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
@@ -354,48 +350,67 @@
 <tr><td><b>PLTR</b></td><td class='num'>08-17 22:25:37</td><td class='r num'>1.8</td><td class='r num'>1.45</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>INTC</b></td><td class='num'>08-17 23:00:59</td><td class='r num'>3.5</td><td class='r num'>3.1</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>23:02:47[partial]; 23:06:09[partial]; 23:08:55[full]</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>NVDA</b></td><td class='num'>08-17 23:18:46</td><td class='r num'>3.05</td><td class='r num'>2.55</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
-<tr><td><b>AMGN</b></td><td class='num'>08-18 00:10:59</td><td class='r num'>1.9</td><td class='r num'>1.5</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>AMGN</b></td><td class='num'>08-18 00:10:59</td><td class='r num'>1.9</td><td class='r num'>1.5</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>03:22:42[partial]</td><td><span class='tag t-watch'>观察中</span></td></tr>
 <tr><td><b>WFC</b></td><td class='num'>08-18 00:16:17</td><td class='r num'>1.27</td><td class='r num'>1.0</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
-<tr><td><b>CRCL</b></td><td class='num'>08-18 04:40:16</td><td class='r num'>4.4</td><td class='r num'>3.6</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>CRCL</b></td><td class='num'>08-18 04:40:16</td><td class='r num'>4.4</td><td class='r num'>3.6</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>22:08:48[partial]; 22:22:16[be]</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>INTC</b></td><td class='num'>08-18 22:55:24</td><td class='r num'>1.05</td><td class='r num'>0.8</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>22:55:56[partial]; 22:57:03[partial]; 23:01:49[partial]; 23:02:10[partial]; 23:09:09[partial]; 22:05:14[full]</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>SPXL</b></td><td class='num'>08-18 23:07:44</td><td class='r num'>1.5</td><td class='r num'>1.1</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>SPY</b></td><td class='num'>08-18 23:38:12</td><td class='r num'>1.25</td><td class='r num'>1.0</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>21:51:57[partial]; 22:03:31[partial]; 22:28:49[partial]; 22:28:49[be]</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>UBER</b></td><td class='num'>08-19 03:32:56</td><td class='r num'>1.24</td><td class='r num'>1.0</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>03:32:56[partial]; 03:32:56[partial]; 04:33:51[partial]; 04:33:56[be]</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>GILD</b></td><td class='num'>08-19 21:41:11</td><td class='r num'>1.6</td><td class='r num'>1.25</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>21:45:35[partial]; 21:46:52[partial]; 21:54:43[partial]</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>CRCL</b></td><td class='num'>08-19 22:07:26</td><td class='r num'>2.47</td><td class='r num'>2.0</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>IBM</b></td><td class='num'>08-19 22:27:30</td><td class='r num'>1.6</td><td class='r num'>1.3</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>22:50:27[partial]; 22:51:33[be]</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>AAPL</b></td><td class='num'>08-19 22:56:56</td><td class='r num'>1.5</td><td class='r num'>1.2</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>IREN</b></td><td class='num'>08-19 23:44:54</td><td class='r num'>1.29</td><td class='r num'>1.0</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>00:01:17[partial]</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>HOOD</b></td><td class='num'>08-20 00:30:36</td><td class='r num'>1.3</td><td class='r num'>1.0</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>SLV</b></td><td class='num'>08-20 22:03:20</td><td class='r num'>0.9</td><td class='r num'>0.65</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>22:03:20[partial]; 22:03:20[partial]; 22:03:20[partial]; 22:03:20[full]</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>INTC</b></td><td class='num'>08-20 22:28:49</td><td class='r num'>1.5</td><td class='r num'>1.2</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>22:28:49[partial]; 22:32:27[be]</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>AAOI</b></td><td class='num'>08-20 22:39:08</td><td class='r num'>2.5</td><td class='r num'>2.0</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>BABA</b></td><td class='num'>08-20 22:56:03</td><td class='r num'>1.5</td><td class='r num'>1.2</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>22:57:21[partial]; 23:17:16[partial]; 23:48:35[partial]; 23:52:35[partial]; 23:55:37[partial]; 01:51:12[full]</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>BABA</b></td><td class='num'>08-20 23:13:21</td><td class='r num'>1.25</td><td class='r num'>1.0</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>AAPL</b></td><td class='num'>08-21 00:02:09</td><td class='r num'>2.45</td><td class='r num'>2.0</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>HOOD</b></td><td class='num'>08-21 21:53:43</td><td class='r num'>3.3</td><td class='r num'>2.9</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>PFE</b></td><td class='num'>08-21 22:11:03</td><td class='r num'>1.3</td><td class='r num'>1.05</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
+<tr><td><b>NEM</b></td><td class='num'>08-21 23:27:43</td><td class='r num'>2.55</td><td class='r num'>2.1</td><td class='r num'><span class='dim'>—</span></td><td class='r'><span class='dim'>—</span></td><td class='wrapcell'>—</td><td><span class='tag t-watch'>观察中</span></td></tr>
 </table></div>
 <h2>🕒 事件流 <small>最近 30 条 · SGT</small></h2>
 <div class='card'><div class='wrap'><table>
-<tr><td class='num' style='width:110px'>08-18 04:40:16</td><td class='wrapcell'>📒 [andy] 入场 CRCL260911C080000.US 权利金4.4 止损3.6 (subset✓)</td></tr>
-<tr><td class='num' style='width:110px'>08-18 04:40:12</td><td class='wrapcell'>📒 [andy] 出场信号 SKHY [partial]</td></tr>
-<tr><td class='num' style='width:110px'>08-18 04:40:12</td><td class='wrapcell'>📒 [andy] 出场信号 SKHY [partial]</td></tr>
-<tr><td class='num' style='width:110px'>08-18 04:40:12</td><td class='wrapcell'>📒 [andy] 出场信号 SKHY [partial]</td></tr>
-<tr><td class='num' style='width:110px'>08-18 04:40:12</td><td class='wrapcell'>· missed_during_downtime {&quot;ts_signal&quot;: &quot;2026-08-17 19:04:11.795000+00:00&quot;}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 04:40:12</td><td class='wrapcell'>· missed_during_downtime {&quot;ts_signal&quot;: &quot;2026-08-17 19:02:52.836000+00:00&quot;}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 04:08:01</td><td class='wrapcell'>· missed_during_downtime {&quot;ts_signal&quot;: &quot;2026-08-17 19:04:11.795000+00:00&quot;}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 04:08:01</td><td class='wrapcell'>· missed_during_downtime {&quot;ts_signal&quot;: &quot;2026-08-17 19:02:52.836000+00:00&quot;}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:37:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 205}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:32:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 200}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:27:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 195}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:25:26</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 190}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:20:10</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 185}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:20:04</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 180}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:19:59</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 175}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:19:46</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 170}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:19:45</td><td class='wrapcell'>📒 [andy] 出场信号 SKHY [be]</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:19:45</td><td class='wrapcell'>📒 [andy] 入场 SKHY260821P165000.US 权利金2.7 止损None (仅观察)</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:19:45</td><td class='wrapcell'>📒 [andy] 入场 SPY260817P774000.US 权利金0.85 止损0.6 (仅观察)</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:19:41</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 165}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:19:37</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 160}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 02:19:33</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 155}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 01:42:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 150}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 01:37:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 145}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 01:32:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 140}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 01:27:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 135}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 01:22:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 130}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 01:17:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 125}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 01:12:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 120}</td></tr>
-<tr><td class='num' style='width:110px'>08-18 01:07:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;AMD260817C520000.US&quot;, &quot;fails&quot;: 115}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 05:51:24</td><td class='wrapcell'>📒 [andy] 出场信号 SPX [partial]</td></tr>
+<tr><td class='num' style='width:110px'>08-22 05:51:24</td><td class='wrapcell'>📒 [andy] 出场信号 SPX [be]</td></tr>
+<tr><td class='num' style='width:110px'>08-22 05:51:24</td><td class='wrapcell'>📒 [andy] 出场信号 SPX [full]</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:24</td><td class='wrapcell'>📒 [andy] 出场信号 SPX [partial]</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:24</td><td class='wrapcell'>📒 [andy] 出场信号 SPX [partial]</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:24</td><td class='wrapcell'>📒 [andy] 入场 SPX260821C7695000.US 权利金0.15 止损None (仅观察)</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:24</td><td class='wrapcell'>📒 [andy] 入场 SPX260821P7665000.US 权利金0.15 止损None (仅观察)</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:24</td><td class='wrapcell'>📒 [andy] 入场 ABBV260821C267500.US 权利金2.0 止损None (仅观察)</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:24</td><td class='wrapcell'>📒 [andy] 入场 SPX260821C7685000.US 权利金2.0 止损1.5 (仅观察)</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:24</td><td class='wrapcell'>📒 [andy] 出场信号 SPY [partial]</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:24</td><td class='wrapcell'>📒 [andy] 出场信号 SPY [partial]</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:24</td><td class='wrapcell'>📒 [andy] 出场信号 SPY [partial]</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:24</td><td class='wrapcell'>· missed_during_downtime {&quot;ts_signal&quot;: &quot;2026-08-21 19:40:31.049000+00:00&quot;}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:23</td><td class='wrapcell'>· exit_fill {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;qty&quot;: 10, &quot;want&quot;: 10, &quot;state&quot;: &quot;Filled&quot;, &quot;px&quot;: </td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:23</td><td class='wrapcell'>· exit_submit {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;qty&quot;: 10, &quot;reason&quot;: &quot;到期强平&quot;, &quot;order_id&quot;: &quot;127554</td></tr>
+<tr><td class='num' style='width:110px'>08-22 03:47:22</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 890}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 02:13:55</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 885}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 02:12:43</td><td class='wrapcell'>📒 [andy] 出场信号 SPY [partial]</td></tr>
+<tr><td class='num' style='width:110px'>08-22 02:10:35</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 880}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 02:02:25</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 875}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 02:01:22</td><td class='wrapcell'>📒 [andy] 出场信号 SPY [partial]</td></tr>
+<tr><td class='num' style='width:110px'>08-22 01:59:03</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 870}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 01:53:06</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 865}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 01:47:52</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 860}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 01:43:50</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 855}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 01:41:35</td><td class='wrapcell'>📒 [andy] 入场 SPY260821P765000.US 权利金0.35 止损None (仅观察)</td></tr>
+<tr><td class='num' style='width:110px'>08-22 01:40:42</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 850}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 01:36:22</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 845}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 01:31:36</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 840}</td></tr>
+<tr><td class='num' style='width:110px'>08-22 01:23:17</td><td class='wrapcell'>· stop_channel_down {&quot;osi&quot;: &quot;PLTR260821C180000.US&quot;, &quot;fails&quot;: 835}</td></tr>
 </table></div></div>
 <details style='margin-top:18px'><summary class='dim' style='cursor:pointer'>📁 数据文件索引 (点开)</summary><div class='wrap' style='margin-top:8px'><table>
-<tr><td>output/enrich_journal.jsonl</td><td class='num'>467 行</td><td class='wrapcell dim'>enrich bot 结构化事件流 (JSONL, 回合重建原料)</td></tr>
-<tr><td>output/enrich_positions.json</td><td class='num'>7 个合约</td><td class='wrapcell dim'>当前持仓状态快照 (bot 自维护)</td></tr>
-<tr><td>output/enrich_orders.csv</td><td class='num'>191 笔</td><td class='wrapcell dim'>LongPort 券商订单流水 (成交价真值来源)</td></tr>
-<tr><td>output/andy_tracked.json</td><td class='num'>32 个</td><td class='wrapcell dim'>andy 观察中合约 (subset 单)</td></tr>
+<tr><td>output/enrich_journal.jsonl</td><td class='num'>813 行</td><td class='wrapcell dim'>enrich bot 结构化事件流 (JSONL, 回合重建原料)</td></tr>
+<tr><td>output/enrich_positions.json</td><td class='num'>8 个合约</td><td class='wrapcell dim'>当前持仓状态快照 (bot 自维护)</td></tr>
+<tr><td>output/enrich_orders.csv</td><td class='num'>203 笔</td><td class='wrapcell dim'>LongPort 券商订单流水 (成交价真值来源)</td></tr>
+<tr><td>output/andy_tracked.json</td><td class='num'>41 个</td><td class='wrapcell dim'>andy 观察中合约 (subset 单)</td></tr>
 <tr><td>output/enrich_history.json</td><td class='num'>1410 条</td><td class='wrapcell dim'>enrich 频道 Discord 消息存档 (UTC)</td></tr>
 <tr><td>output/andy_history.json</td><td class='num'>1161 条</td><td class='wrapcell dim'>andy 频道 Discord 消息存档 (UTC)</td></tr>
 <tr><td>output/zhaoge_history.json</td><td class='num'>2549 条</td><td class='wrapcell dim'>zhaoge 频道 Discord 消息存档 (UTC)</td></tr>

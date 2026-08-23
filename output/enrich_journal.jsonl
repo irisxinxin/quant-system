@@ -465,3 +465,349 @@
 {"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "SKHY TRIMMED ANOTHER 25%, UP $100 PER CONTRACT @everyone", "ts": "2026-08-18T04:40:12+08:00"}
 {"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "TRIMMED MORE @everyone", "ts": "2026-08-18T04:40:12+08:00"}
 {"ev": "andy_entry", "osi": "CRCL260911C080000.US", "ticker": "CRCL", "prem": 4.4, "stop": 3.6, "expiry": "2026-09-11", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: CRCL - $80 CALLS 9/11 $4.40, STOP LOSS AT $3.60, SMALL SWING PLAY @everyone", "ts": "2026-08-18T04:40:16+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "partial", "sig": "AAPL HIGHS, TRIMMED MORE 20% @everyone", "ts": "2026-08-18T22:41:34+08:00"}
+{"ev": "andy_entry", "osi": "SPY260818P769000.US", "ticker": "SPY", "prem": 1.4, "stop": null, "expiry": "2026-08-18", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $769 ITM PUTS 0DTE $1.40, STOP LOSS $1.15, RISKY DAY TRADE @everyone", "ts": "2026-08-18T22:46:08+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "SPY FLUSH, FEEL FREE TO START TRIMMING @everyone", "ts": "2026-08-18T22:54:11+08:00"}
+{"ev": "andy_entry", "osi": "INTC260819P095000.US", "ticker": "INTC", "prem": 1.05, "stop": 0.8, "expiry": "2026-08-19", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: INTC - $95 PUTS 8/19 $1.05, STOP LOSS AT .80 @everyone", "ts": "2026-08-18T22:55:24+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "SPY TRIM MORE @everyone", "ts": "2026-08-18T22:55:56+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "DASH HIGHS, TRIMMED MORE @everyone", "ts": "2026-08-18T22:57:03+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-18T23:01:49+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "SPY TRIMMED 60% @everyone", "ts": "2026-08-18T23:02:10+08:00"}
+{"ev": "andy_entry", "osi": "SPXL260821P282500.US", "ticker": "SPXL", "prem": 1.5, "stop": 1.1, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: SPXL - $282.5 PUTS 8/21 $1.50, STOP LOSS AT $1.10 @everyone", "ts": "2026-08-18T23:07:44+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "INTC LOWS, TRIMMING MORE @everyone", "ts": "2026-08-18T23:09:09+08:00"}
+{"ev": "andy_entry", "osi": "SPX260818P7665000.US", "ticker": "SPX", "prem": 1.9, "stop": null, "expiry": "2026-08-18", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7665 PUTS 0DTE $1.90, LOTTO PLAY @everyone", "ts": "2026-08-18T23:18:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-18T23:19:59+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX PUTS TRIMMING MORE @everyone", "ts": "2026-08-18T23:20:37+08:00"}
+{"ev": "andy_exit", "ticker": "GILD", "level": "partial", "sig": "GILD STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-18T23:25:43+08:00"}
+{"ev": "andy_entry", "osi": "SPY260821P761000.US", "ticker": "SPY", "prem": 1.25, "stop": 1.0, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: SPY - $761 PUTS 8/21 $1.25, STOP LOSS AT $1.00 @everyone", "ts": "2026-08-18T23:38:12+08:00"}
+{"ev": "andy_exit", "ticker": "GILD", "level": "partial", "sig": "GILD highs, trimmed 20% more at $2.50 @everyone", "ts": "2026-08-19T00:25:41+08:00"}
+{"ev": "andy_entry", "osi": "SPX260818P7690000.US", "ticker": "SPX", "prem": 3.2, "stop": null, "expiry": "2026-08-18", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7690 PUTS 0DTE $3.20, LOTTOS ROUND #2@everyone", "ts": "2026-08-19T00:29:39+08:00"}
+{"ev": "missed_during_downtime", "sig": "Excuse my last few alerts… Next up: $SPCX weekly $150 calls $2.10 Scale in up to 2% max @e", "ts_signal": "2026-08-18 16:46:20.070000+00:00", "ts": "2026-08-19T01:59:23+08:00"}
+{"ev": "andy_exit", "ticker": "GILD", "level": "partial", "sig": "SPX LOTTOS TRIMMED PARTIAL @everyone", "ts": "2026-08-19T01:59:23+08:00"}
+{"ev": "andy_entry", "osi": "SPX260818P7680000.US", "ticker": "SPX", "prem": 0.9, "stop": null, "expiry": "2026-08-18", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7680 PUTS 0DTE .90, ROUND 2 SUPER LOTTOS @everyone", "ts": "2026-08-19T01:59:23+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIMMED PARTIAL HERE @everyone", "ts": "2026-08-19T01:59:23+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX TRIMMED TINY PROFITS AGAIN @everyone", "ts": "2026-08-19T01:59:23+08:00"}
+{"ev": "andy_entry", "osi": "UBER260821P076000.US", "ticker": "UBER", "prem": 1.24, "stop": 1.0, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: UBER - $76 PUTS EXPIRATION THIS WEEK $1.24, STOP LOSS AT $1.00 @everyone", "ts": "2026-08-19T03:32:56+08:00"}
+{"ev": "andy_exit", "ticker": "UBER", "level": "partial", "sig": "UBER TRIM 30% @everyone", "ts": "2026-08-19T03:32:56+08:00"}
+{"ev": "andy_exit", "ticker": "UBER", "level": "partial", "sig": "SPX TRIMMED 40% HERE @everyone", "ts": "2026-08-19T03:32:56+08:00"}
+{"ev": "andy_exit", "ticker": "UBER", "level": "partial", "sig": "SUGGEST TRIMMING PARTIAL UBER PUTS HERE IF YOH WEREN'T ABLE TO CLOSE EARLIER @everyone", "ts": "2026-08-19T04:33:51+08:00"}
+{"ev": "andy_entry", "osi": "SPX260818P7690000.US", "ticker": "SPX", "prem": 0.3, "stop": null, "expiry": "2026-08-18", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7690 PUTS 0DTE .30, SUPER LOTTOS AGAIN @everyone", "ts": "2026-08-19T04:33:56+08:00"}
+{"ev": "andy_exit", "ticker": "UBER", "level": "be", "sig": "UBER DON'T FORGET TO SET BREAKEVEN STOP ON REST @everyone", "ts": "2026-08-19T04:33:56+08:00"}
+{"ev": "andy_exit", "ticker": "UBER", "level": "full", "sig": "ALL OUT NOW @everyone", "ts": "2026-08-19T04:33:56+08:00"}
+{"ev": "andy_entry", "osi": "GILD260821C147000.US", "ticker": "GILD", "prem": 1.6, "stop": 1.25, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: GILD - $147 CALLS EXPIRATION THIS WEEK $1.60 STOP LOSS AT $1.25 @everyone", "ts": "2026-08-19T21:41:11+08:00"}
+{"ev": "andy_exit", "ticker": "GILD", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-19T21:45:35+08:00"}
+{"ev": "andy_exit", "ticker": "GILD", "level": "partial", "sig": "TRIMMED LITTLE MORE @everyone", "ts": "2026-08-19T21:46:52+08:00"}
+{"ev": "andy_entry", "osi": "SPY260819P767000.US", "ticker": "SPY", "prem": 0.8, "stop": null, "expiry": "2026-08-19", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - 767 PUTS 0DTE .80, CHEAP LOTTO PLAY @everyone", "ts": "2026-08-19T21:49:49+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-19T21:51:57+08:00"}
+{"ev": "andy_exit", "ticker": "GILD", "level": "partial", "sig": "Up $100 per contract, TRIMMED MORE @everyone", "ts": "2026-08-19T21:54:43+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "full", "sig": "CAN GO ALL OUT HERE @everyone :verifyblue:", "ts": "2026-08-19T22:05:14+08:00"}
+{"ev": "andy_entry", "osi": "CRCL260821C077000.US", "ticker": "CRCL", "prem": 2.47, "stop": 2.0, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: CRCL - $77 CALLS EXPIRATION THIS WEEK $2.47, STOP LOSS AT $2.00 @everyone", "ts": "2026-08-19T22:07:26+08:00"}
+{"ev": "andy_exit", "ticker": "CRCL", "level": "partial", "sig": "CRCL CALLS TRIMMING PARTIAL PROFITS @everyone", "ts": "2026-08-19T22:08:48+08:00"}
+{"ev": "andy_entry", "osi": "SPY260819P767000.US", "ticker": "SPY", "prem": 0.5, "stop": null, "expiry": "2026-08-19", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $767 PUTS 0DTE .50, SUPER LOTTOS @everyone", "ts": "2026-08-19T22:15:03+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "MU", "level": "alert", "sig": "Make sure everyone is scaling out on extensions. $MU hit 50-100% $LLY 30-40% $CRWV 20-30% @everyone", "ts": "2026-08-19T22:17:53+08:00"}
+{"ev": "andy_exit", "ticker": "CRCL", "level": "be", "sig": "CRCL HAS GAP FILL TO $79 ABOVE, GAVE EXIT, SEEMS LIKE A LOT OF YOU ARE STILL NOT USING BREAKEVEN STOPS EVEN AFTER DAILY REMINDER. ", "ts": "2026-08-19T22:22:16+08:00"}
+{"ev": "andy_entry", "osi": "IBM260821C240000.US", "ticker": "IBM", "prem": 1.6, "stop": 1.3, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: IBM - $240 CALLS EXPIRATION THIS WEEK $1.60, STOP LOSS AT $1.30 @everyone", "ts": "2026-08-19T22:27:30+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "partial", "sig": "TRIMMED MORE @everyone", "ts": "2026-08-19T22:50:27+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "be", "sig": "DON'T FORGET TO SET BREAKEVEN STOPS ON REST, EYEING FOR 240 RETEST @everyone", "ts": "2026-08-19T22:51:33+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "full", "sig": "BMNR SWINGS ALL OUT, 100% BANGER @everyone 🚀", "ts": "2026-08-19T22:53:43+08:00"}
+{"ev": "andy_entry", "osi": "AAPL260831C330000.US", "ticker": "AAPL", "prem": 1.5, "stop": 1.2, "expiry": "2026-08-31", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: AAPL - $330 CALLS EXPIRATION 8/31 $1.50, STOP LOSS AT $1.20 @everyone", "ts": "2026-08-19T22:56:56+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "partial", "sig": "IBM HIGHS, TRIMMED LITTLE MORE @everyone", "ts": "2026-08-19T22:57:34+08:00"}
+{"ev": "entry_submit", "osi": "PLTR260821C180000.US", "ticker": "PLTR", "right": "C", "strike": 180.0, "expiry": "2026-08-21", "limit": 1.07, "qty": 20, "order_id": "1274752457582391296", "sig": "$PLTR weekly $180 calls $1.07 @everyone $alert", "ts": "2026-08-19T23:31:09+08:00"}
+{"ev": "entry_fill", "osi": "PLTR260821C180000.US", "qty": 20, "avg": 1.07, "ts": "2026-08-19T23:32:25+08:00"}
+{"ev": "tp_place", "osi": "PLTR260821C180000.US", "px": 1.39, "qty": 10, "order_id": "1274752778966695936", "ts": "2026-08-19T23:32:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 5, "ts": "2026-08-19T23:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 10, "ts": "2026-08-19T23:41:25+08:00"}
+{"ev": "andy_entry", "osi": "IREN260821C042500.US", "ticker": "IREN", "prem": 1.29, "stop": 1.0, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: IREN - $42.5 CALLS EXPIRATION THIS WEEK $1.29 STOP LOSS AT $1.00 @everyone", "ts": "2026-08-19T23:44:54+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 15, "ts": "2026-08-19T23:46:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 20, "ts": "2026-08-19T23:51:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 25, "ts": "2026-08-19T23:56:25+08:00"}
+{"ev": "tp_fill", "osi": "PLTR260821C180000.US", "px": 1.39, "qty": 10, "ts": "2026-08-19T23:58:25+08:00"}
+{"ev": "andy_exit", "ticker": "IREN", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-08-20T00:01:17+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 30, "ts": "2026-08-20T00:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 35, "ts": "2026-08-20T00:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 40, "ts": "2026-08-20T00:11:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 45, "ts": "2026-08-20T00:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 50, "ts": "2026-08-20T00:21:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 55, "ts": "2026-08-20T00:26:25+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260821C102000.US", "ticker": "HOOD", "prem": 1.3, "stop": 1.0, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: HOOD - $102 CALLS EXPIRATION THIS WEEK $1.30, STOP LOSS AT $1.00 @everyone", "ts": "2026-08-20T00:30:36+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 60, "ts": "2026-08-20T00:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 65, "ts": "2026-08-20T00:36:25+08:00"}
+{"ev": "missed_during_downtime", "sig": "$TSLA 8/28 $470 calls $2.75 First close in the gap today - targeting $470 gap fill. 2% pos", "ts_signal": "2026-08-19 16:57:37.630000+00:00", "ts": "2026-08-20T01:41:23+08:00"}
+{"ev": "andy_entry", "osi": "SPX260819P7700000.US", "ticker": "SPX", "prem": 2.0, "stop": null, "expiry": "2026-08-19", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7700 PUTS 0DTE $2.00, LOTTOS @everyone", "ts": "2026-08-20T01:41:25+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX LOTTOS TRIM SOME @everyone", "ts": "2026-08-20T01:41:25+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX LOTTOS TRIMMED MORE @everyone", "ts": "2026-08-20T01:41:25+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "THERE WE GO, TRIMMED AGAIN @everyone", "ts": "2026-08-20T01:41:25+08:00"}
+{"ev": "andy_entry", "osi": "SPX260821P7680000.US", "ticker": "SPX", "prem": 0.6, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7680 PUTS .60, SUPER LOTTOS, EXPECT 0, STRICTLY ROLLING PROFITS @everyone", "ts": "2026-08-20T01:41:25+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX ROUND 2 TRIM PARTIAL @everyone", "ts": "2026-08-20T01:41:25+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX ROUND 2 TRIMMED AGAIN @everyone", "ts": "2026-08-20T01:41:25+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX ROUND 2 TRIMMED AGAIN @everyone", "ts": "2026-08-20T01:41:25+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260821P090000.US", "ticker": "HOOD", "prem": 0.25, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: HOOD - $90 PUTS EXPIRATION THIS WEEK .25, SUPER LOTTOS, HERO OR ZERO @everyone", "ts": "2026-08-20T01:41:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 70, "ts": "2026-08-20T01:41:39+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 75, "ts": "2026-08-20T01:41:42+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 80, "ts": "2026-08-20T01:41:45+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 85, "ts": "2026-08-20T01:41:49+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 90, "ts": "2026-08-20T01:41:52+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 95, "ts": "2026-08-20T02:42:16+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 100, "ts": "2026-08-20T02:42:19+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 105, "ts": "2026-08-20T02:42:22+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "PLTR", "level": "alert", "sig": "Here’s what I have right now. I’ll be swinging $PLTR $TSLA & a few $LLY runners after I scale out mo", "ts": "2026-08-20T02:42:23+08:00"}
+{"ev": "andy_entry", "osi": "SPX260819P7680000.US", "ticker": "SPX", "prem": 0.35, "stop": null, "expiry": "2026-08-19", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7680 PUTS 0DTE .35, SUPER LOTTOS @everyone", "ts": "2026-08-20T02:42:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIMMED PARTIAL @everyone", "ts": "2026-08-20T02:42:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX TRIMMED MORE @everyone", "ts": "2026-08-20T02:42:24+08:00"}
+{"ev": "andy_entry", "osi": "GILD260828C150000.US", "ticker": "GILD", "prem": 1.5, "stop": null, "expiry": "2026-08-28", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: GILD - $150 CALLS EXPIRATION NEXT WEEK $1.50, ROUND 3, ROLLING OVER PROFITS @everyone", "ts": "2026-08-20T02:42:24+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 110, "ts": "2026-08-20T02:42:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 115, "ts": "2026-08-20T02:42:28+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 120, "ts": "2026-08-20T02:42:32+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 125, "ts": "2026-08-20T02:42:35+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 130, "ts": "2026-08-20T02:42:38+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 135, "ts": "2026-08-20T02:42:41+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 140, "ts": "2026-08-20T02:42:44+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 145, "ts": "2026-08-20T02:42:47+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 150, "ts": "2026-08-20T02:42:50+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 155, "ts": "2026-08-20T03:22:33+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 160, "ts": "2026-08-20T03:22:36+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 165, "ts": "2026-08-20T03:22:39+08:00"}
+{"ev": "andy_exit", "ticker": "AMGN", "level": "partial", "sig": "CAN TRIM 25% HERE @everyone", "ts": "2026-08-20T03:22:42+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 170, "ts": "2026-08-20T03:22:42+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 175, "ts": "2026-08-20T03:22:45+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 180, "ts": "2026-08-20T03:22:48+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 185, "ts": "2026-08-20T03:22:52+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 190, "ts": "2026-08-20T03:22:55+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 195, "ts": "2026-08-20T03:22:58+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 200, "ts": "2026-08-20T03:23:01+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 205, "ts": "2026-08-20T03:23:04+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 210, "ts": "2026-08-20T03:23:07+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 215, "ts": "2026-08-20T03:43:16+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 220, "ts": "2026-08-20T03:43:19+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 225, "ts": "2026-08-20T03:43:23+08:00"}
+{"ev": "andy_entry", "osi": "SPX260819P7700000.US", "ticker": "SPX", "prem": 0.25, "stop": null, "expiry": "2026-08-19", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7700 PUTS 0DTE .25, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-08-20T03:43:24+08:00"}
+{"ev": "andy_entry", "osi": "BABX260918C029000.US", "ticker": "BABX", "prem": 1.05, "stop": null, "expiry": "2026-09-18", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: BABX - $29 CALLS 9/18 $1.05, EARNINGS LOTTO PLAY FOR BABA @everyone", "ts": "2026-08-20T03:43:24+08:00"}
+{"ev": "andy_exit", "ticker": "BABX", "level": "partial", "sig": "TRIMMED 50% @everyone", "ts": "2026-08-20T03:43:24+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 230, "ts": "2026-08-20T03:43:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 235, "ts": "2026-08-20T03:43:30+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 240, "ts": "2026-08-20T03:43:34+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 245, "ts": "2026-08-20T03:43:37+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 250, "ts": "2026-08-20T03:43:41+08:00"}
+{"ev": "andy_exit", "ticker": "BABX", "level": "partial", "sig": "TRIMMED 90% NOW @everyone", "ts": "2026-08-20T04:44:21+08:00"}
+{"ev": "missed_during_downtime", "sig": "$UBER weekly $80 call $.45 @everyone $alert", "ts_signal": "2026-08-20 13:39:41.580000+00:00", "ts": "2026-08-20T22:03:15+08:00"}
+{"ev": "andy_entry", "osi": "TEM260821C070000.US", "ticker": "TEM", "prem": 0.65, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: TEM - $70 CALLS EXPIRATION THIS WEEK .65, CHEAP LOTTO PLAY @everyone", "ts": "2026-08-20T22:03:20+08:00"}
+{"ev": "andy_entry", "osi": "SLV260821C060500.US", "ticker": "SLV", "prem": 0.9, "stop": 0.65, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: SLV - $60.5 CALLS 8/21 .90, STOP LOSS AT .65 @everyone", "ts": "2026-08-20T22:03:20+08:00"}
+{"ev": "andy_exit", "ticker": "SLV", "level": "partial", "sig": "TEM BACK TO GREEN, FEEL FREE TO START TRIMMING @everyone", "ts": "2026-08-20T22:03:20+08:00"}
+{"ev": "andy_exit", "ticker": "SLV", "level": "partial", "sig": "TEM TRIMMED MORE @everyone", "ts": "2026-08-20T22:03:20+08:00"}
+{"ev": "andy_exit", "ticker": "SLV", "level": "partial", "sig": "TEM HIGHS, TRIMMED AGAIN @everyone", "ts": "2026-08-20T22:03:20+08:00"}
+{"ev": "andy_exit", "ticker": "SLV", "level": "full", "sig": "I'M OUT 80% HERE @everyone", "ts": "2026-08-20T22:03:20+08:00"}
+{"ev": "andy_entry", "osi": "SPY260820P767000.US", "ticker": "SPY", "prem": 1.65, "stop": 1.3, "expiry": "2026-08-20", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $767 PUTS 0DTE $1.65, STOP LOSS AT $1.30 @everyone", "ts": "2026-08-20T22:03:20+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-20T22:03:31+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 255, "ts": "2026-08-20T22:03:40+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 260, "ts": "2026-08-20T22:03:43+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 265, "ts": "2026-08-20T22:03:46+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 270, "ts": "2026-08-20T22:28:40+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 275, "ts": "2026-08-20T22:28:43+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 280, "ts": "2026-08-20T22:28:46+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 285, "ts": "2026-08-20T22:28:48+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "UBER", "level": "full", "sig": "$UBER - make sure you are almost all out. @everyone", "ts": "2026-08-20T22:28:49+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "THERE IT GOES, TRIMMED MORE @everyone", "ts": "2026-08-20T22:28:49+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "be", "sig": "SPY PUTS BACK AT BREAKEVEN, CAN CLOSE MOST @everyone", "ts": "2026-08-20T22:28:49+08:00"}
+{"ev": "andy_entry", "osi": "INTC260821C091000.US", "ticker": "INTC", "prem": 1.5, "stop": 1.2, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: INTC - $91 CALLS EXPIRATION THIS WEEK $1.50 @everyone STOP LOSS AT $1.20, RISK LEVEL HIGH", "ts": "2026-08-20T22:28:49+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-20T22:28:49+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 290, "ts": "2026-08-20T22:28:51+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 295, "ts": "2026-08-20T22:28:54+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 300, "ts": "2026-08-20T22:28:57+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 305, "ts": "2026-08-20T22:29:00+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 310, "ts": "2026-08-20T22:29:03+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 315, "ts": "2026-08-20T22:29:06+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 320, "ts": "2026-08-20T22:29:08+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 325, "ts": "2026-08-20T22:29:11+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 330, "ts": "2026-08-20T22:29:14+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 335, "ts": "2026-08-20T22:29:16+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 340, "ts": "2026-08-20T22:30:25+08:00"}
+{"ev": "andy_exit", "ticker": "SLV", "level": "partial", "sig": "SLV TRIMMED SOME TINY PROFITS @everyone", "ts": "2026-08-20T22:31:14+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "be", "sig": "INTC CALLS BACK AT BREAKEVEN, I'M HOLDING REST OF MY POSITION DUE TO THE CALL FLOW ACTIVITY @everyone", "ts": "2026-08-20T22:32:27+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 345, "ts": "2026-08-20T22:35:25+08:00"}
+{"ev": "andy_exit", "ticker": "SLV", "level": "be", "sig": "SLV not bad, set breakeven stop on rest @everyone", "ts": "2026-08-20T22:38:06+08:00"}
+{"ev": "andy_entry", "osi": "AAOI260828C148000.US", "ticker": "AAOI", "prem": 2.5, "stop": 2.0, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: AAOI - $148 CALLS EXPIRATION NEXT WEEK $2.50, STOP LOSS AT $2.00 @everyone", "ts": "2026-08-20T22:39:08+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 350, "ts": "2026-08-20T22:40:25+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "INTC TRIMMED SOME MORE HERE @everyone", "ts": "2026-08-20T22:45:23+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 355, "ts": "2026-08-20T22:45:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 360, "ts": "2026-08-20T22:50:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 365, "ts": "2026-08-20T22:55:25+08:00"}
+{"ev": "andy_entry", "osi": "BABA260821C128000.US", "ticker": "BABA", "prem": 1.5, "stop": 1.2, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: BABA - $128 CALLS EXPIRATION THIS WEEK $1.50, STOP LOSS AT $1.20 @everyone", "ts": "2026-08-20T22:56:03+08:00"}
+{"ev": "andy_exit", "ticker": "BABA", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-20T22:57:21+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 370, "ts": "2026-08-20T23:00:25+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "INTC TRIMMED MORE @everyone", "ts": "2026-08-20T23:04:23+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 375, "ts": "2026-08-20T23:05:25+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "be", "sig": "INTC CALLS YOU CAN SET BREAKEVEN STOP ON REST FROM HERE AS WE TOOK MULTIPLE EXITS @everyone", "ts": "2026-08-20T23:08:16+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 380, "ts": "2026-08-20T23:10:25+08:00"}
+{"ev": "andy_entry", "osi": "BABA260821C128000.US", "ticker": "BABA", "prem": 1.25, "stop": 1.0, "expiry": "2026-08-21", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: BABA - $128 CALLS EXPIRATION THIS WEEK $1.25, STOP LOSS AT $1.00, SMALL ONLY, ROUND 2 @everyone", "ts": "2026-08-20T23:13:21+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 385, "ts": "2026-08-20T23:15:25+08:00"}
+{"ev": "andy_exit", "ticker": "BABA", "level": "partial", "sig": "BABA CALLS FEEL FREE TO START TRIMMING PARTIAL @everyone", "ts": "2026-08-20T23:17:16+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 390, "ts": "2026-08-20T23:20:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 395, "ts": "2026-08-20T23:25:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 400, "ts": "2026-08-20T23:30:25+08:00"}
+{"ev": "andy_entry", "osi": "SPY260820P766000.US", "ticker": "SPY", "prem": 1.0, "stop": 0.8, "expiry": "2026-08-20", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $766 PUTS 0DTE $1.00, STOP LOSS AT .80, ROUND #2 @everyone", "ts": "2026-08-20T23:34:54+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 405, "ts": "2026-08-20T23:35:25+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY PUTS STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-20T23:36:08+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "full", "sig": "TEM MORNING LOTTOS ALL OUT @everyone", "ts": "2026-08-20T23:37:46+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY PUTS TRIM LITTLE MORE @everyone", "ts": "2026-08-20T23:38:39+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "be", "sig": "SPY PUTS SET BREAKEVEN STOP ON REST @everyone", "ts": "2026-08-20T23:39:55+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 410, "ts": "2026-08-20T23:40:25+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY LOWS, TRIMMED MORE @everyone", "ts": "2026-08-20T23:41:31+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 415, "ts": "2026-08-20T23:45:25+08:00"}
+{"ev": "andy_exit", "ticker": "BABA", "level": "partial", "sig": "CAN TRIM 30%", "ts": "2026-08-20T23:48:35+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 420, "ts": "2026-08-20T23:50:25+08:00"}
+{"ev": "andy_exit", "ticker": "BABA", "level": "partial", "sig": "CAN TRIM LITTLE MORE", "ts": "2026-08-20T23:52:35+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 425, "ts": "2026-08-20T23:55:25+08:00"}
+{"ev": "andy_exit", "ticker": "BABA", "level": "partial", "sig": "TRIMMED 80% @everyone", "ts": "2026-08-20T23:55:37+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 430, "ts": "2026-08-21T00:00:25+08:00"}
+{"ev": "andy_entry", "osi": "AAPL260828C322500.US", "ticker": "AAPL", "prem": 2.45, "stop": 2.0, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: AAPL - $322.5 CALLS 8/28 $2.45, STOP LOSS AT $2.00, RISKY @everyone", "ts": "2026-08-21T00:02:09+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 435, "ts": "2026-08-21T00:05:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 440, "ts": "2026-08-21T00:10:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 445, "ts": "2026-08-21T00:15:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 450, "ts": "2026-08-21T00:20:25+08:00"}
+{"ev": "andy_exit", "ticker": "BABA", "level": "full", "sig": "BABA 100% BANGER, ALL OUT NOW @everyone :6973_GengarCool:", "ts": "2026-08-21T01:51:12+08:00"}
+{"ev": "andy_entry", "osi": "SPY260820P766000.US", "ticker": "SPY", "prem": 1.3, "stop": 1.0, "expiry": "2026-08-20", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $766 PUTS 0DTE $1.30, STOP LOSS AT $1.00, ROUND 3, ROLLING PROFITS @everyone", "ts": "2026-08-21T01:51:12+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-21T01:51:12+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY DAY LOWS, CAN TRIM LITTLE MORE @everyone", "ts": "2026-08-21T01:51:12+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY GOING, TRIM MORE @everyone", "ts": "2026-08-21T01:51:12+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 455, "ts": "2026-08-21T01:51:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 460, "ts": "2026-08-21T01:51:29+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 465, "ts": "2026-08-21T01:51:32+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 470, "ts": "2026-08-21T01:51:36+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 475, "ts": "2026-08-21T01:51:39+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 480, "ts": "2026-08-21T01:51:42+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 485, "ts": "2026-08-21T02:19:20+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 490, "ts": "2026-08-21T02:19:23+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 495, "ts": "2026-08-21T02:19:26+08:00"}
+{"ev": "missed_during_downtime", "sig": "$MRVL $252.50 SCALP***** calls $1.69 weekly These are super volatile - small position @eve", "ts_signal": "2026-08-20 17:56:28.100000+00:00", "ts": "2026-08-21T02:19:28+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "full", "sig": "ALL OUT NOW, STILL GOOD TO HOLD WITH A TIGHT STOP @everyone", "ts": "2026-08-21T02:19:29+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 500, "ts": "2026-08-21T02:19:30+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 505, "ts": "2026-08-21T02:19:33+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 510, "ts": "2026-08-21T02:19:36+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 515, "ts": "2026-08-21T02:19:39+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 520, "ts": "2026-08-21T02:19:42+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 525, "ts": "2026-08-21T02:19:45+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 530, "ts": "2026-08-21T02:19:48+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 535, "ts": "2026-08-21T02:19:52+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 540, "ts": "2026-08-21T02:19:55+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 545, "ts": "2026-08-21T03:20:20+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 550, "ts": "2026-08-21T03:20:23+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 555, "ts": "2026-08-21T03:20:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 560, "ts": "2026-08-21T03:20:29+08:00"}
+{"ev": "andy_entry", "osi": "SPX260820P7635000.US", "ticker": "SPX", "prem": 0.8, "stop": null, "expiry": "2026-08-20", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7635 PUTS 0DTE .80, SUPER LOTTOS, EXPECT 0, ROLLING PROFITS @everyone", "ts": "2026-08-21T03:20:29+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 565, "ts": "2026-08-21T03:20:32+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 570, "ts": "2026-08-21T03:20:35+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 575, "ts": "2026-08-21T03:20:39+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 580, "ts": "2026-08-21T03:20:42+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 585, "ts": "2026-08-21T03:20:45+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 590, "ts": "2026-08-21T03:20:48+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 595, "ts": "2026-08-21T03:20:51+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 600, "ts": "2026-08-21T03:20:54+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "MRVL", "level": "alert", "sig": "Holding runners on $MRVL. Holding $TSLA. Only holding small in $PLTR lotto. @everyone", "ts": "2026-08-21T04:21:28+08:00"}
+{"ev": "andy_entry", "osi": "SPX260820P7635000.US", "ticker": "SPX", "prem": 0.2, "stop": null, "expiry": "2026-08-20", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7635 PUTS 0DTE .20, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-08-21T04:21:29+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-21T04:21:29+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIMMED 50% @everyone", "ts": "2026-08-21T04:21:29+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY LOWS, TRIMMED ANOTHER 30% @everyone", "ts": "2026-08-21T04:21:29+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "762 PT HIT @everyone", "ts": "2026-08-21T04:21:29+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 605, "ts": "2026-08-21T21:32:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 610, "ts": "2026-08-21T21:37:25+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260821C103000.US", "ticker": "HOOD", "prem": 1.5, "stop": 1.2, "expiry": "2026-08-21", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: HOOD - $103 CALLS EXPIRATION THIS WEEK $1.50 STOP LOSS AT $1.20, HIGH RISK DAY TRADE @everyone", "ts": "2026-08-21T21:39:44+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-21T21:40:11+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "partial", "sig": "HOOD CALLS TRIMMING MORE PROFITS", "ts": "2026-08-21T21:40:34+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "partial", "sig": "TRIMMED MORE @everyone", "ts": "2026-08-21T21:41:16+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 615, "ts": "2026-08-21T21:42:25+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "full", "sig": "ALL OUT, STILL GOOD TO HOLD WITH A TIGHT STOP @everyone", "ts": "2026-08-21T21:46:20+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 620, "ts": "2026-08-21T21:47:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 625, "ts": "2026-08-21T21:52:25+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260828C110000.US", "ticker": "HOOD", "prem": 3.3, "stop": 2.9, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: HOOD - $110 CALLS EXPIRATION NEXT WEEK $3.30, ROLLING MY PROFITS HERE, STOP LOSS AT $2.90", "ts": "2026-08-21T21:53:43+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "partial", "sig": "THERE GOES ROUND #2, FEEL FREE TO START TRIMMING @everyone", "ts": "2026-08-21T21:57:12+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 630, "ts": "2026-08-21T21:57:25+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "partial", "sig": "HOOD CALLS TRIM PARTIAL HERE AT HIGHS, IF YOU WEREN'T ABLE TO TRIM EARLIER @everyone", "ts": "2026-08-21T21:59:42+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 635, "ts": "2026-08-21T22:02:25+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "be", "sig": "DON'T FORGET TO SET BREAKEVEN STOPS ON REST @everyone", "ts": "2026-08-21T22:02:34+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 640, "ts": "2026-08-21T22:07:25+08:00"}
+{"ev": "andy_entry", "osi": "PFE260828C028000.US", "ticker": "PFE", "prem": 0.5, "stop": null, "expiry": "2026-08-28", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: PFE - $28 CALLS EXPIRATION NEXT WEEK .50, CHEAP LOTTO PLAY @everyone", "ts": "2026-08-21T22:08:07+08:00"}
+{"ev": "andy_entry", "osi": "PFE260828C027000.US", "ticker": "PFE", "prem": 1.3, "stop": 1.05, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: PFE - $27 CALLS EXPIRATION NEXT WEEK $1.30 STOP LOSS AT $1.05 @everyone", "ts": "2026-08-21T22:11:03+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 645, "ts": "2026-08-21T22:12:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 650, "ts": "2026-08-21T22:17:25+08:00"}
+{"ev": "andy_entry", "osi": "V260821C372500.US", "ticker": "V", "prem": 0.45, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: V - $372.5 CALLS EXPIRATION THIS WEEK .45, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-08-21T22:18:31+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 655, "ts": "2026-08-21T22:22:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 660, "ts": "2026-08-21T22:27:25+08:00"}
+{"ev": "andy_entry", "osi": "ABBV260821C267500.US", "ticker": "ABBV", "prem": 0.23, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: ABBV - $267.5 CALLS EXPIRATION THIS WEEK .23, SUPER LOTTOS @everyone", "ts": "2026-08-21T22:31:10+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 665, "ts": "2026-08-21T22:32:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 670, "ts": "2026-08-21T22:37:25+08:00"}
+{"ev": "andy_exit", "ticker": "ABBV", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-21T22:37:37+08:00"}
+{"ev": "andy_entry", "osi": "ABBV260821C265000.US", "ticker": "ABBV", "prem": 1.5, "stop": 1.2, "expiry": "2026-08-21", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: ABBV - $265 ITM CALLS EXPIRATION THIS WEEK $1.50, STOP LOSS AT $1.20 @everyone", "ts": "2026-08-21T22:38:41+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 675, "ts": "2026-08-21T22:42:25+08:00"}
+{"ev": "andy_exit", "ticker": "ABBV", "level": "partial", "sig": "ABBV SUPER LOTTOS TRIMMED MORE @everyone", "ts": "2026-08-21T22:43:42+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 680, "ts": "2026-08-21T22:47:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 685, "ts": "2026-08-21T22:52:25+08:00"}
+{"ev": "andy_entry", "osi": "ABBV260821C265000.US", "ticker": "ABBV", "prem": 1.4, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: ABBV - $265 ITM CALLS EXPIRATION THIS WEEK $1.40, LOTTOS ROUND #2 @everyone", "ts": "2026-08-21T22:53:46+08:00"}
+{"ev": "andy_exit", "ticker": "ABBV", "level": "be", "sig": "V CALLS MIGHT DO A BREAKEVEN CLOSE SOON @everyone", "ts": "2026-08-21T22:54:28+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 690, "ts": "2026-08-21T22:57:25+08:00"}
+{"ev": "andy_exit", "ticker": "ABBV", "level": "partial", "sig": "TRIMMED MORE", "ts": "2026-08-21T22:59:15+08:00"}
+{"ev": "andy_exit", "ticker": "ABBV", "level": "partial", "sig": "CAN TRIM SOME AT $1.95 @everyone", "ts": "2026-08-21T23:00:41+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 695, "ts": "2026-08-21T23:02:25+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "PLTR", "level": "partial", "sig": "Here’s what I have left. Scale out if you’re in. $PLTR will expire - still like the chart. @everyone", "ts": "2026-08-21T23:02:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 700, "ts": "2026-08-21T23:07:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 705, "ts": "2026-08-21T23:12:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 710, "ts": "2026-08-21T23:17:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 715, "ts": "2026-08-21T23:22:25+08:00"}
+{"ev": "andy_exit", "ticker": "SLV", "level": "full", "sig": "SLV CALLS ALL OUT @everyone", "ts": "2026-08-21T23:26:12+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 720, "ts": "2026-08-21T23:27:25+08:00"}
+{"ev": "andy_entry", "osi": "NEM260904C138000.US", "ticker": "NEM", "prem": 2.55, "stop": 2.1, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: NEM - $138 CALLS EXPIRATION 9/4 $2.55, STOP LOSS AT $2.10, POSSIBLE SWING @everyone", "ts": "2026-08-21T23:27:43+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 725, "ts": "2026-08-21T23:32:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 730, "ts": "2026-08-21T23:37:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 735, "ts": "2026-08-21T23:42:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 740, "ts": "2026-08-21T23:47:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 745, "ts": "2026-08-21T23:52:25+08:00"}
+{"ev": "andy_entry", "osi": "V260821C370000.US", "ticker": "V", "prem": 1.85, "stop": 1.45, "expiry": "2026-08-21", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: V - $370 ITM CALLS EXPIRATION THIS WEEK $1.85, STOP LOSS AT $1.45 @everyone", "ts": "2026-08-21T23:56:57+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 750, "ts": "2026-08-21T23:57:49+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 755, "ts": "2026-08-22T00:06:19+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 760, "ts": "2026-08-22T00:07:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 765, "ts": "2026-08-22T00:13:17+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 770, "ts": "2026-08-22T00:21:05+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 775, "ts": "2026-08-22T00:23:08+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 780, "ts": "2026-08-22T00:28:09+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 785, "ts": "2026-08-22T00:33:42+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 790, "ts": "2026-08-22T00:39:51+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 795, "ts": "2026-08-22T00:44:54+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 800, "ts": "2026-08-22T00:47:51+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 805, "ts": "2026-08-22T00:54:07+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 810, "ts": "2026-08-22T00:57:38+08:00"}
+{"ev": "andy_entry", "osi": "ABBV260821C265000.US", "ticker": "ABBV", "prem": 3.0, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: ABBV - $265 ITM CALLS ROUND 3, SUPER LOTTOS $1.15, STRICTLY ROLLING PROFITS @everyone", "ts": "2026-08-22T00:57:48+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 815, "ts": "2026-08-22T01:04:08+08:00"}
+{"ev": "andy_entry", "osi": "FCX260821C076000.US", "ticker": "FCX", "prem": 0.65, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: FCX - $76 CALLS EXPIRATION THIS WEEK .65, CHEAP LOTTO PLAY @everyone", "ts": "2026-08-22T01:05:04+08:00"}
+{"ev": "andy_exit", "ticker": "FCX", "level": "partial", "sig": "FCX LOTTOS TRIMMING PARTIAL PROFITS @everyone", "ts": "2026-08-22T01:08:01+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 820, "ts": "2026-08-22T01:08:06+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 825, "ts": "2026-08-22T01:13:11+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 830, "ts": "2026-08-22T01:18:20+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 835, "ts": "2026-08-22T01:23:17+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 840, "ts": "2026-08-22T01:31:36+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 845, "ts": "2026-08-22T01:36:22+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 850, "ts": "2026-08-22T01:40:42+08:00"}
+{"ev": "andy_entry", "osi": "SPY260821P765000.US", "ticker": "SPY", "prem": 0.35, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $765 PUTS 0DTE .35, SUPER LOTTOS @everyone", "ts": "2026-08-22T01:41:35+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 855, "ts": "2026-08-22T01:43:50+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 860, "ts": "2026-08-22T01:47:52+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 865, "ts": "2026-08-22T01:53:06+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 870, "ts": "2026-08-22T01:59:03+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "FCX TRIMMED MORE @everyone", "ts": "2026-08-22T02:01:22+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 875, "ts": "2026-08-22T02:02:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 880, "ts": "2026-08-22T02:10:35+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-22T02:12:43+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 885, "ts": "2026-08-22T02:13:55+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260821C180000.US", "fails": 890, "ts": "2026-08-22T03:47:22+08:00"}
+{"ev": "exit_submit", "osi": "PLTR260821C180000.US", "qty": 10, "reason": "到期强平", "order_id": "1275541715150774272", "ts": "2026-08-22T03:47:23+08:00"}
+{"ev": "exit_fill", "osi": "PLTR260821C180000.US", "qty": 10, "want": 10, "state": "Filled", "px": 0.26, "reason": "到期强平", "ts": "2026-08-22T03:47:23+08:00"}
+{"ev": "missed_during_downtime", "sig": "$IONQ 9/4 $50 calls $1.20 Start position incase we get a chance to add Monday I like the h", "ts_signal": "2026-08-21 19:40:31.049000+00:00", "ts": "2026-08-22T03:47:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY PUTS TRIMMING LITTLE MORE AGAIN HERE @everyone", "ts": "2026-08-22T03:47:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY PUTS TRIMMING AGAIN @everyone", "ts": "2026-08-22T03:47:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "FCX TRIMMED LITTLE MORE @everyone", "ts": "2026-08-22T03:47:24+08:00"}
+{"ev": "andy_entry", "osi": "SPX260821C7685000.US", "ticker": "SPX", "prem": 2.0, "stop": 1.5, "expiry": "2026-08-21", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7685 CALLS 0DTE $2.00, STOP LOSS AT $1.50, HIGH RISK DAY TRADE @everyone", "ts": "2026-08-22T03:47:24+08:00"}
+{"ev": "andy_entry", "osi": "ABBV260821C267500.US", "ticker": "ABBV", "prem": 2.0, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: ABBV - $267.5 CALLS ROUND #2 0.05 SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-08-22T03:47:24+08:00"}
+{"ev": "andy_entry", "osi": "SPX260821P7665000.US", "ticker": "SPX", "prem": 0.15, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7665 PUTS 0DTE .15, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-08-22T03:47:24+08:00"}
+{"ev": "andy_entry", "osi": "SPX260821C7695000.US", "ticker": "SPX", "prem": 0.15, "stop": null, "expiry": "2026-08-21", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7695 CALLS 0DTE .15, HEDGING LOTTOS @everyone", "ts": "2026-08-22T03:47:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIM 50% @everyone", "ts": "2026-08-22T03:47:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX TRIM MORE 30% @everyone", "ts": "2026-08-22T03:47:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "ALL OUT NOW @everyone", "ts": "2026-08-22T05:51:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "be", "sig": "SPX REJECTED, CAREFUL. LOTTOS BACK AT BREAKEVEN IF YOU'RE STILL IN @everyone", "ts": "2026-08-22T05:51:24+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "PUTS TRIMMING PROFITS HERE @everyone", "ts": "2026-08-22T05:51:24+08:00"}
