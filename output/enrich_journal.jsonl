@@ -811,3 +811,42 @@
 {"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "ALL OUT NOW @everyone", "ts": "2026-08-22T05:51:24+08:00"}
 {"ev": "andy_exit", "ticker": "SPX", "level": "be", "sig": "SPX REJECTED, CAREFUL. LOTTOS BACK AT BREAKEVEN IF YOU'RE STILL IN @everyone", "ts": "2026-08-22T05:51:24+08:00"}
 {"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "PUTS TRIMMING PROFITS HERE @everyone", "ts": "2026-08-22T05:51:24+08:00"}
+{"ev": "andy_entry", "osi": "SPY260824P762000.US", "ticker": "SPY", "prem": 0.5, "stop": null, "expiry": "2026-08-24", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $762 PUTS 0DTE .50, CHEAP LOTTO PLAY @everyone", "ts": "2026-08-24T21:32:11+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-24T21:33:15+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY PUTS TRIMMING LITTLE MORE @everyone", "ts": "2026-08-24T21:33:54+08:00"}
+{"ev": "andy_entry", "osi": "MA260828C610000.US", "ticker": "MA", "prem": 1.35, "stop": 1.0, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: MA - $610 CALLS EXPIRATION THIS WEEK $1.35 @everyone STOP LOSS AT $1.00", "ts": "2026-08-24T21:35:27+08:00"}
+{"ev": "andy_entry", "osi": "MA260828C602500.US", "ticker": "MA", "prem": 2.4, "stop": null, "expiry": "2026-08-28", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: MA - $602.5 CALLS EXPIRATION THIS WEEK $2.40 @everyone", "ts": "2026-08-24T21:37:33+08:00"}
+{"ev": "andy_exit", "ticker": "MA", "level": "partial", "sig": "MA CALLS STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-24T21:38:55+08:00"}
+{"ev": "andy_exit", "ticker": "MA", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-24T21:40:01+08:00"}
+{"ev": "andy_exit", "ticker": "MA", "level": "partial", "sig": "MA BOTH ROUNDS TRIMMED LITTLE MORE @everyone", "ts": "2026-08-24T21:41:38+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY PUTS TRIMMING MORE PROFITS HERE @everyone", "ts": "2026-08-24T21:43:41+08:00"}
+{"ev": "andy_entry", "osi": "SPCX260828P132000.US", "ticker": "SPCX", "prem": 2.4, "stop": 2.0, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: SPCX - $132 PUTS EXPIRATION THIS WEEK $2.40 STOP LOSS AT $2.00 @everyone", "ts": "2026-08-24T21:48:38+08:00"}
+{"ev": "andy_exit", "ticker": "MA", "level": "partial", "sig": "MA DAY HIGHS, TRIM LITTLE MORE, MANAGE RISK @everyone 🚀", "ts": "2026-08-24T21:49:24+08:00"}
+{"ev": "andy_exit", "ticker": "MA", "level": "partial", "sig": "TRIMMED partial @everyone", "ts": "2026-08-24T21:49:46+08:00"}
+{"ev": "andy_exit", "ticker": "SPCX", "level": "partial", "sig": "SPCX TRIMMED MORE @everyone", "ts": "2026-08-24T21:52:12+08:00"}
+{"ev": "andy_exit", "ticker": "MA", "level": "partial", "sig": "ROUND 2 TRIMMED MORE @everyone", "ts": "2026-08-24T21:53:37+08:00"}
+{"ev": "andy_exit", "ticker": "MA", "level": "partial", "sig": "KEEP TRIMMING & MOVE TRAILING STOPS HIGHER 🚀", "ts": "2026-08-24T22:05:11+08:00"}
+{"ev": "andy_entry", "osi": "SPY260824P762000.US", "ticker": "SPY", "prem": 0.6, "stop": null, "expiry": "2026-08-24", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $762 PUTS 0DTE .60, ROUND 2 LOTTOS, STRICTLY ROLLING PROFITS @everyone", "ts": "2026-08-24T22:06:01+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-24T22:09:33+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY PUTS TRIMMING LITTLE MORE AGAIN HERE @everyone", "ts": "2026-08-24T22:12:25+08:00"}
+{"ev": "andy_entry", "osi": "HNGE260918C095000.US", "ticker": "HNGE", "prem": 3.7, "stop": 3.3, "expiry": "2026-09-18", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: HNGE - $95 CALLS EXPIRATION 9/18 $3.70, STOP LOSS AT $3.30, SMALL POSITION ONLY @everyone", "ts": "2026-08-24T22:19:43+08:00"}
+{"ev": "andy_exit", "ticker": "HNGE", "level": "partial", "sig": "DAY HIGHS, STARTING TO TRIM MY TINY PROFITS HERE @everyone", "ts": "2026-08-24T22:30:19+08:00"}
+{"ev": "andy_entry", "osi": "BABA260904C125000.US", "ticker": "BABA", "prem": 2.0, "stop": 1.7, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: BABA - $125 CALLS EXPIRATION NEXT WEEK $2.00, STOP LOSS AT $1.70, RISKY @everyone", "ts": "2026-08-24T22:55:35+08:00"}
+{"ev": "andy_exit", "ticker": "HNGE", "level": "partial", "sig": "HNGE DAY HIGHS AGAIN, CAN TRIM LITTLE MORE @everyone", "ts": "2026-08-24T22:57:36+08:00"}
+{"ev": "andy_entry", "osi": "MA260828C610000.US", "ticker": "MA", "prem": 1.6, "stop": 1.3, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: MA - $610 CALLS EXPIRATION THIS WEEK $1.60 ROUND 3, ROLLING PROFITS, STOP LOSS AT $1.30 @everyone", "ts": "2026-08-24T23:03:02+08:00"}
+{"ev": "andy_entry", "osi": "SPY260824P762000.US", "ticker": "SPY", "prem": 3.0, "stop": null, "expiry": "2026-08-24", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $762 PUTS 0DTE ROUND 3, .55, LOTTOS AGAIN @everyone", "ts": "2026-08-24T23:15:36+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-24T23:21:34+08:00"}
+{"ev": "andy_entry", "osi": "MU260824C915000.US", "ticker": "MU", "prem": 1.45, "stop": null, "expiry": "2026-08-24", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: MU - $915 CALLS 0DTE $1.45, SMALL LOTTOS, HIGH RISK @everyone", "ts": "2026-08-24T23:36:22+08:00"}
+{"ev": "andy_exit", "ticker": "MU", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-24T23:37:12+08:00"}
+{"ev": "andy_exit", "ticker": "MU", "level": "partial", "sig": "MU LOTTOS TRIM MORE @everyone", "ts": "2026-08-24T23:39:15+08:00"}
+{"ev": "andy_exit", "ticker": "MU", "level": "partial", "sig": "MU TRIMMED MOST, LEFT RUNNERS @everyone 🚀", "ts": "2026-08-24T23:40:44+08:00"}
+{"ev": "andy_exit", "ticker": "MU", "level": "full", "sig": "ALL OUT @everyone 🚀 STILL GOOD TO HOLD WITH A TIGHT STOP", "ts": "2026-08-24T23:41:26+08:00"}
+{"ev": "andy_entry", "osi": "SNDK260904C2000000.US", "ticker": "SNDK", "prem": 4.3, "stop": 3.4, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: SNDK - $2000 CALLS 9/4 $4.30, STOP LOSS AT $3.40 @everyone", "ts": "2026-08-25T00:20:26+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "OMG SNDK GONE, FEEL FREE TO START TRIMMING @everyone 🚀", "ts": "2026-08-25T00:21:44+08:00"}
+{"ev": "andy_entry", "osi": "INTC260904C100000.US", "ticker": "INTC", "prem": 0.7, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: INTC - $100 CALLS 9/4 .70, SUPER LOTTOS, SWINGS @everyone", "ts": "2026-08-25T00:36:00+08:00"}
+{"ev": "andy_entry", "osi": "MA260828C605000.US", "ticker": "MA", "prem": 2.6, "stop": 2.1, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: MA - $605 CALLS EXPIRATION THIS WEEK $2.60 STOP LOSS AT $2.10", "ts": "2026-08-25T01:03:36+08:00"}
+{"ev": "andy_entry", "osi": "SPY260824C764000.US", "ticker": "SPY", "prem": 0.74, "stop": 0.55, "expiry": "2026-08-24", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $764 CALLS 0DTE .74, STOP LOSS AT .55 @everyone", "ts": "2026-08-25T02:21:54+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-25T02:24:04+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY CALLS TRIMMING MORE PROFITS", "ts": "2026-08-25T02:24:36+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "UBER", "level": "alert", "sig": "Executive decision here - selling all positions except for $UBER $80 weekly calls. I had about 1.5% ", "ts": "2026-08-25T03:11:35+08:00"}
+{"ev": "andy_entry", "osi": "SPX260824P7640000.US", "ticker": "SPX", "prem": 0.15, "stop": null, "expiry": "2026-08-24", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7640 PUTS 0DTE .15, SUPER LOTTOS @everyone", "ts": "2026-08-25T03:41:23+08:00"}
