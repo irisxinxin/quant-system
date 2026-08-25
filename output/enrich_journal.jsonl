@@ -850,3 +850,140 @@
 {"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY CALLS TRIMMING MORE PROFITS", "ts": "2026-08-25T02:24:36+08:00"}
 {"ev": "exit_signal_mech_ignored", "ticker": "UBER", "level": "alert", "sig": "Executive decision here - selling all positions except for $UBER $80 weekly calls. I had about 1.5% ", "ts": "2026-08-25T03:11:35+08:00"}
 {"ev": "andy_entry", "osi": "SPX260824P7640000.US", "ticker": "SPX", "prem": 0.15, "stop": null, "expiry": "2026-08-24", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7640 PUTS 0DTE .15, SUPER LOTTOS @everyone", "ts": "2026-08-25T03:41:23+08:00"}
+{"ev": "andy_entry", "osi": "GILD260828C148000.US", "ticker": "GILD", "prem": 1.4, "stop": 1.1, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: GILD - $148 CALLS EXPIRATION THIS WEEK $1.40 @everyone STOP LOSS AT $1.10", "ts": "2026-08-25T21:36:38+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260828C111000.US", "ticker": "HOOD", "prem": 1.8, "stop": 1.4, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: HOOD - $111 CALLS EXPIRATION THIS WEEK $1.80, STOP LOSS AT $1.40 @everyone", "ts": "2026-08-25T21:38:29+08:00"}
+{"ev": "andy_entry", "osi": "SMCI260828C037000.US", "ticker": "SMCI", "prem": 1.5, "stop": null, "expiry": "2026-08-28", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SMCI - $37 ITM CALLS EXPIRATION THIS WEEK $1.50 @everyone", "ts": "2026-08-25T21:44:27+08:00"}
+{"ev": "entry_submit", "osi": "PLTR260828C185000.US", "ticker": "PLTR", "right": "C", "strike": 185.0, "expiry": "2026-08-28", "limit": 1.84, "qty": 20, "order_id": "1276900401081266176", "sig": "$PLTR weekly $185 calls 2% position $1.75 - $1.84 @everyone $alert", "ts": "2026-08-25T21:46:19+08:00"}
+{"ev": "andy_exit", "ticker": "GILD", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-25T21:47:22+08:00"}
+{"ev": "entry_fill", "osi": "PLTR260828C185000.US", "qty": 20, "avg": 1.84, "ts": "2026-08-25T21:47:25+08:00"}
+{"ev": "tp_place", "osi": "PLTR260828C185000.US", "px": 2.39, "qty": 10, "order_id": "1276900679176171520", "ts": "2026-08-25T21:47:25+08:00"}
+{"ev": "andy_exit", "ticker": "GILD", "level": "partial", "sig": "SMCI TRIMMED LITTLE MORE @everyone", "ts": "2026-08-25T21:49:28+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 5, "ts": "2026-08-25T21:51:25+08:00"}
+{"ev": "andy_entry", "osi": "NVDA260831C222500.US", "ticker": "NVDA", "prem": 3.5, "stop": 3.1, "expiry": "2026-08-31", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: NVDA - $222.5 CALLS 8/31 $3.50, STOP LOSS AT $3.10 @everyone", "ts": "2026-08-25T21:52:39+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 10, "ts": "2026-08-25T21:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 15, "ts": "2026-08-25T22:01:25+08:00"}
+{"ev": "andy_exit", "ticker": "NVDA", "level": "partial", "sig": "SMCI DAY HIGHS, TRIMMED MORE @everyone", "ts": "2026-08-25T22:01:41+08:00"}
+{"ev": "andy_entry", "osi": "ABBV260828C270000.US", "ticker": "ABBV", "prem": 1.23, "stop": 1.0, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: ABBV - $270 CALLS EXPIRATION THIS WEEK $1.23, STOP LOSS AT $1.00 @everyone", "ts": "2026-08-25T22:03:30+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 20, "ts": "2026-08-25T22:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 25, "ts": "2026-08-25T22:11:25+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260828C110000.US", "ticker": "HOOD", "prem": 2.6, "stop": null, "expiry": "2026-08-28", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: HOOD - $110 CALLS EXPIRATION THIS WEEK $2.60, ADDING ROUND #2 @everyone", "ts": "2026-08-25T22:12:51+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 30, "ts": "2026-08-25T22:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 35, "ts": "2026-08-25T22:21:25+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "UBER", "level": "partial", "sig": "$UBER - Trim some more @everyone", "ts": "2026-08-25T22:22:01+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 40, "ts": "2026-08-25T22:26:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 45, "ts": "2026-08-25T22:31:25+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-25T22:32:56+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "be", "sig": "HOOD CALLS SET BREAKEVEN STOP ON REST @everyone", "ts": "2026-08-25T22:33:35+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "partial", "sig": "HOOD TRIMMED MORE @everyone", "ts": "2026-08-25T22:35:38+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 50, "ts": "2026-08-25T22:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 55, "ts": "2026-08-25T22:41:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 60, "ts": "2026-08-25T22:46:25+08:00"}
+{"ev": "andy_entry", "osi": "NFLX260911C082000.US", "ticker": "NFLX", "prem": 2.52, "stop": 2.15, "expiry": "2026-09-11", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: NFLX - $82 CALLS 9/11 $2.52, STOP LOSS AT $2.15 @everyone", "ts": "2026-08-25T22:47:42+08:00"}
+{"ev": "andy_entry", "osi": "NFLX260911C081000.US", "ticker": "NFLX", "prem": 2.52, "stop": 2.15, "expiry": "2026-09-11", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: NFLX - $81 CALLS 9/11 $2.52, STOP LOSS AT $2.15 @everyone", "ts": "2026-08-25T22:48:02+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 65, "ts": "2026-08-25T22:51:25+08:00"}
+{"ev": "andy_entry", "osi": "SPY260825P764000.US", "ticker": "SPY", "prem": 0.67, "stop": 0.5, "expiry": "2026-08-25", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $764 PUTS 0DTE .67, STOP LOSS AT .50, LOTTO SIZE @everyone", "ts": "2026-08-25T22:52:22+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 70, "ts": "2026-08-25T22:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 75, "ts": "2026-08-25T23:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 80, "ts": "2026-08-25T23:06:25+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "UBER", "level": "vague", "sig": "$UBER That’s why we lock gains. You guys better have!!!!!!!! @everyone", "ts": "2026-08-25T23:08:52+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 85, "ts": "2026-08-25T23:11:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 90, "ts": "2026-08-25T23:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 95, "ts": "2026-08-25T23:21:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 100, "ts": "2026-08-25T23:26:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 105, "ts": "2026-08-25T23:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 110, "ts": "2026-08-25T23:36:25+08:00"}
+{"ev": "andy_exit", "ticker": "NFLX", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-25T23:39:21+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 115, "ts": "2026-08-25T23:41:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 120, "ts": "2026-08-25T23:46:25+08:00"}
+{"ev": "andy_entry", "osi": "SPY260825P764000.US", "ticker": "SPY", "prem": 0.45, "stop": null, "expiry": "2026-08-25", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $764 PUTS 0DTE .45, CHEAP LOTTO PLAY @everyone", "ts": "2026-08-25T23:49:36+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 125, "ts": "2026-08-25T23:51:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 130, "ts": "2026-08-25T23:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 135, "ts": "2026-08-26T00:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 140, "ts": "2026-08-26T00:06:25+08:00"}
+{"ev": "andy_entry", "osi": "CLSK260828C012500.US", "ticker": "CLSK", "prem": 0.65, "stop": null, "expiry": "2026-08-28", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: CLSK - $12.5 CALLS EXPIRATION THIS WEEK .65, SUPER LOTTOS @everyone", "ts": "2026-08-26T00:10:28+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 145, "ts": "2026-08-26T00:11:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 150, "ts": "2026-08-26T00:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 155, "ts": "2026-08-26T00:21:25+08:00"}
+{"ev": "andy_exit", "ticker": "NFLX", "level": "partial", "sig": "NFLX CALLS TRIMMED LITTLE MORE @everyone", "ts": "2026-08-26T00:26:09+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 160, "ts": "2026-08-26T00:26:25+08:00"}
+{"ev": "andy_entry", "osi": "BE260828C235000.US", "ticker": "BE", "prem": 2.5, "stop": 2.1, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: BE - $235 CALLS EXPIRATION THIS WEEK $2.50, STOP LOSS AT $2.10, RISKY DAY TRADE @everyone", "ts": "2026-08-26T00:29:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 165, "ts": "2026-08-26T00:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 170, "ts": "2026-08-26T00:36:25+08:00"}
+{"ev": "andy_exit", "ticker": "NFLX", "level": "be", "sig": "NFLX STRONG, DON'T FORGET TO SET BREAKEVEN STOP ON REST @everyone", "ts": "2026-08-26T00:37:57+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 175, "ts": "2026-08-26T00:41:25+08:00"}
+{"ev": "entry_submit", "osi": "BE260828C235000.US", "ticker": "BE", "right": "C", "strike": 235.0, "expiry": "2026-08-28", "limit": 2.5, "qty": 20, "order_id": "1276945719718096896", "sig": "End of day play - $BE weekly $235 calls for $2.50 1-2% sizing @everyone $alert", "ts": "2026-08-26T00:46:24+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 180, "ts": "2026-08-26T00:46:25+08:00"}
+{"ev": "entry_fill", "osi": "BE260828C235000.US", "qty": 20, "avg": 2.5, "ts": "2026-08-26T00:48:26+08:00"}
+{"ev": "tp_place", "osi": "BE260828C235000.US", "px": 3.25, "qty": 10, "order_id": "1276946231796453376", "ts": "2026-08-26T00:48:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 185, "ts": "2026-08-26T00:51:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 5, "ts": "2026-08-26T00:52:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 190, "ts": "2026-08-26T00:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 10, "ts": "2026-08-26T00:57:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 195, "ts": "2026-08-26T01:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 15, "ts": "2026-08-26T01:02:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 200, "ts": "2026-08-26T01:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 20, "ts": "2026-08-26T01:07:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 205, "ts": "2026-08-26T01:11:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 25, "ts": "2026-08-26T01:12:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 210, "ts": "2026-08-26T01:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 30, "ts": "2026-08-26T01:17:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 215, "ts": "2026-08-26T01:21:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 35, "ts": "2026-08-26T01:22:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 220, "ts": "2026-08-26T01:26:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 40, "ts": "2026-08-26T01:27:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 225, "ts": "2026-08-26T01:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 45, "ts": "2026-08-26T01:32:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 230, "ts": "2026-08-26T01:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 50, "ts": "2026-08-26T01:37:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 235, "ts": "2026-08-26T01:41:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 55, "ts": "2026-08-26T01:42:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 240, "ts": "2026-08-26T01:46:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 60, "ts": "2026-08-26T01:47:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 245, "ts": "2026-08-26T01:51:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 65, "ts": "2026-08-26T01:52:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 250, "ts": "2026-08-26T01:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 70, "ts": "2026-08-26T01:57:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 255, "ts": "2026-08-26T02:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 75, "ts": "2026-08-26T02:02:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 260, "ts": "2026-08-26T02:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 80, "ts": "2026-08-26T02:07:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 265, "ts": "2026-08-26T02:11:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 85, "ts": "2026-08-26T02:12:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 270, "ts": "2026-08-26T02:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 90, "ts": "2026-08-26T02:17:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 275, "ts": "2026-08-26T02:21:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 95, "ts": "2026-08-26T02:22:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 280, "ts": "2026-08-26T02:26:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 100, "ts": "2026-08-26T02:27:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 285, "ts": "2026-08-26T02:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 105, "ts": "2026-08-26T02:32:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 290, "ts": "2026-08-26T02:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 110, "ts": "2026-08-26T02:37:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 295, "ts": "2026-08-26T02:41:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 115, "ts": "2026-08-26T02:42:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 300, "ts": "2026-08-26T02:46:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 120, "ts": "2026-08-26T02:47:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 305, "ts": "2026-08-26T02:51:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 125, "ts": "2026-08-26T02:52:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 310, "ts": "2026-08-26T02:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 130, "ts": "2026-08-26T02:57:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 315, "ts": "2026-08-26T03:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 135, "ts": "2026-08-26T03:02:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 320, "ts": "2026-08-26T03:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 140, "ts": "2026-08-26T03:07:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 325, "ts": "2026-08-26T03:11:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 145, "ts": "2026-08-26T03:12:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 330, "ts": "2026-08-26T03:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 150, "ts": "2026-08-26T03:17:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 335, "ts": "2026-08-26T03:21:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 155, "ts": "2026-08-26T03:22:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 340, "ts": "2026-08-26T03:26:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 160, "ts": "2026-08-26T03:27:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 345, "ts": "2026-08-26T03:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 165, "ts": "2026-08-26T03:32:26+08:00"}
+{"ev": "stop_channel_down", "osi": "PLTR260828C185000.US", "fails": 350, "ts": "2026-08-26T03:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "BE260828C235000.US", "fails": 170, "ts": "2026-08-26T03:37:26+08:00"}
+{"ev": "exit_submit", "osi": "PLTR260828C185000.US", "qty": 20, "reason": "收盘平未落袋(报价失效, 保守不过夜)", "order_id": "1276989519740030976", "ts": "2026-08-26T03:40:26+08:00"}
+{"ev": "exit_submit", "osi": "BE260828C235000.US", "qty": 20, "reason": "收盘平未落袋(报价失效, 保守不过夜)", "order_id": "1276989527612751872", "ts": "2026-08-26T03:40:28+08:00"}
+{"ev": "exit_fill", "osi": "PLTR260828C185000.US", "qty": 20, "want": 20, "state": "Filled", "px": 0.39, "reason": "收盘平未落袋(报价失效, 保守不过夜)", "ts": "2026-08-26T03:41:25+08:00"}
+{"ev": "exit_fill", "osi": "BE260828C235000.US", "qty": 20, "want": 20, "state": "Filled", "px": 2.39, "reason": "收盘平未落袋(报价失效, 保守不过夜)", "ts": "2026-08-26T03:41:26+08:00"}
