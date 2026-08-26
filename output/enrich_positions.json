@@ -225,5 +225,28 @@
   "exit_reason": "收盘平未落袋(报价失效, 保守不过夜)",
   "exit_intent": "full",
   "exit_ts": 1787686828.813079
+ },
+ "ALAB260828C300000.US": {
+  "ticker": "ALAB",
+  "entry_order_id": null,
+  "qty": 20,
+  "limit": 2.68,
+  "expiry": "2026-08-28",
+  "filled": 20,
+  "sold": 10,
+  "avg": 2.68,
+  "tp_order_id": null,
+  "tp_qty": 10,
+  "tp2_order_id": null,
+  "tp2_qty": 0,
+  "tp1_done": true,
+  "tp2_done": false,
+  "armed": false,
+  "submitted_ts": 1787761846.094371,
+  "stop_mult": 0.5,
+  "status": "open",
+  "opened": "2026-08-26",
+  "tp_order_id_counted": 10,
+  "reduced": true
  }
 }
