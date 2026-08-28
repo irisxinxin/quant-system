@@ -248,5 +248,28 @@
   "opened": "2026-08-26",
   "tp_order_id_counted": 10,
   "reduced": true
+ },
+ "COIN260828C195000.US": {
+  "ticker": "COIN",
+  "entry_order_id": null,
+  "qty": 20,
+  "limit": 1.45,
+  "expiry": "2026-08-28",
+  "filled": 20,
+  "sold": 10,
+  "avg": 1.45,
+  "tp_order_id": null,
+  "tp_qty": 10,
+  "tp2_order_id": null,
+  "tp2_qty": 0,
+  "tp1_done": true,
+  "tp2_done": false,
+  "armed": false,
+  "submitted_ts": 1787838921.978422,
+  "stop_mult": 0.5,
+  "status": "open",
+  "opened": "2026-08-27",
+  "tp_order_id_counted": 10,
+  "reduced": true
  }
 }

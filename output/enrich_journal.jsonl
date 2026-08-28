@@ -1097,3 +1097,161 @@
 {"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIM MORE 20% AGAIN @everyone", "ts": "2026-08-27T03:58:32+08:00"}
 {"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "ALL OUT @everyone", "ts": "2026-08-27T03:59:29+08:00"}
 {"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "ALL OUT @everyone", "ts": "2026-08-27T03:59:29+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 200, "ts": "2026-08-27T21:32:25+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "ALAB", "level": "partial", "sig": "$ALAB - Scale out. Congrats to all!!! One of my best weeks since Q2 @everyone $alert", "ts": "2026-08-27T21:33:57+08:00"}
+{"ev": "andy_entry", "osi": "AVGO260831C375000.US", "ticker": "AVGO", "prem": 2.8, "stop": 2.2, "expiry": "2026-08-31", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: AVGO - $375 CALLS 8/31 $2.80 @everyone STOP LOSS AT $2.20", "ts": "2026-08-27T21:34:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 205, "ts": "2026-08-27T21:37:25+08:00"}
+{"ev": "andy_exit", "ticker": "AVGO", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-08-27T21:41:33+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 210, "ts": "2026-08-27T21:42:25+08:00"}
+{"ev": "andy_entry", "osi": "SMCI260904C039500.US", "ticker": "SMCI", "prem": 1.34, "stop": 1.05, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: SMCI - $39.5 CALLS EXPIRATION NEXT WEEK $1.34 STOP LOSS AT $1.05 @everyone", "ts": "2026-08-27T21:43:27+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 215, "ts": "2026-08-27T21:47:25+08:00"}
+{"ev": "andy_entry", "osi": "NVDA260904C235000.US", "ticker": "NVDA", "prem": 1.25, "stop": 1.0, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: NVDA - $235 CALLS 9/4 $1.25, STOP LOSS AT $1.00, RISKY DAY TRADE @everyone", "ts": "2026-08-27T21:48:56+08:00"}
+{"ev": "andy_exit", "ticker": "SMCI", "level": "partial", "sig": "SMCI TRIMMED PARTIAL @everyone", "ts": "2026-08-27T21:49:48+08:00"}
+{"ev": "andy_exit", "ticker": "SMCI", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-27T21:51:13+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 220, "ts": "2026-08-27T21:52:25+08:00"}
+{"ev": "andy_exit", "ticker": "NVDA", "level": "partial", "sig": "NVDA TRIMMED MORE @everyone", "ts": "2026-08-27T21:52:59+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260904C120000.US", "ticker": "HOOD", "prem": 1.54, "stop": 1.2, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: HOOD - $120 CALLS EXPIRATION 9/4 $1.54 STOP LOSS AT $1.20 @everyone", "ts": "2026-08-27T21:53:44+08:00"}
+{"ev": "noexpiry_accept", "ticker": "COIN", "strike": 195.0, "expiry": "2026-08-28", "limit": 1.45, "sig": "Risk lotto - $COIN - $195 calls $1.35 - $1.45 @everyone $alert", "ts": "2026-08-27T21:55:21+08:00"}
+{"ev": "entry_submit", "osi": "COIN260828C195000.US", "ticker": "COIN", "right": "C", "strike": 195.0, "expiry": "2026-08-28", "limit": 1.45, "qty": 20, "order_id": "1277627452578938880", "sig": "Risk lotto - $COIN - $195 calls $1.35 - $1.45 @everyone $alert", "ts": "2026-08-27T21:55:21+08:00"}
+{"ev": "andy_entry", "osi": "PLTR260828C185000.US", "ticker": "PLTR", "prem": 2.48, "stop": 2.0, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: PLTR - $185 CALLS EXPIRATION THIS WEEK $2.48 STOP LOSS AT $2.00 @everyone", "ts": "2026-08-27T21:56:06+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 225, "ts": "2026-08-27T21:57:25+08:00"}
+{"ev": "andy_exit", "ticker": "PLTR", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-27T21:58:56+08:00"}
+{"ev": "andy_exit", "ticker": "PLTR", "level": "be", "sig": "PLTR BREAKEVEN STOP HIT ON REST RIGHT ON THAT DOWN MOVE @everyone", "ts": "2026-08-27T22:02:12+08:00"}
+{"ev": "andy_exit", "ticker": "PLTR", "level": "be", "sig": "Please use breakeven stops after partial exits", "ts": "2026-08-27T22:02:19+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 230, "ts": "2026-08-27T22:02:25+08:00"}
+{"ev": "andy_entry", "osi": "PLTR260828C185000.US", "ticker": "PLTR", "prem": 2.35, "stop": 2.0, "expiry": "2026-08-28", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: PLTR - $185 CALLS EXPIRATION THIS WEEK $2.35, ADDED ROUND #2 @everyone STOP LOSS AT $2.00", "ts": "2026-08-27T22:03:52+08:00"}
+{"ev": "andy_exit", "ticker": "PLTR", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-27T22:06:11+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 235, "ts": "2026-08-27T22:07:25+08:00"}
+{"ev": "andy_entry", "osi": "PLTR260904C197500.US", "ticker": "PLTR", "prem": 1.3, "stop": 1.0, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: PLTR - $197.5 CALLS EXPIRATION 9/4 $1.30 STOP LOSS AT $1.00, ROUND 3, ONLY REASON I'M ADDING AGAIN IS BECAUSE SETUP LOO", "ts": "2026-08-27T22:11:33+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 240, "ts": "2026-08-27T22:12:25+08:00"}
+{"ev": "entry_fill", "osi": "COIN260828C195000.US", "qty": 20, "avg": 1.45, "ts": "2026-08-27T22:14:26+08:00"}
+{"ev": "tp_place", "osi": "COIN260828C195000.US", "px": 1.89, "qty": 10, "order_id": "1277632252175466496", "ts": "2026-08-27T22:14:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 245, "ts": "2026-08-27T22:17:25+08:00"}
+{"ev": "andy_exit", "ticker": "PLTR", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-08-27T22:17:53+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 5, "ts": "2026-08-27T22:18:26+08:00"}
+{"ev": "andy_exit", "ticker": "PLTR", "level": "partial", "sig": "PLTR DAY HIGHS, TRIMMED MORE @everyone", "ts": "2026-08-27T22:19:15+08:00"}
+{"ev": "tp_fill", "osi": "COIN260828C195000.US", "px": 1.89, "qty": 10, "ts": "2026-08-27T22:19:26+08:00"}
+{"ev": "andy_exit", "ticker": "PLTR", "level": "be", "sig": "Another reason for me to give you multiple rounds is to also show you that you can always add another position again if you scale ", "ts": "2026-08-27T22:20:29+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 250, "ts": "2026-08-27T22:22:25+08:00"}
+{"ev": "andy_entry", "osi": "MSFT260831C515000.US", "ticker": "MSFT", "prem": 1.4, "stop": 1.0, "expiry": "2026-08-31", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: MSFT - $515 CALLS 8/31 $1.40 STOP LOSS AT $1.00 @everyone", "ts": "2026-08-27T22:23:02+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 10, "ts": "2026-08-27T22:23:26+08:00"}
+{"ev": "andy_exit", "ticker": "PLTR", "level": "partial", "sig": "PLTR DAY HIGHS AGAIN, TRIMMED MORE @everyone", "ts": "2026-08-27T22:23:38+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 255, "ts": "2026-08-27T22:27:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 15, "ts": "2026-08-27T22:28:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 260, "ts": "2026-08-27T22:32:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 20, "ts": "2026-08-27T22:33:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 265, "ts": "2026-08-27T22:37:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 25, "ts": "2026-08-27T22:38:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 270, "ts": "2026-08-27T22:42:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 30, "ts": "2026-08-27T22:43:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 275, "ts": "2026-08-27T22:47:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 35, "ts": "2026-08-27T22:48:26+08:00"}
+{"ev": "andy_entry", "osi": "IBM260918C257500.US", "ticker": "IBM", "prem": 1.5, "stop": null, "expiry": "2026-09-18", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: IBM - $257.5 CALLS 9/18 $1.50 @everyone", "ts": "2026-08-27T22:49:47+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 280, "ts": "2026-08-27T22:52:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 40, "ts": "2026-08-27T22:53:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 285, "ts": "2026-08-27T22:57:25+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260911C125000.US", "ticker": "HOOD", "prem": 1.6, "stop": null, "expiry": "2026-09-11", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: HOOD - $125 CALLS EXPIRATION 9/11 $1.60 @everyone", "ts": "2026-08-27T22:57:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 45, "ts": "2026-08-27T22:58:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 290, "ts": "2026-08-27T23:02:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 50, "ts": "2026-08-27T23:03:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 295, "ts": "2026-08-27T23:07:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 55, "ts": "2026-08-27T23:08:26+08:00"}
+{"ev": "andy_entry", "osi": "SPCX260904C150000.US", "ticker": "SPCX", "prem": 1.4, "stop": 1.1, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: SPCX - $150 CALLS EXPIRATION NEXT WEEK $1.40, STOP LOSS AT $1.10 @everyone", "ts": "2026-08-27T23:11:42+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 300, "ts": "2026-08-27T23:12:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 60, "ts": "2026-08-27T23:13:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 305, "ts": "2026-08-27T23:17:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 65, "ts": "2026-08-27T23:18:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 310, "ts": "2026-08-27T23:22:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 70, "ts": "2026-08-27T23:23:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 315, "ts": "2026-08-27T23:27:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 75, "ts": "2026-08-27T23:28:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 320, "ts": "2026-08-27T23:32:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 80, "ts": "2026-08-27T23:33:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 325, "ts": "2026-08-27T23:37:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 85, "ts": "2026-08-27T23:38:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 330, "ts": "2026-08-27T23:42:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 90, "ts": "2026-08-27T23:43:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 335, "ts": "2026-08-27T23:47:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 95, "ts": "2026-08-27T23:48:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 340, "ts": "2026-08-27T23:52:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 100, "ts": "2026-08-27T23:53:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 345, "ts": "2026-08-27T23:57:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 105, "ts": "2026-08-27T23:58:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 350, "ts": "2026-08-28T00:02:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 110, "ts": "2026-08-28T00:03:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 355, "ts": "2026-08-28T00:07:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 115, "ts": "2026-08-28T00:08:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 360, "ts": "2026-08-28T00:12:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 120, "ts": "2026-08-28T00:13:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 365, "ts": "2026-08-28T00:17:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 125, "ts": "2026-08-28T00:18:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 370, "ts": "2026-08-28T00:22:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 130, "ts": "2026-08-28T00:23:26+08:00"}
+{"ev": "andy_exit", "ticker": "NVDA", "level": "full", "sig": "I'M OUT 80% HERE @everyone", "ts": "2026-08-28T00:24:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 375, "ts": "2026-08-28T00:27:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 135, "ts": "2026-08-28T00:28:26+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "full", "sig": "IBM CALLS I'M OUT 50% HERE, WOULD LOVE TO SEE IT GO FOR GAP FILL FROM HERE @everyone 🚀", "ts": "2026-08-28T00:31:23+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 380, "ts": "2026-08-28T00:32:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 140, "ts": "2026-08-28T00:33:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 385, "ts": "2026-08-28T00:37:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 145, "ts": "2026-08-28T00:38:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 390, "ts": "2026-08-28T00:42:25+08:00"}
+{"ev": "andy_entry", "osi": "NVDA260918C250000.US", "ticker": "NVDA", "prem": 1.65, "stop": null, "expiry": "2026-09-18", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: NVDA - $250 CALLS 9/18 $1.65, LOTTOS, ROLLING PROFITS @everyone", "ts": "2026-08-28T00:43:03+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 150, "ts": "2026-08-28T00:43:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 395, "ts": "2026-08-28T00:47:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 155, "ts": "2026-08-28T00:48:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 400, "ts": "2026-08-28T00:52:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 160, "ts": "2026-08-28T00:53:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 405, "ts": "2026-08-28T00:57:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 165, "ts": "2026-08-28T00:58:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 410, "ts": "2026-08-28T01:02:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 170, "ts": "2026-08-28T01:03:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 415, "ts": "2026-08-28T01:07:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 175, "ts": "2026-08-28T01:08:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 420, "ts": "2026-08-28T01:12:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 180, "ts": "2026-08-28T01:13:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 425, "ts": "2026-08-28T01:17:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 185, "ts": "2026-08-28T01:18:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 430, "ts": "2026-08-28T01:22:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 190, "ts": "2026-08-28T01:23:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 435, "ts": "2026-08-28T01:27:25+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "COIN", "level": "partial", "sig": "I will only be holding $COIN into tomorrow as of now. Will trim everything else. @everyone $alert", "ts": "2026-08-28T01:28:04+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 195, "ts": "2026-08-28T01:28:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 440, "ts": "2026-08-28T01:32:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 200, "ts": "2026-08-28T01:33:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 445, "ts": "2026-08-28T01:37:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 205, "ts": "2026-08-28T01:38:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 450, "ts": "2026-08-28T01:42:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 210, "ts": "2026-08-28T01:43:26+08:00"}
+{"ev": "andy_entry", "osi": "MSFT260904C517500.US", "ticker": "MSFT", "prem": 3.5, "stop": 3.0, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: MSFT - $517.5 CALLS EXPIRATION 9/4 $3.50, STOP LOSS AT $3.00 @everyone", "ts": "2026-08-28T01:46:10+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 455, "ts": "2026-08-28T01:47:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 215, "ts": "2026-08-28T01:48:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 460, "ts": "2026-08-28T01:52:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 220, "ts": "2026-08-28T01:53:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 465, "ts": "2026-08-28T01:57:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 225, "ts": "2026-08-28T01:58:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 470, "ts": "2026-08-28T02:02:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 230, "ts": "2026-08-28T02:03:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 475, "ts": "2026-08-28T02:07:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 235, "ts": "2026-08-28T02:08:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 480, "ts": "2026-08-28T02:12:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 240, "ts": "2026-08-28T02:13:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 485, "ts": "2026-08-28T02:17:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 245, "ts": "2026-08-28T02:18:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 490, "ts": "2026-08-28T02:22:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 250, "ts": "2026-08-28T02:23:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 495, "ts": "2026-08-28T02:27:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 255, "ts": "2026-08-28T02:28:26+08:00"}
+{"ev": "stop_channel_down", "osi": "ALAB260828C300000.US", "fails": 500, "ts": "2026-08-28T02:32:25+08:00"}
+{"ev": "stop_channel_down", "osi": "COIN260828C195000.US", "fails": 260, "ts": "2026-08-28T02:33:26+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "COIN", "level": "alert", "sig": "Holding runners on $COIN into tomorrow. All eyes at $MRVL earnings after close. Some exciting setups", "ts": "2026-08-28T04:30:51+08:00"}
+{"ev": "andy_entry", "osi": "MU260828C950000.US", "ticker": "MU", "prem": 1.0, "stop": null, "expiry": "2026-08-28", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: MU - $950 CALLS 1DTE $2.80, SUPER LOTTOS, HIGH RISK DAY TRADE @everyone", "ts": "2026-08-28T04:30:55+08:00"}
+{"ev": "andy_exit", "ticker": "MU", "level": "partial", "sig": "STARTING TO TRIM MY TINY PROFITS HERE @everyone", "ts": "2026-08-28T04:30:55+08:00"}
+{"ev": "andy_exit", "ticker": "MU", "level": "partial", "sig": "MU CALLS TRIMMING MORE AGAIN @everyone", "ts": "2026-08-28T04:30:55+08:00"}
+{"ev": "andy_entry", "osi": "SPX260827C7735000.US", "ticker": "SPX", "prem": 0.1, "stop": null, "expiry": "2026-08-27", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7735 CALLS 0DTE .10, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-08-28T04:30:55+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-08-28T04:30:55+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIMMED MORE @everyone", "ts": "2026-08-28T04:30:55+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX TRIMMED MORE @everyone 🚀", "ts": "2026-08-28T04:30:55+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "ALL OUT NOW @everyone", "ts": "2026-08-28T04:30:55+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIMMED MOST, CAN LEAVE RUNNERS OVERNIGHT", "ts": "2026-08-28T04:30:55+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "ALL OUT NOW @everyone", "ts": "2026-08-28T04:30:55+08:00"}
