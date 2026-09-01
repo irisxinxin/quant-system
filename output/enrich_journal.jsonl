@@ -1502,3 +1502,48 @@
 {"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "DON'T FORGET TO KEEP TRIMMING @everyone", "ts": "2026-09-01T06:55:22+08:00"}
 {"ev": "andy_entry", "osi": "SPX260904C7700000.US", "ticker": "SPX", "prem": 3.0, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7700 CALLS ROUND 3 .20, SUPER LOTTOS AGAIN, STRICTLY ROLLING PROFITS @everyone", "ts": "2026-09-01T06:55:22+08:00"}
 {"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX LOTTOS TRIMMED PARTIAL @everyone", "ts": "2026-09-01T06:55:22+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "COIN", "level": "partial", "sig": "I’ll be back to 100% cash at open. Trimming my last $COIN runners. @everyone", "ts": "2026-09-01T21:23:03+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260904C108000.US", "ticker": "HOOD", "prem": 2.45, "stop": 2.05, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: HOOD - $108 CALLS EXPIRATION THIS WEEK $2.45, STOP LOSS AT $2.05 @everyone", "ts": "2026-09-01T21:37:33+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "SKHY SWINGS TRIMMED PARTIAL @everyone", "ts": "2026-09-01T21:44:00+08:00"}
+{"ev": "andy_entry", "osi": "SPCX260904C143000.US", "ticker": "SPCX", "prem": 2.6, "stop": null, "expiry": "2026-09-04", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SPCX - $143 CALLS EXPIRATION THIS WEEK $2.60 @everyone", "ts": "2026-09-01T21:47:04+08:00"}
+{"ev": "andy_exit", "ticker": "SPCX", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-01T21:50:44+08:00"}
+{"ev": "andy_exit", "ticker": "SPCX", "level": "partial", "sig": "CAN TRIM MORE @everyone", "ts": "2026-09-01T22:07:45+08:00"}
+{"ev": "andy_entry", "osi": "AAPL260902C325000.US", "ticker": "AAPL", "prem": 1.3, "stop": 1.0, "expiry": "2026-09-02", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: AAPL - $325 CALLS 9/2 $1.30, STOP LOSS AT $1.00 @everyone", "ts": "2026-09-01T22:09:18+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-01T22:10:14+08:00"}
+{"ev": "andy_entry", "osi": "MRNA260904C149000.US", "ticker": "MRNA", "prem": 3.85, "stop": 3.2, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: MRNA - $149 CALLS EXPIRATION THIS WEEK $3.85, STOP LOSS AT $3.20, LOTTO SIZE @everyone", "ts": "2026-09-01T22:13:27+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "partial", "sig": "AAPL TRIMMED LITTLE MORE @everyone", "ts": "2026-09-01T22:14:02+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-01T22:14:31+08:00"}
+{"ev": "andy_entry", "osi": "JPM260904C360000.US", "ticker": "JPM", "prem": 2.4, "stop": null, "expiry": "2026-09-04", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: JPM - $360 CALLS EXPIRATION THIS WEEK $2.40 @everyone", "ts": "2026-09-01T22:20:37+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-01T22:22:39+08:00"}
+{"ev": "andy_exit", "ticker": "JPM", "level": "partial", "sig": "JPM TRIMMED MORE HERE @everyone", "ts": "2026-09-01T22:24:27+08:00"}
+{"ev": "andy_exit", "ticker": "JPM", "level": "be", "sig": "JPM BACK AT BREAKEVEN, MANAGE RISK @everyone", "ts": "2026-09-01T22:32:11+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "full", "sig": "AAPL 100% BANGER, ALL OUT @everyone", "ts": "2026-09-01T22:33:58+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260904C108000.US", "ticker": "HOOD", "prem": 2.05, "stop": null, "expiry": "2026-09-04", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: HOOD - $108 CALLS EXPIRATION THIS WEEK $2.05, TRYING AGAIN INTO A SMALL POSITION @everyone", "ts": "2026-09-01T22:36:14+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260911C110000.US", "ticker": "HOOD", "prem": 2.6, "stop": 2.2, "expiry": "2026-09-11", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: HOOD - $110 CALLS EXPIRATION NEXT WEEK $2.60, STOP LOSS AT $2.20 @everyone", "ts": "2026-09-01T23:14:51+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "*", "level": "full", "sig": "I’m all cash still @everyone", "ts": "2026-09-01T23:16:09+08:00"}
+{"ev": "andy_entry", "osi": "SPY260901C764000.US", "ticker": "SPY", "prem": 0.95, "stop": 0.8, "expiry": "2026-09-01", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $764 CALLS 0DTE .95, STOP LOSS AT .80 @everyone", "ts": "2026-09-01T23:56:44+08:00"}
+{"ev": "andy_entry", "osi": "SPX260901P7620000.US", "ticker": "SPX", "prem": 1.45, "stop": null, "expiry": "2026-09-01", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7620 PUTS 0DTE $1.45, SUPER LOTTOS @everyone", "ts": "2026-09-02T00:19:50+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-02T00:20:43+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIMMED MORE @everyone", "ts": "2026-09-02T00:21:09+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX PUTS TRIMMING AGAIN @everyone", "ts": "2026-09-02T00:21:36+08:00"}
+{"ev": "andy_entry", "osi": "SPX260901P7620000.US", "ticker": "SPX", "prem": 1.9, "stop": null, "expiry": "2026-09-01", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7620 PUTS 0DTE $1.90, ROUND #2, STRICTLY ROLLING PROFITS @everyone", "ts": "2026-09-02T00:26:40+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIMMED PROFITS@everyone", "ts": "2026-09-02T00:27:13+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIMMED MORE @everyone", "ts": "2026-09-02T00:27:38+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "SPX TRIMMED MOST @everyone", "ts": "2026-09-02T00:31:02+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "ROUND 1 ALL OUT NOW @everyone", "ts": "2026-09-02T00:31:28+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "ROUND 2 ALL OUT NOW @everyone", "ts": "2026-09-02T00:35:16+08:00"}
+{"ev": "andy_entry", "osi": "SPX260901P7600000.US", "ticker": "SPX", "prem": 1.15, "stop": null, "expiry": "2026-09-01", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7600 PUTS 0DTE $1.15, SUPER LOTTOS AGAIN, ROLLING SOME PROFITS @everyone", "ts": "2026-09-02T00:43:18+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-02T00:44:46+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-02T01:00:39+08:00"}
+{"ev": "andy_entry", "osi": "SPX260901P7605000.US", "ticker": "SPX", "prem": 1.25, "stop": null, "expiry": "2026-09-01", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7605 PUTS 0DTE $1.25, ROLLING PROFITS AGAIN ROUND 4, SUPER LOTTOS @everyone", "ts": "2026-09-02T01:17:32+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-09-02T01:25:50+08:00"}
+{"ev": "andy_entry", "osi": "SNDK260904P1400000.US", "ticker": "SNDK", "prem": 3.1, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SNDK - $1400 PUTS EXPIRATION THIS WEEK $3.10, SUPER LOTTOS @everyone", "ts": "2026-09-02T01:50:24+08:00"}
+{"ev": "andy_entry", "osi": "SPX260904P7620000.US", "ticker": "SPX", "prem": 5.0, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7620 PUTS ROUND 5, $2.30, SMALL LOTTOS @everyone", "ts": "2026-09-02T01:55:29+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "THERE WE GO, FEEL FREE TO START TRIMMING @everyone", "ts": "2026-09-02T01:57:12+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "SNDK TRIMMED 30% HERE @everyone", "ts": "2026-09-02T02:13:35+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "full", "sig": "SPY PUTS 100% BANGER, ALL OUT @everyone", "ts": "2026-09-02T02:37:51+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "full", "sig": "SPX ALL OUT, 100% BANGER @everyone", "ts": "2026-09-02T02:44:48+08:00"}
+{"ev": "andy_exit", "ticker": "SPY", "level": "full", "sig": "SPY PUTS ALL OUT, 100% BANGER @everyone", "ts": "2026-09-02T02:46:25+08:00"}
+{"ev": "andy_entry", "osi": "SPX260901P7610000.US", "ticker": "SPX", "prem": 0.2, "stop": null, "expiry": "2026-09-01", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7610 PUTS 0DTE .20, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-09-02T03:41:26+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-09-02T03:42:38+08:00"}
+{"ev": "andy_entry", "osi": "SPX260901P7610000.US", "ticker": "SPX", "prem": 0.2, "stop": null, "expiry": "2026-09-01", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7610 PUTS 0DTE SUPER LOTTOS .20, ROUND 2, EXPECT 0 @everyone", "ts": "2026-09-02T03:47:35+08:00"}
