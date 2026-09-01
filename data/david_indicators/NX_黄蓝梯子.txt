@@ -1,0 +1,5 @@
+NX (黄蓝梯子) — 用户提供 2026-09-01
+N1:=26; N2:=89;
+A:EMA(H,N1) B:EMA(L,N1) 蓝梯子 = EMA(高,26)/EMA(低,26) 通道带
+A1:EMA(H,N2) B1:EMA(L,N2) 黄梯子 = EMA(高,89)/EMA(低,89) 通道带
+STICKLINE 在 C>A / C<B 时填充带体
