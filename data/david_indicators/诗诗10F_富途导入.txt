@@ -19,9 +19,11 @@ M90:MA(CLOSE,90),COLORORANGE;
 BUYSIG:=MIN(OPEN,CLOSE)>F10 AND REF(MIN(OPEN,CLOSE),1)<=REF(F10,1);
 {卖: 盘中跌破上一根bar的10F线值(他不等收盘,"10f在6.58賣出")}
 SELLSIG:=LOW<REF(F10,1) AND REF(LOW,1)>=REF(F10,2);
-{只留箭头防止文字扎堆; 想加回文字在下面补DRAWTEXT行}
+{箭头+彩色文字; 震荡段文字若扎堆可删掉两行DRAWTEXT}
 DRAWICON(BUYSIG,LOW*0.995,1);
+DRAWTEXT(BUYSIG,LOW*0.982,'买入'),COLORGREEN;
 DRAWICON(SELLSIG,HIGH*1.005,2);
+DRAWTEXT(SELLSIG,HIGH*1.018,'卖出'),COLORRED;
 
 ────────────────────────────────────────────
 指标二: 四色柱 (主图叠加, RSI6口径)
