@@ -218,8 +218,17 @@ def handle(text, msg_ts):
 
 
 def manage_loop():
-    """60s轮询: 止损-60% / 时间止损 / 到期强平。"""
+    """60s轮询: ①到期强平(不依赖报价) ②止损-60%/时间止损(需报价)。
+
+    2026-08-31 重构原因: 原实现把到期强平放在 option_quote() 之后、且在
+    `last is None: continue` 之后。美股期权行情权限失效时 option_quote 抛异常,
+    被最外层 except 吞掉 → 整轮 manage 全跳过 → 到期强平从未执行。
+    后果: QQQ 08/27 707C 留到到期被自动行权成 100 股 QQQ 正股, 占用 $70,700 保证金,
+    且 positions.json 与券商实际持仓完全脱节。
+    到期强平只需要日期+时间, 根本不需要报价 —— 必须独立于行情可用性。
+    """
     from longport.openapi import Config, QuoteContext
+    warned = False
     while True:
         try:
             time.sleep(60)
@@ -227,17 +236,40 @@ def manage_loop():
                 snapshot = dict(BOOK.pos)
             if not snapshot:
                 continue
-            _, q = ctxs()
             now_et = datetime.now(ET)
-            quotes = {r.symbol: float(r.last_done) for r in q.option_quote(list(snapshot))}
+            cut = datetime.strptime("15:40", "%H:%M").time()
+
+            # ── ① 到期强平: 只看日期时间, 无论行情是否可用都要执行 ──
+            still = {}
             for osi, p in snapshot.items():
+                try:
+                    exp = date.fromisoformat(str(p["exp"]))
+                except Exception:
+                    still[osi] = p; continue
+                if now_et.date() > exp or (now_et.date() == exp and now_et.time() >= cut):
+                    submit_sell(osi, p["qty"], "expiry-force"); journal("expiry_force", osi=osi)
+                else:
+                    still[osi] = p
+            if not still:
+                continue
+
+            # ── ② 止损/时损: 需要报价; 取不到只暂停这部分, 不影响 ① ──
+            _, q = ctxs()
+            try:
+                quotes = {r.symbol: float(r.last_done) for r in q.option_quote(list(still))}
+            except Exception as e:
+                if not warned:      # 降噪: 权限缺失时原来每60s刷一条, 日志已涨到 446KB
+                    log(f"⚠️ 期权报价不可用, 止损轮询暂停(到期强平仍生效): {type(e).__name__} {e}")
+                    warned = True
+                continue
+            if warned:
+                log("✅ 期权报价已恢复, 止损轮询重新生效"); warned = False
+
+            for osi, p in still.items():
                 last = quotes.get(osi)
                 if last is None:
                     continue
                 entry = p["entry"]
-                exp = date.fromisoformat(str(p["exp"]))
-                if now_et.date() >= exp and now_et.time() >= datetime.strptime("15:40", "%H:%M").time():
-                    submit_sell(osi, p["qty"], "expiry-force"); journal("expiry_force", osi=osi); continue
                 if last <= entry * (1 - STOP_PCT):
                     submit_sell(osi, p["qty"], f"stop-{int(STOP_PCT*100)}pct")
                     journal("stop_trigger", osi=osi, last=last, entry=entry); continue
