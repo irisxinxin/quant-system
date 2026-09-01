@@ -28,15 +28,24 @@ DRAWICON(SELLSIG,HIGH*1.005,2);
 ────────────────────────────────────────────
 指标二: 四色柱 (主图叠加, RSI6口径)
 ────────────────────────────────────────────
-{黄柱=RSI6下穿80顶部警告(他"四色柱要先賣出"), 蓝柱=RSI6上穿20底部信号}
+{真·四色版: 全部K线重染色, 视觉同诗诗图。底色绿=RSI6强势区/红=弱势区,
+ 黄柱=RSI6下穿80顶部警告(5锚点验证), 蓝柱=RSI6上穿20底部信号, 叠最上层。
+ 注: 黄/蓝是锚定实锤的真规则; 红/绿分界(RSI50)是按他截图观感定的近似底色。
+ 实体宽度7可自行改6~8; 删除本指标即恢复原生蜡烛}
 LC:=REF(CLOSE,1);
 R6:=SMA(MAX(CLOSE-LC,0),6,1)/SMA(ABS(CLOSE-LC),6,1)*100;
 HJ:=REF(R6,1)>=80 AND R6<80;
 LD:=REF(R6,1)<=20 AND R6>20;
-STICKLINE(HJ,LOW,HIGH,0.8,0),COLORYELLOW;
-STICKLINE(HJ,CLOSE,OPEN,8,0),COLORYELLOW;
-STICKLINE(LD,LOW,HIGH,0.8,0),COLORBLUE;
-STICKLINE(LD,CLOSE,OPEN,8,0),COLORBLUE;
+DUO:=R6>=50 AND HJ=0 AND LD=0;
+KONG:=R6<50 AND HJ=0 AND LD=0;
+STICKLINE(DUO,LOW,HIGH,0.5,0),COLORGREEN;
+STICKLINE(DUO,CLOSE,OPEN,7,0),COLORGREEN;
+STICKLINE(KONG,LOW,HIGH,0.5,0),COLORRED;
+STICKLINE(KONG,CLOSE,OPEN,7,0),COLORRED;
+STICKLINE(HJ,LOW,HIGH,0.5,0),COLORYELLOW;
+STICKLINE(HJ,CLOSE,OPEN,7,0),COLORYELLOW;
+STICKLINE(LD,LOW,HIGH,0.5,0),COLORBLUE;
+STICKLINE(LD,CLOSE,OPEN,7,0),COLORBLUE;
 
 ────────────────────────────────────────────
 操作口径速查 (他的实际用法)
