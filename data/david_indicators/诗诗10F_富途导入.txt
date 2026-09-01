@@ -28,50 +28,36 @@ DRAWTEXT(SELLSIG,HIGH*1.018,'卖出'),COLORRED;
 ────────────────────────────────────────────
 指标二: 四色柱 (主图叠加, RSI6口径)
 ────────────────────────────────────────────
-{真·四色版: 全部K线重染色, 视觉同诗诗图。底色绿=RSI6强势区/红=弱势区,
- 黄柱=RSI6下穿80顶部警告(5锚点验证), 蓝柱=RSI6上穿20底部信号, 叠最上层。
- 注: 黄/蓝是锚定实锤的真规则; 红/绿分界(RSI50)是按他截图观感定的近似底色。
- 实体宽度7可自行改6~8; 删除本指标即恢复原生蜡烛}
+{真·四色版(诗诗同款): 全K线四色实心重绘, 宽度=原生蜡烛
+ 绿=RSI6强势区 红=弱势区 黄=下穿80止盈警告 蓝=上穿20超跌企稳
+ 黄/蓝为5锚点实锤真规则; 红/绿分界(RSI50)为按其截图观感的近似
+ 想区分阳阴线: 把DUO/KONG实体行的最后一个0改成1(阳线空心)}
 LC:=REF(CLOSE,1);
 R6:=SMA(MAX(CLOSE-LC,0),6,1)/SMA(ABS(CLOSE-LC),6,1)*100;
 HJ:=REF(R6,1)>=80 AND R6<80;
 LD:=REF(R6,1)<=20 AND R6>20;
 DUO:=R6>=50 AND HJ=0 AND LD=0;
 KONG:=R6<50 AND HJ=0 AND LD=0;
-{留K线形态: 阳线空心描边, 阴线实心}
-YANG:=CLOSE>=OPEN;
-YIN:=CLOSE<OPEN;
-STICKLINE(DUO,LOW,HIGH,0.5,0),COLORGREEN;
-STICKLINE(DUO AND YANG,CLOSE,OPEN,4.5,1),COLORGREEN;
-STICKLINE(DUO AND YIN,CLOSE,OPEN,4.5,0),COLORGREEN;
-STICKLINE(KONG,LOW,HIGH,0.5,0),COLORRED;
-STICKLINE(KONG AND YANG,CLOSE,OPEN,4.5,1),COLORRED;
-STICKLINE(KONG AND YIN,CLOSE,OPEN,4.5,0),COLORRED;
-STICKLINE(HJ,LOW,HIGH,0.5,0),COLORYELLOW;
-STICKLINE(HJ AND YANG,CLOSE,OPEN,4.5,1),COLORYELLOW;
-STICKLINE(HJ AND YIN,CLOSE,OPEN,4.5,0),COLORYELLOW;
-STICKLINE(LD,LOW,HIGH,0.5,0),COLORBLUE;
-STICKLINE(LD AND YANG,CLOSE,OPEN,4.5,1),COLORBLUE;
-STICKLINE(LD AND YIN,CLOSE,OPEN,4.5,0),COLORBLUE;
+STICKLINE(DUO,LOW,HIGH,0.18,0),COLORGREEN;
+STICKLINE(DUO,CLOSE,OPEN,0.9,0),COLORGREEN;
+STICKLINE(KONG,LOW,HIGH,0.18,0),COLORRED;
+STICKLINE(KONG,CLOSE,OPEN,0.9,0),COLORRED;
+STICKLINE(HJ,LOW,HIGH,0.18,0),COLORYELLOW;
+STICKLINE(HJ,CLOSE,OPEN,0.9,0),COLORYELLOW;
+STICKLINE(LD,LOW,HIGH,0.18,0),COLORBLUE;
+STICKLINE(LD,CLOSE,OPEN,0.9,0),COLORBLUE;
 
-── 轻量版(推荐): 保留原生K线, 只染黄/蓝信号柱 ──
+── 轻量版: 保留原生K线, 只染黄/蓝信号柱 ──
 LC:=REF(CLOSE,1);
 R6:=SMA(MAX(CLOSE-LC,0),6,1)/SMA(ABS(CLOSE-LC),6,1)*100;
 HJ:=REF(R6,1)>=80 AND R6<80;
 LD:=REF(R6,1)<=20 AND R6>20;
-STICKLINE(HJ,LOW,HIGH,0.3,0),COLORYELLOW;
-STICKLINE(HJ,CLOSE,OPEN,2.6,0),COLORYELLOW;
-STICKLINE(LD,LOW,HIGH,0.3,0),COLORBLUE;
-STICKLINE(LD,CLOSE,OPEN,2.6,0),COLORBLUE;
+STICKLINE(HJ,LOW,HIGH,0.18,0),COLORYELLOW;
+STICKLINE(HJ,CLOSE,OPEN,0.9,0),COLORYELLOW;
+STICKLINE(LD,LOW,HIGH,0.18,0),COLORBLUE;
+STICKLINE(LD,CLOSE,OPEN,0.9,0),COLORBLUE;
 
-────────────────────────────────────────────
-操作口径速查 (他的实际用法)
-────────────────────────────────────────────
-· 进场: 实体完全站上10F线 + (可选)收盘>MA90趋势闸门
-· 出场: 价格盘中跌破10F线 → 立刻卖, 不等K线收盘
-· 提前止盈: 持仓中黄柱打出 → 先卖 (8/21他6.4卖=黄柱, 8/31"四色柱要先賣出")
-· 蓝柱: 底部反弹信号, 配合他的"預備買入"型抄底观察, 非独立买点
-· 回测判决: 机械执行3-8月为负(-32%~-41%), 仅趋势段赚钱;
-  MA90闸门显著少亏但不产生alpha。指标是"看到他所看到"的工具, 不是赚钱机器。
-
-未破解: TEST3變盤線(源码缺), WM套装的買/賣/預備買入/移動止盈/洗盤标记逻辑(私有编译)
+════════════════════════════════════════════════════════════
+⚠️ 宽度单位说明(踩坑实录): STICKLINE第4参=K线槽位倍数, 1=一根K线宽。
+   实体0.9/影线0.18在任何缩放下都与原生蜡烛同宽; >1会横跨多根K线糊成板砖。
+════════════════════════════════════════════════════════════
