@@ -83,12 +83,19 @@ def refresh_history():
              "小鱼日内vip": ROOT/"output"/"xiaoyu_intraday_history.json",
              "所有突發信息": ROOT/"output"/"samlam_history.json",   # Sam lam投資筆記(港, Minervini流)
              "华尔街观察-正股": ROOT/"output"/"wallst_history.json",  # 第九源: 大类资产轮动(黄金主仓+行业ETF)
-             "seek-vip": ROOT/"output"/"seek_vip_history.json"}  # 第十二源候选: ~Seeker~英文技术流(站长转发3中继), 深回撤埋伏+阻力位, 8/19接入观察
+             "seek-vip": ROOT/"output"/"seek_vip_history.json",  # 第十二源候选: ~Seeker~英文技术流(站长转发3中继), 深回撤埋伏+阻力位, 8/19接入观察
+             # ── 第十三源 V型律动 (2026-09-01 接入, 用户指定) ───────────────────────
+             # ⚠️ 频道内 author 全是中继号"v型律动", 真实发言人写在正文 **粗体** 里:
+             #    V型律动 / V型律动_小助理 / 路人 / 鸿运小哥 —— 引用前必须按粗体名解析,
+             #    否则会重蹈"归档频道名≠发言人"的坑(xiaoyu_intraday 那次把蛋挞当成小鱼)
+             "带单正股": ROOT/"output"/"daidan_stock_history.json",      # 正股+杠杆ETF短线带单(SOXL/APPX/MSTX/TTD/AMBA)
+             "交易节奏引导": ROOT/"output"/"jiezou_history.json"}        # SPX日内/末日期权节奏(GEX+gamma wall), 铁律"末日≤总仓位1%"
     KOVA = 1520803125647380640        # Kova本人
     KOVA_TR = 1511035459709702314     # 懂王翻译2
     TTT = 1350502142997434582         # ttt2023(群主, 华尔街观察频道发布人)
     WSGC = 1538784726234693652        # 华尔街观察官方号
-    ALLOW = {ZWZF, ZWZF3, ZZ, KOVA, KOVA_TR, TTT, WSGC}  # 站长中继×2+张张+Kova+翻译+华尔街观察×2
+    VXLD = 1542734958685323264        # v型律动(第十三源中继号, 带单正股+交易节奏引导两个频道)
+    ALLOW = {ZWZF, ZWZF3, ZZ, KOVA, KOVA_TR, TTT, WSGC, VXLD}  # 站长中继×2+张张+Kova+翻译+华尔街观察×2+V型律动
 
     IMG_SAVE = {"蛋挞vip": ROOT / "data" / "danta_img",   # 点位表以图片发布的频道 → 落盘抢救(CDN链接会过期)
                 "潜力形态-多": ROOT / "data" / "qianli_img",   # 形态派全靠图
@@ -96,7 +103,10 @@ def refresh_history():
                 "小鱼日内vip": ROOT / "data" / "danta_intraday_img",  # 蛋挞在日内频道发的点位图/持仓图
                 "所有突發信息": ROOT / "data" / "samlam_img",          # Sam lam 的图表标注(base/breakout 划线图)
                 "华尔街观察-正股": ROOT / "data" / "wallst_img",          # 华尔街观察周报配图
-                "seek-vip": ROOT / "data" / "seek_img"}                  # Seeker 的点位全画在图上(箱体zone)
+                "seek-vip": ROOT / "data" / "seek_img",                  # Seeker 的点位全画在图上(箱体zone)
+                "边城": ROOT / "data" / "biancheng_img",                 # 🔧2026-09-01补: 他定期发持仓+现金比例截图, 之前一直漏抓
+                "带单正股": ROOT / "data" / "daidan_img",                # V型律动的标注图
+                "交易节奏引导": ROOT / "data" / "jiezou_img"}            # GEX / gamma wall 图, 每日盘前发
 
     @client.event
     async def on_ready():
