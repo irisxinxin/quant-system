@@ -41,18 +41,26 @@ def refresh_history():
     if not proxy:
         # 2026-08-17: 代理环境会变(Clash 7897 ↔ SSX-NG 1087, 且1087的privoxy拒绝Discord CONNECT)。
         # 探测顺序: 直连Discord可用→不走代理; 否则依次试本地代理端口。
+        # 2026-08-31 修: 原来用 _ur.urlopen 测直连是错的 —— macOS 上 urllib 会自动读系统代理
+        # (SSX-NG 设的 1087), 于是"直连测试"实际走了代理、被 Privoxy 拒绝, 再 fallback 到 1087 同样失败。
+        # 必须用 ProxyHandler({}) 显式禁用代理才是真的测直连。这个 bug 让归档静默失败了多日。
         import urllib.request as _ur
         try:
-            _ur.urlopen("https://discord.com/api/v10/gateway", timeout=6)
+            _ur.build_opener(_ur.ProxyHandler({})).open(
+                "https://discord.com/api/v10/gateway", timeout=6)
             proxy = None
         except Exception:
             proxy = None
             for port in (7897, 7890, 1087):
                 try:
                     s = socket.create_connection(("127.0.0.1", port), timeout=1); s.close()
+                    # 端口监听 ≠ 能过 Discord: 1087 的 privoxy 会拒绝 CONNECT, 必须实测
+                    r = _ur.build_opener(_ur.ProxyHandler(
+                        {"http": f"http://127.0.0.1:{port}", "https": f"http://127.0.0.1:{port}"}))
+                    r.open("https://discord.com/api/v10/gateway", timeout=6)
                     proxy = f"http://127.0.0.1:{port}"
                     break
-                except OSError:
+                except Exception:
                     continue
     intents = discord.Intents.default(); intents.message_content = True
     client = discord.Client(intents=intents, proxy=proxy)
