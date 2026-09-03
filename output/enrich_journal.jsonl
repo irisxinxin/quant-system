@@ -1571,3 +1571,34 @@
 {"ev": "andy_exit", "ticker": "SPY", "level": "partial", "sig": "SPY TRIMMED ANOTHER 25% @everyone", "ts": "2026-09-02T23:40:03+08:00"}
 {"ev": "andy_exit", "ticker": "JPM", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-03T00:01:55+08:00"}
 {"ev": "andy_exit", "ticker": "JPM", "level": "full", "sig": "ALL OUT @everyone", "ts": "2026-09-03T00:25:45+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "partial", "sig": "TRIMMED 80% HERE", "ts": "2026-09-03T21:30:33+08:00"}
+{"ev": "andy_exit", "ticker": "HOOD", "level": "full", "sig": "ALL OUT NOW @everyone", "ts": "2026-09-03T21:32:28+08:00"}
+{"ev": "andy_entry", "osi": "NFLX260904C084000.US", "ticker": "NFLX", "prem": 0.4, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: NFLX - $84 CALLS EXPIRATION THIS WEEK .40, CHEAP LOTTO PLAY, HERO OR ZERO @everyone", "ts": "2026-09-03T21:39:56+08:00"}
+{"ev": "andy_entry", "osi": "AAPL260904C332500.US", "ticker": "AAPL", "prem": 1.0, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: AAPL - $332.5 CALLS 1DTE .50, CHEAP LOTTO PLAY @everyone", "ts": "2026-09-03T21:47:31+08:00"}
+{"ev": "andy_entry", "osi": "MU260909C1000000.US", "ticker": "MU", "prem": 5.8, "stop": 5.0, "expiry": "2026-09-09", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: MU - $1000 CALLS 9/9 $5.80, STOP LOSS AT $5.00 @everyone", "ts": "2026-09-03T21:51:54+08:00"}
+{"ev": "andy_exit", "ticker": "MU", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-09-03T21:55:16+08:00"}
+{"ev": "andy_entry", "osi": "DELL260904C520000.US", "ticker": "DELL", "prem": 5.7, "stop": null, "expiry": "2026-09-04", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: DELL - $520 CALLS EXPIRATION THIS WEEK $5.70 @everyone", "ts": "2026-09-03T22:03:20+08:00"}
+{"ev": "andy_exit", "ticker": "DELL", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-03T22:05:24+08:00"}
+{"ev": "andy_exit", "ticker": "DELL", "level": "partial", "sig": "DELL CALLS TRIMMING MORE @everyone", "ts": "2026-09-03T22:07:20+08:00"}
+{"ev": "andy_entry", "osi": "DELL260904C520000.US", "ticker": "DELL", "prem": 5.1, "stop": null, "expiry": "2026-09-04", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: DELL - $520 CALLS EXPIRATION THIS WEEK $5.10, ROLLING PROFITS, SMALL POSITION @everyone", "ts": "2026-09-03T22:11:06+08:00"}
+{"ev": "andy_exit", "ticker": "DELL", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-03T22:14:42+08:00"}
+{"ev": "andy_exit", "ticker": "DELL", "level": "partial", "sig": "TRIMMED MORE", "ts": "2026-09-03T22:14:56+08:00"}
+{"ev": "andy_entry", "osi": "PLTR260918C195000.US", "ticker": "PLTR", "prem": 3.6, "stop": 3.15, "expiry": "2026-09-18", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: PLTR - $195 CALLS 9/18 $3.60, STOP LOSS AT $3.15 @everyone", "ts": "2026-09-03T22:18:59+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "full", "sig": "ALL OUT ON AAPL LOTTOS, RUNNERS STILL GOOD TO HOLD WITH A TRAILING STOP @everyone", "ts": "2026-09-03T22:28:49+08:00"}
+{"ev": "andy_entry", "osi": "DELL260904C520000.US", "ticker": "DELL", "prem": 3.0, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: DELL - $520 CALLS ROUND 3, STRICTLY ROLLING PROFITS AGAIN AS LOTTOS $5.40 @everyone", "ts": "2026-09-03T22:36:44+08:00"}
+{"ev": "andy_entry", "osi": "COIN260904C192500.US", "ticker": "COIN", "prem": 2.4, "stop": null, "expiry": "2026-09-04", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: COIN - $192.5 CALLS EXPIRATION THIS WEEK $2.40 @everyone", "ts": "2026-09-03T22:40:01+08:00"}
+{"ev": "andy_exit", "ticker": "PLTR", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-03T22:42:13+08:00"}
+{"ev": "andy_exit", "ticker": "PLTR", "level": "be", "sig": "SET BREAKEVEN STOP ON REST :verifyblue:", "ts": "2026-09-03T22:43:12+08:00"}
+{"ev": "andy_entry", "osi": "SNDK260911C1790000.US", "ticker": "SNDK", "prem": 4.9, "stop": null, "expiry": "2026-09-11", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SNDK - $1790 CALLS 9/11 $4.90, SMALL LOTTOS @everyone", "ts": "2026-09-03T22:58:44+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-09-03T23:02:47+08:00"}
+{"ev": "andy_exit", "ticker": "DELL", "level": "full", "sig": "502.5 LOTTOS ALL OUT @everyone", "ts": "2026-09-03T23:13:41+08:00"}
+{"ev": "andy_entry", "osi": "JPM260904C365000.US", "ticker": "JPM", "prem": 0.63, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: JPM - $365 CALLS EXPIRATION THIS WEEK .63, CHEAP LOTTO PLAY, EXPECT 0 @everyone", "ts": "2026-09-03T23:24:16+08:00"}
+{"ev": "andy_entry", "osi": "TSLA260904C385000.US", "ticker": "TSLA", "prem": 4.6, "stop": 4.2, "expiry": "2026-09-04", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: TSLA - $385 CALLS 9/4 $4.60, STOP LOSS AT $4.20, RISKY @everyone", "ts": "2026-09-03T23:38:10+08:00"}
+{"ev": "andy_exit", "ticker": "DELL", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-03T23:46:33+08:00"}
+{"ev": "andy_exit", "ticker": "DELL", "level": "full", "sig": "DELL ROUND 2 ALL OUT, 100% BANGER @everyone", "ts": "2026-09-03T23:47:43+08:00"}
+{"ev": "andy_exit", "ticker": "DELL", "level": "full", "sig": "DELL ROUND 3 ALL OUT, ANOTHER 100% BANGER @everyone", "ts": "2026-09-03T23:49:26+08:00"}
+{"ev": "andy_exit", "ticker": "DELL", "level": "full", "sig": "MORNING CALLS ROUND 1 ALL OUT ALSO @everyone", "ts": "2026-09-04T00:02:07+08:00"}
+{"ev": "andy_exit", "ticker": "UBER", "level": "full", "sig": "UBER LOTTOS ALL OUT, 100% BANGER @everyone", "ts": "2026-09-04T00:12:39+08:00"}
+{"ev": "andy_entry", "osi": "SNDK260918C1750000.US", "ticker": "SNDK", "prem": 25.0, "stop": null, "expiry": "2026-09-18", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SNDK - $1750 CALLS 9/18 $25.00, ROLLING SOME PROFITS @everyone", "ts": "2026-09-04T01:18:41+08:00"}
+{"ev": "missed_during_downtime", "sig": "Lotto - $NBIS weekly $215 calls for $2.08 @everyone $alert", "ts_signal": "2026-09-03 18:47:29.870000+00:00", "ts": "2026-09-04T03:10:49+08:00"}
+{"ev": "andy_entry", "osi": "MSFT260904C520000.US", "ticker": "MSFT", "prem": 1.0, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: MSFT - $520 CALLS 1DTE $1.35, EARLY LOTTO FRIDAY SWING @everyone", "ts": "2026-09-04T03:10:52+08:00"}
