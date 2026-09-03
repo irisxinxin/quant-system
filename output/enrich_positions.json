@@ -298,5 +298,26 @@
   "stop_mult": 0.5,
   "status": "closed",
   "opened": "2026-08-31"
+ },
+ "HOOD260904C108000.US": {
+  "ticker": "HOOD",
+  "entry_order_id": null,
+  "qty": 20,
+  "limit": 1.06,
+  "expiry": "2026-09-04",
+  "filled": 0,
+  "sold": 0,
+  "avg": 0.0,
+  "tp_order_id": null,
+  "tp_qty": 0,
+  "tp2_order_id": null,
+  "tp2_qty": 0,
+  "tp1_done": false,
+  "tp2_done": false,
+  "armed": false,
+  "submitted_ts": 1788358054.0292768,
+  "stop_mult": 0.5,
+  "status": "closed",
+  "opened": "2026-09-02"
  }
 }
