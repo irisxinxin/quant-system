@@ -1602,3 +1602,39 @@
 {"ev": "andy_entry", "osi": "SNDK260918C1750000.US", "ticker": "SNDK", "prem": 25.0, "stop": null, "expiry": "2026-09-18", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SNDK - $1750 CALLS 9/18 $25.00, ROLLING SOME PROFITS @everyone", "ts": "2026-09-04T01:18:41+08:00"}
 {"ev": "missed_during_downtime", "sig": "Lotto - $NBIS weekly $215 calls for $2.08 @everyone $alert", "ts_signal": "2026-09-03 18:47:29.870000+00:00", "ts": "2026-09-04T03:10:49+08:00"}
 {"ev": "andy_entry", "osi": "MSFT260904C520000.US", "ticker": "MSFT", "prem": 1.0, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: MSFT - $520 CALLS 1DTE $1.35, EARLY LOTTO FRIDAY SWING @everyone", "ts": "2026-09-04T03:10:52+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "SNDK CALLS YOU CAN TRIM MORE AT OPEN @everyone 👀", "ts": "2026-09-04T21:28:09+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "CAN TRIM MOST", "ts": "2026-09-04T21:31:24+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "full", "sig": "SNDK LOTTOS ALL OUT @everyone", "ts": "2026-09-04T21:33:13+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "TRIM MORE", "ts": "2026-09-04T21:34:06+08:00"}
+{"ev": "andy_entry", "osi": "NVDA260904C237500.US", "ticker": "NVDA", "prem": 0.3, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: NVDA - $237.5 CALLS 0DTE .30, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-09-04T21:37:49+08:00"}
+{"ev": "andy_entry", "osi": "NVDA260909C237500.US", "ticker": "NVDA", "prem": 1.59, "stop": 1.3, "expiry": "2026-09-09", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: NVDA - $237.5 CALLS 9/9 $1.59, STOP LOSS AT $1.30 @everyone", "ts": "2026-09-04T21:39:03+08:00"}
+{"ev": "andy_exit", "ticker": "NVDA", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-04T21:40:43+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "LOTTOS TRIMMED SOME MORE HERE @everyone", "ts": "2026-09-04T21:48:03+08:00"}
+{"ev": "andy_entry", "osi": "NVDA260904C232500.US", "ticker": "NVDA", "prem": 2.5, "stop": 2.0, "expiry": "2026-09-04", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: NVDA - $232.5 CALLS 0DTE $2.50, STOP LOSS AT $2.00 @EVERY", "ts": "2026-09-04T21:50:39+08:00"}
+{"ev": "andy_exit", "ticker": "NVDA", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-04T21:51:00+08:00"}
+{"ev": "andy_entry", "osi": "SNDK260904C1720000.US", "ticker": "SNDK", "prem": 2.9, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SNDK - $1720 CALLS 0DTE $2.90, HIGH RISK SUPER LOTTOS, I'M STRICTLY ROLLING PROFITS @everyone", "ts": "2026-09-04T21:59:34+08:00"}
+{"ev": "andy_entry", "osi": "NVDA260911C237500.US", "ticker": "NVDA", "prem": 2.5, "stop": null, "expiry": "2026-09-11", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: NVDA - $237.5 CALLS 9/11 $2.50 @everyone", "ts": "2026-09-04T22:05:02+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "SNDK LOTTOS TRIMMED MORE @everyone", "ts": "2026-09-04T22:05:24+08:00"}
+{"ev": "andy_entry", "osi": "SKHY260904C170000.US", "ticker": "SKHY", "prem": 1.55, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SKHY - $170 CALLS EXPIRATION THIS WEEK $1.55, LOTTO SIZE @everyone", "ts": "2026-09-04T22:10:10+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "SNDK TRIMMED MORE @everyone", "ts": "2026-09-04T22:15:02+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-04T22:15:18+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "full", "sig": "WILL GO ALL OUT ON THESE BY EOD, HOPE YOU ALL BANKED HUGE ON THESE CALLS @everyone", "ts": "2026-09-04T22:19:11+08:00"}
+{"ev": "andy_entry", "osi": "NVDA260904C237500.US", "ticker": "NVDA", "prem": 0.25, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: NVDA - $237.5 CALLS 0DTE .25, SUPER LOTTOS, ROUND 2 @everyone", "ts": "2026-09-04T22:20:28+08:00"}
+{"ev": "andy_exit", "ticker": "NVDA", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-04T22:21:58+08:00"}
+{"ev": "andy_exit", "ticker": "NVDA", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-09-04T22:25:38+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "full", "sig": "ALL OUT NOW @everyone", "ts": "2026-09-04T22:36:18+08:00"}
+{"ev": "andy_entry", "osi": "SNDK260911C2000000.US", "ticker": "SNDK", "prem": 4.5, "stop": null, "expiry": "2026-09-11", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SNDK - $2000 CALLS 9/11 $4.50, ANOTHER ROUND, ROLLING OVER PROFITS @everyone", "ts": "2026-09-04T22:59:39+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-09-04T23:02:47+08:00"}
+{"ev": "andy_entry", "osi": "HOOD260904C123000.US", "ticker": "HOOD", "prem": 1.25, "stop": 1.0, "expiry": "2026-09-04", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: HOOD - $123 CALLS 0DTE $1.25, STOP LOSS AT $1.00 @everyone", "ts": "2026-09-04T23:50:52+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "be", "sig": "SKHY LOTTOS TRIM MORE & SET BREAKEVEN STOP ON REST @everyone", "ts": "2026-09-05T00:10:26+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "SKHY TRIMMED MORE @everyone", "ts": "2026-09-05T00:21:00+08:00"}
+{"ev": "andy_entry", "osi": "MU260904C1000000.US", "ticker": "MU", "prem": 5.7, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: MU - $1000 CALLS ITM LOTTOS $5.70, HIGH RISK @everyone", "ts": "2026-09-05T00:23:32+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-05T00:24:13+08:00"}
+{"ev": "andy_exit", "ticker": "MU", "level": "partial", "sig": "TRIMMED MORE @everyone", "ts": "2026-09-05T00:24:57+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "be", "sig": "INTC MIGHT DO A BREAKEVEN CLOSE SOON @everyone", "ts": "2026-09-05T00:26:29+08:00"}
+{"ev": "andy_exit", "ticker": "MU", "level": "full", "sig": "MU LOTTOS ALL OUT @everyone", "ts": "2026-09-05T02:02:29+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "full", "sig": "SKHY 100% BANGER, ALL OUT NOW @everyone 🚀", "ts": "2026-09-05T02:02:29+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "full", "sig": "I'M OUT MOST ON THIS ONE", "ts": "2026-09-05T02:02:29+08:00"}
+{"ev": "exit_signal_mech_ignored", "ticker": "NBIS", "level": "full", "sig": "$NBIS - One more to cap the week off. Cheers. Closing runners. @everyone $alert", "ts": "2026-09-05T04:29:57+08:00"}
+{"ev": "andy_entry", "osi": "IREN261023C049000.US", "ticker": "IREN", "prem": 3.8, "stop": 3.2, "expiry": "2026-10-23", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: IREN - $49 CALLS 10/23 $3.80, SWINGS, STOP LOSS AT $3.20 @everyone", "ts": "2026-09-05T04:30:01+08:00"}
+{"ev": "andy_entry", "osi": "SPX260904C7725000.US", "ticker": "SPX", "prem": 0.2, "stop": null, "expiry": "2026-09-04", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7725 CALLS 0DTE .20, SUPER LOTTOS, EXPECT 0 @EVERY", "ts": "2026-09-05T04:30:01+08:00"}
