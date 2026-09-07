@@ -89,7 +89,13 @@ def refresh_history():
              #    V型律动 / V型律动_小助理 / 路人 / 鸿运小哥 —— 引用前必须按粗体名解析,
              #    否则会重蹈"归档频道名≠发言人"的坑(xiaoyu_intraday 那次把蛋挞当成小鱼)
              "带单正股": ROOT/"output"/"daidan_stock_history.json",      # 正股+杠杆ETF短线带单(SOXL/APPX/MSTX/TTD/AMBA)
-             "交易节奏引导": ROOT/"output"/"jiezou_history.json"}        # SPX日内/末日期权节奏(GEX+gamma wall), 铁律"末日≤总仓位1%"
+             "交易节奏引导": ROOT/"output"/"jiezou_history.json",        # SPX日内/末日期权节奏(GEX+gamma wall), 铁律"末日≤总仓位1%"
+             # ── 第十四源 天哥 (2026-09-07 接入, 用户指定) ─────────────────────────
+             # 期权卖方现金流派第三家(与索亚/边城同类): leaps合成多头底仓 + PMCC/CC卖租 + sell put
+             # 账户约$60万, 每周日发"公开账户盘后持仓报告"截图(可核验); 数据最长(3/4起, 含6-7月下跌月)
+             "实盘操作": ROOT/"output"/"tiange_trades_history.json",     # 逐笔操作(卖价/买回价/盈亏/止盈%全报)
+             "机会雷达": ROOT/"output"/"tiange_radar_history.json",      # 每日盘前分析+标的价位
+             "天哥盘后日志": ROOT/"output"/"tiange_weekly_history.json"}  # 周报+公开账户持仓截图
     KOVA = 1520803125647380640        # Kova本人
     KOVA_TR = 1511035459709702314     # 懂王翻译2
     TTT = 1350502142997434582         # ttt2023(群主, 华尔街观察频道发布人)
@@ -106,7 +112,9 @@ def refresh_history():
                 "seek-vip": ROOT / "data" / "seek_img",                  # Seeker 的点位全画在图上(箱体zone)
                 "边城": ROOT / "data" / "biancheng_img",                 # 🔧2026-09-01补: 他定期发持仓+现金比例截图, 之前一直漏抓
                 "带单正股": ROOT / "data" / "daidan_img",                # V型律动的标注图
-                "交易节奏引导": ROOT / "data" / "jiezou_img"}            # GEX / gamma wall 图, 每日盘前发
+                "交易节奏引导": ROOT / "data" / "jiezou_img",            # GEX / gamma wall 图, 每日盘前发
+                "天哥盘后日志": ROOT / "data" / "tiange_img",             # 🔧2026-09-07: 每周公开账户持仓截图=核验金标准
+                "实盘操作": ROOT / "data" / "tiange_img"}                 # 逐笔操作也常带券商截图
 
     @client.event
     async def on_ready():
