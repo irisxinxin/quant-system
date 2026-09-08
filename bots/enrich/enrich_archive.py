@@ -66,6 +66,7 @@ def refresh_history():
     client = discord.Client(intents=intents, proxy=proxy)
     ZWZF = 1392020997393088542        # 站长转发#2054
     ZWZF3 = 1486283682753937488       # 站长转发3#7191
+    ZWZF1 = 1477326419028611445       # 站长转发1#0512 (天哥三频道的中继号; 2026-09-08 漏加→归档拉到0条把609条写空, 已从HEAD恢复)
     ZZ = 1535470978660827196          # zhangzhanglucky/zzlucky (张张本人)
     CHANS = {"期权-波段-enrich": HIST, "andy-option": ROOT/"output"/"andy_history.json",
              "股票赵哥-日内": ROOT/"output"/"zhaoge_history.json",
@@ -101,7 +102,7 @@ def refresh_history():
     TTT = 1350502142997434582         # ttt2023(群主, 华尔街观察频道发布人)
     WSGC = 1538784726234693652        # 华尔街观察官方号
     VXLD = 1542734958685323264        # v型律动(第十三源中继号, 带单正股+交易节奏引导两个频道)
-    ALLOW = {ZWZF, ZWZF3, ZZ, KOVA, KOVA_TR, TTT, WSGC, VXLD}  # 站长中继×2+张张+Kova+翻译+华尔街观察×2+V型律动
+    ALLOW = {ZWZF, ZWZF1, ZWZF3, ZZ, KOVA, KOVA_TR, TTT, WSGC, VXLD}  # 站长中继×3+张张+Kova+翻译+华尔街观察×2+V型律动
 
     IMG_SAVE = {"蛋挞vip": ROOT / "data" / "danta_img",   # 点位表以图片发布的频道 → 落盘抢救(CDN链接会过期)
                 "潜力形态-多": ROOT / "data" / "qianli_img",   # 形态派全靠图
@@ -154,6 +155,10 @@ def refresh_history():
                                         except Exception:
                                             pass
                         msgs.reverse()
+                        # 🔒 防清空: 拉到0条(ALLOW漏人/权限变动/限流)时绝不覆盖已有非空存档 (2026-09-08 天哥三频道被写空的教训)
+                        if not msgs and path.exists() and path.stat().st_size > 2:
+                            print(f"⚠️ {key}: 本次拉到0条, 保留原存档不覆盖 (查ALLOW/权限)")
+                            continue
                         path.write_text(json.dumps(msgs, ensure_ascii=False))
                         print(f"① 消息存档 {key}: {len(msgs)} 条")
                       except Exception as e:
