@@ -1724,3 +1724,107 @@
 {"ev": "andy_entry", "osi": "SPX260908P7665000.US", "ticker": "SPX", "prem": 0.1, "stop": null, "expiry": "2026-09-08", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7665 PUTS 0DTE .10, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-09-09T03:56:17+08:00"}
 {"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIM PROFITS @everyone", "ts": "2026-09-09T03:58:02+08:00"}
 {"ev": "andy_exit", "ticker": "SPX", "level": "full", "sig": "ALL OUT @everyone", "ts": "2026-09-09T03:59:07+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 130, "ts": "2026-09-09T21:31:25+08:00"}
+{"ev": "andy_entry", "osi": "SKHY260911C195000.US", "ticker": "SKHY", "prem": 2.9, "stop": null, "expiry": "2026-09-11", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: SKHY - $195 CALLS EXPIRATION THIS WEEK $2.90 @everyone", "ts": "2026-09-09T21:33:21+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 135, "ts": "2026-09-09T21:36:25+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-09T21:38:32+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "TRIMMED MORE @everyone", "ts": "2026-09-09T21:39:08+08:00"}
+{"ev": "andy_entry", "osi": "INTC261002C110000.US", "ticker": "INTC", "prem": 4.7, "stop": 4.2, "expiry": "2026-10-02", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: INTC - $110 CALLS 10/2 $4.70, STOP LOSS AT $4.20 @everyone", "ts": "2026-09-09T21:40:52+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 140, "ts": "2026-09-09T21:41:25+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "partial", "sig": "SKHY TRIMMED MORE AGAIN @everyone", "ts": "2026-09-09T21:42:35+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "be", "sig": "SET BREAKEVEN STOP ON REST AS ALWAYS, MANAGE RISK, EYEING FOR 195 PT", "ts": "2026-09-09T21:43:07+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 145, "ts": "2026-09-09T21:46:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 150, "ts": "2026-09-09T21:51:25+08:00"}
+{"ev": "andy_exit", "ticker": "SKHY", "level": "full", "sig": "Going all out here, still good to hold with a tight stop", "ts": "2026-09-09T21:53:00+08:00"}
+{"ev": "andy_entry", "osi": "ARM260918C300000.US", "ticker": "ARM", "prem": 4.9, "stop": null, "expiry": "2026-09-18", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: ARM - $300 CALLS EXPIRATION NEXT WEEK $4.90 @everyone", "ts": "2026-09-09T21:54:55+08:00"}
+{"ev": "andy_exit", "ticker": "ARM", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-09T21:56:01+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 155, "ts": "2026-09-09T21:56:25+08:00"}
+{"ev": "andy_exit", "ticker": "SNDK", "level": "partial", "sig": "I keep a lot of you panicking and asking about SNDK, keep in mind if you can't risk such trades or can't have patience then don't ", "ts": "2026-09-09T21:59:07+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "full", "sig": "INTC I'M OUT 40% AT DAY HIGHS @everyone", "ts": "2026-09-09T22:00:39+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 160, "ts": "2026-09-09T22:01:25+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-09T22:05:26+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 165, "ts": "2026-09-09T22:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 170, "ts": "2026-09-09T22:11:25+08:00"}
+{"ev": "andy_exit", "ticker": "SLV", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-09T22:14:52+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 175, "ts": "2026-09-09T22:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 180, "ts": "2026-09-09T22:21:25+08:00"}
+{"ev": "andy_entry", "osi": "JPM260911C355000.US", "ticker": "JPM", "prem": 2.5, "stop": 2.1, "expiry": "2026-09-11", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: JPM - $355 CALLS EXPIRATION THIS WEEK $2.50, STOP LOSS AT $2.10 @everyone", "ts": "2026-09-09T22:26:10+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 185, "ts": "2026-09-09T22:26:25+08:00"}
+{"ev": "andy_exit", "ticker": "JPM", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-09T22:27:54+08:00"}
+{"ev": "andy_exit", "ticker": "SLV", "level": "partial", "sig": "SLV SUPER LOTTOS BACK UP, CAN TRIM LITTLE MORE & MANAGE RISK @everyone", "ts": "2026-09-09T22:28:44+08:00"}
+{"ev": "andy_exit", "ticker": "JPM", "level": "partial", "sig": "JPM HIGHS, TRIMMED LITTLE MORE @everyone", "ts": "2026-09-09T22:30:42+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 190, "ts": "2026-09-09T22:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 195, "ts": "2026-09-09T22:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 200, "ts": "2026-09-09T22:41:25+08:00"}
+{"ev": "andy_entry", "osi": "GS260911C1060000.US", "ticker": "GS", "prem": 3.6, "stop": 3.0, "expiry": "2026-09-11", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: GS - $1060 CALLS EXPIRATION THIS WEEK $3.60, STOP LOSS AT $3.00, HIGH RISK DAY TRADE @everyone", "ts": "2026-09-09T22:43:18+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 205, "ts": "2026-09-09T22:46:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 210, "ts": "2026-09-09T22:51:25+08:00"}
+{"ev": "andy_exit", "ticker": "GS", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-09T22:52:04+08:00"}
+{"ev": "andy_exit", "ticker": "GS", "level": "partial", "sig": "GS TRIMMED LITTLE MORE @everyone", "ts": "2026-09-09T22:53:02+08:00"}
+{"ev": "andy_exit", "ticker": "GS", "level": "partial", "sig": "GS HIGHS, TRIMMED MORE @everyone", "ts": "2026-09-09T22:54:39+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 215, "ts": "2026-09-09T22:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 220, "ts": "2026-09-09T23:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 225, "ts": "2026-09-09T23:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 230, "ts": "2026-09-09T23:11:25+08:00"}
+{"ev": "andy_entry", "osi": "SPY260909P760000.US", "ticker": "SPY", "prem": 0.5, "stop": null, "expiry": "2026-09-09", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPY - $760 PUTS 0DTE .50, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-09-09T23:16:04+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 235, "ts": "2026-09-09T23:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 240, "ts": "2026-09-09T23:21:25+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-09T23:23:15+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 245, "ts": "2026-09-09T23:26:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 250, "ts": "2026-09-09T23:31:25+08:00"}
+{"ev": "andy_entry", "osi": "INTC261002C120000.US", "ticker": "INTC", "prem": 2.6, "stop": null, "expiry": "2026-10-02", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: INTC - $120 CALLS 10/2 $2.60 @everyone", "ts": "2026-09-09T23:31:49+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 255, "ts": "2026-09-09T23:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 260, "ts": "2026-09-09T23:41:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 265, "ts": "2026-09-09T23:46:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 270, "ts": "2026-09-09T23:51:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 275, "ts": "2026-09-09T23:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 280, "ts": "2026-09-10T00:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 285, "ts": "2026-09-10T00:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 290, "ts": "2026-09-10T00:11:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 295, "ts": "2026-09-10T00:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 300, "ts": "2026-09-10T00:21:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 305, "ts": "2026-09-10T00:26:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 310, "ts": "2026-09-10T00:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 315, "ts": "2026-09-10T00:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 320, "ts": "2026-09-10T00:41:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 325, "ts": "2026-09-10T00:46:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 330, "ts": "2026-09-10T00:51:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 335, "ts": "2026-09-10T00:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 340, "ts": "2026-09-10T01:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 345, "ts": "2026-09-10T01:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 350, "ts": "2026-09-10T01:11:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 355, "ts": "2026-09-10T01:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 360, "ts": "2026-09-10T01:21:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 365, "ts": "2026-09-10T01:26:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 370, "ts": "2026-09-10T01:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 375, "ts": "2026-09-10T01:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 380, "ts": "2026-09-10T01:41:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 385, "ts": "2026-09-10T01:46:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 390, "ts": "2026-09-10T01:51:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 395, "ts": "2026-09-10T01:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 400, "ts": "2026-09-10T02:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 405, "ts": "2026-09-10T02:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 410, "ts": "2026-09-10T02:11:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 415, "ts": "2026-09-10T02:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 420, "ts": "2026-09-10T02:21:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 425, "ts": "2026-09-10T02:26:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 430, "ts": "2026-09-10T02:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 435, "ts": "2026-09-10T02:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 440, "ts": "2026-09-10T02:41:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 445, "ts": "2026-09-10T02:46:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 450, "ts": "2026-09-10T02:51:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 455, "ts": "2026-09-10T02:56:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 460, "ts": "2026-09-10T03:01:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 465, "ts": "2026-09-10T03:06:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 470, "ts": "2026-09-10T03:11:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 475, "ts": "2026-09-10T03:16:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 480, "ts": "2026-09-10T03:21:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 485, "ts": "2026-09-10T03:26:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 490, "ts": "2026-09-10T03:31:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 495, "ts": "2026-09-10T03:36:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 500, "ts": "2026-09-10T03:41:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 505, "ts": "2026-09-10T03:46:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 510, "ts": "2026-09-10T03:51:25+08:00"}
+{"ev": "andy_entry", "osi": "SPX260909P7630000.US", "ticker": "SPX", "prem": 0.2, "stop": null, "expiry": "2026-09-09", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7630 PUTS 0DTE .20, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-09-10T03:52:47+08:00"}
+{"ev": "andy_exit", "ticker": "SPX", "level": "partial", "sig": "TRIMMED 50% @everyone", "ts": "2026-09-10T03:55:04+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 515, "ts": "2026-09-10T03:56:25+08:00"}
