@@ -2083,3 +2083,76 @@
 {"ev": "andy_exit", "ticker": "ORCU", "level": "be", "sig": "CAN SET BREAKEVEN STOP ON REST & SWING OVERNIGHT @everyone", "ts": "2026-09-11T03:52:33+08:00"}
 {"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 900, "ts": "2026-09-11T03:54:25+08:00"}
 {"ev": "andy_entry", "osi": "SPX260910P7580000.US", "ticker": "SPX", "prem": 0.1, "stop": null, "expiry": "2026-09-10", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: SPX - 7580 PUTS 0DTE .10, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-09-11T03:55:04+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 905, "ts": "2026-09-11T21:34:38+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 910, "ts": "2026-09-11T21:34:41+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 915, "ts": "2026-09-11T21:55:33+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 920, "ts": "2026-09-11T21:55:35+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 925, "ts": "2026-09-11T21:55:38+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 930, "ts": "2026-09-11T21:55:41+08:00"}
+{"ev": "missed_during_downtime", "sig": "$BE $275 calls $2.10 - lotto @everyone $alert", "ts_signal": "2026-09-11 13:37:27.202000+00:00", "ts": "2026-09-11T21:55:41+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "full", "sig": "ALL OUT NOW @everyone STILL GOOD TO HOLD WITH A TIGHT STOP :USAFLAG: 🚀", "ts": "2026-09-11T21:55:41+08:00"}
+{"ev": "andy_entry", "osi": "AAPL260916C337500.US", "ticker": "AAPL", "prem": 2.4, "stop": null, "expiry": "2026-09-16", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: AAPL - $337.5 CALLS 9/16 $2.40 @everyone STRICTLY ROLLING PROFITS", "ts": "2026-09-11T21:55:41+08:00"}
+{"ev": "andy_entry", "osi": "INTC260911C104000.US", "ticker": "INTC", "prem": 1.17, "stop": null, "expiry": "2026-09-11", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: INTC - $104 CALLS 0DTE $1.17, LOTTOS @everyone", "ts": "2026-09-11T21:55:41+08:00"}
+{"ev": "andy_exit", "ticker": "INTC", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-11T21:55:41+08:00"}
+{"ev": "andy_entry", "osi": "IBM260911C240000.US", "ticker": "IBM", "prem": 1.25, "stop": null, "expiry": "2026-09-11", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: IBM - $240 CALLS EXPIRATION THIS WEEK $1.25, LOTTOS @everyone", "ts": "2026-09-11T21:55:41+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-09-11T21:56:47+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "partial", "sig": "IBM TRIMMED MORE @everyone", "ts": "2026-09-11T21:58:06+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "partial", "sig": "IBM BOOM, KEEP TRIMMING @everyone", "ts": "2026-09-11T21:58:52+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 935, "ts": "2026-09-11T21:59:25+08:00"}
+{"ev": "andy_entry", "osi": "HPE260911C061000.US", "ticker": "HPE", "prem": 0.95, "stop": null, "expiry": "2026-09-11", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: HPE - $61 ITM CALLS EXPIRATION THIS WEEK .95, ANOTHER LOTTO PLAY @everyone", "ts": "2026-09-11T22:00:02+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 940, "ts": "2026-09-11T22:04:25+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-11T22:07:10+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "full", "sig": "IBM LOTTOS ALL OUT @everyone", "ts": "2026-09-11T22:09:02+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 945, "ts": "2026-09-11T22:09:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 950, "ts": "2026-09-11T22:14:25+08:00"}
+{"ev": "andy_entry", "osi": "GOOG260911C335000.US", "ticker": "GOOG", "prem": 2.4, "stop": 2.0, "expiry": "2026-09-11", "lotto": false, "subset": false, "quote": {}, "sig": ":RedAlert: GOOG - $335 CALLS 0DTE $2.40, STOP LOSS AT $2.00, RISKY DAY TRADE @everyone", "ts": "2026-09-11T22:18:56+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 955, "ts": "2026-09-11T22:22:36+08:00"}
+{"ev": "andy_exit", "ticker": "GOOG", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-11T22:23:22+08:00"}
+{"ev": "andy_exit", "ticker": "GOOG", "level": "partial", "sig": "GOOG TRIMMED MORE @everyone", "ts": "2026-09-11T22:23:22+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 960, "ts": "2026-09-11T22:24:25+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "partial", "sig": "AAPL HIGHS, FEEL FREE TO START TRIMMING @everyone", "ts": "2026-09-11T23:06:16+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "partial", "sig": "AAPL CALLS TRIMMED SOME MORE HERE @everyone", "ts": "2026-09-11T23:06:16+08:00"}
+{"ev": "andy_entry", "osi": "ADBE260911C247500.US", "ticker": "ADBE", "prem": 3.6, "stop": null, "expiry": "2026-09-11", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: ADBE - $247.5 CALLS 0DTE $3.60, LOTTO SIZE ONLY @everyone", "ts": "2026-09-11T23:06:16+08:00"}
+{"ev": "andy_entry", "osi": "AFRM260911C071000.US", "ticker": "AFRM", "prem": 0.5, "stop": null, "expiry": "2026-09-11", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: AFRM - $71 CALLS 0DTE .50, SUPER LOTTOS, EXPECT 0 @everyone", "ts": "2026-09-11T23:06:16+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 965, "ts": "2026-09-11T23:06:17+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 970, "ts": "2026-09-11T23:06:20+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 975, "ts": "2026-09-11T23:06:23+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 980, "ts": "2026-09-11T23:06:26+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 985, "ts": "2026-09-11T23:06:29+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 990, "ts": "2026-09-11T23:06:32+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 995, "ts": "2026-09-11T23:06:35+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1000, "ts": "2026-09-11T23:06:39+08:00"}
+{"ev": "andy_exit", "ticker": "AFRM", "level": "partial", "sig": "GOOG FLYING, TRIMMED MORE LOTTOS @everyone", "ts": "2026-09-11T23:20:43+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "full", "sig": "GOOG BOOM, ALMOST 100% BANGER, ALL OUT NOW @everyone", "ts": "2026-09-11T23:20:43+08:00"}
+{"ev": "andy_exit", "ticker": "AAPL", "level": "be", "sig": "AFRM SUPER LOTTOS BREAKEVEN CLOSE, TOO SLOW, SEEING A LOT OF PEOPLE BEING IMPATIENT ON A TRADE THAT CLEARLY SAYS TO 'EXPECT 0' @ev", "ts": "2026-09-11T23:20:43+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1005, "ts": "2026-09-11T23:21:01+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1010, "ts": "2026-09-11T23:21:04+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1015, "ts": "2026-09-11T23:21:07+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1020, "ts": "2026-09-11T23:24:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1025, "ts": "2026-09-11T23:29:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1030, "ts": "2026-09-11T23:34:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1035, "ts": "2026-09-11T23:39:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1040, "ts": "2026-09-11T23:44:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1045, "ts": "2026-09-11T23:49:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1050, "ts": "2026-09-11T23:54:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1055, "ts": "2026-09-11T23:59:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1060, "ts": "2026-09-12T00:04:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1065, "ts": "2026-09-12T00:09:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1070, "ts": "2026-09-12T00:14:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1075, "ts": "2026-09-12T00:19:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1080, "ts": "2026-09-12T00:24:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1085, "ts": "2026-09-12T00:29:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1090, "ts": "2026-09-12T00:34:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1095, "ts": "2026-09-12T00:39:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1100, "ts": "2026-09-12T00:44:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1105, "ts": "2026-09-12T00:49:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1110, "ts": "2026-09-12T00:54:25+08:00"}
+{"ev": "stop_channel_down", "osi": "DELL260911C570000.US", "fails": 1115, "ts": "2026-09-12T00:59:25+08:00"}
+{"ev": "missed_during_downtime", "sig": "$ARM - Holding 9/18 $290s into Monday $2.51 average Cheers on a solid week. FOMC next Wedn", "ts_signal": "2026-09-11 19:51:32.052000+00:00", "ts": "2026-09-12T07:05:13+08:00"}
+{"ev": "andy_entry", "osi": "HPE261002C063000.US", "ticker": "HPE", "prem": 2.63, "stop": 2.15, "expiry": "2026-10-02", "lotto": false, "subset": true, "quote": {}, "sig": ":RedAlert: HPE - $63 CALLS 10/2 $2.63, STOP LOSS AT $2.15, POSSIBLE SWING PLAY @everyone", "ts": "2026-09-12T07:52:03+08:00"}
+{"ev": "andy_entry", "osi": "IBM260911C240000.US", "ticker": "IBM", "prem": 0.98, "stop": null, "expiry": "2026-09-11", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: IBM - $240 CALLS EXPIRATION THIS WEEK .98, CHEAP LOTTO PLAY, ROLLING PROFITS, ROUND 2 @everyone", "ts": "2026-09-12T07:52:03+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "partial", "sig": "FEEL FREE TO START TRIMMING @everyone", "ts": "2026-09-12T07:52:03+08:00"}
+{"ev": "andy_entry", "osi": "IBM260911C240000.US", "ticker": "IBM", "prem": 1.5, "stop": null, "expiry": "2026-09-11", "lotto": true, "subset": false, "quote": {}, "sig": ":RedAlert: IBM - $240 CALLS 0DTE $1.50, ROLLING PROFITS AS LOTTOS AGAIN @everyone", "ts": "2026-09-12T07:52:03+08:00"}
+{"ev": "andy_exit", "ticker": "HPE", "level": "partial", "sig": "STARTING TO TRIM MY PROFITS HERE @everyone", "ts": "2026-09-12T07:52:03+08:00"}
+{"ev": "andy_exit", "ticker": "HPE", "level": "partial", "sig": "TRIMMED LITTLE MORE @everyone", "ts": "2026-09-12T07:52:03+08:00"}
+{"ev": "andy_exit", "ticker": "IBM", "level": "full", "sig": "I'M GOING ALL OUT JUST BECAUSE THESE ARE 0DTE, MANAGE RISK @everyone :USAFLAG: 🚀", "ts": "2026-09-12T07:52:03+08:00"}
