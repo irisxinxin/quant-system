@@ -117,12 +117,21 @@ def refresh_history():
                 "天哥盘后日志": ROOT / "data" / "tiange_img",             # 🔧2026-09-07: 每周公开账户持仓截图=核验金标准
                 "实盘操作": ROOT / "data" / "tiange_img"}                 # 逐笔操作也常带券商截图
 
+    # 🔒 歧义键 id 锁定 (2026-09-23 事故): "信号"子串同时命中 enrich信号源头1/2、信号、短线信号
+    # 四个频道, 最后写入的"短线信号"(V型律动中继)把 Kova 归档覆盖成空文本。凡是短词/易撞名的
+    # key 必须在这里钉死频道 id; 新增数据源前先跑 getid 确认无碰撞。
+    CHAN_PIN = {"信号": 1499452378963775488,   # Kova 信号频道(精确名"信号")
+                "边城": 1526982925470666752}   # 防"边城聊天区"日后拿到权限反向覆盖
+    # ⚠️ 2026-09-23 普查: "期权-波段-enrich"/"张张"/"潜力形态-多"/"所有突發信息" 已匹配不到
+    # 任何频道(改名或权限收回), 对应归档分别停更于 ~8/16、8/15、8/16、8/13 — 属于源头断供,
+    # 不是脚本 bug; 恢复接入前, 形态多/Sam/张张 在看板里只算历史背书不算活跃源。
+
     @client.event
     async def on_ready():
         for g in client.guilds:
             for c in g.text_channels:
                 for key, path in CHANS.items():
-                    if key in c.name:
+                    if key in c.name and CHAN_PIN.get(key, c.id) == c.id:
                       try:
                         msgs = []
                         async for m in c.history(limit=3000):
